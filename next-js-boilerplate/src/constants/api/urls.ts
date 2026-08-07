@@ -107,7 +107,10 @@ export const MESSAGES_CONVERSATIONS_URL =
   "/api/messages/conversations" as const;
 export const MESSAGES_CONVERSATION_MESSAGES_PREFIX =
   "/api/messages/conversations/" as const;
+export const MESSAGES_CONVERSATION_ATTACHMENTS_PREFIX =
+  "/api/messages/conversations/" as const;
 export const MESSAGES_ROOM_MESSAGES_PREFIX = "/api/messages/rooms/" as const;
+export const MESSAGES_ROOM_ATTACHMENTS_PREFIX = "/api/messages/rooms/" as const;
 export const MESSAGES_UNREAD_COUNT_URL = "/api/messages/unread-count" as const;
 export const CSRF_TOKEN_BACKEND_URL = "/csrf/token" as const;
 export const GQL_BACKEND_PATH = "/graphql" as const;

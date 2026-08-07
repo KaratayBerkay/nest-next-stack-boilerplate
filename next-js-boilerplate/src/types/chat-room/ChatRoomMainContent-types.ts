@@ -18,6 +18,8 @@ export interface ChatRoomMainContentProps {
   bottomRef: RefObject<HTMLDivElement | null>;
   messagesRef: RefObject<HTMLDivElement | null>;
   isAtBottom: boolean;
+  /** Called when the user clicks "All uploads" to open the attachment gallery. */
+  onOpenGallery?: () => void;
   t: Record<string, string>;
   tErr: Record<string, string>;
   onSetSidebarOpen: (open: boolean) => void;

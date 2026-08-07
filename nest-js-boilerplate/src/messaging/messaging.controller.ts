@@ -188,6 +188,35 @@ export class MessagingController {
     };
   }
 
+  @Get('conversations/:userId/attachments')
+  @ApiOperation({
+    summary:
+      'List every attachment exchanged in a conversation, newest first',
+  })
+  @ApiQuery({
+    name: 'before',
+    required: false,
+    description: 'Cursor for pagination (ISO timestamp)',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    description: 'Page size (default 30)',
+  })
+  async getConversationAttachments(
+    @CurrentUser() user: JwtUser,
+    @Param('userId') otherUserId: string,
+    @Query('before') before?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.ms.getConversationAttachments(
+      user.userId,
+      otherUserId,
+      before,
+      take ? Math.min(parseInt(take, 10), 100) : 30,
+    );
+  }
+
   @Post('conversations/:userId/messages')
   @ApiOperation({ summary: 'Send a direct message' })
   async sendMessage(
@@ -251,6 +280,32 @@ export class MessagingController {
         this.decryptMessageBody(m, user.userId),
       ),
     };
+  }
+
+  @Get('rooms/:roomId/attachments')
+  @ApiOperation({
+    summary: 'List every attachment ever shared in a room, newest first',
+  })
+  @ApiQuery({
+    name: 'before',
+    required: false,
+    description: 'Cursor for pagination (ISO timestamp)',
+  })
+  @ApiQuery({
+    name: 'take',
+    required: false,
+    description: 'Page size (default 30)',
+  })
+  async getRoomAttachments(
+    @Param('roomId') roomId: string,
+    @Query('before') before?: string,
+    @Query('take') take?: string,
+  ) {
+    return this.ms.getRoomAttachments(
+      roomId,
+      before,
+      take ? Math.min(parseInt(take, 10), 100) : 30,
+    );
   }
 
   /**

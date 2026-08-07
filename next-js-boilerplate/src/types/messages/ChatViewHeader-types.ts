@@ -7,6 +7,8 @@ export interface ChatViewHeaderProps {
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
   onlineUsers: Set<string>;
   isTyping: boolean;
+  /** Called when the user clicks "All uploads" to open the attachment gallery. */
+  onOpenGallery?: () => void;
   ownUserId?: string;
   ownFingerprint?: string;
   peerFingerprint?: string;

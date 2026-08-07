@@ -250,6 +250,51 @@ export class MessagingDmService {
     return { messages: redacted.reverse(), hasMore: messages.length === take };
   }
 
+  /**
+   * Every file ever exchanged in this conversation, newest first. Queries
+   * `MessageAttachment` directly (not `PendingUpload` — for DMs its
+   * `scopeId` is the uploader's own id, not the conversation, so it can't
+   * answer "everything exchanged with this peer"). Explicit `select` keeps
+   * the ciphertext columns (`ct` duplicates the full file bytes) off the
+   * wire; unlike `getMessages`, results are returned newest-first as-is —
+   * this is a flat gallery list, not a bottom-anchored chat scroll.
+   */
+  async getConversationAttachments(
+    userId: string,
+    otherUserId: string,
+    areFriends: (a: string, b: string) => Promise<boolean>,
+    before?: string,
+    take = 30,
+  ) {
+    if (!(await areFriends(userId, otherUserId)))
+      return { attachments: [], hasMore: false };
+    const where: Prisma.MessageAttachmentWhereInput = {
+      message: {
+        OR: [
+          { senderId: userId, recipientId: otherUserId },
+          { senderId: otherUserId, recipientId: userId },
+        ],
+      },
+    };
+    if (before) where.createdAt = { lt: new Date(before) };
+    const attachments = await this.prisma.messageAttachment.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take,
+      select: {
+        id: true,
+        url: true,
+        thumbnailUrl: true,
+        type: true,
+        name: true,
+        size: true,
+        createdAt: true,
+        messageId: true,
+      },
+    });
+    return { attachments, hasMore: attachments.length === take };
+  }
+
   async sendMessage(
     senderId: string,
     recipientId: string,
@@ -306,6 +351,7 @@ export class MessagingDmService {
                   type: a.type,
                   name: a.name,
                   size: a.size,
+                  thumbnailUrl: a.thumbnailUrl ?? null,
                   v: a.storageEnvelope?.v ?? null,
                   ct: a.storageEnvelope?.ct ?? null,
                   nonce: a.storageEnvelope?.nonce ?? null,

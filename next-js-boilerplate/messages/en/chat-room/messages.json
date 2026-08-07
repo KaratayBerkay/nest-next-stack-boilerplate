@@ -24,5 +24,9 @@
   "cancel": "Cancel",
   "uploaded": "Uploaded",
   "uploadFailed": "Upload failed",
-  "addMore": "Add more"
+  "addMore": "Add more",
+  "allUploadsTitle": "All uploads",
+  "allUploadsEmpty": "No files uploaded in this room yet",
+  "allUploadsFailedToLoad": "Failed to load uploads",
+  "loadMore": "Load more"
 }

@@ -24,6 +24,7 @@ import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
+import { RoomAttachmentGallerySheet } from "@/views/chat-room/RoomAttachmentGallerySheet";
 import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
 
 function ChatRoomContent({
@@ -41,6 +42,7 @@ function ChatRoomContent({
   const router = useRouter();
   const [room, setRoom] = useState<string>(initialRoom);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const [input, setInput] = useState("");
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
@@ -201,6 +203,7 @@ function ChatRoomContent({
             messagesRef as unknown as React.RefObject<HTMLDivElement | null>
           }
           isAtBottom={isAtBottom}
+          onOpenGallery={() => setGalleryOpen(true)}
           t={t}
           tErr={tErr}
           onSetSidebarOpen={setSidebarOpen}
@@ -212,6 +215,12 @@ function ChatRoomContent({
           onSendAttachments={handleSendAttachments}
         />
       </div>
+
+      <RoomAttachmentGallerySheet
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        room={room}
+      />
     </div>
   );
 }

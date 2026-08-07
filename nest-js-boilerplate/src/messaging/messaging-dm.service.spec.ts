@@ -17,6 +17,7 @@ describe('MessagingDmService', () => {
       groupBy: jest.Mock;
     };
     pendingUpload: { findMany: jest.Mock; updateMany: jest.Mock };
+    messageAttachment: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
     $queryRawUnsafe: jest.Mock;
   };
@@ -43,6 +44,7 @@ describe('MessagingDmService', () => {
         findMany: jest.fn(),
         updateMany: jest.fn().mockResolvedValue({ count: 0 }),
       },
+      messageAttachment: { findMany: jest.fn().mockResolvedValue([]) },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
     };
     mockCache = {
@@ -206,6 +208,7 @@ describe('MessagingDmService', () => {
                   url: 'https://minio/uploads/file-1.png',
                   type: 'image/png',
                   name: 'file-1.png',
+                  thumbnailUrl: null,
                   v: 'storage-v1',
                   ct: 'c1',
                   nonce: 'n1',
@@ -402,6 +405,107 @@ describe('MessagingDmService', () => {
       expect(messages[0].sender).not.toHaveProperty('hideAvatar');
       expect(messages[0].recipient.avatarUrl).toBe('https://x/alice.png');
       expect(messages[0].recipient).not.toHaveProperty('hideAvatar');
+    });
+  });
+
+  describe('getConversationAttachments', () => {
+    it('short-circuits without querying the DB when the pair are not friends', async () => {
+      areFriendsMock.mockResolvedValue(false);
+
+      const result = await service.getConversationAttachments(
+        'u1',
+        'u2',
+        areFriendsMock,
+      );
+
+      expect(result).toEqual({ attachments: [], hasMore: false });
+      expect(mockPrisma.messageAttachment.findMany).not.toHaveBeenCalled();
+    });
+
+    it('queries both message directions, newest first, with an explicit select that excludes ciphertext', async () => {
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.messageAttachment.findMany.mockResolvedValue([
+        {
+          id: 'a1',
+          url: 'https://r2/x.pdf',
+          thumbnailUrl: 'https://r2/x.thumb.webp',
+          type: 'application/pdf',
+          name: 'x.pdf',
+          size: 1234,
+          createdAt: new Date('2026-08-07T10:00:00Z'),
+          messageId: 'm1',
+        },
+      ]);
+
+      const result = await service.getConversationAttachments(
+        'u1',
+        'u2',
+        areFriendsMock,
+      );
+
+      expect(mockPrisma.messageAttachment.findMany).toHaveBeenCalledWith({
+        where: {
+          message: {
+            OR: [
+              { senderId: 'u1', recipientId: 'u2' },
+              { senderId: 'u2', recipientId: 'u1' },
+            ],
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+        select: {
+          id: true,
+          url: true,
+          thumbnailUrl: true,
+          type: true,
+          name: true,
+          size: true,
+          createdAt: true,
+          messageId: true,
+        },
+      });
+      // No v/ct/nonce anywhere in the select — the full file ciphertext must
+      // never leave the DB on a list call.
+      const [[call]] = mockPrisma.messageAttachment.findMany.mock.calls;
+      expect(call.select).not.toHaveProperty('v');
+      expect(call.select).not.toHaveProperty('ct');
+      expect(call.select).not.toHaveProperty('nonce');
+      expect(result.attachments).toHaveLength(1);
+      expect(result.hasMore).toBe(false);
+    });
+
+    it('applies the cursor and reports hasMore when a full page comes back', async () => {
+      areFriendsMock.mockResolvedValue(true);
+      const fullPage = Array.from({ length: 5 }, (_, i) => ({
+        id: `a${i}`,
+        url: `https://r2/${i}.png`,
+        thumbnailUrl: null,
+        type: 'image/png',
+        name: `${i}.png`,
+        size: 10,
+        createdAt: new Date(),
+        messageId: `m${i}`,
+      }));
+      mockPrisma.messageAttachment.findMany.mockResolvedValue(fullPage);
+
+      const result = await service.getConversationAttachments(
+        'u1',
+        'u2',
+        areFriendsMock,
+        '2026-08-07T09:00:00Z',
+        5,
+      );
+
+      expect(mockPrisma.messageAttachment.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: { lt: new Date('2026-08-07T09:00:00Z') },
+          }),
+          take: 5,
+        }),
+      );
+      expect(result.hasMore).toBe(true);
     });
   });
 

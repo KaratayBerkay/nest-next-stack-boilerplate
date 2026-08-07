@@ -76,6 +76,21 @@ export class MessagingService {
     );
   }
 
+  getConversationAttachments(
+    userId: string,
+    otherUserId: string,
+    before?: string,
+    take?: number,
+  ) {
+    return this.dm.getConversationAttachments(
+      userId,
+      otherUserId,
+      (a, b) => this.friends.areFriends(a, b),
+      before,
+      take,
+    );
+  }
+
   sendMessage(
     senderId: string,
     recipientId: string,
@@ -246,6 +261,10 @@ export class MessagingService {
 
   getRoomMessages(roomId: string, before?: string, take?: number) {
     return this.rooms.getRoomMessages(roomId, before, take);
+  }
+
+  getRoomAttachments(roomId: string, before?: string, take?: number) {
+    return this.rooms.getRoomAttachments(roomId, before, take);
   }
 }
 

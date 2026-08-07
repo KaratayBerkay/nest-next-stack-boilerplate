@@ -220,6 +220,10 @@ export type I18nMessages = {
       "uploaded": string;
       "uploadFailed": string;
       "addMore": string;
+      "allUploadsTitle": string;
+      "allUploadsEmpty": string;
+      "allUploadsFailedToLoad": string;
+      "loadMore": string;
     }
 
   "checkout": {
@@ -1076,6 +1080,10 @@ export type I18nMessages = {
       "uploaded": string;
       "uploadFailed": string;
       "addMore": string;
+      "allUploadsTitle": string;
+      "allUploadsEmpty": string;
+      "allUploadsFailedToLoad": string;
+      "loadMore": string;
     }
 
   "notification": {

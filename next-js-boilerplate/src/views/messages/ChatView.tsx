@@ -23,6 +23,7 @@ import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
 import { StorageLimitNotice } from "@/views/messages/StorageLimitNotice";
 import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
+import { AttachmentGallerySheet } from "@/views/messages/AttachmentGallerySheet";
 
 export function ChatView({
   selectedUser,
@@ -37,6 +38,7 @@ export function ChatView({
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
   const {
     items: uploadItems,
     startUploads,
@@ -141,6 +143,7 @@ export function ChatView({
         setSidebarOpen={setSidebarOpen}
         onlineUsers={onlineUsers}
         isTyping={typingUsers.has(selectedUser.id)}
+        onOpenGallery={() => setGalleryOpen(true)}
       />
 
       <ChatMessageList
@@ -193,6 +196,12 @@ export function ChatView({
         onRemoveItem={removeUploadItem}
         onAddFiles={handleAttachFiles}
         onCancel={cancelUploads}
+      />
+
+      <AttachmentGallerySheet
+        open={galleryOpen}
+        onOpenChange={setGalleryOpen}
+        peerId={selectedUser.id}
       />
     </div>
   );

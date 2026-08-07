@@ -26,5 +26,9 @@
   "cancel": "İptal",
   "uploaded": "Yüklendi",
   "uploadFailed": "Yükleme başarısız",
-  "addMore": "Daha fazla ekle"
+  "addMore": "Daha fazla ekle",
+  "allUploadsTitle": "Tüm yüklemeler",
+  "allUploadsEmpty": "Bu sohbette henüz dosya yüklenmedi",
+  "allUploadsFailedToLoad": "Yüklemeler yüklenemedi",
+  "loadMore": "Daha fazla yükle"
 }

@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useSyncExternalStore,
+  type KeyboardEvent,
   type MouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
@@ -85,13 +86,24 @@ export function DialogContent({
     [onOpenChange],
   );
 
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // This is a native <dialog>, which has its own top-layer + `cancel`-event
+    // Escape handling (below) that's entirely independent of Radix. When this
+    // Dialog is opened from inside a Radix-based overlay (e.g. Sheet), Radix's
+    // own document-level Escape listener would ALSO see this same keydown as
+    // it bubbles past the portal (portaled content is a body sibling, not a
+    // DOM descendant of the Radix layer) and close that too. Stop it here so
+    // only the topmost (this) layer responds to a single Escape press.
+    if (e.key === "Escape") e.stopPropagation();
+  }, []);
+
   const dialog = (
     <>
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
+      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <dialog
         ref={dialogRef}
         className={cn(
-          "backdrop:bg-overlay/50 m-auto flex h-dvh w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
+          "backdrop:bg-overlay/50 pointer-events-auto m-auto flex h-dvh w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
           resolveVariant(dialogVariants, effectiveVariant),
           sizeStyles[size],
           !open && !closing && "hidden",
@@ -99,6 +111,7 @@ export function DialogContent({
           className,
         )}
         onClick={handleBackdropClick}
+        onKeyDown={handleKeyDown}
       >
         <button
           type="button"

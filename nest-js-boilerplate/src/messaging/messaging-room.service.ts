@@ -281,6 +281,7 @@ export class MessagingRoomService {
                     type: a.type,
                     name: a.name,
                     size: a.size,
+                    thumbnailUrl: a.thumbnailUrl ?? null,
                     v: a.storageEnvelope?.v ?? null,
                     ct: a.storageEnvelope?.ct ?? null,
                     nonce: a.storageEnvelope?.nonce ?? null,
@@ -342,5 +343,38 @@ export class MessagingRoomService {
       })),
       hasMore: messages.length === take,
     };
+  }
+
+  /**
+   * Every file ever shared in this room, newest first. Queries
+   * RoomMessageAttachment (not MessageAttachment — rooms have their own
+   * attachment table, joined through roomMessage.roomId) with an explicit
+   * select to keep ciphertext columns off the wire, mirroring
+   * MessagingDmService.getConversationAttachments. No membership check here,
+   * same as getRoomMessages above — only room validity is gated.
+   */
+  async getRoomAttachments(roomId: string, before?: string, take = 30) {
+    if (!isValidRoom(roomId))
+      throw new NotFoundException(`Unknown room: ${roomId}`);
+    const where: Prisma.RoomMessageAttachmentWhereInput = {
+      roomMessage: { roomId },
+    };
+    if (before) where.createdAt = { lt: new Date(before) };
+    const attachments = await this.prisma.roomMessageAttachment.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take,
+      select: {
+        id: true,
+        url: true,
+        thumbnailUrl: true,
+        type: true,
+        name: true,
+        size: true,
+        createdAt: true,
+        roomMessageId: true,
+      },
+    });
+    return { attachments, hasMore: attachments.length === take };
   }
 }

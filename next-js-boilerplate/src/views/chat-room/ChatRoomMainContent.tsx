@@ -1,6 +1,8 @@
 "use client";
 
 import { useRef } from "react";
+import { IconFolder } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
 import {
   HamburgerButton,
   MessageInput,
@@ -49,6 +51,7 @@ export function ChatRoomMainContent({
   bottomRef,
   messagesRef,
   isAtBottom,
+  onOpenGallery,
   t,
   tErr,
   onSetSidebarOpen,
@@ -94,6 +97,16 @@ export function ChatRoomMainContent({
             {t.countOnline.replace("{count}", String(roomCounts[room] ?? 0))}
           </span>
         </div>
+        {onOpenGallery ? (
+          <IconButton
+            icon={<IconFolder size={18} />}
+            label={t.allUploadsTitle}
+            variant="ghost"
+            size="icon-sm"
+            onClick={onOpenGallery}
+            className="ml-auto"
+          />
+        ) : null}
       </div>
 
       <ChatRoomMessageList

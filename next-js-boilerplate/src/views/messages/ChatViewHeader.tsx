@@ -2,7 +2,7 @@
 
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/button/icon-button";
-import { IconChevronLeft } from "@tabler/icons-react";
+import { IconChevronLeft, IconFolder } from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -22,6 +22,7 @@ export function ChatViewHeader({
   setSidebarOpen,
   onlineUsers,
   isTyping,
+  onOpenGallery,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
   const isOnline = onlineUsers.has(selectedUser.id);
@@ -63,6 +64,15 @@ export function ChatViewHeader({
           )}
         </p>
       </div>
+      {onOpenGallery ? (
+        <IconButton
+          icon={<IconFolder size={18} />}
+          label={t.allUploadsTitle}
+          variant="ghost"
+          size="icon-sm"
+          onClick={onOpenGallery}
+        />
+      ) : null}
     </div>
   );
 }

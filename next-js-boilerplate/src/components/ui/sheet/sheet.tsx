@@ -57,10 +57,17 @@ export const SheetContent = forwardRef<
         {...props}
       >
         {children}
-        <Close className="text-muted hover:bg-surface-hover absolute top-4 right-4 inline-flex size-7 items-center justify-center rounded-md transition-colors">
+        <Close
+          className={cn(
+            "text-muted hover:bg-surface-hover focus-visible:ring-brand absolute inline-flex items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none",
+            // Aligned to the same p-6 boundary the rest of the panel uses
+            // (title, body) rather than a tighter, mismatched offset.
+            "top-6 right-6 size-9",
+          )}
+        >
           <svg
-            width="16"
-            height="16"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
