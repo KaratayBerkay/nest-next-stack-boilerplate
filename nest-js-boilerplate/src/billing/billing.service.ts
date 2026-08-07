@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { TIER_RANK } from '../authorization/tier-rank';
@@ -208,7 +213,7 @@ export class BillingService {
           ? `stripe_invoice:${chargeResult.latestInvoiceId}`
           : retryKey;
 
-        const wallet = await this.wallet.ensureWallet(userId);
+        const wallet = await this.wallet.ensureWallet(userId, tx);
 
         provisioned = await this.persistUpgrade(
           tx,
@@ -586,7 +591,7 @@ export class BillingService {
           return;
         }
 
-        const wallet = await this.wallet.ensureWallet(userId);
+        const wallet = await this.wallet.ensureWallet(userId, tx);
         const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
 
         await tx.user.update({
@@ -906,6 +911,25 @@ export class BillingService {
     }));
   }
 
+  /**
+   * Stripe's detach/set-default APIs operate on the payment-method id alone
+   * with no customer-scoping — without this check any authenticated user who
+   * obtains another user's pm_... id (logs, support ticket, future leak
+   * elsewhere) could detach or re-default someone else's card.
+   */
+  private async assertOwnsPaymentMethod(
+    stripeCustomerId: string,
+    paymentMethodId: string,
+  ): Promise<void> {
+    const methods =
+      await this.stripeService.listPaymentMethods(stripeCustomerId);
+    if (!methods.some((m) => m.id === paymentMethodId)) {
+      throw new ForbiddenException(
+        'Payment method does not belong to this customer',
+      );
+    }
+  }
+
   async removePaymentMethod(userId: string, paymentMethodId: string) {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -916,6 +940,7 @@ export class BillingService {
       throw new BadRequestException('No Stripe customer');
     }
 
+    await this.assertOwnsPaymentMethod(user.stripeCustomerId, paymentMethodId);
     await this.stripeService.detachPaymentMethod(paymentMethodId);
   }
 
@@ -929,6 +954,7 @@ export class BillingService {
       throw new BadRequestException('No Stripe customer');
     }
 
+    await this.assertOwnsPaymentMethod(user.stripeCustomerId, paymentMethodId);
     await this.stripeService.setDefaultPaymentMethod(
       user.stripeCustomerId,
       paymentMethodId,
