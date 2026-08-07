@@ -44,7 +44,11 @@ class LoginServer {
       data: {
         'query': _loginMutation,
         'variables': {
-          'input': {'email': request.email, 'password': request.password},
+          'input': {
+            'email': request.email,
+            'password': request.password,
+            if (request.timezone != null) 'timezone': request.timezone,
+          },
         },
       },
     );

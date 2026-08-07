@@ -60,7 +60,6 @@ class MessagesSidebarFriends extends ConsumerWidget {
                 child: Row(
                   children: [
                     OnlineAvatar(
-                      imageUrl: friend.avatarUrl,
                       name: friend.name,
                       userId: friend.id,
                     ),

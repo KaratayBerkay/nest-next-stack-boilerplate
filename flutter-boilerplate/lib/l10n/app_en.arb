@@ -323,6 +323,11 @@
   "findFriendsSameInterests": "Same interests",
   "findFriendsSearchDifferentTerm": "Try a different search term.",
   "findFriendsSentLabel": "Sent {time} ago",
+  "friendsTitle": "Friends",
+  "friendsFindFriends": "Find Friends",
+  "friendsMessage": "Message",
+  "friendsNoFriends": "No friends yet",
+  "friendsNoFriendsDescription": "Find people to add as friends and start chatting.",
   "formsGalleryPageTitle": "Forms Demo",
   "formsGalleryPageDescription": "Real-world form patterns built with TanStack Form",
   "formsGalleryBack": "Back",
@@ -1004,6 +1009,7 @@
   "messagesFailedToLoad": "Failed to load messages",
   "messagesAttachmentTooLarge": "File is too large (max 10MB)",
   "messagesAttachmentUploadFailed": "Failed to upload attachment",
+  "messagesAttachmentOpenFailed": "Could not open attachment",
   "messagesSignInRequired": "Sign in to start messaging",
   "messagesSearchConversations": "Search conversations...",
   "messagesBasicDescription": "Basic chat features coming soon",
@@ -1071,6 +1077,29 @@
   "settingsNavAccount": "Account",
   "settingsNavPrivacy": "Privacy",
   "settingsNavSecurity": "Security",
+  "settingsNavUsage": "Usage",
+  "settingsUsageHeading": "Usage",
+  "settingsUsageStored": "Stored",
+  "settingsUsageOf": "of",
+  "settingsUsageLetters": "letters",
+  "settingsUsageMonth": "this month",
+  "settingsUsageLimitReached": "You have reached your storage limit.",
+  "settingsUsageUpgradeHint": "Each plan upgrade doubles your message storage.",
+  "settingsUploadStorageTitle": "Upload storage",
+  "settingsUploadStorageFiles": "{count} files uploaded",
+  "settingsUploadStorageMultiplier": "plan multiplier ×{count}",
+  "settingsUploadStorageLimitReached": "You have reached your upload storage limit.",
+  "settingsUploadStorageUpgradeHint": "Each plan upgrade doubles your upload storage.",
+  "@settingsUploadStorageFiles": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@settingsUploadStorageMultiplier": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsPrivacySubtitle": "Privacy settings, data sharing",
   "settingsNavBilling": "Billing",
   "settingsBillingSubtitle": "Payment methods, invoices, plan",
@@ -1395,6 +1424,7 @@
   "v1ShellNavChatRoom": "Chat Room",
   "v1ShellNavMessages": "Messages",
   "v1ShellNavFindFriends": "Find Friends",
+  "v1ShellNavFriends": "Friends",
   "v1ShellNavUiComponents": "UI Components",
   "v1ShellNavForms": "Forms",
   "v1ShellNavErrorTest": "Error Test",

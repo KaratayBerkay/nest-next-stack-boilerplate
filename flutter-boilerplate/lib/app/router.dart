@@ -50,6 +50,7 @@ import '../views/forms/page_content.dart';
 import '../views/forms/profile/page_content.dart';
 import '../views/forms/team_invite/page_content.dart';
 import '../views/forms/uploads/page_content.dart';
+import '../views/friends/page_view.dart';
 import '../views/gallery/gallery_page.dart';
 import '../views/gallery/photo_detail.dart';
 import '../views/home/page_content.dart';
@@ -72,6 +73,7 @@ import '../views/settings/general/page_view.dart';
 import '../views/settings/page_view.dart';
 import '../views/settings/privacy/page_view.dart';
 import '../views/settings/sessions/page_view.dart';
+import '../views/settings/usage/page_view.dart';
 
 import '../views/share/page_content.dart';
 import '../views/ui/accordion/page_content.dart';
@@ -87,6 +89,7 @@ import '../views/ui/button/page_content.dart';
 import '../views/ui/calendar/page_content.dart';
 import '../views/ui/card/page_content.dart';
 import '../views/ui/carousel/page_content.dart';
+import '../views/ui/chart/page_content.dart';
 import '../views/ui/checkbox/page_content.dart';
 import '../views/ui/collapsible/page_content.dart';
 import '../views/ui/combobox/page_content.dart';
@@ -94,11 +97,13 @@ import '../views/ui/command/page_content.dart';
 import '../views/ui/confirm_dialog/page_content.dart';
 import '../views/ui/context_menu/page_content.dart';
 import '../views/ui/counter/page_content.dart';
+import '../views/ui/data_table/page_content.dart';
 import '../views/ui/date_picker/page_content.dart';
 import '../views/ui/dialog/page_content.dart';
 import '../views/ui/drawer/page_content.dart';
 import '../views/ui/dropdown/page_content.dart';
 import '../views/ui/dropdown_menu/page_content.dart';
+import '../views/ui/emoji_picker/page_content.dart';
 import '../views/ui/empty/page_content.dart';
 import '../views/ui/error_boundary/page_content.dart';
 import '../views/ui/file_upload/page_content.dart';
@@ -115,6 +120,7 @@ import '../views/ui/menubar/page_content.dart';
 import '../views/ui/native_select/page_content.dart';
 import '../views/ui/navigation_menu/page_content.dart';
 import '../views/ui/page_content.dart' as ui_index;
+import '../views/ui/page_header/page_content.dart';
 import '../views/ui/pagination/page_content.dart';
 import '../views/ui/popover/page_content.dart';
 import '../views/ui/progress/page_content.dart';
@@ -130,6 +136,7 @@ import '../views/ui/slider/page_content.dart';
 import '../views/ui/spinner/page_content.dart';
 import '../views/ui/step_indicator/page_content.dart';
 import '../views/ui/switch/page_content.dart';
+import '../views/ui/table/page_content.dart';
 import '../views/ui/tabs/page_content.dart';
 import '../views/ui/textarea/page_content.dart';
 import '../views/ui/time_input/page_content.dart';
@@ -382,6 +389,13 @@ final routerProvider = Provider<GoRouter>((ref) {
               lang: state.pathParameters['lang'] ?? 'en',
             ),
           ),
+          GoRoute(
+            path: '/v1/:lang/settings/usage',
+            name: 'v1SettingsUsage',
+            builder: (_, state) => SettingsUsagePageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
           // Posts routes
           GoRoute(
             path: '/v1/:lang/posts',
@@ -417,6 +431,14 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/v1/:lang/find-friends/requests',
             name: 'v1FindFriendsRequests',
             builder: (_, state) => FindFriendsRequestsPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          // Friends
+          GoRoute(
+            path: '/v1/:lang/friends',
+            name: 'v1Friends',
+            builder: (_, state) => FriendsPageView(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
           ),
@@ -764,6 +786,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 CarouselDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
           ),
           GoRoute(
+            path: '/v1/:lang/ui/chart',
+            name: 'uiChart',
+            builder: (_, state) =>
+                ChartDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
             path: '/v1/:lang/ui/checkbox',
             name: 'uiCheckbox',
             builder: (_, state) =>
@@ -809,6 +837,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 CounterDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
           ),
           GoRoute(
+            path: '/v1/:lang/ui/data-table',
+            name: 'uiDataTable',
+            builder: (_, state) =>
+                DataTableDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
             path: '/v1/:lang/ui/date-picker',
             name: 'uiDatePicker',
             builder: (_, state) => DatePickerDemoPage(
@@ -837,6 +871,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/v1/:lang/ui/dropdown-menu',
             name: 'uiDropdownMenu',
             builder: (_, state) => DropdownMenuDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/emoji-picker',
+            name: 'uiEmojiPicker',
+            builder: (_, state) => EmojiPickerDemoPage(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
           ),
@@ -941,6 +982,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ),
           ),
           GoRoute(
+            path: '/v1/:lang/ui/page-header',
+            name: 'uiPageHeader',
+            builder: (_, state) => PageHeaderDemoPage(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
             path: '/v1/:lang/ui/pagination',
             name: 'uiPagination',
             builder: (_, state) => PaginationDemoPage(
@@ -1036,6 +1084,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'uiSwitch',
             builder: (_, state) =>
                 SwitchDemoPage(lang: state.pathParameters['lang'] ?? 'en'),
+          ),
+          GoRoute(
+            path: '/v1/:lang/ui/table',
+            name: 'uiTable',
+            builder: (_, state) =>
+                TablePageContent(lang: state.pathParameters['lang'] ?? 'en'),
           ),
           GoRoute(
             path: '/v1/:lang/ui/tabs',

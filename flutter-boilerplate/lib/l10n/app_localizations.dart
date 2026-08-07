@@ -2042,6 +2042,36 @@ abstract class AppLocalizations {
   /// **'Sent {time} ago'**
   String findFriendsSentLabel(Object time);
 
+  /// No description provided for @friendsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get friendsTitle;
+
+  /// No description provided for @friendsFindFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Friends'**
+  String get friendsFindFriends;
+
+  /// No description provided for @friendsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get friendsMessage;
+
+  /// No description provided for @friendsNoFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'No friends yet'**
+  String get friendsNoFriends;
+
+  /// No description provided for @friendsNoFriendsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Find people to add as friends and start chatting.'**
+  String get friendsNoFriendsDescription;
+
   /// No description provided for @formsGalleryPageTitle.
   ///
   /// In en, this message translates to:
@@ -6128,6 +6158,12 @@ abstract class AppLocalizations {
   /// **'Failed to upload attachment'**
   String get messagesAttachmentUploadFailed;
 
+  /// No description provided for @messagesAttachmentOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not open attachment'**
+  String get messagesAttachmentOpenFailed;
+
   /// No description provided for @messagesSignInRequired.
   ///
   /// In en, this message translates to:
@@ -6529,6 +6565,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Security'**
   String get settingsNavSecurity;
+
+  /// No description provided for @settingsNavUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get settingsNavUsage;
+
+  /// No description provided for @settingsUsageHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage'**
+  String get settingsUsageHeading;
+
+  /// No description provided for @settingsUsageStored.
+  ///
+  /// In en, this message translates to:
+  /// **'Stored'**
+  String get settingsUsageStored;
+
+  /// No description provided for @settingsUsageOf.
+  ///
+  /// In en, this message translates to:
+  /// **'of'**
+  String get settingsUsageOf;
+
+  /// No description provided for @settingsUsageLetters.
+  ///
+  /// In en, this message translates to:
+  /// **'letters'**
+  String get settingsUsageLetters;
+
+  /// No description provided for @settingsUsageMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'this month'**
+  String get settingsUsageMonth;
+
+  /// No description provided for @settingsUsageLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your storage limit.'**
+  String get settingsUsageLimitReached;
+
+  /// No description provided for @settingsUsageUpgradeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each plan upgrade doubles your message storage.'**
+  String get settingsUsageUpgradeHint;
+
+  /// No description provided for @settingsUploadStorageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload storage'**
+  String get settingsUploadStorageTitle;
+
+  /// No description provided for @settingsUploadStorageFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} files uploaded'**
+  String settingsUploadStorageFiles(Object count);
+
+  /// No description provided for @settingsUploadStorageMultiplier.
+  ///
+  /// In en, this message translates to:
+  /// **'plan multiplier ×{count}'**
+  String settingsUploadStorageMultiplier(Object count);
+
+  /// No description provided for @settingsUploadStorageLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your upload storage limit.'**
+  String get settingsUploadStorageLimitReached;
+
+  /// No description provided for @settingsUploadStorageUpgradeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each plan upgrade doubles your upload storage.'**
+  String get settingsUploadStorageUpgradeHint;
 
   /// No description provided for @settingsPrivacySubtitle.
   ///
@@ -8473,6 +8587,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Find Friends'**
   String get v1ShellNavFindFriends;
+
+  /// No description provided for @v1ShellNavFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get v1ShellNavFriends;
 
   /// No description provided for @v1ShellNavUiComponents.
   ///

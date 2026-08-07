@@ -12,7 +12,7 @@ class HoverCardDemoPage extends StatelessWidget {
     return Center(
       child: PopoverWidget(
         child: Button(child: const Text('Hover me'), onPressed: () {}),
-        popoverBuilder: (_) => const Padding(
+        popoverBuilder: (_, __) => const Padding(
           padding: EdgeInsets.all(12),
           child: Text('Hover card content with additional info.'),
         ),

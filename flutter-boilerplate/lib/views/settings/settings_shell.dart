@@ -79,6 +79,12 @@ class _SettingsNavState extends State<SettingsNav> {
         '/v1/${widget.lang}/settings/security',
       ),
       _TabData(
+        Icons.bar_chart_outlined,
+        Icons.bar_chart,
+        t.settingsNavUsage,
+        '/v1/${widget.lang}/settings/usage',
+      ),
+      _TabData(
         Icons.credit_card_outlined,
         Icons.credit_card,
         t.settingsNavBilling,

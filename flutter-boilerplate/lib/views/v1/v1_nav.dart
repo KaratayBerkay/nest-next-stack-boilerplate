@@ -72,6 +72,13 @@ class V1Nav extends ConsumerWidget {
         t.v1ShellNavFindFriends,
       ),
       _NavLink(
+        '/friends',
+        const Icon(Icons.group_outlined),
+        Icons.group,
+        t.v1ShellNavFriends,
+        auth: true,
+      ),
+      _NavLink(
         '/premium',
         const Icon(Icons.workspace_premium_outlined),
         Icons.workspace_premium,

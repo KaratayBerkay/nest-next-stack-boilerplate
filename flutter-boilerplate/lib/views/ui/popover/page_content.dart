@@ -12,7 +12,7 @@ class PopoverDemoPage extends StatelessWidget {
     return Center(
       child: PopoverWidget(
         child: Button(child: const Text('Open Popover'), onPressed: () {}),
-        popoverBuilder: (_) => const Padding(
+        popoverBuilder: (_, __) => const Padding(
           padding: EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,

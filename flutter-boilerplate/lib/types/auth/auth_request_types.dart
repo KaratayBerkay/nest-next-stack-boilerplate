@@ -23,12 +23,18 @@ class LoginMfaRequired extends LoginResult {
 class LoginRequest {
   final String email;
   final String password;
+  final String? timezone;
 
-  const LoginRequest({required this.email, required this.password});
+  const LoginRequest({
+    required this.email,
+    required this.password,
+    this.timezone,
+  });
 
   Map<String, dynamic> toJson() => {
         'email': email,
         'password': password,
+        if (timezone != null) 'timezone': timezone,
       };
 }
 
@@ -65,17 +71,20 @@ class RegisterRequest {
   final String email;
   final String password;
   final String name;
+  final String? timezone;
 
   const RegisterRequest({
     required this.email,
     required this.password,
     required this.name,
+    this.timezone,
   });
 
   Map<String, dynamic> toJson() => {
         'email': email,
         'password': password,
         'name': name,
+        if (timezone != null) 'timezone': timezone,
       };
 }
 

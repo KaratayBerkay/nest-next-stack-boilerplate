@@ -323,6 +323,11 @@
   "findFriendsSameInterests": "Aynı ilgi alanları",
   "findFriendsSearchDifferentTerm": "Farklı bir arama terimi deneyin.",
   "findFriendsSentLabel": "{time} önce gönderildi",
+  "friendsTitle": "Arkadaşlar",
+  "friendsFindFriends": "Arkadaş Bul",
+  "friendsMessage": "Mesaj",
+  "friendsNoFriends": "Henüz arkadaşınız yok",
+  "friendsNoFriendsDescription": "Arkadaş olarak ekleyecek kişiler bulun ve sohbete başlayın.",
   "formsGalleryPageTitle": "Form Demoları",
   "formsGalleryPageDescription": "TanStack Form ile gerçek dünya form desenleri",
   "formsGalleryBack": "Geri",
@@ -1004,6 +1009,7 @@
   "messagesFailedToLoad": "Mesajlar yüklenemedi",
   "messagesAttachmentTooLarge": "Dosya çok büyük (en fazla 10MB)",
   "messagesAttachmentUploadFailed": "Ek yüklenemedi",
+  "messagesAttachmentOpenFailed": "Ek açılamadı",
   "messagesSignInRequired": "Mesajlaşmaya başlamak için giriş yapın",
   "messagesSearchConversations": "Konuşmaları ara...",
   "messagesBasicDescription": "Temel sohbet özellikleri yakında geliyor",
@@ -1071,6 +1077,29 @@
   "settingsNavAccount": "Hesap",
   "settingsNavPrivacy": "Gizlilik",
   "settingsNavSecurity": "Güvenlik",
+  "settingsNavUsage": "Kullanım",
+  "settingsUsageHeading": "Kullanım",
+  "settingsUsageStored": "Saklanan",
+  "settingsUsageOf": "/",
+  "settingsUsageLetters": "harf",
+  "settingsUsageMonth": "bu ay",
+  "settingsUsageLimitReached": "Depolama limitinize ulaştınız.",
+  "settingsUsageUpgradeHint": "Her plan yükseltmesi mesaj depolama alanınızı ikiye katlar.",
+  "settingsUploadStorageTitle": "Yükleme depolaması",
+  "settingsUploadStorageFiles": "{count} dosya yüklendi",
+  "settingsUploadStorageMultiplier": "plan çarpanı ×{count}",
+  "settingsUploadStorageLimitReached": "Yükleme depolama limitinize ulaştınız.",
+  "settingsUploadStorageUpgradeHint": "Her plan yükseltmesi yükleme depolama alanınızı ikiye katlar.",
+  "@settingsUploadStorageFiles": {
+    "placeholders": {
+      "count": {}
+    }
+  },
+  "@settingsUploadStorageMultiplier": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "settingsPrivacySubtitle": "Gizlilik ayarları, veri paylaşımı",
   "settingsNavBilling": "Fatura",
   "settingsBillingSubtitle": "Ödeme yöntemleri, faturalar, plan",
@@ -1395,6 +1424,7 @@
   "v1ShellNavChatRoom": "Sohbet Odası",
   "v1ShellNavMessages": "Mesajlar",
   "v1ShellNavFindFriends": "Arkadaş Bul",
+  "v1ShellNavFriends": "Arkadaşlar",
   "v1ShellNavUiComponents": "UI Bileşenleri",
   "v1ShellNavForms": "Formlar",
   "v1ShellNavErrorTest": "Hata Testi",

@@ -1,0 +1,24 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_view.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'basic_page_view.dart';
+import 'free_page_view.dart';
+import 'medium_page_view.dart';
+import 'premium_page_view.dart';
+
+class FriendsPageView extends ConsumerWidget {
+  final String lang;
+
+  const FriendsPageView({super.key, required this.lang});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return TierGate(
+      freeWidget: FreeFriendsPage(lang: lang),
+      basicWidget: BasicFriendsPage(lang: lang),
+      mediumWidget: MediumFriendsPage(lang: lang),
+      premiumWidget: PremiumFriendsPage(lang: lang),
+    );
+  }
+}

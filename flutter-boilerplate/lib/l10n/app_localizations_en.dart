@@ -1049,6 +1049,22 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get friendsTitle => 'Friends';
+
+  @override
+  String get friendsFindFriends => 'Find Friends';
+
+  @override
+  String get friendsMessage => 'Message';
+
+  @override
+  String get friendsNoFriends => 'No friends yet';
+
+  @override
+  String get friendsNoFriendsDescription =>
+      'Find people to add as friends and start chatting.';
+
+  @override
   String get formsGalleryPageTitle => 'Forms Demo';
 
   @override
@@ -3240,6 +3256,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesAttachmentUploadFailed => 'Failed to upload attachment';
 
   @override
+  String get messagesAttachmentOpenFailed => 'Could not open attachment';
+
+  @override
   String get messagesSignInRequired => 'Sign in to start messaging';
 
   @override
@@ -3446,6 +3465,53 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsNavSecurity => 'Security';
+
+  @override
+  String get settingsNavUsage => 'Usage';
+
+  @override
+  String get settingsUsageHeading => 'Usage';
+
+  @override
+  String get settingsUsageStored => 'Stored';
+
+  @override
+  String get settingsUsageOf => 'of';
+
+  @override
+  String get settingsUsageLetters => 'letters';
+
+  @override
+  String get settingsUsageMonth => 'this month';
+
+  @override
+  String get settingsUsageLimitReached =>
+      'You have reached your storage limit.';
+
+  @override
+  String get settingsUsageUpgradeHint =>
+      'Each plan upgrade doubles your message storage.';
+
+  @override
+  String get settingsUploadStorageTitle => 'Upload storage';
+
+  @override
+  String settingsUploadStorageFiles(Object count) {
+    return '$count files uploaded';
+  }
+
+  @override
+  String settingsUploadStorageMultiplier(Object count) {
+    return 'plan multiplier ×$count';
+  }
+
+  @override
+  String get settingsUploadStorageLimitReached =>
+      'You have reached your upload storage limit.';
+
+  @override
+  String get settingsUploadStorageUpgradeHint =>
+      'Each plan upgrade doubles your upload storage.';
 
   @override
   String get settingsPrivacySubtitle => 'Privacy settings, data sharing';
@@ -4459,6 +4525,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get v1ShellNavFindFriends => 'Find Friends';
+
+  @override
+  String get v1ShellNavFriends => 'Friends';
 
   @override
   String get v1ShellNavUiComponents => 'UI Components';

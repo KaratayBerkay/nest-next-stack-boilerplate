@@ -1,8 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/currency.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../api/client/billing/query.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
@@ -18,10 +21,23 @@ class PlansPageContent extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final userTier = ref.watch(userTierProvider);
 
+    // Real per-currency amounts once loaded; the ARB pricingPriceX strings
+    // (stale, USD-only) are just a same-shape placeholder for the render
+    // before the query resolves — mirrors the web's own TIER_PRICES_CENTS
+    // placeholder in views/plans/PageContent.tsx.
+    final pricesAsync = ref.watch(planPricesProvider);
+    final livePrices = pricesAsync.asData?.value;
+    String priceFor(String tier, String placeholder) {
+      final match =
+          livePrices?.where((p) => p.tier.toLowerCase() == tier).firstOrNull;
+      if (match == null) return placeholder;
+      return formatPrice(match.priceCents, toCurrencyCode(match.currency));
+    }
+
     List<_PlanCard> buildCards(double width) => [
           _PlanCard(
             tier: Tier.free,
-            price: t.pricingPriceFree,
+            price: priceFor(Tier.free, t.pricingPriceFree),
             features: const ['Basic feed', '5 messages/day', '1 device'],
             color: colors.surfaceAlt,
             userTier: userTier,
@@ -29,7 +45,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.basic,
-            price: t.pricingPriceBasic,
+            price: priceFor(Tier.basic, t.pricingPriceBasic),
             features: const [
               'Enhanced feed',
               '50 messages/day',
@@ -43,7 +59,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.medium,
-            price: t.pricingPriceMedium,
+            price: priceFor(Tier.medium, t.pricingPriceMedium),
             features: const [
               'Full feed',
               'Unlimited messages',
@@ -58,7 +74,7 @@ class PlansPageContent extends ConsumerWidget {
           ),
           _PlanCard(
             tier: Tier.premium,
-            price: t.pricingPricePremium,
+            price: priceFor(Tier.premium, t.pricingPricePremium),
             features: const [
               'Everything',
               'Unlimited',

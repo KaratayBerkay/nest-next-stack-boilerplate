@@ -10,7 +10,7 @@ void main() {
       tester,
       PopoverWidget(
         child: const Text('Open popover'),
-        popoverBuilder: (_) => const Text('Popover content'),
+        popoverBuilder: (_, __) => const Text('Popover content'),
       ),
     );
     expect(find.text('Open popover'), findsOneWidget);
@@ -21,7 +21,7 @@ void main() {
       tester,
       PopoverWidget(
         child: const Text('Tap me'),
-        popoverBuilder: (_) => const Text('Content here'),
+        popoverBuilder: (_, __) => const Text('Content here'),
       ),
     );
     await tester.tap(find.text('Tap me'));
@@ -34,7 +34,7 @@ void main() {
       tester,
       PopoverWidget(
         child: const Text('Tap me'),
-        popoverBuilder: (_) => const Text('Dismiss me'),
+        popoverBuilder: (_, __) => const Text('Dismiss me'),
       ),
     );
     await tester.tap(find.text('Tap me'));
@@ -43,5 +43,26 @@ void main() {
     await tester.tapAt(const Offset(0, 0));
     await tester.pump();
     expect(find.text('Dismiss me'), findsNothing);
+  });
+
+  testWidgets('dismisses popover when the builder calls its close callback',
+      (tester) async {
+    await pumpTestApp(
+      tester,
+      PopoverWidget(
+        child: const Text('Tap me'),
+        popoverBuilder: (_, close) => TextButton(
+          onPressed: close,
+          child: const Text('Close from inside'),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Tap me'));
+    await tester.pump();
+    expect(find.text('Close from inside'), findsOneWidget);
+
+    await tester.tap(find.text('Close from inside'));
+    await tester.pump();
+    expect(find.text('Close from inside'), findsNothing);
   });
 }

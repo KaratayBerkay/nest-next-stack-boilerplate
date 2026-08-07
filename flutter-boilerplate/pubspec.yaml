@@ -49,6 +49,8 @@ dependencies:
   local_auth: ^2.3.0
   share_plus: ^13.3.0
   emoji_picker_flutter: ^4.5.3
+  flutter_timezone: ^5.1.0
+  fl_chart: ^1.2.0
 
 dev_dependencies:
   flutter_test:

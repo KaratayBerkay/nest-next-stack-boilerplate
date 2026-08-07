@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
-import '../../../l10n/app_localizations.dart';
 
 class TablePageContent extends StatelessWidget {
   final String lang;
@@ -11,146 +10,142 @@ class TablePageContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
-    final t = AppLocalizations.of(context);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.uiTableTitle)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          const Text(
-            'Basic Table',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      'Name',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        const Text(
+          'Basic Table',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    'Name',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Email',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Email',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Role',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Role',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Status',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Status',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ],
-                rows: [
-                  _buildRow(
-                    colors,
-                    'Alice Johnson',
-                    'alice@example.com',
-                    'Admin',
-                    'Active',
-                  ),
-                  _buildRow(
-                    colors,
-                    'Bob Smith',
-                    'bob@example.com',
-                    'Editor',
-                    'Active',
-                  ),
-                  _buildRow(
-                    colors,
-                    'Charlie Brown',
-                    'charlie@example.com',
-                    'Viewer',
-                    'Inactive',
-                  ),
-                  _buildRow(
-                    colors,
-                    'Diana Prince',
-                    'diana@example.com',
-                    'Editor',
-                    'Active',
-                  ),
-                  _buildRow(
-                    colors,
-                    'Eve Wilson',
-                    'eve@example.com',
-                    'Admin',
-                    'Suspended',
-                  ),
-                ],
-              ),
+                ),
+              ],
+              rows: [
+                _buildRow(
+                  colors,
+                  'Alice Johnson',
+                  'alice@example.com',
+                  'Admin',
+                  'Active',
+                ),
+                _buildRow(
+                  colors,
+                  'Bob Smith',
+                  'bob@example.com',
+                  'Editor',
+                  'Active',
+                ),
+                _buildRow(
+                  colors,
+                  'Charlie Brown',
+                  'charlie@example.com',
+                  'Viewer',
+                  'Inactive',
+                ),
+                _buildRow(
+                  colors,
+                  'Diana Prince',
+                  'diana@example.com',
+                  'Editor',
+                  'Active',
+                ),
+                _buildRow(
+                  colors,
+                  'Eve Wilson',
+                  'eve@example.com',
+                  'Admin',
+                  'Suspended',
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'With Selection',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Card(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(
-                    label: Text(
-                      'ID',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+        ),
+        const SizedBox(height: 24),
+        const Text(
+          'With Selection',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Card(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columns: const [
+                DataColumn(
+                  label: Text(
+                    'ID',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Product',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Product',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Price',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Price',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Stock',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Stock',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  DataColumn(
-                    label: Text(
-                      'Sold',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
+                ),
+                DataColumn(
+                  label: Text(
+                    'Sold',
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
-                ],
-                rows: List.generate(8, (i) {
-                  return DataRow(
-                    cells: [
-                      DataCell(Text('PRD-${1000 + i}')),
-                      DataCell(Text('Product ${i + 1}')),
-                      DataCell(Text('\$${(i + 1) * 10}.99')),
-                      DataCell(Text('${(i + 1) * 50}')),
-                      DataCell(Text('${(i + 1) * 20}')),
-                    ],
-                  );
-                }),
-              ),
+                ),
+              ],
+              rows: List.generate(8, (i) {
+                return DataRow(
+                  cells: [
+                    DataCell(Text('PRD-${1000 + i}')),
+                    DataCell(Text('Product ${i + 1}')),
+                    DataCell(Text('\$${(i + 1) * 10}.99')),
+                    DataCell(Text('${(i + 1) * 50}')),
+                    DataCell(Text('${(i + 1) * 20}')),
+                  ],
+                );
+              }),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 class PopoverWidget extends StatefulWidget {
   final Widget child;
-  final Widget Function(BuildContext) popoverBuilder;
+  final Widget Function(BuildContext context, VoidCallback close)
+      popoverBuilder;
   final PopoverPosition position;
 
   const PopoverWidget({
@@ -38,7 +39,7 @@ class _PopoverWidgetState extends State<PopoverWidget> {
             child: Material(
               elevation: 8,
               borderRadius: BorderRadius.circular(8),
-              child: widget.popoverBuilder(context),
+              child: widget.popoverBuilder(context, _dismiss),
             ),
           ),
         ],

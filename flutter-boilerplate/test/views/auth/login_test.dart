@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_boilerplate/api/client/auth/actions.dart';
 import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_boilerplate/l10n/app_localizations.dart';
@@ -64,10 +65,22 @@ void main() {
     );
   });
 
+  const timezoneChannel = MethodChannel('flutter_timezone');
+
   setUp(() {
     mockActions = MockLoginActions();
     FlutterSecureStoragePlatform.instance =
         TestFlutterSecureStoragePlatform({});
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(
+      timezoneChannel,
+      (call) async => 'Europe/Istanbul',
+    );
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(timezoneChannel, null);
   });
 
   group('LoginPage', () {

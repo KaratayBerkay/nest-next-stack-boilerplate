@@ -22,6 +22,7 @@ class Routes {
   static const v1PostDetail = '/v1/:lang/posts/:uuid';
   static const v1FindFriends = '/v1/:lang/find-friends';
   static const v1FindFriendsRequests = '/v1/:lang/find-friends/requests';
+  static const v1Friends = '/v1/:lang/friends';
   static const v1Plans = '/v1/:lang/plans';
   static const v1Premium = '/v1/:lang/premium';
   static const v1Checkout = '/v1/:lang/checkout/:tier';
@@ -33,6 +34,7 @@ class Routes {
   static const v1SettingsPrivacy = '/v1/:lang/settings/privacy';
   static const v1SettingsSessions = '/v1/:lang/settings/sessions';
   static const v1SettingsApiKeys = '/v1/:lang/settings/api-keys';
+  static const v1SettingsUsage = '/v1/:lang/settings/usage';
   static const v1Admin = '/v1/:lang/admin';
   static const v1AdminAuditLogs = '/v1/:lang/admin/audit-logs';
   static const v1Boom = '/v1/:lang/boom';

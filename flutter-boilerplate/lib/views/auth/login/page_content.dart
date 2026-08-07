@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_boilerplate/lib/device_timezone.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -94,6 +95,7 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
       final request = LoginRequest(
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
+        timezone: await deviceTimezone(),
       );
       final result = await actions.login(request);
 

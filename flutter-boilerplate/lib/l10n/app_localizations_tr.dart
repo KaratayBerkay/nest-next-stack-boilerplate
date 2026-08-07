@@ -1057,6 +1057,22 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get friendsTitle => 'Arkadaşlar';
+
+  @override
+  String get friendsFindFriends => 'Arkadaş Bul';
+
+  @override
+  String get friendsMessage => 'Mesaj';
+
+  @override
+  String get friendsNoFriends => 'Henüz arkadaşınız yok';
+
+  @override
+  String get friendsNoFriendsDescription =>
+      'Arkadaş olarak ekleyecek kişiler bulun ve sohbete başlayın.';
+
+  @override
   String get formsGalleryPageTitle => 'Form Demoları';
 
   @override
@@ -3246,6 +3262,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesAttachmentUploadFailed => 'Ek yüklenemedi';
 
   @override
+  String get messagesAttachmentOpenFailed => 'Ek açılamadı';
+
+  @override
   String get messagesSignInRequired => 'Mesajlaşmaya başlamak için giriş yapın';
 
   @override
@@ -3455,6 +3474,52 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsNavSecurity => 'Güvenlik';
+
+  @override
+  String get settingsNavUsage => 'Kullanım';
+
+  @override
+  String get settingsUsageHeading => 'Kullanım';
+
+  @override
+  String get settingsUsageStored => 'Saklanan';
+
+  @override
+  String get settingsUsageOf => '/';
+
+  @override
+  String get settingsUsageLetters => 'harf';
+
+  @override
+  String get settingsUsageMonth => 'bu ay';
+
+  @override
+  String get settingsUsageLimitReached => 'Depolama limitinize ulaştınız.';
+
+  @override
+  String get settingsUsageUpgradeHint =>
+      'Her plan yükseltmesi mesaj depolama alanınızı ikiye katlar.';
+
+  @override
+  String get settingsUploadStorageTitle => 'Yükleme depolaması';
+
+  @override
+  String settingsUploadStorageFiles(Object count) {
+    return '$count dosya yüklendi';
+  }
+
+  @override
+  String settingsUploadStorageMultiplier(Object count) {
+    return 'plan çarpanı ×$count';
+  }
+
+  @override
+  String get settingsUploadStorageLimitReached =>
+      'Yükleme depolama limitinize ulaştınız.';
+
+  @override
+  String get settingsUploadStorageUpgradeHint =>
+      'Her plan yükseltmesi yükleme depolama alanınızı ikiye katlar.';
 
   @override
   String get settingsPrivacySubtitle => 'Gizlilik ayarları, veri paylaşımı';
@@ -4471,6 +4536,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get v1ShellNavFindFriends => 'Arkadaş Bul';
+
+  @override
+  String get v1ShellNavFriends => 'Arkadaşlar';
 
   @override
   String get v1ShellNavUiComponents => 'UI Bileşenleri';

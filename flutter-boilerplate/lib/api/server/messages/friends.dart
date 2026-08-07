@@ -5,22 +5,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class Friend {
   final String id;
   final String name;
-  final String? avatarUrl;
+  final String email;
   final bool isOnline;
 
   const Friend({
     required this.id,
     required this.name,
-    this.avatarUrl,
+    required this.email,
     required this.isOnline,
   });
 
+  // Backend (getFriends() in messaging-friend.service.ts) sends `email`,
+  // a nullable `name`, and `online` — not `avatarUrl`/`isOnline`. `avatar`
+  // is deliberately not modeled: it's server-computed initials text, not an
+  // image URL, so nothing should ever feed it to a network image loader.
   factory Friend.fromJson(Map<String, dynamic> json) {
+    final email = json['email'] as String;
     return Friend(
       id: json['id'] as String,
-      name: json['name'] as String,
-      avatarUrl: json['avatarUrl'] as String?,
-      isOnline: json['isOnline'] as bool? ?? false,
+      name: (json['name'] as String?) ?? email,
+      email: email,
+      isOnline: json['online'] as bool? ?? false,
     );
   }
 }

@@ -43,6 +43,7 @@ class RegisterServer {
             'email': request.email,
             'password': request.password,
             'name': request.name,
+            if (request.timezone != null) 'timezone': request.timezone,
           },
         },
       },

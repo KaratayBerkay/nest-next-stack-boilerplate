@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/device_timezone.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -84,6 +85,7 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
         email: _emailCtrl.text.trim(),
         password: _passwordCtrl.text,
         name: _nameCtrl.text.trim(),
+        timezone: await deviceTimezone(),
       );
       final response = await actions.register(request);
 

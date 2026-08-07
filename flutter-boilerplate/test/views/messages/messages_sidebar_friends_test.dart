@@ -28,8 +28,18 @@ void main() {
             overrides: [
               friendsListProvider.overrideWith(
                 (ref) async => const [
-                  Friend(id: 'f1', name: 'Alice', isOnline: true),
-                  Friend(id: 'f2', name: 'Bob', isOnline: false),
+                  Friend(
+                    id: 'f1',
+                    name: 'Alice',
+                    email: 'alice@example.com',
+                    isOnline: true,
+                  ),
+                  Friend(
+                    id: 'f2',
+                    name: 'Bob',
+                    email: 'bob@example.com',
+                    isOnline: false,
+                  ),
                 ],
               ),
               onlineUsersProvider.overrideWith((ref) => const {'f1'}),
@@ -64,8 +74,18 @@ void main() {
             overrides: [
               friendsListProvider.overrideWith(
                 (ref) async => const [
-                  Friend(id: 'f1', name: 'Alice', isOnline: false),
-                  Friend(id: 'f2', name: 'Bob', isOnline: false),
+                  Friend(
+                    id: 'f1',
+                    name: 'Alice',
+                    email: 'alice@example.com',
+                    isOnline: false,
+                  ),
+                  Friend(
+                    id: 'f2',
+                    name: 'Bob',
+                    email: 'bob@example.com',
+                    isOnline: false,
+                  ),
                 ],
               ),
             ],
