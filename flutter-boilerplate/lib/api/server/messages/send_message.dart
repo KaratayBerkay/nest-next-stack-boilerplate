@@ -21,7 +21,9 @@ const _mutation = '''
         url
         type
         name
-        storageEnvelope { v nonce ct }
+        size
+        thumbnailUrl
+        storageEnvelope { v nonce }
       }
       createdAt
       readAt

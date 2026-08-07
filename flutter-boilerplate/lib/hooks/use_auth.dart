@@ -123,6 +123,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthenticatedUser?>> {
       // the new one or the session hard-expires on a fixed clock from
       // login regardless of how many refreshes succeed in between.
       await setRefreshToken(result.refreshToken);
+      // The backend also rotates rbac/device/user tokens on every refresh
+      // and revokes the compound Redis key they were keyed on — without
+      // persisting these too, the very next authenticated request presents
+      // the stale trio, misses the new compound key, and 401s again
+      // (session_miss), turning a successful refresh into a silent logout.
+      await _storage.write(key: _rbacTokenKey, value: result.rbacToken);
+      await _storage.write(key: _deviceTokenKey, value: result.deviceToken);
+      await _storage.write(key: _userTokenKey, value: result.userToken);
       return true;
     } catch (_) {
       return false;

@@ -35,7 +35,13 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
       if (ref.read(currentUserProvider) == null) return null;
       return ref.read(authProvider.notifier).getAuthTokens();
     },
-    onStatusChange: (status) => onStatus.state = status,
+    // client.disconnect() (below, via ref.onDispose) fires during
+    // ProviderContainer teardown, where dispose order isn't guaranteed to
+    // leave realtimeStatusProvider's own controller alive — guard against
+    // "Bad state: Tried to use StateController after dispose was called."
+    onStatusChange: (status) {
+      if (onStatus.mounted) onStatus.state = status;
+    },
     onBustTokenCache: () =>
         ref.read(authProvider.notifier).refreshAccessToken(),
     onFrame: (frame) {

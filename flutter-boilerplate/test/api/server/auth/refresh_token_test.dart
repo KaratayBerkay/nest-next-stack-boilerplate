@@ -31,6 +31,9 @@ class _RecordingAdapter implements HttpClientAdapter {
           'refresh': {
             'accessToken': 'new-access-token',
             'refreshToken': 'new-refresh-token',
+            'rbacToken': 'new-rbac-token',
+            'deviceToken': 'new-device-token',
+            'userToken': 'new-user-token',
           },
         },
       }),
@@ -63,6 +66,14 @@ void main() {
 
       expect(result.accessToken, 'new-access-token');
       expect(result.refreshToken, 'new-refresh-token');
+      // The backend rotates rbac/device/user tokens on every refresh and
+      // revokes the compound Redis key they were keyed on — the caller
+      // must receive (and, at the use_auth.dart call site, persist) the
+      // new trio or the very next authenticated request 401s again even
+      // though this refresh itself succeeded.
+      expect(result.rbacToken, 'new-rbac-token');
+      expect(result.deviceToken, 'new-device-token');
+      expect(result.userToken, 'new-user-token');
 
       final refreshRequest = adapter.requests.firstWhere(
         (r) => r.path == '/graphql',
@@ -72,6 +83,12 @@ void main() {
       expect(refreshRequest.headers['x-device-token'], 'device-token-value');
       expect(refreshRequest.headers['x-user-token'], 'user-token-value');
       expect(refreshRequest.headers['x-csrf-token'], 'csrf-token-value');
+
+      final query =
+          (refreshRequest.data as Map<String, dynamic>)['query'] as String;
+      expect(query, contains('rbacToken'));
+      expect(query, contains('deviceToken'));
+      expect(query, contains('userToken'));
     },
   );
 }

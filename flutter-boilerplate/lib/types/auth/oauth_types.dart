@@ -1,39 +1,5 @@
 import 'user.dart';
 
-class OAuthProfile {
-  final String type;
-  final String provider;
-  final String providerAccountId;
-  final String email;
-  final String? name;
-
-  const OAuthProfile({
-    required this.type,
-    required this.provider,
-    required this.providerAccountId,
-    required this.email,
-    this.name,
-  });
-
-  factory OAuthProfile.fromJson(Map<String, dynamic> json) {
-    return OAuthProfile(
-      type: json['type'] as String,
-      provider: json['provider'] as String,
-      providerAccountId: json['providerAccountId'] as String,
-      email: json['email'] as String,
-      name: json['name'] as String?,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-        'type': type,
-        'provider': provider,
-        'providerAccountId': providerAccountId,
-        'email': email,
-        'name': name,
-      };
-}
-
 class OAuthLoginResponse {
   final String accessToken;
   final String? refreshToken;

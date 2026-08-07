@@ -195,8 +195,7 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
       if (resultState == null || !mounted) return;
 
       final actions = ref.read(oauthActionsProvider);
-      final profile = await actions.getProfile(widget.provider, resultState);
-      final authResult = await actions.loginWithOAuth(profile);
+      final authResult = await actions.loginWithOAuth(resultState);
 
       await ref.read(authProvider.notifier).setSession(
             authResult.accessToken,

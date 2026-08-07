@@ -10,11 +10,7 @@ class OAuthActions {
 
   OAuthActions(this._ref);
 
-  Future<OAuthProfile> getProfile(String provider, String state) {
-    return _ref.read(oauthProfileServerProvider).call(provider, state);
-  }
-
-  Future<OAuthLoginResponse> loginWithOAuth(OAuthProfile profile) {
-    return _ref.read(oauthLoginServerProvider).call(profile);
+  Future<OAuthLoginResponse> loginWithOAuth(String state) {
+    return _ref.read(oauthLoginServerProvider).call(state);
   }
 }

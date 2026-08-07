@@ -28,6 +28,21 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
+/// The same 4 headers [AuthInterceptor] attaches to every Dio request, for
+/// callers that can't go through Dio directly (e.g. `CachedNetworkImage`'s
+/// `httpHeaders`, which needs a resolved header map rather than an
+/// interceptor).
+final authHeadersProvider = FutureProvider<Map<String, String>?>((ref) async {
+  final tokens = await ref.read(authProvider.notifier).getAuthTokens();
+  if (tokens == null) return null;
+  return {
+    'Authorization': 'Bearer ${tokens['accessToken']}',
+    'x-rbac-token': tokens['rbacToken']!,
+    'x-device-token': tokens['deviceToken']!,
+    'x-user-token': tokens['userToken']!,
+  };
+});
+
 class AuthInterceptor extends Interceptor {
   final Ref _ref;
   bool _isRefreshing = false;

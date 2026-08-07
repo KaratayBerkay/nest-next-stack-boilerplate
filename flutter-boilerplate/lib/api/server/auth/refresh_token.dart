@@ -10,6 +10,9 @@ const _mutation = '''
     refresh {
       accessToken
       refreshToken
+      rbacToken
+      deviceToken
+      userToken
     }
   }
 ''';
@@ -55,7 +58,21 @@ class RefreshTokenServer {
   /// omitting any of them makes the new access token unusable the instant
   /// it's issued (the next request presents the real device token, which
   /// can never match a session keyed on a blank one).
-  Future<({String accessToken, String refreshToken})> call(
+  ///
+  /// The response carries a freshly ROTATED rbac/device/user trio too: the
+  /// backend revokes the old compound Redis key as part of this call and
+  /// keys the new session on the rotated values
+  /// (`auth-session.service.ts`'s `refresh()`), so the caller must persist
+  /// all three or the very next authenticated request 401s again
+  /// (`session_miss`) even though this refresh itself succeeded.
+  Future<
+      ({
+        String accessToken,
+        String refreshToken,
+        String rbacToken,
+        String deviceToken,
+        String userToken,
+      })> call(
     String refreshToken, {
     required String rbacToken,
     required String deviceToken,
@@ -91,6 +108,9 @@ class RefreshTokenServer {
     return (
       accessToken: result['accessToken'] as String,
       refreshToken: result['refreshToken'] as String,
+      rbacToken: result['rbacToken'] as String,
+      deviceToken: result['deviceToken'] as String,
+      userToken: result['userToken'] as String,
     );
   }
 }
