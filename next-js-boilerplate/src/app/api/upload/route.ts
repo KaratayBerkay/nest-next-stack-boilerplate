@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 import { backendFormFetch } from "@/lib/backend";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { POST as POST_METHOD } from "@/constants/api/methods";
-import { MAX_UPLOAD_SIZE } from "@/constants/upload";
+import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from "@/constants/upload";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
 
     if (file.size > MAX_UPLOAD_SIZE) {
       return NextResponse.json(
-        { error: "File must be under 5 MB" },
+        { error: `File must be under ${MAX_UPLOAD_SIZE_MB} MB` },
         { status: 400 },
       );
     }

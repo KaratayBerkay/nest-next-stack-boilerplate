@@ -86,7 +86,7 @@
   "saveFailed": "Failed to save",
   "uploadFailed": "Upload failed",
   "invalidFileType": "Only JPEG, PNG, WebP, and GIF images are allowed",
-  "fileTooLarge": "File must be under 5 MB",
+  "fileTooLarge": "File must be under 10 MB",
   "loading": "Loading…",
   "navSecurity": "Security",
   "navApiKeys": "API Keys",
