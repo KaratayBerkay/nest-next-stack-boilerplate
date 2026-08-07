@@ -1,4 +1,5 @@
 import { apiFetch } from "@/lib/api-client";
+import type { ExceptionResponse } from "@/lib/api-client";
 import { AUTH_LOGIN_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
@@ -47,9 +48,20 @@ export async function loginServer(
   }
 
   if (!res.ok) {
-    throw new Error(
-      (data as unknown as { msg?: string }).msg ?? "Login failed",
-    );
+    const body = data as unknown as Partial<ExceptionResponse>;
+    const err = new Error(body.msg ?? "Login failed") as Error & {
+      exception?: ExceptionResponse;
+    };
+    // Mirrors apiFetchJson (lib/api-client.ts) — that's the only path
+    // useAuth.tsx's login() unwraps into the rethrown error, and the only
+    // shape LoginCredentialsForm's err.field/err.msg reads actually work
+    // against. Without this, every login failure showed the same hardcoded
+    // "Invalid credentials" regardless of the real reason (locked account,
+    // rate-limit, etc).
+    if (body.exc && body.msg) {
+      err.exception = body as ExceptionResponse;
+    }
+    throw err;
   }
 
   return data;
