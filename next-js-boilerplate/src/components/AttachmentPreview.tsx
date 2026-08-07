@@ -63,10 +63,10 @@ function AttachmentIcon({
   name: string | null | undefined;
 }) {
   if (type?.startsWith("image/") || isImageByExtension(name))
-    return <IconPhoto size={16} className="text-muted shrink-0" />;
+    return <IconPhoto size={20} className="text-muted shrink-0" />;
   if (isPdfByExtension(name))
-    return <IconFileText size={16} className="text-muted shrink-0" />;
-  return <IconFile size={16} className="text-muted shrink-0" />;
+    return <IconFileText size={20} className="text-muted shrink-0" />;
+  return <IconFile size={20} className="text-muted shrink-0" />;
 }
 
 export function AttachmentPreview({
@@ -83,7 +83,6 @@ export function AttachmentPreview({
   const href = serveUrl(url);
   const isImage = type?.startsWith("image/") || isImageByExtension(name);
   const isPdf = isPdfByExtension(name);
-  const showThumb = !!thumbnailUrl && !thumbFailed;
 
   return (
     <>
@@ -91,8 +90,7 @@ export function AttachmentPreview({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "bg-surface border-border hover:bg-surface-hover flex items-center gap-2 rounded-lg border py-1.5 pr-2.5 text-left transition-colors",
-          showThumb ? "pl-1.5" : "pl-2.5",
+          "bg-surface border-border hover:bg-surface-hover flex items-center gap-2 rounded-lg border py-1.5 pr-2.5 pl-1.5 text-left transition-colors",
           className,
         )}
       >
@@ -104,7 +102,13 @@ export function AttachmentPreview({
             onError={() => setThumbFailed(true)}
           />
         ) : (
-          <AttachmentIcon type={type} name={name} />
+          // No thumbnail (unsupported type like .docx/.drawio, or generation
+          // failed): a bare icon reads as an empty/broken slot next to real
+          // thumbnails in a list. Same-sized tile keeps the row's leading
+          // visual consistent either way.
+          <div className="bg-surface-hover flex size-10 shrink-0 items-center justify-center rounded-md">
+            <AttachmentIcon type={type} name={name} />
+          </div>
         )}
         <span className="text-fg max-w-[160px] truncate text-xs">{label}</span>
         {size ? (
