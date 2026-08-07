@@ -57,9 +57,11 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
                 </p>
                 <p className="text-muted truncate text-xs">
                   {typeof c.lastMessage === "string"
-                    ? c.lastMessage === "[Encrypted]" || c.lastMessage === ""
-                      ? "\uD83D\uDD12 " + t.decryptionFailed
-                      : c.lastMessage
+                    ? c.lastMessage !== "" && c.lastMessage !== "[Encrypted]"
+                      ? c.lastMessage
+                      : c.hasAttachments
+                        ? "\uD83D\uDCCE " + t.attachmentPreview
+                        : "\uD83D\uDD12 " + t.decryptionFailed
                     : "\uD83D\uDD12 " + t.decryptionFailed}
                 </p>
               </div>

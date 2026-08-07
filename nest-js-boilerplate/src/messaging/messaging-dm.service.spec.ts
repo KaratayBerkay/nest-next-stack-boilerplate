@@ -365,6 +365,76 @@ describe('MessagingDmService', () => {
         expect.objectContaining({ attachments }),
       );
     });
+
+    it('marks the sidebar-preview payload with hasAttachments so the recipient sidebar does not render it as a decrypt failure', async () => {
+      mockPrisma.message.count.mockResolvedValue(0);
+
+      await service.deliverDirectMessage(
+        {
+          id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
+          createdAt: new Date('2026-08-05T10:00:00Z'),
+          sender: { id: 'u1', name: 'Alice', email: 'a@b.com' },
+          attachments: [
+            { url: 'https://minio/x.png', type: 'image/png', name: 'x.png' },
+          ],
+        },
+        { text: '', attachments: undefined },
+      );
+
+      expect(mockRealtime.emitToService).toHaveBeenCalledWith(
+        'u2',
+        'MESSAGE',
+        expect.objectContaining({
+          renew: 'Messages',
+          type: 'Conversation',
+          conversation: expect.objectContaining({
+            lastMessage: '',
+            hasAttachments: true,
+          }),
+        }),
+      );
+    });
+  });
+
+  describe('getConversations', () => {
+    it('flags a peer whose latest message is attachment-only instead of masking it as a decrypt failure', async () => {
+      mockPrisma.message.groupBy.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe
+        .mockResolvedValueOnce([]) // sentMessages: u1 sent nothing to u2
+        .mockResolvedValueOnce([
+          {
+            id: 'm1',
+            senderId: 'u2',
+            createdAt: new Date('2026-08-07T10:00:00Z'),
+            v: 'v1',
+            ct: 'ct1',
+            nonce: 'n1',
+            hasAttachments: true,
+          },
+        ]); // receivedMessages: u2's latest message to u1 is attachment-only
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: 'u2',
+          email: 'u2@x.com',
+          name: 'U2',
+          avatarUrl: null,
+          hideAvatar: false,
+        },
+      ]);
+
+      const result = await service.getConversations('u1', () =>
+        Promise.resolve(['u2']),
+      );
+
+      expect(result).toEqual([
+        expect.objectContaining({
+          lastMessage: '',
+          hasAttachments: true,
+        }),
+      ]);
+    });
   });
 
   describe('getMessages', () => {

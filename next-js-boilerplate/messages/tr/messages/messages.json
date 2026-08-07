@@ -19,6 +19,7 @@
   "failedToLoad": "Mesajlar yüklenemedi",
   "signInRequired": "Mesajlaşmaya başlamak için giriş yapın",
   "decryptionFailed": "Mesajlar deşifre edilemedi. Mesajlaşmayı geri yüklemek için çıkış yapıp tekrar giriş yapın.",
+  "attachmentPreview": "Ek",
   "storageLimitReached": "Depolama limitinize ulaştınız.",
   "storageLimitUpgradeHint": "Her plan yükseltmesi mesaj depolama alanınızı ikiye katlar.",
   "attachmentsTitle": "Ekleri gönder",

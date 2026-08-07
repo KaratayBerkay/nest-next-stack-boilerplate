@@ -4,6 +4,7 @@ type Conversation = {
   user: UserInfo;
   lastMessage: string | Record<string, unknown>;
   lastTime: string;
+  hasAttachments?: boolean;
   unread: number;
 };
 

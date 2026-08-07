@@ -1072,6 +1072,7 @@ export type I18nMessages = {
       "failedToLoad": string;
       "signInRequired": string;
       "decryptionFailed": string;
+      "attachmentPreview": string;
       "storageLimitReached": string;
       "storageLimitUpgradeHint": string;
       "attachmentsTitle": string;
@@ -1542,5 +1543,6 @@ export type I18nMessages = {
       "navAuditLog": string;
       "skipToContent": string;
       "decryptionFailed": string;
+      "attachmentPreview": string;
     }
 };

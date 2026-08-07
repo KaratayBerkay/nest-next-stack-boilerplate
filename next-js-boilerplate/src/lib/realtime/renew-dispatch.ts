@@ -28,7 +28,7 @@ export function patchConversationList(
         ...(updated[idx] as Record<string, unknown>),
       };
       for (const [k, v] of Object.entries(conversation)) {
-        if (v !== undefined && v !== null && v !== "") {
+        if (v !== undefined && v !== null) {
           merged[k] =
             k === "user" && typeof v === "object"
               ? { ...(merged.user as object), ...(v as object) }

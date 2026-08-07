@@ -93,6 +93,7 @@ export class MessagingDmService {
         };
         lastMessage: string;
         lastTime: Date;
+        hasAttachments: boolean;
         unread: number;
       }[]
     >(cacheKey);
@@ -110,6 +111,11 @@ export class MessagingDmService {
       unreads.map((u) => [u.senderId, u._count.id]),
     );
 
+    // hasAttachments comes from a real join against MessageAttachment, not
+    // from the decrypted envelope — attachments sent via a caller-supplied
+    // client envelope aren't guaranteed to echo their metadata back out of
+    // decryptPreview, so the DB relation is the only source both encryption
+    // paths agree on.
     const sentMessages = await this.prisma.$queryRawUnsafe<
       Array<{
         id: string;
@@ -118,9 +124,10 @@ export class MessagingDmService {
         v: string;
         ct: string;
         nonce: string;
+        hasAttachments: boolean;
       }>
     >(
-      `SELECT DISTINCT ON ("recipientId") id, "recipientId", "createdAt", v, ct, nonce FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("recipientId") id, "recipientId", "createdAt", v, ct, nonce, EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -132,21 +139,27 @@ export class MessagingDmService {
         v: string;
         ct: string;
         nonce: string;
+        hasAttachments: boolean;
       }>
     >(
-      `SELECT DISTINCT ON ("senderId") id, "senderId", "createdAt", v, ct, nonce FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("senderId") id, "senderId", "createdAt", v, ct, nonce, EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
       userId,
       friendIds,
     );
 
     const latestPerPeer = new Map<
       string,
-      { lastMessage: string | Record<string, unknown>; lastTime: Date }
+      {
+        lastMessage: string | Record<string, unknown>;
+        lastTime: Date;
+        hasAttachments: boolean;
+      }
     >();
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
         lastMessage: this.decryptPreview(msg, userId),
         lastTime: msg.createdAt,
+        hasAttachments: msg.hasAttachments,
       });
     for (const msg of receivedMessages) {
       const existing = latestPerPeer.get(msg.senderId);
@@ -154,6 +167,7 @@ export class MessagingDmService {
         latestPerPeer.set(msg.senderId, {
           lastMessage: this.decryptPreview(msg, userId),
           lastTime: msg.createdAt,
+          hasAttachments: msg.hasAttachments,
         });
     }
 
@@ -188,6 +202,7 @@ export class MessagingDmService {
           },
           lastMessage: latest.lastMessage,
           lastTime: latest.lastTime,
+          hasAttachments: latest.hasAttachments,
           unread: unreadMap.get(peerId) ?? 0,
         };
       })
@@ -461,6 +476,7 @@ export class MessagingDmService {
         },
         lastMessage,
         lastTime: message.createdAt,
+        hasAttachments: (message.attachments?.length ?? 0) > 0,
         unread: unread + 1,
       },
     });

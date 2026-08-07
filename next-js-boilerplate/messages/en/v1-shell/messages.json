@@ -28,5 +28,6 @@
   "navAdmin": "Admin",
   "navAuditLog": "Audit Log",
   "skipToContent": "Skip to content",
-  "decryptionFailed": "Could not decrypt. Sign out and back in."
+  "decryptionFailed": "Could not decrypt. Sign out and back in.",
+  "attachmentPreview": "Attachment"
 }

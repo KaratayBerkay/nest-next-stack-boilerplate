@@ -11,6 +11,7 @@ export interface Conversation {
   };
   lastMessage: string | Record<string, unknown>;
   lastTime: string;
+  hasAttachments?: boolean;
   unread: number;
 }
 
