@@ -6,6 +6,8 @@ export const AUTH_OAUTH_PREFIX = "/api/auth/oauth/" as const;
 export const AUTH_TOKEN_URL = "/api/auth/token" as const;
 export const AUTH_REFRESH_URL = "/api/auth/refresh" as const;
 export const AUTH_DEVICE_HANDSHAKE_URL = "/api/auth/device-handshake" as const;
+export const CRYPTO_HANDSHAKE_URL = "/api/rest/crypto/handshake" as const;
+export const CRYPTO_RE_KEY_URL = "/api/rest/crypto/re-key" as const;
 export const AUTH_ME_URL = "/api/auth/me" as const;
 export const AUTH_LOGIN_URL = "/api/auth/login" as const;
 export const AUTH_LOGIN_MFA_URL = "/api/auth/login/mfa" as const;
@@ -85,6 +87,7 @@ export const ADMIN_SET_TIER_URL = "/api/admin/set-tier" as const;
 export const ADMIN_AUDIT_LOGS_URL = "/api/admin/audit-logs" as const;
 
 export const MESSAGES_FRIENDS_URL = "/api/messages/friends" as const;
+export const FRIENDS_URL = "/api/friends" as const;
 export const MESSAGES_FRIENDS_REQUESTS_URL =
   "/api/messages/friends/requests" as const;
 export const MESSAGES_FRIENDS_REQUEST_PREFIX =

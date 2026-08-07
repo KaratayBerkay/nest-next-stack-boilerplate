@@ -11,16 +11,7 @@ import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { V1Header } from "./V1Header";
 import { V1Sidebar } from "./V1Sidebar";
-import {
-  handleTouchStart,
-  handleTouchMove,
-  handleTouchEnd,
-  handleMouseDown,
-  handleMouseMove,
-  handleMouseUp,
-} from "@/lib/v1/touch-handlers";
-import { dragOnStart, dragOnMove, dragOnEnd } from "./V1ShellDrag";
-import type { DragState } from "./V1ShellDrag";
+import { useSidebarEscape, useSidebarDrag } from "./useV1Sidebar";
 import { onServiceWorkerMessage } from "./V1ShellSW";
 
 export function V1Shell({ children }: V1ShellProps) {
@@ -34,62 +25,19 @@ export function V1Shell({ children }: V1ShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const sidebarRef = useRef<HTMLElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
-  const dragStateRef = useRef<DragState>({ dragging: false, startX: 0, currentX: 0 });
 
   const open = useCallback(() => setSidebarOpen(true), []);
   const close = useCallback(() => setSidebarOpen(false), []);
   const toggle = useCallback(() => setSidebarOpen((p) => !p), []);
 
-  useEffect(() => {
-    if (!sidebarOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      close();
-      toggleRef.current?.focus();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [sidebarOpen, close]);
+  useSidebarEscape(sidebarOpen, close, toggleRef);
+  useSidebarDrag(sidebarRef, sidebarOpen, close, toggleRef);
 
   useEdgeSwipe({
     onSwipeRight: open,
     onSwipeLeft: close,
     enabled: isTouch && !sidebarOpen,
   });
-
-  useEffect(() => {
-    const el = sidebarRef.current;
-    if (!el) return;
-
-    const touchStart = (e: TouchEvent) =>
-      handleTouchStart(e, (cx) => dragOnStart(cx, dragStateRef));
-    const touchMove = (e: TouchEvent) =>
-      handleTouchMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const touchEnd = () =>
-      handleTouchEnd(() => dragOnEnd(dragStateRef, close, toggleRef));
-    const mouseDown = (e: MouseEvent) =>
-      handleMouseDown(e, (cx) => dragOnStart(cx, dragStateRef));
-    const mouseMove = (e: MouseEvent) =>
-      handleMouseMove(e, (cx) => dragOnMove(cx, dragStateRef));
-    const mouseUp = () =>
-      handleMouseUp(() => dragOnEnd(dragStateRef, close, toggleRef));
-
-    el.addEventListener("touchstart", touchStart, { passive: true });
-    el.addEventListener("touchmove", touchMove, { passive: true });
-    el.addEventListener("touchend", touchEnd);
-    el.addEventListener("mousedown", mouseDown);
-    document.addEventListener("mousemove", mouseMove);
-    document.addEventListener("mouseup", mouseUp);
-
-    return () => {
-      el.removeEventListener("touchstart", touchStart);
-      el.removeEventListener("touchmove", touchMove);
-      el.removeEventListener("touchend", touchEnd);
-      el.removeEventListener("mousedown", mouseDown);
-      document.removeEventListener("mousemove", mouseMove);
-      document.removeEventListener("mouseup", mouseUp);
-    };
-  }, [sidebarOpen, close]);
 
   const router = useRouter();
 

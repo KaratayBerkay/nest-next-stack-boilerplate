@@ -4,21 +4,7 @@ import { IconBell, IconBellOff, IconArrowLeft } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { notificationPageInfo } from "@/constants/page-info";
-
-interface NotificationHeaderProps {
-  title: string;
-  supported: boolean;
-  permission: NotificationPermission;
-  subscription: PushSubscription | null;
-  requestPermission: () => void;
-  unsubscribe: () => void;
-  unreadCount: number;
-  markAllRead: () => void;
-  markAllReadLabel: string;
-  enablePushLabel: string;
-  disablePushLabel: string;
-  navigateToFeed: () => void;
-}
+import type { NotificationHeaderProps } from "@/types/views/notification/NotificationHeader-types";
 
 export function NotificationHeader({
   title,

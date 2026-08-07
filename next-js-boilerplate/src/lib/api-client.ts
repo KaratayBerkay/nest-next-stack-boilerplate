@@ -20,15 +20,16 @@ export type ExceptionResponse = {
 
 // Single-flight guard: concurrent 401s share one refresh attempt instead of
 // hammering the endpoint. Cleared in the finally so the next 401 can retry.
-let refreshInFlight: Promise<boolean> | null = null;
+let refreshInFlight: Promise<Response> | null = null;
 
 /**
  * Ask the BFF to rotate the session via the backend `refresh` mutation.
  * Deliberately uses raw fetch (NOT apiFetch) — a failing refresh must not
  * recurse back into itself. Single-flight: concurrent callers share one
- * attempt.
+ * attempt. Resolves with the raw Response so callers can distinguish a
+ * definitive 401 (dead session) from a transient backend failure.
  */
-function attemptRefresh(): Promise<boolean> {
+function attemptRefresh(): Promise<Response> {
   if (!refreshInFlight) {
     refreshInFlight = (async () => {
       try {
@@ -45,9 +46,9 @@ function attemptRefresh(): Promise<boolean> {
             /* non-critical — device token may not be present */
           }
         }
-        return res.ok;
+        return res;
       } catch {
-        return false;
+        return new Response(null, { status: 599 });
       } finally {
         refreshInFlight = null;
       }
@@ -59,6 +60,12 @@ function attemptRefresh(): Promise<boolean> {
 /** Public handle for callers that want to rotate the session on their own
  *  trigger (e.g. a tier-changed WS frame, whose rbac token goes stale). */
 export function refreshSession(): Promise<boolean> {
+  return attemptRefresh().then((res) => res.ok);
+}
+
+/** Public handle for callers that need the raw refresh Response to react to
+ *  the exact status (e.g. realtime re-connect: 401 = dead session). */
+export function refreshSessionResponse(): Promise<Response> {
   return attemptRefresh();
 }
 
@@ -89,7 +96,7 @@ export async function apiFetch(
     // was produced by a stale token set, so after a successful rotation the
     // request is safe to re-issue exactly as-is (it never reached a handler).
     const refreshed = await attemptRefresh();
-    if (refreshed) {
+    if (refreshed.ok) {
       res = await fetch(input, mergedInit);
     }
     // Background/best-effort widgets (unread badges, etc.) opt out: a single

@@ -17,10 +17,11 @@ import { xchacha20poly1305 } from "@noble/ciphers/chacha.js";
 import { hkdf } from "@noble/hashes/hkdf.js";
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
-import { apiFetch, apiFetchJson } from "@/lib/api-client";
+import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
+import { cryptoHandshakeServer } from "@/api/server/crypto/handshake";
+import { cryptoReKeyServer } from "@/api/server/crypto/re-key";
 import {
   getDeviceToken,
-  setDeviceToken,
   loadKeys,
   storeKeys,
   flushKeys,
@@ -76,20 +77,8 @@ export async function performHandshake(
   // directly. This is a quick POST that slides the cookie and returns the
   // token value.
   if (!deviceToken) {
-    try {
-      const res = await fetch("/api/auth/device-handshake", {
-        method: "POST",
-      });
-      if (res.ok) {
-        const body = (await res.json()) as { deviceToken?: string };
-        if (body.deviceToken) {
-          setDeviceToken(body.deviceToken);
-          deviceToken = body.deviceToken;
-        }
-      }
-    } catch {
-      /* ignore — will throw below if still null */
-    }
+    await deviceHandshakeServer();
+    deviceToken = getDeviceToken() ?? "";
   }
 
   if (!deviceToken) {
@@ -132,18 +121,10 @@ export async function performHandshake(
   // the inflated local seq (max-adoption) deadlocks every later frame in a
   // permanent wire.decrypt_fail loop. Skipped seqs are lost frames; the app
   // layer surfaces the failed send and the user retries.
-  const { serverPublicKey, c2sSeq, s2cSeq } = await apiFetchJson<{
-    serverPublicKey: string;
-    c2sSeq?: number;
-    s2cSeq?: number;
-  }>("/api/rest/crypto/handshake", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-device-token": deviceToken,
-    },
-    body: JSON.stringify({ publicKey: clientPubHex }),
-  });
+  const { serverPublicKey, c2sSeq, s2cSeq } = await cryptoHandshakeServer(
+    clientPubHex,
+    deviceToken,
+  );
 
   // Derive the shared secret — must match server's setDevicePeerPublicKey().
   const shared = x25519.getSharedSecret(privKey, hexToBytes(serverPublicKey));
@@ -286,13 +267,7 @@ export async function reKey(
 
   // Also tell the server to flush its device keys.
   try {
-    await apiFetch("/api/rest/crypto/re-key", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-device-token": deviceToken,
-      },
-    });
+    await cryptoReKeyServer(deviceToken);
   } catch {
     // Best effort — server might already have flushed.
   }

@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { resolveChangeType, buildSuccessMessage } from "../CheckoutContent";
+import {
+  resolveChangeType,
+  buildSuccessMessage,
+} from "@/lib/checkout/plan-change";
 
 const t = {
   changeScheduled: "Your plan will change to {tier} on {date}.",

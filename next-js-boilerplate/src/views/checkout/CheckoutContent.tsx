@@ -17,6 +17,10 @@ import { planPricesQueryOptions } from "@/api/client/billing/query";
 import { PRICING_PATH } from "@/constants/routes";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { cn } from "@/lib/cn";
+import {
+  resolveChangeType,
+  buildSuccessMessage,
+} from "@/lib/checkout/plan-change";
 import { CheckoutSuccessView } from "./CheckoutSuccessView";
 import { PlanSummaryCard } from "./PlanSummaryCard";
 import { DowngradeSection } from "./DowngradeSection";
@@ -28,37 +32,6 @@ const StripeCardForm = dynamic(
     ),
   { ssr: false },
 );
-
-export type CheckoutChangeType = "immediate" | "scheduled" | "cancel";
-
-export function resolveChangeType(
-  currentTier: string | undefined,
-  targetTier: string,
-): CheckoutChangeType {
-  if (!currentTier || currentTier === "FREE") return "immediate";
-  if (targetTier === "FREE") return "cancel";
-  return "scheduled";
-}
-
-export function buildSuccessMessage(
-  changeType: CheckoutChangeType,
-  scheduledEffectiveAt: string | null,
-  targetTier: string,
-  lang: string,
-  t: { changeScheduled: string; planChanged: string; upgradeSuccess: string },
-): string {
-  if (changeType !== "scheduled") {
-    return changeType === "cancel" ? t.planChanged : t.upgradeSuccess;
-  }
-  if (!scheduledEffectiveAt) return t.planChanged;
-  return t.changeScheduled
-    .replace("{tier}", tierLabel(targetTier))
-    .replace("{date}", formatEffectiveDate(scheduledEffectiveAt, lang));
-}
-
-function formatEffectiveDate(iso: string, lang: string): string {
-  return new Date(iso).toLocaleDateString(lang);
-}
 
 function onUpgradeSuccess(
   setSuccess: Dispatch<SetStateAction<boolean>>,

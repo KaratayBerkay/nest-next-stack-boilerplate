@@ -3,11 +3,7 @@
 import { useState } from "react";
 import { IconCheck, IconCopy } from "@tabler/icons-react";
 import { cn } from "@/lib/cn";
-
-interface CodeBlockProps {
-  code: string;
-  className?: string;
-}
+import type { CodeBlockProps } from "@/types/views/ui/CodeBlock-types";
 
 export function CodeBlock({ code, className }: CodeBlockProps) {
   const [copied, setCopied] = useState(false);

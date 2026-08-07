@@ -1,21 +1,20 @@
 "use client";
 
 import {
-  useEffect,
-  useRef,
   useCallback,
   useId,
+  useRef,
   type ChangeEvent,
   type Dispatch,
+  type KeyboardEvent,
   type SetStateAction,
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { EmojiPickerButton } from "@/components/ui/EmojiPickerButton";
 import { IconPaperclip, IconSend } from "@tabler/icons-react";
 import { ATTACHMENT_ACCEPT } from "@/constants/upload";
+import { useTypingIndicator } from "@/hooks/messages/useTypingIndicator";
 import type { ChatInputBarProps } from "@/types/messages/ChatInputBar-types";
-
-const TYPING_TIMEOUT_MS = 3000;
 
 function handleFileChange(
   e: ChangeEvent<HTMLInputElement>,
@@ -45,6 +44,13 @@ function insertEmojiAtCursor(
   });
 }
 
+function handleKeyDown(e: KeyboardEvent<HTMLInputElement>, doSend: () => void) {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    doSend();
+  }
+}
+
 export function ChatInputBar({
   input,
   setInput,
@@ -60,57 +66,29 @@ export function ChatInputBar({
   uploadItems,
   onAttachFiles,
 }: ChatInputBarProps) {
-  const isTypingRef = useRef(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const attachInputId = useId();
-
-  const sendTypingStop = useCallback(() => {
-    if (!isTypingRef.current) return;
-    isTypingRef.current = false;
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-    onTypingStop(recipientId);
-  }, [recipientId, onTypingStop]);
-
-  // Cleanup typing on unmount / recipient change
-  useEffect(() => {
-    return () => {
-      sendTypingStop();
-    };
-  }, [recipientId, sendTypingStop]);
+  const { resetTyping, notifyTyping } = useTypingIndicator(
+    recipientId,
+    onTypingStart,
+    onTypingStop,
+  );
 
   const handleChange = useCallback(
     (value: string) => {
       setInput(value);
-
-      if (value.trim() && !isTypingRef.current) {
-        isTypingRef.current = true;
-        onTypingStart(recipientId);
-      }
-
-      if (timerRef.current) clearTimeout(timerRef.current);
-
-      if (value.trim()) {
-        timerRef.current = setTimeout(() => {
-          sendTypingStop();
-        }, TYPING_TIMEOUT_MS);
-      } else {
-        sendTypingStop();
-      }
+      notifyTyping(value);
     },
-    [setInput, recipientId, onTypingStart, sendTypingStop],
+    [setInput, notifyTyping],
   );
 
   const doSend = useCallback(() => {
     // Block send while attachments are pending — WhatsApp-style, the modal's
     // Send is the only path that ships them together.
     if (attaching || uploadItems.length > 0) return;
-    sendTypingStop();
+    resetTyping();
     handleSend();
-  }, [attaching, uploadItems.length, sendTypingStop, handleSend]);
+  }, [attaching, uploadItems.length, resetTyping, handleSend]);
 
   const online = connectionState === "online";
 
@@ -148,12 +126,7 @@ export function ChatInputBar({
           ref={inputRef}
           value={input}
           onChange={(e) => handleChange(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              doSend();
-            }
-          }}
+          onKeyDown={(e) => handleKeyDown(e, doSend)}
           placeholder={online ? inputPlaceholder : connectingLabel}
           disabled={!online}
           className="bg-surface text-fg placeholder:text-muted focus:ring-brand/30 w-full rounded-lg border-0 px-4 py-3 text-sm focus:ring-1 focus:outline-none"

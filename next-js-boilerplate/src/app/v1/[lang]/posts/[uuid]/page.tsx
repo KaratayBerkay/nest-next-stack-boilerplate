@@ -9,8 +9,6 @@ import { BasicPageView } from "@/views/posts/[uuid]/BasicPageView";
 import { MediumPageView } from "@/views/posts/[uuid]/MediumPageView";
 import { PremiumPageView } from "@/views/posts/[uuid]/PremiumPageView";
 import type { PostPageProps } from "@/types/routing/PostPage-types";
-import { serverEnv } from "@/lib/env";
-import { POST, JSON_CONTENT_TYPE_HEADER } from "@/constants";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { sessionTokenHeaders } from "@/lib/backend";
 
@@ -26,19 +24,12 @@ export async function generateMetadata({
 }: PostPageProps): Promise<Metadata> {
   const { uuid } = await params;
   try {
-    const backendUrl = serverEnv().APP_URL;
-    const gqlQuery = JSON.stringify({
-      query: `query Post($id: ID!) { post(id: $id) { title content } }`,
-      variables: { id: uuid },
+    const res = await graphqlFetch<{
+      post: { title?: string; content?: string } | null;
+    }>(`query Post($id: ID!) { post(id: $id) { title content } }`, {
+      id: uuid,
     });
-    const res = await fetch(`${backendUrl}/graphql`, {
-      method: POST,
-      headers: JSON_CONTENT_TYPE_HEADER,
-      body: gqlQuery,
-      cache: "no-store",
-    });
-    const data = await res.json();
-    const post = data?.data?.post;
+    const post = res.data?.post;
     if (!post) return { title: "Post" };
     return {
       title: post.title ?? "Post",

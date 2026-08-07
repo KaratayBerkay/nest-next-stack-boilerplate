@@ -1,17 +1,15 @@
 "use client";
 
 import { useCallback } from "react";
-import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { Tier } from "@/lib/tier";
 import { tierLabel } from "@/lib/tier";
 import { formatPrice, toCurrencyCode } from "@/lib/currency";
-import { plansPath } from "@/constants/routes";
 import { useToast } from "@/components/ui/Toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useBillingActions } from "@/api/client/billing/actions";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { PlanDetailsProps } from "@/types/views/settings/PlanDetails-types";
+import { PlanDetailsActions } from "./PlanDetailsActions";
 
 async function handleCancel(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -130,55 +128,20 @@ export function PlanDetails({
         </p>
       )}
 
-      <div className="mt-4 flex items-center gap-2">
-        {hasPendingChange ? (
-          <button
-            type="button"
-            onClick={onCancelPendingChange}
-            className="border-border hover:bg-surface-hover w-full rounded-lg border px-4 py-2 text-sm font-medium"
-          >
-            {t.cancelPendingChange
-              .replace("{tier}", tierLabel(pendingTier ?? tier))
-              .replace("{date}", pendingTierEffectiveAt ?? "")}
-          </button>
-        ) : tier === "FREE" ? (
-          <Link
-            href={plansPath()}
-            className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-          >
-            {t.upgradePlan}
-          </Link>
-        ) : (
-          <>
-            <Link
-              href={plansPath()}
-              className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-            >
-              {t.upgradePlan}
-            </Link>
-            {cancelAtPeriodEnd ? (
-              <p className="text-warning text-xs">{t.cancelsOn}</p>
-            ) : (
-              <ConfirmDialog
-                title={t.cancelSubscription}
-                description={t.cancelSubscriptionConfirm}
-                confirmLabel={t.cancelSubscription}
-                onConfirm={onCancel}
-              >
-                {(open) => (
-                  <button
-                    type="button"
-                    onClick={open}
-                    className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-                  >
-                    {t.cancelSubscription}
-                  </button>
-                )}
-              </ConfirmDialog>
-            )}
-          </>
-        )}
-      </div>
+      <PlanDetailsActions
+        hasPendingChange={hasPendingChange}
+        tier={tier}
+        cancelAtPeriodEnd={cancelAtPeriodEnd}
+        onCancel={onCancel}
+        onCancelPendingChange={onCancelPendingChange}
+        upgradePlanLabel={t.upgradePlan}
+        cancelPendingChangeLabel={t.cancelPendingChange
+          .replace("{tier}", tierLabel(pendingTier ?? tier))
+          .replace("{date}", pendingTierEffectiveAt ?? "")}
+        cancelSubscriptionLabel={t.cancelSubscription}
+        cancelSubscriptionConfirmLabel={t.cancelSubscriptionConfirm}
+        cancelsOnLabel={t.cancelsOn}
+      />
     </div>
   );
 }

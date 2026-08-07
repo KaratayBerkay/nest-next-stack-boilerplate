@@ -8,10 +8,9 @@ import {
   type SetStateAction,
 } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { IconCode, IconEye } from "@tabler/icons-react";
 import { ExampleTabsDesktopBar } from "./ExampleTabsDesktopBar";
 import { ExampleTabsMobileAccordion } from "./ExampleTabsMobileAccordion";
-import { CodeBlock } from "./CodeBlock";
+import { ExamplePanel } from "./ExamplePanel";
 import type {
   ExampleTabsProps,
   UIExample,
@@ -32,51 +31,6 @@ function handleChangeModuleLevel(
 
   const qs = next !== examples[0]?.id ? `?tab=${next}` : "";
   router.replace(qs ? `${pathname}${qs}` : pathname, { scroll: false });
-}
-
-function ExamplePanel({
-  example,
-  baseId,
-  viewMode,
-  onToggleView,
-}: {
-  example: UIExample;
-  baseId: string;
-  viewMode: "preview" | "code";
-  onToggleView: () => void;
-}) {
-  return (
-    <div
-      id={`${baseId}-panel-${example.id}`}
-      role="tabpanel"
-      aria-labelledby={`${baseId}-tab-${example.id}`}
-      className="space-y-4"
-    >
-      <p className="text-muted text-sm italic">{example.description}</p>
-      {example.code && (
-        <button
-          type="button"
-          onClick={onToggleView}
-          className="text-muted hover:text-fg flex items-center gap-1.5 text-xs font-medium transition-colors"
-        >
-          {viewMode === "preview" ? (
-            <>
-              <IconCode size={14} /> View Code
-            </>
-          ) : (
-            <>
-              <IconEye size={14} /> Preview
-            </>
-          )}
-        </button>
-      )}
-      {viewMode === "preview" ? (
-        <div>{example.render()}</div>
-      ) : example.code ? (
-        <CodeBlock code={example.code} />
-      ) : null}
-    </div>
-  );
 }
 
 export function ExampleTabs({

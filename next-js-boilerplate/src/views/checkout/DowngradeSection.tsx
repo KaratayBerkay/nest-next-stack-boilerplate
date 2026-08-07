@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { useBillingActions } from "@/api/client/billing/actions";
 import type { SubscribeResult } from "@/api/server/billing/stripe";
+import type { DowngradeSectionProps } from "@/types/checkout/DowngradeSection-types";
 import { PRICING_PATH } from "@/constants/routes";
 
 async function handleDowngrade(
@@ -28,15 +29,6 @@ async function handleDowngrade(
   } catch (err) {
     setError((err as Error).message ?? "Failed to change plan");
   }
-}
-
-interface DowngradeSectionProps {
-  targetTier: string;
-  error: string | null;
-  setError: Dispatch<SetStateAction<string | null>>;
-  onSuccess: (effectiveAt: string | null) => void;
-  confirmLabel: string;
-  redirectDelayMs: number;
 }
 
 export function DowngradeSection({

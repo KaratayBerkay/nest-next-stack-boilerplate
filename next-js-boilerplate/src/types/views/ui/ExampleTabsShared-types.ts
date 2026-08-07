@@ -14,3 +14,10 @@ export interface ExampleTabsMobileAccordionProps {
   accordionOpen: boolean;
   onToggle: () => void;
 }
+
+export interface ExamplePanelProps {
+  example: UIExample;
+  baseId: string;
+  viewMode: "preview" | "code";
+  onToggleView: () => void;
+}

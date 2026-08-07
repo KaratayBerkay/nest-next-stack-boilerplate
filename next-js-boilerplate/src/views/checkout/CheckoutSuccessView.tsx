@@ -1,15 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
-
-interface CheckoutSuccessViewProps {
-  isDowngrade: boolean;
-  downgradeMsg: string;
-  upgradeMsg: string;
-  redirectingMsg: string;
-  message?: string;
-  className?: string;
-}
+import type { CheckoutSuccessViewProps } from "@/types/checkout/CheckoutSuccessView-types";
 
 export function CheckoutSuccessView({
   isDowngrade,

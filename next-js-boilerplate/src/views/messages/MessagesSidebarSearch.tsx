@@ -1,14 +1,26 @@
 "use client";
 
+import type { Dispatch, SetStateAction } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconSearch } from "@tabler/icons-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useFriendActions } from "@/api/client/friends/actions";
 import type { MessagesSidebarSearchProps } from "@/types/messages/MessagesSidebarSearch-types";
+
+async function handleSendFriendRequest(
+  friendId: string,
+  setSentRequestIds: Dispatch<SetStateAction<Set<string>>>,
+  sendRequest: (userId: string) => Promise<boolean>,
+  queryClient: QueryClient,
+) {
+  setSentRequestIds((prev) => new Set(prev).add(friendId));
+  await sendRequest(friendId);
+  queryClient.invalidateQueries({ queryKey: ["users", "search"] });
+}
 
 export function MessagesSidebarSearch({
   tab,
@@ -75,13 +87,14 @@ export function MessagesSidebarSearch({
                 <Button
                   variant="primary"
                   size="sm"
-                  onClick={async () => {
-                    setSentRequestIds((prev) => new Set(prev).add(u.id));
-                    await sendFriendRequest(u.id);
-                    queryClient.invalidateQueries({
-                      queryKey: ["users", "search"],
-                    });
-                  }}
+                  onClick={() =>
+                    handleSendFriendRequest(
+                      u.id,
+                      setSentRequestIds,
+                      sendFriendRequest,
+                      queryClient,
+                    )
+                  }
                   className="rounded-lg text-xs"
                 >
                   {t.add}

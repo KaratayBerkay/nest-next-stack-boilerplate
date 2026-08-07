@@ -7,8 +7,7 @@ export type RealtimeStatus =
   | "down"
   | "waiting";
 
-import { AUTH_REFRESH_URL } from "@/constants/api/urls";
-import { POST } from "@/constants/api/methods";
+import { refreshSessionResponse } from "@/lib/api-client";
 import {
   performHandshake,
   encryptForServer,
@@ -161,7 +160,7 @@ export class RealtimeClient {
 
     if (this.pendingRefresh) {
       this.pendingRefresh = false;
-      fetch(AUTH_REFRESH_URL, { method: POST })
+      refreshSessionResponse()
         .then((res) => {
           if (res.ok) {
             open();

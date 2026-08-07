@@ -2,7 +2,6 @@
 
 import { use } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import type { TierCardProps } from "@/types/plans/TierCard-types";
 import type { PlansPageProps } from "@/types/plans/PlansPage-types";
 import {
   TIERS,
@@ -20,12 +19,12 @@ import type { CurrencyCode } from "@/constants/currency";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { plansPageInfo } from "@/constants/page-info";
 import { cn } from "@/lib/cn";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   subscriptionQueryOptions,
   planPricesQueryOptions,
 } from "@/api/client/billing/query";
+import { TierCard } from "./TierCard";
 
 function buildTierCards(
   user: { tier?: string } | null,
@@ -73,53 +72,6 @@ function buildTierCards(
       />
     );
   });
-}
-
-function TierCard({
-  tier,
-  price,
-  features,
-  current,
-  ctaLabel,
-  ctaHref,
-  currentLabel,
-  changePending,
-}: TierCardProps) {
-  return (
-    <div
-      className={`flex flex-col rounded-xl border p-6 ${
-        current ? "border-brand ring-brand/20 ring-2" : "border-border"
-      }`}
-    >
-      <h3 className="text-lg font-semibold">{tierLabel(tier)}</h3>
-      <p className="text-muted mt-1 text-2xl font-bold">{price}</p>
-      <ul className="mt-4 flex flex-col gap-2">
-        {features.map((f) => (
-          <li key={f} className="text-muted text-sm">
-            {f}
-          </li>
-        ))}
-      </ul>
-      <div className="mt-auto pt-6">
-        {current ? (
-          <span className="bg-surface text-muted block rounded-lg px-4 py-2 text-center text-sm font-medium">
-            {currentLabel}
-          </span>
-        ) : ctaHref && !changePending ? (
-          <Link
-            href={ctaHref}
-            className="bg-brand hover:bg-brand/90 text-brand-fg block rounded-lg px-4 py-2 text-center text-sm font-medium"
-          >
-            {ctaLabel}
-          </Link>
-        ) : (
-          <span className="bg-surface text-muted block rounded-lg px-4 py-2 text-center text-sm font-medium">
-            {ctaLabel}
-          </span>
-        )}
-      </div>
-    </div>
-  );
 }
 
 export default function PageContent({ params, className }: PlansPageProps) {

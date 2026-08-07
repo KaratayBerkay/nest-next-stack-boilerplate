@@ -9,3 +9,16 @@ export interface PlanDetailsProps {
   pendingTier?: string;
   pendingTierEffectiveAt?: string;
 }
+
+export interface PlanDetailsActionsProps {
+  hasPendingChange: boolean;
+  tier: Tier;
+  cancelAtPeriodEnd: boolean;
+  onCancel: () => void;
+  onCancelPendingChange: () => void;
+  upgradePlanLabel: string;
+  cancelPendingChangeLabel: string;
+  cancelSubscriptionLabel: string;
+  cancelSubscriptionConfirmLabel: string;
+  cancelsOnLabel: string;
+}

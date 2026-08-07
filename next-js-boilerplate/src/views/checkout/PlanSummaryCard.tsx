@@ -3,12 +3,7 @@
 import { tierLabel } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { TIER_FEATURES } from "@/lib/checkout/tier-features";
-
-interface PlanSummaryCardProps {
-  targetTier: string;
-  currency: string;
-  priceCents: number;
-}
+import type { PlanSummaryCardProps } from "@/types/checkout/PlanSummaryCard-types";
 
 export function PlanSummaryCard({
   targetTier,
