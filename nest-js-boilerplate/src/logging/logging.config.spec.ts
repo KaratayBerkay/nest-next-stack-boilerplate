@@ -32,6 +32,21 @@ describe('extractGraphqlOperation', () => {
     ).toBe('LoginWithOAuth');
   });
 
+  it('extracts the op name from a real template-literal query (leading newline + indent)', () => {
+    // Matches how every query/mutation constant in next-js-boilerplate is
+    // actually written, e.g. REFRESH_MUTATION in api/auth/refresh/route.ts.
+    const REFRESH_MUTATION = `
+  mutation Refresh {
+    refresh {
+      accessToken
+    }
+  }
+`;
+    expect(
+      extractGraphqlOperation(reqWithBody(REFRESH_MUTATION) as never),
+    ).toBe('Refresh');
+  });
+
   it('marks anonymous operations so they are still distinguishable', () => {
     expect(extractGraphqlOperation(reqWithBody('{ me { id } }') as never)).toBe(
       'anonymous',

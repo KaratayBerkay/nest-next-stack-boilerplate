@@ -288,7 +288,7 @@ describe("RealtimeClient", () => {
 
     it("hard-logs out and stops retrying when the pre-connect refresh 401s", async () => {
       vi.useFakeTimers();
-      const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 401 });
       vi.stubGlobal("fetch", fetchMock);
       const onAuthExpired = vi.fn();
       const { client, onStatusChange } = createClient({ onAuthExpired });
@@ -309,6 +309,25 @@ describe("RealtimeClient", () => {
       vi.advanceTimersByTime(60_000);
       await vi.advanceTimersByTimeAsync(0);
       expect(MockWebSocket.instances.length).toBe(1);
+      vi.useRealTimers();
+    });
+
+    it("reopens the socket (does not hard-log-out) when the pre-connect refresh fails with a non-auth status", async () => {
+      vi.useFakeTimers();
+      // e.g. CSRF handshake failure or the backend being briefly unreachable
+      // mid-deploy — the BFF returns 500, not 401. Not proof the session is
+      // dead, so this must retry, not log the user out and wipe their keys.
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 500 });
+      vi.stubGlobal("fetch", fetchMock);
+      const onAuthExpired = vi.fn();
+      const { client } = createClient({ onAuthExpired });
+      client.connect();
+      const ws1 = MockWebSocket.instances[0];
+      ws1.close(); // rejected before ever opening → pendingRefresh
+      vi.advanceTimersByTime(2000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(onAuthExpired).not.toHaveBeenCalled();
+      expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(2);
       vi.useRealTimers();
     });
 

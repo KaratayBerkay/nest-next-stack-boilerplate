@@ -19,7 +19,11 @@ export function extractGraphqlOperation(
   req: RequestWithBody,
 ): string | undefined {
   if (typeof req.body?.query !== 'string') return undefined;
-  const match = /^(?:query|mutation|subscription)\s+([A-Za-z0-9_]+)/.exec(
+  // Real query/mutation constants are template literals that start with a
+  // newline + indentation before the keyword (e.g. `\n  mutation Refresh {`)
+  // — the leading \s* is required or every real request falls through to
+  // 'anonymous'.
+  const match = /^\s*(?:query|mutation|subscription)\s+([A-Za-z0-9_]+)/.exec(
     req.body.query,
   );
   return match ? match[1] : 'anonymous';

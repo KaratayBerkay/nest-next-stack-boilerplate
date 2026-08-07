@@ -165,12 +165,20 @@ export class RealtimeClient {
         .then((res) => {
           if (res.ok) {
             open();
-          } else {
-            // The refresh failed — the session is dead (revoked/expired) and
-            // the socket would only re-connect to be rejected with
-            // session_miss. Stop the retry loop and hand the decision to the
-            // app's hard-logout path instead of spinning forever.
+          } else if (res.status === 401) {
+            // The refresh token itself was rejected — the session is dead
+            // (revoked/expired) and the socket would only re-connect to be
+            // rejected with session_miss. Stop the retry loop and hand the
+            // decision to the app's hard-logout path instead of spinning
+            // forever. Mirrors apiFetch's own 401-only escalation rule
+            // (api-client.ts) so a definitive auth rejection is required.
             this.handleAuthExpired();
+          } else {
+            // Non-auth failure on the BFF side (backend unreachable mid
+            // deploy, CSRF handshake hiccup, etc.) — not proof the session
+            // is dead. Retry the socket via the existing backoff/degraded
+            // retry loop instead of logging a possibly-still-valid user out.
+            open();
           }
         })
         .catch(() => {
