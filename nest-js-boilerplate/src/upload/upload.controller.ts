@@ -22,6 +22,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { AttachmentThumbnailService } from './attachment-thumbnail.service';
 import { ImageService, IMAGE_SIZES } from './image.service';
 import { S3BucketService } from './s3-bucket.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
@@ -152,9 +153,63 @@ export class UploadController {
   constructor(
     private readonly s3bucket: S3BucketService,
     private readonly images: ImageService,
+    private readonly thumbnails: AttachmentThumbnailService,
     private readonly storageCrypto: StorageCryptoService,
     private readonly prisma: PrismaService,
   ) {}
+
+  /**
+   * Best-effort: generates a thumbnail for the plaintext buffer and, if one
+   * comes back, encrypts + uploads it as its own R2 object with its own
+   * `PendingUpload` row (so the existing, unmodified `/upload/serve` route
+   * can find and decrypt it like any other object). Returns null — never
+   * throws — when the type isn't thumbnailed or generation fails; the
+   * caller simply omits `thumbnailUrl` in that case.
+   */
+  private async generateAndStoreThumbnail(
+    buffer: Buffer,
+    mimetype: string,
+    originalname: string,
+    scope: UploadScope,
+    userId: string,
+  ): Promise<string | null> {
+    const thumbnail = await this.thumbnails.generate(
+      buffer,
+      mimetype,
+      originalname,
+    );
+    if (!thumbnail) return null;
+
+    const objectName = `${scope.prefix}thumbs/${randomUUID()}.webp`;
+    const envelope = this.storageCrypto.encryptBytes(
+      userId,
+      new Uint8Array(thumbnail),
+    );
+    const url = await this.s3bucket.upload(
+      objectName,
+      Buffer.from(envelope.ct, 'base64'),
+      undefined,
+      'application/octet-stream',
+    );
+    await this.prisma.pendingUpload.upsert({
+      where: { objectName },
+      create: {
+        objectName,
+        url,
+        v: envelope.v,
+        ct: envelope.ct,
+        nonce: envelope.nonce,
+        uploadedBy: userId,
+        size: thumbnail.length,
+        kind: scope.kind,
+        scopeId: scope.scopeId,
+        filename: originalname,
+        mimetype: 'image/webp',
+      },
+      update: {},
+    });
+    return url;
+  }
 
   @Post('single')
   @UseInterceptors(FileInterceptor('file'))
@@ -249,12 +304,21 @@ export class UploadController {
       new Uint8Array(file.buffer),
     );
 
-    const url = await this.s3bucket.upload(
-      objectName,
-      Buffer.from(envelope.ct, 'base64'),
-      undefined,
-      'application/octet-stream',
-    );
+    const [url, thumbnailUrl] = await Promise.all([
+      this.s3bucket.upload(
+        objectName,
+        Buffer.from(envelope.ct, 'base64'),
+        undefined,
+        'application/octet-stream',
+      ),
+      this.generateAndStoreThumbnail(
+        file.buffer,
+        file.mimetype,
+        file.originalname,
+        scope,
+        user.userId,
+      ),
+    ]);
     // The envelope is generated server-side, so persist it here keyed by the
     // object name. Messaging services resolve it from the attachment `url`
     // at message-save time, which keeps the full-file ciphertext off the WS
@@ -273,6 +337,7 @@ export class UploadController {
         scopeId: scope.scopeId,
         filename: file.originalname,
         mimetype: file.mimetype,
+        thumbnailUrl,
       },
       update: {},
     });
@@ -357,12 +422,21 @@ export class UploadController {
       new Uint8Array(buffer),
     );
 
-    const url = await this.s3bucket.upload(
-      objectName,
-      Buffer.from(envelope.ct, 'base64'),
-      undefined,
-      'application/octet-stream',
-    );
+    const [url, thumbnailUrl] = await Promise.all([
+      this.s3bucket.upload(
+        objectName,
+        Buffer.from(envelope.ct, 'base64'),
+        undefined,
+        'application/octet-stream',
+      ),
+      this.generateAndStoreThumbnail(
+        buffer,
+        mimetype,
+        originalname,
+        scope,
+        user.userId,
+      ),
+    ]);
     await this.prisma.pendingUpload.upsert({
       where: { objectName },
       create: {
@@ -377,6 +451,7 @@ export class UploadController {
         scopeId: scope.scopeId,
         filename: originalname,
         mimetype,
+        thumbnailUrl,
       },
       update: {},
     });

@@ -82,6 +82,7 @@ export const ChatRoomMessageList = forwardRef<
                       type={att.type}
                       name={att.name}
                       size={att.size}
+                      thumbnailUrl={att.thumbnailUrl}
                     />
                   ))}
                 </div>

@@ -117,6 +117,7 @@ export class StorageCryptoService {
     type: string;
     name: string;
     size?: number;
+    thumbnailUrl?: string | null;
     v: string | null;
     ct: string | null;
     nonce: string | null;
@@ -125,6 +126,7 @@ export class StorageCryptoService {
     type: string;
     name: string;
     size: number;
+    thumbnailUrl: string | null;
     storageEnvelope: { v: string; nonce: string } | null;
   } {
     const env = this.toEnvelope(row);
@@ -133,6 +135,7 @@ export class StorageCryptoService {
       type: row.type,
       name: row.name,
       size: row.size ?? 0,
+      thumbnailUrl: row.thumbnailUrl ?? null,
       storageEnvelope: env ? { v: env.v, nonce: env.nonce } : null,
     };
   }

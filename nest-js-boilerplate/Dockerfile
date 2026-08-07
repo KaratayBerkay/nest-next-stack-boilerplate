@@ -3,7 +3,7 @@ ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
-    openssl ca-certificates python3 build-essential \
+    openssl ca-certificates python3 build-essential poppler-utils \
   && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 WORKDIR /app

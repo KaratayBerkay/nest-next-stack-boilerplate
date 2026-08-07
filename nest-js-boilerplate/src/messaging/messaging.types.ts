@@ -17,6 +17,8 @@ export interface MessageAttachment {
   name: string;
   /** Decompressed file size in bytes (resolved from PendingUpload server-side). */
   size?: number;
+  /** Small preview object URL, resolved from PendingUpload server-side. Null/absent when the type isn't thumbnailed or generation failed. */
+  thumbnailUrl?: string | null;
   /** Server-side at-rest encryption metadata (ct omitted — too large for WS). */
   storageEnvelope?: { v: string; nonce: string; ct?: string } | null;
 }

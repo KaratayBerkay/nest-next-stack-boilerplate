@@ -845,17 +845,22 @@ model Message {
 }
 
 model MessageAttachment {
-  id        String   @id @default(uuid(7)) @db.Uuid
-  messageId String   @db.Uuid
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  url       String
-  type      String
-  name      String
-  size      Int      @default(0)
-  v         String?
-  ct        String?  @db.Text
-  nonce     String?
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  id           String   @id @default(uuid(7)) @db.Uuid
+  messageId    String   @db.Uuid
+  message      Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  url          String
+  type         String
+  name         String
+  size         Int      @default(0)
+  // Small server-generated preview object (encrypted, served the same way as
+  // the original via GET /upload/serve). Null when the file type isn't
+  // thumbnailed (e.g. doc/docx) or generation failed — the client falls back
+  // to the icon+name chip in that case.
+  thumbnailUrl String?
+  v            String?
+  ct           String?  @db.Text
+  nonce        String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([messageId])
 }
@@ -884,6 +889,8 @@ model RoomMessageAttachment {
   type          String
   name          String
   size          Int         @default(0)
+  // See MessageAttachment.thumbnailUrl.
+  thumbnailUrl  String?
   v             String?
   ct            String?     @db.Text
   nonce         String?
@@ -920,6 +927,11 @@ model PendingUpload {
   mimetype   String?
   messageId  String?    @db.Uuid
   roomMessageId String? @db.Uuid
+  // Set at upload time once thumbnail generation succeeds — the URL of a
+  // *second* PendingUpload-backed object (its own row, own objectName) holding
+  // the small encrypted preview. Null when the file type isn't thumbnailed or
+  // generation failed.
+  thumbnailUrl String?
   createdAt  DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([uploadedBy, createdAt])

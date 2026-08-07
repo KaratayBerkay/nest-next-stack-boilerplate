@@ -7,6 +7,7 @@ import {
   Dialog,
   DialogBody,
   DialogContent,
+  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { UPLOAD_SERVE_URL } from "@/constants/api/urls";
@@ -73,13 +74,16 @@ export function AttachmentPreview({
   type,
   name,
   size,
+  thumbnailUrl,
   className,
 }: AttachmentPreviewProps) {
   const [open, setOpen] = useState(false);
+  const [thumbFailed, setThumbFailed] = useState(false);
   const label = name || "Attachment";
   const href = serveUrl(url);
   const isImage = type?.startsWith("image/") || isImageByExtension(name);
   const isPdf = isPdfByExtension(name);
+  const showThumb = !!thumbnailUrl && !thumbFailed;
 
   return (
     <>
@@ -87,11 +91,21 @@ export function AttachmentPreview({
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          "bg-surface border-border hover:bg-surface-hover flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left transition-colors",
+          "bg-surface border-border hover:bg-surface-hover flex items-center gap-2 rounded-lg border py-1.5 pr-2.5 text-left transition-colors",
+          showThumb ? "pl-1.5" : "pl-2.5",
           className,
         )}
       >
-        <AttachmentIcon type={type} name={name} />
+        {thumbnailUrl && !thumbFailed ? (
+          <img
+            src={serveUrl(thumbnailUrl)}
+            alt=""
+            className="bg-surface-hover size-10 shrink-0 rounded-md object-cover"
+            onError={() => setThumbFailed(true)}
+          />
+        ) : (
+          <AttachmentIcon type={type} name={name} />
+        )}
         <span className="text-fg max-w-[160px] truncate text-xs">{label}</span>
         {size ? (
           <span className="text-muted shrink-0 text-[10px]">
@@ -102,7 +116,9 @@ export function AttachmentPreview({
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent size="lg">
-          <DialogTitle>{label}</DialogTitle>
+          <DialogHeader>
+            <DialogTitle>{label}</DialogTitle>
+          </DialogHeader>
           <DialogBody className="flex items-center justify-center overflow-auto">
             {isImage ? (
               <img

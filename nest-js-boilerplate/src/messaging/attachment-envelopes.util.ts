@@ -30,6 +30,7 @@ export async function resolveAttachmentEnvelopes(
     return {
       ...a,
       size: stored.size,
+      thumbnailUrl: stored.thumbnailUrl,
       storageEnvelope: {
         v: stored.v,
         nonce: stored.nonce,

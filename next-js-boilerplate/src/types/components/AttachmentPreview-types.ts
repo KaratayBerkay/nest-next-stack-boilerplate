@@ -3,5 +3,6 @@ export interface AttachmentPreviewProps {
   type?: string | null;
   name?: string | null;
   size?: number;
+  thumbnailUrl?: string | null;
   className?: string;
 }
