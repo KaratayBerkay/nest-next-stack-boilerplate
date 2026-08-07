@@ -6,8 +6,16 @@ import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
   rbacTokenCookieOptions,
+  refreshTokenCookieOptions,
+  sessionUserCookieOptions,
   userTokenCookieOptions,
 } from "@/lib/cookie";
+import { ME_QUERY } from "@/lib/graphql/queries";
+import {
+  DEVICE_TOKEN_HEADER,
+  RBAC_TOKEN_HEADER,
+  USER_TOKEN_HEADER,
+} from "@/constants";
 
 const LOGIN_WITH_OAUTH = `
   mutation LoginWithOAuth($profile: OAuthProfileInput!) {
@@ -17,6 +25,7 @@ const LOGIN_WITH_OAUTH = `
       deviceId
       deviceToken
       userToken
+      refreshToken
       user {
         id
         email
@@ -79,6 +88,7 @@ export async function GET(
         deviceId?: string;
         deviceToken?: string;
         userToken?: string;
+        refreshToken?: string;
         user: unknown;
       };
     }>(LOGIN_WITH_OAUTH, { profile });
@@ -89,8 +99,41 @@ export async function GET(
       return NextResponse.redirect(loginUrl, 302);
     }
 
-    const { accessToken, rbacToken, deviceToken, userToken } =
-      data.loginWithOAuth;
+    const {
+      accessToken,
+      rbacToken,
+      deviceToken,
+      userToken,
+      refreshToken,
+      user,
+    } = data.loginWithOAuth;
+
+    // LOGIN_WITH_OAUTH's `user` selection is deliberately partial (same
+    // constraint as the password-login route — can't select hideAvatar
+    // (@HideField()'d) and omits chatNickname/sessionId). Overlay the real
+    // `me` snapshot so the session_user cookie isn't born stale, and — more
+    // importantly — carries `sessionId`, which getSessionUser()'s fast path
+    // requires before it will trust the cookie without a live re-check.
+    let sessionUser: unknown = user;
+    if (accessToken && rbacToken && userToken) {
+      const meResult = await graphqlFetch<{ me: Record<string, unknown> }>(
+        ME_QUERY,
+        undefined,
+        accessToken,
+        {
+          [RBAC_TOKEN_HEADER]: rbacToken,
+          ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
+          [USER_TOKEN_HEADER]: userToken,
+        },
+      );
+      if (meResult.data?.me) {
+        sessionUser = {
+          ...(user as Record<string, unknown>),
+          ...meResult.data.me,
+        };
+      }
+    }
+
     const response = NextResponse.redirect(env.NEXT_PUBLIC_APP_URL, 302);
 
     // Set all auth cookies directly from body values (not relayed Set-Cookie headers,
@@ -100,6 +143,13 @@ export async function GET(
     if (deviceToken)
       response.cookies.set(deviceTokenCookieOptions(deviceToken));
     if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+    if (refreshToken)
+      response.cookies.set(refreshTokenCookieOptions(refreshToken));
+    response.cookies.set(
+      sessionUserCookieOptions(
+        Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
+      ),
+    );
 
     return response;
   } catch {
