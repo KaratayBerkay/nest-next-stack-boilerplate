@@ -18,6 +18,7 @@ import { UsernameService } from './username.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { EmailOtpService } from './email-otp.service';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+import { OAuthService } from './oauth/oauth.service';
 
 jest.mock('otplib', () => ({
   verify: jest.fn(),
@@ -62,6 +63,10 @@ const mockOutbox = {
 
 const mockConfig = {
   get: jest.fn((key: string, def?: unknown) => def),
+};
+
+const mockOAuthService = {
+  retrieveProfile: jest.fn(),
 };
 
 const mockTokenStore = {
@@ -117,6 +122,7 @@ describe('AuthService', () => {
             touchTTL: jest.fn().mockResolvedValue(undefined),
           },
         },
+        { provide: OAuthService, useValue: mockOAuthService },
       ],
     }).compile();
 
@@ -533,6 +539,28 @@ describe('AuthService', () => {
       expect(result.mfaRequired).toBe(true);
       expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
       expect(mockTokenStore.write).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('loginWithOAuth', () => {
+    afterEach(() => {
+      mockOAuthService.retrieveProfile.mockReset();
+    });
+
+    it('retrieves the profile via the state token rather than trusting a caller-supplied one', async () => {
+      mockOAuthService.retrieveProfile.mockRejectedValueOnce(
+        new UnauthorizedException('OAuth profile expired or not found'),
+      );
+
+      await expect(service.loginWithOAuth('some-state')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(mockOAuthService.retrieveProfile).toHaveBeenCalledWith(
+        'some-state',
+      );
+      // An unverified state must never reach account lookup/creation — this
+      // is the account-takeover fix's core guarantee.
+      expect(mockPrisma.$transaction).not.toHaveBeenCalled();
     });
   });
 });

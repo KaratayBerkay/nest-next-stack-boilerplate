@@ -6,8 +6,11 @@ import { REDIS_CLIENT } from '../../redis/redis.module';
 import { oauthProviders, type OAuthProfileResult } from './oauth-providers';
 
 const OAUTH_STATE_PREFIX = 'oauth:state:';
-const OAUTH_PROFILE_PREFIX = 'oauth:profile:';
-const OAUTH_TTL_SEC = 600; // 10 minutes
+// Exported so tests can seed a verified profile directly (simulating a
+// completed provider handshake) instead of driving a real OAuth consent
+// screen, which e2e tests have no credentials to do.
+export const OAUTH_PROFILE_PREFIX = 'oauth:profile:';
+export const OAUTH_TTL_SEC = 600; // 10 minutes
 
 type PendingState = {
   provider: string;

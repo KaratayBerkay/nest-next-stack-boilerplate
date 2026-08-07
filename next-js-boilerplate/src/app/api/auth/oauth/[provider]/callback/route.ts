@@ -20,8 +20,8 @@ import {
 } from "@/constants";
 
 const LOGIN_WITH_OAUTH = `
-  mutation LoginWithOAuth($profile: OAuthProfileInput!) {
-    loginWithOAuth(profile: $profile) {
+  mutation LoginWithOAuth($input: OAuthLoginInput!) {
+    loginWithOAuth(input: $input) {
       accessToken
       rbacToken
       deviceId
@@ -90,33 +90,15 @@ export const GET = async (
     }
 
     try {
-      const profileUrl = `${env.APP_URL}/auth/oauth/${providerName}/profile?state=${encodeURIComponent(state)}`;
+      // The profile itself is never fetched or seen by this route anymore —
+      // loginWithOAuth retrieves it server-to-server on the NestJS side by
+      // redeeming `state` (a single-use claim ticket that only resolves to a
+      // real profile once OAuthService.handleCallback completed a genuine
+      // provider handshake). Forwarding a client-visible profile object here
+      // was the account-takeover hole: anyone could fabricate one.
       log.info(
         { provider: providerName, state },
-        "oauth callback: fetching profile",
-      );
-      const profileRes = await fetch(profileUrl);
-      if (!profileRes.ok) {
-        log.warn(
-          {
-            provider: providerName,
-            state,
-            profileStatus: profileRes.status,
-          },
-          "oauth callback: profile fetch failed",
-        );
-        loginUrl.searchParams.set("error", "profile_fetch_failed");
-        return NextResponse.redirect(loginUrl, 302);
-      }
-      const profile = await profileRes.json();
-
-      log.info(
-        {
-          provider: providerName,
-          state,
-          hasProfileEmail: Boolean(profile?.email),
-        },
-        "oauth callback: profile ok, calling loginWithOAuth",
+        "oauth callback: calling loginWithOAuth",
       );
 
       const { data, errors } = await graphqlFetch<{
@@ -129,7 +111,7 @@ export const GET = async (
           refreshToken?: string;
           user: unknown;
         };
-      }>(LOGIN_WITH_OAUTH, { profile });
+      }>(LOGIN_WITH_OAUTH, { input: { state } });
 
       if (errors || !data?.loginWithOAuth) {
         log.warn(

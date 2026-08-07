@@ -24,6 +24,7 @@ import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
 import { EmailOtpService } from './email-otp.service';
 import { AuthSessionService } from './auth-session.service';
+import { OAuthService } from './oauth/oauth.service';
 import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
@@ -64,6 +65,7 @@ export class AuthService {
     private readonly realtime: RealtimeGateway,
     private readonly emailOtp: EmailOtpService,
     private readonly wireCrypto: WireCryptoService,
+    private readonly oauthService: OAuthService,
   ) {
     this.authTokens = new AuthTokenService(
       jwt,
@@ -203,9 +205,17 @@ export class AuthService {
   }
 
   async loginWithOAuth(
-    profile: OAuthProfile,
+    state: string,
     ctx?: RequestContext,
   ): Promise<AuthPayload> {
+    // The profile is never trusted from the caller: `state` is a single-use
+    // claim ticket that only resolves to a profile once a real provider
+    // handshake completed (OAuthService.handleCallback populates it after
+    // exchanging the code server-to-server). This is the only thing standing
+    // between "anyone can log in as anyone by email" and a real OAuth login.
+    const profile = (await this.oauthService.retrieveProfile(
+      state,
+    )) as unknown as OAuthProfile;
     const frontendUrl = this.config.get<string>(
       'FRONTEND_URL',
       'http://localhost:3000',

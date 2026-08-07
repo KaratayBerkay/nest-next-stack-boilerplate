@@ -2,13 +2,20 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Queue } from 'bullmq';
+import { randomUUID } from 'node:crypto';
+import type Redis from 'ioredis';
 import { generateSync } from 'otplib';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { AppModule } from './../src/app.module';
 import { AuthService } from './../src/auth/auth.service';
+import {
+  OAUTH_PROFILE_PREFIX,
+  OAUTH_TTL_SEC,
+} from './../src/auth/oauth/oauth.service';
 import { OutboxService } from './../src/outbox/outbox.service';
 import { PrismaService } from './../src/prisma/prisma.service';
+import { REDIS_CLIENT } from './../src/redis/redis.module';
 
 // Proves the full auth + transactional-outbox + broker-logging stack end-to-end:
 //   credentials register/login (argon2 + JWT), account lockout tracking, email-confirmation
@@ -37,6 +44,7 @@ describe('Auth + Outbox (e2e)', () => {
   let prisma: PrismaService;
   let outbox: OutboxService;
   let authService: AuthService;
+  let redis: Redis;
 
   const email = 'alice@example.com';
   const password = 'sup3rSecret!';
@@ -78,6 +86,7 @@ describe('Auth + Outbox (e2e)', () => {
     prisma = app.get(PrismaService);
     outbox = app.get(OutboxService);
     authService = app.get(AuthService);
+    redis = app.get(REDIS_CLIENT);
 
     // Clear any stale broker jobs so assertions are deterministic.
     for (const name of ['outbox', 'mail']) {
@@ -223,8 +232,24 @@ describe('Auth + Outbox (e2e)', () => {
       name: 'OAuth User',
     };
 
-    const first = await authService.loginWithOAuth(profile);
-    const second = await authService.loginWithOAuth(profile);
+    // loginWithOAuth only trusts a profile it retrieves itself via a
+    // single-use `state` key (populated the same way a real provider
+    // callback would populate it) — never a client-supplied profile, which
+    // is exactly the account-takeover hole this shape closes. Each login
+    // here seeds its own state to model two separate real handshakes that
+    // both happen to resolve to the same provider identity.
+    const seedOAuthState = async (): Promise<string> => {
+      const state = randomUUID();
+      await redis.setex(
+        `${OAUTH_PROFILE_PREFIX}${state}`,
+        OAUTH_TTL_SEC,
+        JSON.stringify(profile),
+      );
+      return state;
+    };
+
+    const first = await authService.loginWithOAuth(await seedOAuthState());
+    const second = await authService.loginWithOAuth(await seedOAuthState());
 
     expect(first.user.id).toBe(second.user.id);
     expect(first.user.status).toBe('ACTIVE'); // provider-verified email -> active
@@ -234,5 +259,15 @@ describe('Auth + Outbox (e2e)', () => {
       where: { provider: 'google', providerAccountId: 'google-oauth-123' },
     });
     expect(accounts).toHaveLength(1); // linked once, not duplicated
+  });
+
+  it('rejects loginWithOAuth for a state with no verified profile behind it', async () => {
+    // Regression test for the account-takeover fix: loginWithOAuth must
+    // reject any state it didn't itself populate via a real provider
+    // handshake — it must never accept a caller-asserted identity (e.g. an
+    // arbitrary victim email) directly.
+    await expect(
+      authService.loginWithOAuth(`unknown-${randomUUID()}`),
+    ).rejects.toThrow(/oauth profile expired or not found/i);
   });
 });

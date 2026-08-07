@@ -15,11 +15,10 @@ import { CurrentUser } from './current-user.decorator';
 import { SessionAuthGuard } from './session-auth.guard';
 import { LoginInput } from './dto/login.input';
 import { RegisterInput } from './dto/register.input';
-import { OAuthProfileInput } from './dto/oauth-profile.input';
+import { OAuthLoginInput } from './dto/oauth-login.input';
 import { RequestPasswordResetInput } from './dto/request-password-reset.input';
 import { ResetPasswordInput } from './dto/reset-password.input';
 import { VerifyLoginMfaInput } from './dto/verify-login-mfa.input';
-import type { OAuthProfile } from './auth.service';
 
 @Resolver()
 export class AuthResolver {
@@ -98,12 +97,10 @@ export class AuthResolver {
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Mutation(() => AuthPayload)
   loginWithOAuth(
-    @Args('profile') profile: OAuthProfileInput,
+    @Args('input') input: OAuthLoginInput,
     @Context() ctx: { req: Request },
   ): Promise<AuthPayload> {
-    return this.auth.loginWithOAuth(profile as unknown as OAuthProfile, {
-      req: ctx.req,
-    });
+    return this.auth.loginWithOAuth(input.state, { req: ctx.req });
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })
