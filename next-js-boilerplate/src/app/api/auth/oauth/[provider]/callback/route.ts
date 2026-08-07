@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { graphqlFetch } from "@/lib/backend";
+import { withLogging } from "@/lib/request-logger";
 import {
   accessTokenCookieOptions,
   deviceTokenCookieOptions,
@@ -42,118 +44,183 @@ const LOGIN_WITH_OAUTH = `
   }
 `;
 
-export async function GET(
-  request: Request,
+export const GET = async (
+  request: NextRequest,
   { params }: { params: Promise<{ provider: string }> },
-) {
+) => {
   const { provider: providerName } = await params;
-  const { searchParams } = new URL(request.url);
-  const state = searchParams.get("state");
-  const error = searchParams.get("error");
-  const env = serverEnv();
-  const loginUrl = new URL("/auth/login", env.NEXT_PUBLIC_APP_URL);
 
-  if (error) {
-    loginUrl.searchParams.set("error", error);
-    return NextResponse.redirect(loginUrl, 302);
-  }
+  return withLogging(async (_request, log) => {
+    const { searchParams } = new URL(request.url);
+    const state = searchParams.get("state");
+    const error = searchParams.get("error");
+    const env = serverEnv();
+    const loginUrl = new URL("/auth/login", env.NEXT_PUBLIC_APP_URL);
 
-  if (!state) {
-    loginUrl.searchParams.set("error", "missing_state");
-    return NextResponse.redirect(loginUrl, 302);
-  }
-
-  const cookieStore = await cookies();
-  const savedState = cookieStore.get("oauth_state")?.value;
-  cookieStore.delete("oauth_state");
-
-  if (!savedState || savedState !== state) {
-    loginUrl.searchParams.set("error", "state_mismatch");
-    return NextResponse.redirect(loginUrl, 302);
-  }
-
-  try {
-    const profileUrl = `${env.APP_URL}/auth/oauth/${providerName}/profile?state=${encodeURIComponent(state)}`;
-    const profileRes = await fetch(profileUrl);
-    if (!profileRes.ok) {
-      loginUrl.searchParams.set("error", "profile_fetch_failed");
-      return NextResponse.redirect(loginUrl, 302);
-    }
-    const profile = await profileRes.json();
-
-    const { data, errors } = await graphqlFetch<{
-      loginWithOAuth: {
-        accessToken: string;
-        rbacToken?: string;
-        deviceId?: string;
-        deviceToken?: string;
-        userToken?: string;
-        refreshToken?: string;
-        user: unknown;
-      };
-    }>(LOGIN_WITH_OAUTH, { profile });
-
-    if (errors || !data?.loginWithOAuth) {
-      const message = errors?.[0]?.message ?? "oauth_failed";
-      loginUrl.searchParams.set("error", message);
-      return NextResponse.redirect(loginUrl, 302);
-    }
-
-    const {
-      accessToken,
-      rbacToken,
-      deviceToken,
-      userToken,
-      refreshToken,
-      user,
-    } = data.loginWithOAuth;
-
-    // LOGIN_WITH_OAUTH's `user` selection is deliberately partial (same
-    // constraint as the password-login route — can't select hideAvatar
-    // (@HideField()'d) and omits chatNickname/sessionId). Overlay the real
-    // `me` snapshot so the session_user cookie isn't born stale, and — more
-    // importantly — carries `sessionId`, which getSessionUser()'s fast path
-    // requires before it will trust the cookie without a live re-check.
-    let sessionUser: unknown = user;
-    if (accessToken && rbacToken && userToken) {
-      const meResult = await graphqlFetch<{ me: Record<string, unknown> }>(
-        ME_QUERY,
-        undefined,
-        accessToken,
-        {
-          [RBAC_TOKEN_HEADER]: rbacToken,
-          ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
-          [USER_TOKEN_HEADER]: userToken,
-        },
+    if (error) {
+      log.warn(
+        { provider: providerName, state, error },
+        "oauth callback: provider error",
       );
-      if (meResult.data?.me) {
-        sessionUser = {
-          ...(user as Record<string, unknown>),
-          ...meResult.data.me,
-        };
-      }
+      loginUrl.searchParams.set("error", error);
+      return NextResponse.redirect(loginUrl, 302);
     }
 
-    const response = NextResponse.redirect(env.NEXT_PUBLIC_APP_URL, 302);
+    if (!state) {
+      log.warn({ provider: providerName }, "oauth callback: missing state");
+      loginUrl.searchParams.set("error", "missing_state");
+      return NextResponse.redirect(loginUrl, 302);
+    }
 
-    // Set all auth cookies directly from body values (not relayed Set-Cookie headers,
-    // which the Fetch API strips from server-to-server responses).
-    response.cookies.set(accessTokenCookieOptions(accessToken));
-    if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
-    if (deviceToken)
-      response.cookies.set(deviceTokenCookieOptions(deviceToken));
-    if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
-    if (refreshToken)
-      response.cookies.set(refreshTokenCookieOptions(refreshToken));
-    response.cookies.set(
-      sessionUserCookieOptions(
-        Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
-      ),
-    );
+    const cookieStore = await cookies();
+    const savedState = cookieStore.get("oauth_state")?.value;
+    cookieStore.delete("oauth_state");
 
-    return response;
-  } catch {
-    loginUrl.searchParams.set("error", "oauth_failed");
-    return NextResponse.redirect(loginUrl, 302);
-  }
-}
+    if (!savedState || savedState !== state) {
+      log.warn(
+        {
+          provider: providerName,
+          state,
+          hasSavedState: Boolean(savedState),
+        },
+        "oauth callback: state mismatch",
+      );
+      loginUrl.searchParams.set("error", "state_mismatch");
+      return NextResponse.redirect(loginUrl, 302);
+    }
+
+    try {
+      const profileUrl = `${env.APP_URL}/auth/oauth/${providerName}/profile?state=${encodeURIComponent(state)}`;
+      log.info(
+        { provider: providerName, state },
+        "oauth callback: fetching profile",
+      );
+      const profileRes = await fetch(profileUrl);
+      if (!profileRes.ok) {
+        log.warn(
+          {
+            provider: providerName,
+            state,
+            profileStatus: profileRes.status,
+          },
+          "oauth callback: profile fetch failed",
+        );
+        loginUrl.searchParams.set("error", "profile_fetch_failed");
+        return NextResponse.redirect(loginUrl, 302);
+      }
+      const profile = await profileRes.json();
+
+      log.info(
+        {
+          provider: providerName,
+          state,
+          hasProfileEmail: Boolean(profile?.email),
+        },
+        "oauth callback: profile ok, calling loginWithOAuth",
+      );
+
+      const { data, errors } = await graphqlFetch<{
+        loginWithOAuth: {
+          accessToken: string;
+          rbacToken?: string;
+          deviceId?: string;
+          deviceToken?: string;
+          userToken?: string;
+          refreshToken?: string;
+          user: unknown;
+        };
+      }>(LOGIN_WITH_OAUTH, { profile });
+
+      if (errors || !data?.loginWithOAuth) {
+        log.warn(
+          {
+            provider: providerName,
+            state,
+            exc: errors?.[0]?.extensions?.exc,
+            statusCode: errors?.[0]?.extensions?.statusCode,
+            code: errors?.[0]?.extensions?.code,
+            message: errors?.[0]?.message,
+          },
+          "oauth callback: loginWithOAuth rejected",
+        );
+        const message = errors?.[0]?.message ?? "oauth_failed";
+        loginUrl.searchParams.set("error", message);
+        return NextResponse.redirect(loginUrl, 302);
+      }
+
+      const {
+        accessToken,
+        rbacToken,
+        deviceToken,
+        userToken,
+        refreshToken,
+        user,
+      } = data.loginWithOAuth;
+
+      // LOGIN_WITH_OAUTH's `user` selection is deliberately partial (same
+      // constraint as the password-login route — can't select hideAvatar
+      // (@HideField()'d) and omits chatNickname/sessionId). Overlay the real
+      // `me` snapshot so the session_user cookie isn't born stale, and — more
+      // importantly — carries `sessionId`, which getSessionUser()'s fast path
+      // requires before it will trust the cookie without a live re-check.
+      let sessionUser: unknown = user;
+      if (accessToken && rbacToken && userToken) {
+        const meResult = await graphqlFetch<{ me: Record<string, unknown> }>(
+          ME_QUERY,
+          undefined,
+          accessToken,
+          {
+            [RBAC_TOKEN_HEADER]: rbacToken,
+            ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
+            [USER_TOKEN_HEADER]: userToken,
+          },
+        );
+        if (meResult.data?.me) {
+          sessionUser = {
+            ...(user as Record<string, unknown>),
+            ...meResult.data.me,
+          };
+        }
+      }
+
+      const response = NextResponse.redirect(env.NEXT_PUBLIC_APP_URL, 302);
+
+      // Set all auth cookies directly from body values (not relayed Set-Cookie headers,
+      // which the Fetch API strips from server-to-server responses).
+      response.cookies.set(accessTokenCookieOptions(accessToken));
+      if (rbacToken) response.cookies.set(rbacTokenCookieOptions(rbacToken));
+      if (deviceToken)
+        response.cookies.set(deviceTokenCookieOptions(deviceToken));
+      if (userToken) response.cookies.set(userTokenCookieOptions(userToken));
+      if (refreshToken)
+        response.cookies.set(refreshTokenCookieOptions(refreshToken));
+      response.cookies.set(
+        sessionUserCookieOptions(
+          Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
+        ),
+      );
+
+      log.info(
+        {
+          provider: providerName,
+          state,
+          userId: (user as { id?: string })?.id,
+        },
+        "oauth callback: success, session cookies set",
+      );
+
+      return response;
+    } catch (err) {
+      log.error(
+        {
+          provider: providerName,
+          state,
+          err: err instanceof Error ? err.message : String(err),
+        },
+        "oauth callback: unexpected failure",
+      );
+      loginUrl.searchParams.set("error", "oauth_failed");
+      return NextResponse.redirect(loginUrl, 302);
+    }
+  })(request);
+};

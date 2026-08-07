@@ -1,4 +1,8 @@
-import { buildPinoHttpOptions } from './logging.config';
+import {
+  buildPinoHttpOptions,
+  extractGraphqlOperation,
+} from './logging.config';
+import type { IncomingMessage } from 'node:http';
 
 interface MultiTransport {
   targets: {
@@ -6,6 +10,47 @@ interface MultiTransport {
     options?: { destination?: unknown; mkdir?: boolean };
   }[];
 }
+
+function reqWithBody(query: string): IncomingMessage & { body?: unknown } {
+  return { body: { query } } as IncomingMessage & { body?: unknown };
+}
+
+describe('extractGraphqlOperation', () => {
+  it('extracts a named query', () => {
+    expect(
+      extractGraphqlOperation(reqWithBody('query Me { id }') as never),
+    ).toBe('Me');
+  });
+
+  it('extracts a named mutation', () => {
+    expect(
+      extractGraphqlOperation(
+        reqWithBody(
+          'mutation LoginWithOAuth { loginWithOAuth { email } }',
+        ) as never,
+      ),
+    ).toBe('LoginWithOAuth');
+  });
+
+  it('marks anonymous operations so they are still distinguishable', () => {
+    expect(extractGraphqlOperation(reqWithBody('{ me { id } }') as never)).toBe(
+      'anonymous',
+    );
+  });
+
+  it('returns undefined when there is no graphql body', () => {
+    expect(
+      extractGraphqlOperation({
+        body: undefined,
+      } as unknown as IncomingMessage),
+    ).toBeUndefined();
+    expect(
+      extractGraphqlOperation({
+        body: { query: 42 },
+      } as unknown as IncomingMessage),
+    ).toBeUndefined();
+  });
+});
 
 describe('buildPinoHttpOptions', () => {
   it('prod without LOG_FILE writes raw JSON to stdout (no transport) at level info', () => {

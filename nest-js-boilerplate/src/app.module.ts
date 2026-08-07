@@ -130,6 +130,10 @@ const CORE_MODULES = [
         extensions: {
           ...formattedError.extensions,
           ...unified,
+          // Override Apollo's default code (INTERNAL_SERVER_ERROR) with the
+          // app's real exception code — otherwise every error, including
+          // 401s, surfaces as INTERNAL_SERVER_ERROR and misleads consumers.
+          code: unified.exc,
         },
       };
     },

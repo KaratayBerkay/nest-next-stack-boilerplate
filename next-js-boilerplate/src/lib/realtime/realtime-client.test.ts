@@ -98,17 +98,20 @@ function createClient(
     onStatusChange?: (s: RealtimeStatus) => void;
     onFrame?: (f: Record<string, unknown>) => void;
     onAuthenticated?: () => void;
+    onAuthExpired?: () => void;
   } = {},
 ) {
   const onStatusChange = overrides.onStatusChange ?? vi.fn();
   const onFrame = overrides.onFrame ?? vi.fn();
   const onAuthenticated = overrides.onAuthenticated ?? vi.fn();
+  const onAuthExpired = overrides.onAuthExpired ?? vi.fn();
 
   const client = new RealtimeClient(
     "ws://localhost:3000",
     onStatusChange,
     onFrame,
     onAuthenticated,
+    onAuthExpired,
   );
 
   return {
@@ -116,6 +119,7 @@ function createClient(
     onStatusChange,
     onFrame,
     onAuthenticated,
+    onAuthExpired,
   };
 }
 
@@ -278,6 +282,48 @@ describe("RealtimeClient", () => {
       vi.advanceTimersByTime(2000);
       await vi.advanceTimersByTimeAsync(0);
       expect(fetchMock).not.toHaveBeenCalled();
+      expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(2);
+      vi.useRealTimers();
+    });
+
+    it("hard-logs out and stops retrying when the pre-connect refresh 401s", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn().mockResolvedValue({ ok: false });
+      vi.stubGlobal("fetch", fetchMock);
+      const onAuthExpired = vi.fn();
+      const { client, onStatusChange } = createClient({ onAuthExpired });
+      client.connect();
+      const ws1 = MockWebSocket.instances[0];
+      ws1.close(); // rejected before ever opening → pendingRefresh
+      vi.advanceTimersByTime(2000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchMock).toHaveBeenCalledWith(
+        "/api/auth/refresh",
+        expect.objectContaining({ method: "POST" }),
+      );
+      expect(onAuthExpired).toHaveBeenCalledTimes(1);
+      // No new socket is opened after an auth-expired stop.
+      expect(MockWebSocket.instances.length).toBe(1);
+      expect(onStatusChange).toHaveBeenCalledWith("idle");
+      // The 60s degraded timer must not re-connect either.
+      vi.advanceTimersByTime(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(MockWebSocket.instances.length).toBe(1);
+      vi.useRealTimers();
+    });
+
+    it("reopens the socket when the pre-connect refresh fails on a network error", async () => {
+      vi.useFakeTimers();
+      const fetchMock = vi.fn().mockRejectedValue(new Error("offline"));
+      vi.stubGlobal("fetch", fetchMock);
+      const onAuthExpired = vi.fn();
+      const { client } = createClient({ onAuthExpired });
+      client.connect();
+      const ws1 = MockWebSocket.instances[0];
+      ws1.close(); // never opened
+      vi.advanceTimersByTime(2000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(onAuthExpired).not.toHaveBeenCalled();
       expect(MockWebSocket.instances.length).toBeGreaterThanOrEqual(2);
       vi.useRealTimers();
     });

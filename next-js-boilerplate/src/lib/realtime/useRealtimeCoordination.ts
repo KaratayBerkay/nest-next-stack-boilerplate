@@ -95,6 +95,10 @@ export function useRealtimeCoordination() {
         resyncAfterConnect(queryClient, claimRef.current);
       };
 
+      const onAuthExpired = () => {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      };
+
       const createLeader = (): RealtimeClient => {
         const c = new RealtimeClient(
           clientEnv.NEXT_PUBLIC_REALTIME_WS_URL,
@@ -107,6 +111,7 @@ export function useRealtimeCoordination() {
             bc?.postMessage({ type: "frame", data: frame } satisfies Cmd);
           },
           onAuthenticated,
+          onAuthExpired,
         );
         c.registerServices(["MESSAGE", "NOTIFICATION"]);
         if (claimRef.current) {
@@ -244,6 +249,9 @@ export function useRealtimeCoordination() {
       process,
       () => {
         resyncAfterConnect(queryClient, claimRef.current);
+      },
+      () => {
+        window.dispatchEvent(new CustomEvent("auth:logout"));
       },
     );
     client.registerServices(["MESSAGE", "NOTIFICATION"]);

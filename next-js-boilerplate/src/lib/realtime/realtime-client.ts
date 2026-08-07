@@ -68,6 +68,7 @@ export class RealtimeClient {
     private readonly onStatusChange: (status: RealtimeStatus) => void,
     private readonly onFrame: (frame: Record<string, unknown>) => void,
     private readonly onAuthenticated?: () => void,
+    private readonly onAuthExpired?: () => void,
   ) {}
 
   connect(): void {
@@ -161,11 +162,46 @@ export class RealtimeClient {
     if (this.pendingRefresh) {
       this.pendingRefresh = false;
       fetch(AUTH_REFRESH_URL, { method: POST })
-        .catch(() => {})
-        .finally(open);
+        .then((res) => {
+          if (res.ok) {
+            open();
+          } else {
+            // The refresh failed — the session is dead (revoked/expired) and
+            // the socket would only re-connect to be rejected with
+            // session_miss. Stop the retry loop and hand the decision to the
+            // app's hard-logout path instead of spinning forever.
+            this.handleAuthExpired();
+          }
+        })
+        .catch(() => {
+          // Network hiccup — not an auth failure. Retry the socket as before.
+          open();
+        });
     } else {
       open();
     }
+  }
+
+  private handleAuthExpired(): void {
+    if (this.destroyed) return;
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    if (this.backoffTimer) {
+      clearTimeout(this.backoffTimer);
+      this.backoffTimer = null;
+    }
+    if (this.onlineHandler) {
+      window.removeEventListener("online", this.onlineHandler);
+      this.onlineHandler = null;
+    }
+    this.ws?.close();
+    this.ws = null;
+    this.authFailRetries = 0;
+    destroySession();
+    this.setStatus("idle");
+    this.onAuthExpired?.();
   }
 
   disconnect(): void {

@@ -7,6 +7,24 @@ import { getRequestId } from './request-context';
 // pino-http augments the request with `id` (the result of genReqId). Narrow, not `any`.
 type RequestWithId = IncomingMessage & { id?: string };
 
+type RequestWithBody = IncomingMessage & { body?: { query?: unknown } };
+
+/**
+ * Pulls the GraphQL operation name out of a /graphql request body *without*
+ * ever logging variables or credentials. The body is parsed by express.json()
+ * long before the pino-http request log emits (request completion), so the op
+ * name is available here even though pino-http never serializes the body.
+ */
+export function extractGraphqlOperation(
+  req: RequestWithBody,
+): string | undefined {
+  if (typeof req.body?.query !== 'string') return undefined;
+  const match = /^(?:query|mutation|subscription)\s+([A-Za-z0-9_]+)/.exec(
+    req.body.query,
+  );
+  return match ? match[1] : 'anonymous';
+}
+
 export interface LoggingEnv {
   /** `process.env.NODE_ENV`; controls pretty-vs-JSON output and the default level. */
   nodeEnv?: string;
@@ -64,7 +82,16 @@ export function buildPinoHttpOptions(env: LoggingEnv): Options {
     // Single source of truth for the id (see request-context.ts); fall back defensively.
     genReqId: () => getRequestId() ?? randomUUID(),
     // Surface the id under the name the audit trail uses, so logs and AuditLog join cleanly.
-    customProps: (req) => ({ correlationId: (req as RequestWithId).id }),
+    customProps: (req) => {
+      const graphql = extractGraphqlOperation(req);
+      return {
+        correlationId: (req as RequestWithId).id,
+        // Annotate /graphql request logs with the operation name so the
+        // different mutations (login vs refresh vs me) are distinguishable
+        // in ELK. Variables/credentials are never read, only the op name.
+        ...(graphql ? { graphql } : {}),
+      };
+    },
     redact: {
       paths: [
         'req.headers.authorization',

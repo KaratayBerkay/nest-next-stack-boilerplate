@@ -183,6 +183,7 @@ interface GraphQlError {
     exc?: string;
     msg?: string;
     key?: string;
+    statusCode?: number;
     fields?: GraphQlErrorField[];
   };
 }

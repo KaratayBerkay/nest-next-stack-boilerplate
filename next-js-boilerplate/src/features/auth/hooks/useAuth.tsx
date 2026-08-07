@@ -149,6 +149,10 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         // login page's server-side check treats the user as logged in,
         // bounces back to /v1/en/feed, which 401s again — the login loop.
         await logoutServer();
+        // Wipe the wire-crypto keypair + device-token mirror so the next
+        // login starts with fresh crypto material (localStorage + IndexedDB).
+        const { flushAll } = await import("@/lib/crypto/device-storage");
+        await flushAll();
       } catch {
         /* best-effort — never block the redirect */
       }

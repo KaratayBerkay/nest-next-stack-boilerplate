@@ -67,7 +67,11 @@ export const GET = withLogging(async (_request, log) => {
       );
     }
     log.warn(
-      { exc: errors?.[0]?.extensions?.code },
+      {
+        exc: errors?.[0]?.extensions?.exc,
+        statusCode: errors?.[0]?.extensions?.statusCode,
+        code: errors?.[0]?.extensions?.code,
+      },
       "me: GraphQL fallback also failed",
     );
     return NextResponse.json({ error: "Token expired" }, { status: 401 });

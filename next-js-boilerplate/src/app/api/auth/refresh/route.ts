@@ -93,7 +93,11 @@ export const POST = withLogging(async (_request, log) => {
 
   if (errors || !data?.refresh?.accessToken) {
     log.warn(
-      { exc: errors?.[0]?.extensions?.code },
+      {
+        exc: errors?.[0]?.extensions?.exc,
+        statusCode: errors?.[0]?.extensions?.statusCode,
+        code: errors?.[0]?.extensions?.code,
+      },
       "session refresh rejected",
     );
     return NextResponse.json(
