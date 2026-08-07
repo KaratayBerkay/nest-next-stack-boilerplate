@@ -19,6 +19,18 @@ export function useRealtimeCoordination() {
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<RealtimeStatus>("idle");
   const subsRef = useRef<Map<string, Set<FrameHandler>>>(new Map());
+  /**
+   * Always-on presence cache, kept current on every online-users/user-online/
+   * user-offline frame regardless of whether anything is subscribed to those
+   * types right now. The server sends the full online-users snapshot exactly
+   * once per WS connection lifecycle (on connect) — which, since this
+   * provider is mounted once at the app shell, usually happens long before
+   * the Messages page (the only subscriber) ever mounts. Without this cache
+   * that snapshot is lost forever and presence only reflects deltas that
+   * occur after a subscriber shows up. New subscribers seed from this ref
+   * (see getOnlineUsers below) instead of starting from an empty set.
+   */
+  const onlineUsersRef = useRef<Set<string>>(new Set());
   const clientRef = useRef<RealtimeClient | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const tabIdRef = useRef<string>("");
@@ -53,6 +65,21 @@ export function useRealtimeCoordination() {
         }
       });
       const t = frame.type as string;
+      if (t === "online-users") {
+        const users = (frame.users as { id: string }[] | undefined) ?? [];
+        onlineUsersRef.current = new Set(users.map((u) => u.id));
+      } else if (t === "user-online") {
+        const id = (frame.user as { id: string } | undefined)?.id;
+        if (id)
+          onlineUsersRef.current = new Set(onlineUsersRef.current).add(id);
+      } else if (t === "user-offline") {
+        const id = frame.userId as string | undefined;
+        if (id) {
+          const next = new Set(onlineUsersRef.current);
+          next.delete(id);
+          onlineUsersRef.current = next;
+        }
+      }
       const subs = subsRef.current.get(t);
       if (subs) for (const h of subs) h(frame);
     };
@@ -292,6 +319,11 @@ export function useRealtimeCoordination() {
     [],
   );
 
+  const getOnlineUsers = useCallback(
+    (): Set<string> => onlineUsersRef.current,
+    [],
+  );
+
   const watch = useCallback((topic: string) => {
     if (clientRef.current) {
       clientRef.current.watch(topic);
@@ -349,6 +381,7 @@ export function useRealtimeCoordination() {
     status,
     send,
     subscribe,
+    getOnlineUsers,
     watch,
     unwatch,
     registerServices,

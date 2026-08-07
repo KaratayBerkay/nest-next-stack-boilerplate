@@ -11,6 +11,7 @@ type RealtimeContextValue = {
   status: RealtimeStatus;
   send: (data: Record<string, unknown>) => void;
   subscribe: (type: string, handler: FrameHandler) => () => void;
+  getOnlineUsers: () => Set<string>;
   watch: (topic: string) => void;
   unwatch: (topic: string) => void;
   registerServices: (services: string[]) => void;

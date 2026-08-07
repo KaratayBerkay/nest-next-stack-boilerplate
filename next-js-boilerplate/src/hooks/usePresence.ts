@@ -5,8 +5,15 @@ import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 
 export function usePresence(): Set<string> {
   const realtime = useRealtime();
-  const [online, setOnline] = useState<Set<string>>(new Set());
-  const onlineRef = useRef<Set<string>>(new Set());
+  // Seed from the provider's always-on cache rather than starting empty: the
+  // server's one-time online-users snapshot (sent at WS connect, which
+  // usually happens before this hook ever mounts) would otherwise be lost,
+  // leaving already-online peers stuck looking offline until they happen to
+  // toggle after this hook subscribes.
+  const [online, setOnline] = useState<Set<string>>(
+    () => realtime?.getOnlineUsers() ?? new Set(),
+  );
+  const onlineRef = useRef<Set<string>>(online);
 
   useEffect(() => {
     if (!realtime) return;
