@@ -4,14 +4,13 @@ import { PrismaService } from '../prisma/prisma.service';
 import {
   MessagingService,
   isValidRoom,
-  VIP_ROOM_PREFIX,
+  hasRoomTierAccess,
 } from './messaging.service';
 import type { RoomMember } from './messaging.types';
 import { initials, type MessageAttachment } from './messaging.types';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs as RealtimeAuthWs } from '../realtime/realtime.types';
-import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 
@@ -230,10 +229,7 @@ export class MessagingWsGateway implements OnModuleInit {
   // Returns an error message if ws may not join room, null if it's allowed.
   private roomJoinError(ws: AuthWs, room: string): string | null {
     if (!isValidRoom(room)) return 'Invalid room';
-    if (
-      room.startsWith(VIP_ROOM_PREFIX) &&
-      tierRank(ws.tier ?? 'FREE') < MIN_TIER_FOR_VIP
-    ) {
+    if (!hasRoomTierAccess(room, ws.tier)) {
       return 'VIP rooms require MEDIUM tier or above';
     }
     return null;
@@ -311,6 +307,15 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'Invalid room' }));
       return;
     }
+    if (!hasRoomTierAccess(data.room, ws.tier)) {
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          message: 'VIP rooms require MEDIUM tier or above',
+        }),
+      );
+      return;
+    }
     if (!hasTextOrAttachmentOrEnvelope(data)) {
       ws.send(
         JSON.stringify({
@@ -343,6 +348,7 @@ export class MessagingWsGateway implements OnModuleInit {
     const saved = await this.ms.saveRoomMessage(
       data.room,
       ws.userId,
+      ws.tier,
       plaintext.text ?? '',
       toAttachments(data),
       storageEnvelope,

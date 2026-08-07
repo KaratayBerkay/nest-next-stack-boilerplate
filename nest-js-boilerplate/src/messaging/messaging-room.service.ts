@@ -1,10 +1,11 @@
-import { NotFoundException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { countLetters } from '../common/utils/letter-count';
 import { UsageService } from '../usage/usage.service';
+import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 import {
   type RoomMember,
   type MessageAttachment,
@@ -43,6 +44,22 @@ export function isValidRoom(room: string): boolean {
     CHAT_ROOMS.includes(room as ChatRoom) ||
     room.startsWith(VIP_ROOM_PREFIX) ||
     dbRoomSlugs.has(room)
+  );
+}
+
+/**
+ * Single source of truth for the VIP tier gate, shared by every place a room
+ * is joined, read, or written to (WS gateway's roomJoinError, the REST/WS
+ * read paths, saveRoomMessage, and /upload/serve's attachment ownership
+ * check) so the gate can't drift out of sync between them again.
+ */
+export function hasRoomTierAccess(
+  room: string,
+  tier: string | undefined,
+): boolean {
+  return (
+    !room.startsWith(VIP_ROOM_PREFIX) ||
+    tierRank(tier ?? 'FREE') >= MIN_TIER_FOR_VIP
   );
 }
 
@@ -240,12 +257,15 @@ export class MessagingRoomService {
   async saveRoomMessage(
     roomId: string,
     senderId: string,
+    tier: string | undefined,
     body = '',
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
+    if (!hasRoomTierAccess(roomId, tier))
+      throw new ForbiddenException('VIP rooms require MEDIUM tier or above');
     await this.usage.assertCanSendMessage(senderId, countLetters(body));
     // Room messages are ALWAYS stored encrypted: a caller-supplied envelope
     // is flattened into the v/ct/nonce columns as-is, otherwise the server
@@ -313,9 +333,16 @@ export class MessagingRoomService {
       });
   }
 
-  async getRoomMessages(roomId: string, before?: string, take = 30) {
+  async getRoomMessages(
+    roomId: string,
+    tier: string | undefined,
+    before?: string,
+    take = 30,
+  ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
+    if (!hasRoomTierAccess(roomId, tier))
+      throw new ForbiddenException('VIP rooms require MEDIUM tier or above');
     const where: Prisma.RoomMessageWhereInput = { roomId };
     if (before) where.createdAt = { lt: new Date(before) };
     const messages = await this.prisma.roomMessage.findMany({
@@ -350,12 +377,19 @@ export class MessagingRoomService {
    * RoomMessageAttachment (not MessageAttachment — rooms have their own
    * attachment table, joined through roomMessage.roomId) with an explicit
    * select to keep ciphertext columns off the wire, mirroring
-   * MessagingDmService.getConversationAttachments. No membership check here,
-   * same as getRoomMessages above — only room validity is gated.
+   * MessagingDmService.getConversationAttachments. Gated the same way as
+   * getRoomMessages above: valid room, and sufficient tier for vip- rooms.
    */
-  async getRoomAttachments(roomId: string, before?: string, take = 30) {
+  async getRoomAttachments(
+    roomId: string,
+    tier: string | undefined,
+    before?: string,
+    take = 30,
+  ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
+    if (!hasRoomTierAccess(roomId, tier))
+      throw new ForbiddenException('VIP rooms require MEDIUM tier or above');
     const where: Prisma.RoomMessageAttachmentWhereInput = {
       roomMessage: { roomId },
     };

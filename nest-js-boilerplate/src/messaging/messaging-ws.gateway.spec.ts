@@ -351,6 +351,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
         'general',
         'u1',
+        'FREE',
         'hello',
         [],
         undefined,
@@ -371,6 +372,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
         'general',
         'u1',
+        'FREE',
         '',
         attachments,
         undefined,
@@ -388,9 +390,38 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
         'general',
         'u1',
+        'FREE',
         '',
         [],
         envelope,
+      );
+    });
+
+    it('rejects FREE tier sending room-message to a vip- room without joining', async () => {
+      const ws = createMockWs('FREE');
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'vip-lounge',
+        text: 'hello',
+      });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('VIP rooms require MEDIUM tier'),
+      );
+      expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
+    });
+
+    it('allows MEDIUM tier sending room-message to a vip- room', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'vip-lounge',
+        text: 'hello',
+      });
+      expect(mockMs.saveRoomMessage).toHaveBeenCalledWith(
+        'vip-lounge',
+        'u1',
+        'MEDIUM',
+        'hello',
+        [],
+        undefined,
       );
     });
 

@@ -29,6 +29,7 @@ import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
+import { hasRoomTierAccess } from '../messaging/messaging.service';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import {
   FREE_UPLOAD_STORAGE_BYTES,
@@ -400,8 +401,12 @@ export class UploadController {
 
     // FileTypeValidator only reads `buffer` + `mimetype` (magic bytes sniff),
     // so a plain object stands in for the multer file here.
-    const fake = { originalname, mimetype, buffer, size: buffer.length } as
-      Express.Multer.File;
+    const fake = {
+      originalname,
+      mimetype,
+      buffer,
+      size: buffer.length,
+    } as Express.Multer.File;
 
     const validator = new ChatAttachmentTypeValidator({
       fileType: ALLOWED_ATTACHMENT_TYPES,
@@ -479,13 +484,14 @@ export class UploadController {
     @Res() res: Response,
     @Query('objectName') objectName?: string,
   ) {
-    if (!objectName || !objectName.trim()) {
+    if (!objectName?.trim()) {
       throw new BadRequestException('Missing objectName query parameter');
     }
     const pending = await this.prisma.pendingUpload.findUnique({
       where: { objectName },
     });
     if (!pending) throw new NotFoundException('Attachment not found');
+    await this.assertCanAccessUpload(user, pending);
 
     let plain: Uint8Array;
     try {
@@ -507,6 +513,52 @@ export class UploadController {
       'Cache-Control': 'public, max-age=31536000, immutable',
     });
     res.end(Buffer.from(plain));
+  }
+
+  /**
+   * Ownership/membership gate for decrypted attachment bytes. A PendingUpload
+   * row on its own proves nothing about the requester — it's keyed by
+   * objectName, guessable-shaped, and readable by any logged-in user unless
+   * gated here. Allowed callers: the uploader themselves (covers in-flight
+   * uploads not yet attached to any message, e.g. an abandoned composer), the
+   * sender/recipient of the DM the attachment ended up on, or a room member
+   * with sufficient tier for the room it ended up on. Throws the same 404 for
+   * "doesn't exist" and "not yours" so the endpoint doesn't leak which
+   * objectNames are real.
+   */
+  private async assertCanAccessUpload(
+    user: JwtUser,
+    pending: {
+      uploadedBy: string;
+      messageId: string | null;
+      roomMessageId: string | null;
+    },
+  ): Promise<void> {
+    if (pending.uploadedBy === user.userId) return;
+
+    if (pending.messageId) {
+      const message = await this.prisma.message.findUnique({
+        where: { id: pending.messageId },
+        select: { senderId: true, recipientId: true },
+      });
+      if (
+        message &&
+        (message.senderId === user.userId ||
+          message.recipientId === user.userId)
+      ) {
+        return;
+      }
+    } else if (pending.roomMessageId) {
+      const roomMessage = await this.prisma.roomMessage.findUnique({
+        where: { id: pending.roomMessageId },
+        select: { roomId: true },
+      });
+      if (roomMessage && hasRoomTierAccess(roomMessage.roomId, user.tier)) {
+        return;
+      }
+    }
+
+    throw new NotFoundException('Attachment not found');
   }
 
   private async readBodyStream(req: Request): Promise<Buffer> {
@@ -576,7 +628,12 @@ export class UploadController {
         undefined,
         'image/webp',
       ),
-      this.s3bucket.upload(`${base}-full${ext}`, fullBuf, undefined, 'image/webp'),
+      this.s3bucket.upload(
+        `${base}-full${ext}`,
+        fullBuf,
+        undefined,
+        'image/webp',
+      ),
     ]);
 
     return { badge, medium, full };

@@ -190,8 +190,7 @@ export class MessagingController {
 
   @Get('conversations/:userId/attachments')
   @ApiOperation({
-    summary:
-      'List every attachment exchanged in a conversation, newest first',
+    summary: 'List every attachment exchanged in a conversation, newest first',
   })
   @ApiQuery({
     name: 'before',
@@ -271,6 +270,7 @@ export class MessagingController {
   ) {
     const result = await this.ms.getRoomMessages(
       roomId,
+      user.tier,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
     );
@@ -297,12 +297,14 @@ export class MessagingController {
     description: 'Page size (default 30)',
   })
   async getRoomAttachments(
+    @CurrentUser() user: JwtUser,
     @Param('roomId') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
     return this.ms.getRoomAttachments(
       roomId,
+      user.tier,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
     );

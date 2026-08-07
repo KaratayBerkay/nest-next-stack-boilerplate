@@ -246,6 +246,7 @@ export class MessagingService {
   saveRoomMessage(
     roomId: string,
     senderId: string,
+    tier: string | undefined,
     body: string,
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
@@ -253,18 +254,29 @@ export class MessagingService {
     return this.rooms.saveRoomMessage(
       roomId,
       senderId,
+      tier,
       body,
       attachments,
       envelope,
     );
   }
 
-  getRoomMessages(roomId: string, before?: string, take?: number) {
-    return this.rooms.getRoomMessages(roomId, before, take);
+  getRoomMessages(
+    roomId: string,
+    tier: string | undefined,
+    before?: string,
+    take?: number,
+  ) {
+    return this.rooms.getRoomMessages(roomId, tier, before, take);
   }
 
-  getRoomAttachments(roomId: string, before?: string, take?: number) {
-    return this.rooms.getRoomAttachments(roomId, before, take);
+  getRoomAttachments(
+    roomId: string,
+    tier: string | undefined,
+    before?: string,
+    take?: number,
+  ) {
+    return this.rooms.getRoomAttachments(roomId, tier, before, take);
   }
 }
 
@@ -272,5 +284,6 @@ export {
   CHAT_ROOMS,
   VIP_ROOM_PREFIX,
   isValidRoom,
+  hasRoomTierAccess,
 } from './messaging-room.service';
 export type { ChatRoom } from './messaging-room.service';
