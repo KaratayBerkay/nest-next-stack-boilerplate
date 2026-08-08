@@ -225,8 +225,7 @@ void main() {
       );
     });
 
-    test(
-        'message-deleted event frame (scope everyone) is handled gracefully',
+    test('message-deleted event frame (scope everyone) is handled gracefully',
         () {
       final container = ProviderContainer();
       addTearDown(container.dispose);
