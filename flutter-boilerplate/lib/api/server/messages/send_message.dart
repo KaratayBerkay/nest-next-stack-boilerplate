@@ -27,6 +27,7 @@ const _mutation = '''
       }
       createdAt
       readAt
+      deletedAt
     }
   }
 ''';
@@ -70,12 +71,15 @@ class SendMessageServer {
       senderId: result['senderId'] as String,
       senderName: sender?['name'] as String? ?? '',
       senderAvatarUrl: sender?['avatarUrl'] as String?,
-      content: result['body'] as String,
+      content: result['body'] as String? ?? '',
       attachments: (result['attachments'] as List<dynamic>? ?? const [])
           .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
           .toList(),
       createdAt: DateTime.parse(result['createdAt'] as String),
       isRead: result['readAt'] != null,
+      deletedAt: result['deletedAt'] != null
+          ? DateTime.parse(result['deletedAt'] as String)
+          : null,
     );
   }
 }

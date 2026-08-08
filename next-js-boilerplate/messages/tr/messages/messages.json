@@ -31,5 +31,12 @@
   "allUploadsTitle": "Tüm yüklemeler",
   "allUploadsEmpty": "Bu sohbette henüz dosya yüklenmedi",
   "allUploadsFailedToLoad": "Yüklemeler yüklenemedi",
-  "loadMore": "Daha fazla yükle"
+  "loadMore": "Daha fazla yükle",
+  "messageActions": "Mesaj işlemleri",
+  "deletedMessage": "Bu mesaj silindi",
+  "deleteForMe": "Benden sil",
+  "deleteForEveryone": "Herkesten sil",
+  "deleteForEveryoneConfirmTitle": "Herkesten silinsin mi?",
+  "deleteForEveryoneConfirmDescription": "Bu mesaj bu sohbetteki herkes için kaldırılacak. Bu işlem geri alınamaz.",
+  "deleteMessageFailed": "Mesaj silinemedi. Tekrar deneyin."
 }

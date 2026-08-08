@@ -375,6 +375,7 @@ model User {
   recvFriendReqs     Friendship[]       @relation("FriendshipAddressee")
   sentMessages       Message[]          @relation("MessageSender")
   recvMessages       Message[]          @relation("MessageRecipient")
+  messageDeletions   MessageDeletion[]
   roomMessages       RoomMessage[]      @relation("RoomMessageSender")
   roomParticipations RoomParticipant[]
   notifications      Notification[]     @relation("NotificationRecipient")
@@ -838,10 +839,30 @@ model Message {
   attachments MessageAttachment[]
   deliveredAt DateTime? @db.Timestamptz(6)
   readAt      DateTime? @db.Timestamptz(6)
+  // "Delete for everyone" tombstone — set once, ciphertext/attachments left
+  // untouched at rest, just excluded from API responses from this point on.
+  deletedAt   DateTime? @db.Timestamptz(6)
+  // Per-viewer "delete for me" rows — see MessageDeletion below.
+  deletions   MessageDeletion[]
   createdAt   DateTime  @default(now()) @db.Timestamptz(6)
 
   @@index([senderId, recipientId])
   @@index([recipientId, readAt])
+}
+
+// One row per (message, viewer) who "deleted for me" — hides the message
+// only for that viewer, persists across reloads/devices, and never affects
+// the other party. Mirrors RoomParticipant's per-user-per-entity shape.
+model MessageDeletion {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  messageId String   @db.Uuid
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([messageId, userId])
+  @@index([userId])
 }
 
 model MessageAttachment {

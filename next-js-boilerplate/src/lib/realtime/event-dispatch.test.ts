@@ -502,6 +502,119 @@ describe("dispatchEvent", () => {
     });
   });
 
+  describe("message-deleted", () => {
+    it("scope 'me' removes the message from the cache entirely", async () => {
+      qc.setQueryData(["messages", "peer-1"], {
+        pages: [{ messages: [{ id: "m1" }, { id: "m2" }] }],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "message-deleted",
+          scope: "me",
+          messageId: "m1",
+          peerId: "peer-1",
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["messages", "peer-1"]) as {
+        pages: { messages: { id: string }[] }[];
+      };
+      expect(data.pages[0].messages).toEqual([{ id: "m2" }]);
+    });
+
+    it("scope 'everyone' patches the message in place without changing array length or order", async () => {
+      qc.setQueryData(["messages", "peer-1"], {
+        pages: [
+          {
+            messages: [
+              { id: "m1", body: "first" },
+              { id: "m2", body: "second", attachments: [{ url: "x" }] },
+              { id: "m3", body: "third" },
+            ],
+          },
+        ],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "message-deleted",
+          scope: "everyone",
+          messageId: "m2",
+          senderId: "user-1",
+          recipientId: "peer-1",
+          deletedAt: "2026-08-08T00:00:00Z",
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["messages", "peer-1"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(3);
+      expect(data.pages[0].messages.map((m) => m.id)).toEqual([
+        "m1",
+        "m2",
+        "m3",
+      ]);
+      expect(data.pages[0].messages[1]).toEqual({
+        id: "m2",
+        body: null,
+        attachments: [],
+        deletedAt: "2026-08-08T00:00:00Z",
+      });
+    });
+
+    it("scope 'everyone' derives peerId as the sender when the current user is the recipient", async () => {
+      qc.setQueryData(["messages", "sender-1"], {
+        pages: [{ messages: [{ id: "m1", body: "hi" }] }],
+        pageParams: [undefined],
+      });
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "message-deleted",
+          scope: "everyone",
+          messageId: "m1",
+          senderId: "sender-1",
+          recipientId: "user-1",
+          deletedAt: "2026-08-08T00:00:00Z",
+        },
+        "user-1",
+      );
+
+      const data = qc.getQueryData(["messages", "sender-1"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      };
+      expect(data.pages[0].messages[0].deletedAt).toBe("2026-08-08T00:00:00Z");
+    });
+
+    it("invalidates when the conversation is not cached", async () => {
+      const invalidateSpy = vi.spyOn(qc, "invalidateQueries");
+
+      await dispatchEvent(
+        qc,
+        {
+          type: "message-deleted",
+          scope: "me",
+          messageId: "m1",
+          peerId: "peer-1",
+        },
+        "user-1",
+      );
+
+      expect(invalidateSpy).toHaveBeenCalledWith({
+        queryKey: ["messages", "peer-1"],
+      });
+    });
+  });
+
   describe("room-message", () => {
     it("appends message to cached room messages", async () => {
       qc.setQueryData(["room", "general"], [{ id: "m1", body: "hello" }]);

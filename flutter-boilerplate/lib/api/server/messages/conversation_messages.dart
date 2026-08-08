@@ -28,6 +28,7 @@ const _query = '''
       }
       createdAt
       readAt
+      deletedAt
     }
   }
 ''';
@@ -65,12 +66,18 @@ class ConversationMessagesServer {
       senderId: json['senderId'] as String,
       senderName: sender?['name'] as String? ?? '',
       senderAvatarUrl: sender?['avatarUrl'] as String?,
-      content: json['body'] as String,
+      // A tombstoned ("deleted for everyone") message resolves `body` to
+      // null server-side — the unguarded cast this used to be would throw
+      // the first time a deleted message was fetched.
+      content: json['body'] as String? ?? '',
       attachments: (json['attachments'] as List<dynamic>? ?? const [])
           .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['readAt'] != null,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
     );
   }
 }

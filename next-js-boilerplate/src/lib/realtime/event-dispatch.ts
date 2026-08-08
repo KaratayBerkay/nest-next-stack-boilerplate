@@ -62,13 +62,15 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
       const echoTempId = (msg as Record<string, unknown>)._tempId as
-        string | undefined;
+        | string
+        | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
         sentTempIds.delete(echoTempId);
         first.messages = first.messages.map((m) =>
@@ -104,7 +106,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -126,7 +129,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -135,6 +139,48 @@ export async function dispatchEvent(
             ? { ...m, deliveredAt: frame.deliveredAt }
             : m,
         ),
+      }));
+      return { ...data, pages };
+    });
+  }
+
+  if (t === "message-deleted" && ownUserId) {
+    const scope = frame.scope as "me" | "everyone";
+    // scope "me": peerId rides directly on the frame (it's a sync frame to
+    // the actor's own other devices/tabs, not a peer-facing broadcast).
+    // scope "everyone": derive it the same way "direct-message" does — the
+    // frame carries absolute senderId/recipientId, not a peerId.
+    const peerId =
+      scope === "me"
+        ? (frame.peerId as string)
+        : ownUserId === (frame.senderId as string)
+          ? (frame.recipientId as string)
+          : (frame.senderId as string);
+    if (!peerId) return;
+    if (!qc.getQueryData(["messages", peerId])) {
+      qc.invalidateQueries({ queryKey: ["messages", peerId] });
+      return;
+    }
+    qc.setQueryData(["messages", peerId], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = data.pages.map((page) => ({
+        ...page,
+        messages:
+          scope === "me"
+            ? page.messages.filter((m) => m.id !== frame.messageId)
+            : page.messages.map((m) =>
+                m.id === frame.messageId
+                  ? {
+                      ...m,
+                      body: null,
+                      attachments: [],
+                      deletedAt: frame.deletedAt,
+                    }
+                  : m,
+              ),
       }));
       return { ...data, pages };
     });

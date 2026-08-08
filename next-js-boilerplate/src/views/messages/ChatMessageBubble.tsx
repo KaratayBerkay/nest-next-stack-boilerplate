@@ -1,11 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { MessageTick } from "@/components/MessageTick";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { IconButton } from "@/components/ui/button/icon-button";
+import { IconDotsVertical, IconBan } from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { formatMessageTime } from "@/views/messages/ChatView-utils";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { DELETE_FOR_EVERYONE_WINDOW_MS } from "@/constants/messages";
 import type { ChatMessageBubbleProps } from "@/types/messages/ChatMessageBubble-types";
 
 export function ChatMessageBubble({
@@ -15,13 +26,28 @@ export function ChatMessageBubble({
   userEmail,
   userAvatarUrl,
   dateDisplay,
+  onDelete,
 }: ChatMessageBubbleProps) {
   const t = useMessages("messages");
+  // Lazy initializer isolates the impure Date.now() read to component mount
+  // instead of every render (react-hooks/purity) — the delete window is a
+  // soft UI gate anyway (the server re-checks it), so "current as of when
+  // this bubble first appeared" is close enough.
+  const [renderedAt] = useState(() => Date.now());
+  const isDeleted = !!msg.deletedAt;
   const decryptionFailed =
-    (msg.body == null || msg.body === "") && !msg.attachments?.length;
+    !isDeleted &&
+    (msg.body == null || msg.body === "") &&
+    !msg.attachments?.length;
+  const canDeleteForEveryone =
+    isMe &&
+    renderedAt - new Date(msg.createdAt).getTime() <
+      DELETE_FOR_EVERYONE_WINDOW_MS;
+  const showActions = !isDeleted && !msg.pending && !msg.failed;
+
   return (
     <div
-      className={`animate-fade-in-up flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}
+      className={`animate-fade-in-up group flex items-end gap-2 ${isMe ? "flex-row-reverse" : ""}`}
       style={{ animationDelay: "0ms" }}
     >
       {!isMe && (
@@ -36,42 +62,53 @@ export function ChatMessageBubble({
       <div
         className={`flex max-w-[70%] flex-col gap-0.5 ${isMe ? "items-end" : ""}`}
       >
-        {msg.attachments?.length ? (
-          <div className="flex flex-wrap gap-2">
-            {msg.attachments.map((att) => (
-              <AttachmentPreview
-                key={att.url}
-                url={att.url}
-                type={att.type}
-                name={att.name}
-                size={att.size}
-                thumbnailUrl={att.thumbnailUrl}
-              />
-            ))}
-          </div>
-        ) : null}
-        {msg.body != null && msg.body !== "" ? (
-          <span
-            className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
-            }`}
-          >
-            {msg.body}
-          </span>
-        ) : decryptionFailed ? (
-          <span
-            className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              isMe
-                ? "bg-warning/10 text-warning-foreground"
-                : "bg-warning/10 text-warning-foreground"
-            }`}
-          >
+        {isDeleted ? (
+          <span className="bg-surface text-muted inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed">
             <span className="inline-flex items-center gap-1.5 text-xs italic">
-              <span>{"\uD83D\uDD12"}</span>
-              <span>{t.decryptionFailed}</span>
+              <IconBan size={13} stroke={1.75} />
+              <span>{t.deletedMessage}</span>
             </span>
           </span>
-        ) : null}
+        ) : (
+          <>
+            {msg.attachments?.length ? (
+              <div className="flex flex-wrap gap-2">
+                {msg.attachments.map((att) => (
+                  <AttachmentPreview
+                    key={att.url}
+                    url={att.url}
+                    type={att.type}
+                    name={att.name}
+                    size={att.size}
+                    thumbnailUrl={att.thumbnailUrl}
+                  />
+                ))}
+              </div>
+            ) : null}
+            {msg.body != null && msg.body !== "" ? (
+              <span
+                className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                }`}
+              >
+                {msg.body}
+              </span>
+            ) : decryptionFailed ? (
+              <span
+                className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  isMe
+                    ? "bg-warning/10 text-warning-foreground"
+                    : "bg-warning/10 text-warning-foreground"
+                }`}
+              >
+                <span className="inline-flex items-center gap-1.5 text-xs italic">
+                  <span>{"🔒"}</span>
+                  <span>{t.decryptionFailed}</span>
+                </span>
+              </span>
+            ) : null}
+          </>
+        )}
         <div
           className={`flex items-center gap-1 px-1 ${isMe ? "flex-row-reverse" : ""}`}
         >
@@ -87,6 +124,42 @@ export function ChatMessageBubble({
           )}
         </div>
       </div>
+      {showActions && (
+        <div
+          className={`self-center opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${
+            isMe ? "order-first" : "order-last"
+          }`}
+        >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <IconButton
+                icon={<IconDotsVertical size={16} stroke={1.5} />}
+                label={t.messageActions}
+                size="icon-xs"
+              />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onDelete(msg.id, "me")}>
+                {t.deleteForMe}
+              </DropdownMenuItem>
+              {canDeleteForEveryone && (
+                <ConfirmDialog
+                  title={t.deleteForEveryoneConfirmTitle}
+                  description={t.deleteForEveryoneConfirmDescription}
+                  confirmLabel={t.deleteForEveryone}
+                  onConfirm={() => onDelete(msg.id, "everyone")}
+                >
+                  {(open) => (
+                    <DropdownMenuItem className="text-error" onClick={open}>
+                      {t.deleteForEveryone}
+                    </DropdownMenuItem>
+                  )}
+                </ConfirmDialog>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
     </div>
   );
 }

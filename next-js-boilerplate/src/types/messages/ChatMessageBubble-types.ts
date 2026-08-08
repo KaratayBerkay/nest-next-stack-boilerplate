@@ -8,4 +8,5 @@ export interface ChatMessageBubbleProps {
   userEmail: string;
   userAvatarUrl?: string | null;
   dateDisplay: DateDisplayFormat;
+  onDelete: (messageId: string, scope: "me" | "everyone") => void;
 }

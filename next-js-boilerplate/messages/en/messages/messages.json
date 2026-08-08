@@ -31,5 +31,12 @@
   "allUploadsTitle": "All uploads",
   "allUploadsEmpty": "No files uploaded in this conversation yet",
   "allUploadsFailedToLoad": "Failed to load uploads",
-  "loadMore": "Load more"
+  "loadMore": "Load more",
+  "messageActions": "Message actions",
+  "deletedMessage": "This message was deleted",
+  "deleteForMe": "Delete for me",
+  "deleteForEveryone": "Delete for everyone",
+  "deleteForEveryoneConfirmTitle": "Delete for everyone?",
+  "deleteForEveryoneConfirmDescription": "This message will be removed for everyone in this conversation. This cannot be undone.",
+  "deleteMessageFailed": "Failed to delete message. Try again."
 }

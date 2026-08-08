@@ -21,7 +21,8 @@ export function useMessageActions() {
       trackTempId(tempId);
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+          | { pages: { messages: Record<string, unknown>[] }[] }
+          | undefined;
         if (!data?.pages?.length) return old;
         const pages = [...data.pages];
         const first = { ...pages[0] };
@@ -65,7 +66,8 @@ export function useMessageActions() {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
           const data = old as
-            { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+            | { pages: { messages: Record<string, unknown>[] }[] }
+            | undefined;
           if (!data?.pages?.length) return old;
           const pages = data.pages.map((page) => ({
             ...page,
@@ -88,7 +90,8 @@ export function useMessageActions() {
     if (user?.id && message) {
       queryClient.setQueryData(["messages", recipientId], (old: unknown) => {
         const data = old as
-          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+          | { pages: { messages: Record<string, unknown>[] }[] }
+          | undefined;
         if (!data?.pages?.length) return old;
         const pages = data.pages.map((page) => ({
           ...page,
@@ -109,6 +112,56 @@ export function useMessageActions() {
     await queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
+  const deleteMessage = async (
+    messageId: string,
+    peerId: string,
+    scope: "me" | "everyone",
+  ) => {
+    const queryKey = ["messages", peerId];
+    const previous = queryClient.getQueryData(queryKey);
+
+    queryClient.setQueryData(queryKey, (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = data.pages.map((page) => ({
+        ...page,
+        messages:
+          scope === "me"
+            ? page.messages.filter((m) => m.id !== messageId)
+            : page.messages.map((m) =>
+                m.id === messageId
+                  ? {
+                      ...m,
+                      body: null,
+                      attachments: [],
+                      deletedAt: new Date().toISOString(),
+                    }
+                  : m,
+              ),
+      }));
+      return { ...data, pages };
+    });
+
+    try {
+      const { deleteMessageForMeServer, deleteMessageForEveryoneServer } =
+        await import("@/api/server/messages/delete-message");
+      await (scope === "me"
+        ? deleteMessageForMeServer(messageId)
+        : deleteMessageForEveryoneServer(messageId));
+    } catch (err) {
+      // Roll back the optimistic patch — the message is still exactly as
+      // it was before this attempt.
+      queryClient.setQueryData(queryKey, previous);
+      throw err;
+    }
+
+    if (scope === "everyone") {
+      await queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    }
+  };
+
   const markRead = async (userId: string) => {
     try {
       const { markMessagesReadServer } =
@@ -123,7 +176,7 @@ export function useMessageActions() {
     await queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
-  return { sendMessage, markRead };
+  return { sendMessage, markRead, deleteMessage };
 }
 
 export interface UploadAttachmentOptions {

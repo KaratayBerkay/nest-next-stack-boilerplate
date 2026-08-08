@@ -3285,6 +3285,28 @@ class AppLocalizationsTr extends AppLocalizations {
       'Sohbete başlamak için kenar çubuğundan bir konuşma seçin';
 
   @override
+  String get messagesDeletedMessage => 'Bu mesaj silindi';
+
+  @override
+  String get messagesDeleteForMe => 'Benden sil';
+
+  @override
+  String get messagesDeleteForEveryone => 'Herkesten sil';
+
+  @override
+  String get messagesDeleteForEveryoneConfirmTitle => 'Herkesten silinsin mi?';
+
+  @override
+  String get messagesDeleteForEveryoneConfirm =>
+      'Bu mesaj bu sohbetteki herkes için kaldırılacak. Bu işlem geri alınamaz.';
+
+  @override
+  String get messagesFailedToDeleteMessage => 'Mesaj silinemedi';
+
+  @override
+  String get messagesCancel => 'İptal';
+
+  @override
   String get notificationTitle => 'Bildirimler';
 
   @override

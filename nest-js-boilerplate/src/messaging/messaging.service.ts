@@ -171,6 +171,14 @@ export class MessagingService {
     return this.dm.markRead(userId, otherUserId);
   }
 
+  deleteMessageForMe(userId: string, messageId: string) {
+    return this.dm.deleteMessageForMe(userId, messageId);
+  }
+
+  deleteMessageForEveryone(userId: string, messageId: string) {
+    return this.dm.deleteMessageForEveryone(userId, messageId);
+  }
+
   // === Delegated friend methods ===
 
   getUsers(currentUserId: string, search?: string) {

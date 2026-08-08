@@ -211,6 +211,36 @@ void main() {
       );
     });
 
+    test('message-deleted event frame (scope me) is handled gracefully', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final client = container.read(realtimeProvider);
+
+      expect(
+        () => client.handleMessage(
+          '{"type":"message-deleted","scope":"me","messageId":"m1","peerId":"user-b"}',
+        ),
+        returnsNormally,
+      );
+    });
+
+    test(
+        'message-deleted event frame (scope everyone) is handled gracefully',
+        () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      final client = container.read(realtimeProvider);
+
+      expect(
+        () => client.handleMessage(
+          '{"type":"message-deleted","scope":"everyone","messageId":"m1","senderId":"user-a","recipientId":"user-b","deletedAt":"2026-08-08T00:00:00Z"}',
+        ),
+        returnsNormally,
+      );
+    });
+
     test('room-message event frame is handled gracefully', () {
       final container = ProviderContainer();
       addTearDown(container.dispose);

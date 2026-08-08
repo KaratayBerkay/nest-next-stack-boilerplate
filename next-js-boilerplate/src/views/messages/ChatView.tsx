@@ -16,6 +16,7 @@ import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
 import { useTypingUsers } from "@/hooks/useTypingUsers";
 import {
   chatViewHandleSend,
+  chatViewHandleDelete,
   groupMessagesByDate,
 } from "@/views/messages/ChatView-utils";
 import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
@@ -71,7 +72,7 @@ export function ChatView({
     !!selectedUser,
   );
 
-  const { sendMessage } = useMessageActions();
+  const { sendMessage, deleteMessage } = useMessageActions();
   const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
 
   const handleSend = useCallback(
@@ -120,6 +121,21 @@ export function ChatView({
     [conversationMessages],
   );
 
+  const handleDeleteMessage = useCallback(
+    (messageId: string, scope: "me" | "everyone") => {
+      if (!selectedUser) return;
+      void chatViewHandleDelete(
+        deleteMessage,
+        selectedUser.id,
+        messageId,
+        scope,
+        setMessageError,
+        t.deleteMessageFailed,
+      );
+    },
+    [selectedUser, deleteMessage, t.deleteMessageFailed],
+  );
+
   if (connectionState === "unstable") {
     return (
       <ConnectionUnstable title={t.disconnected} description={t.connecting} />
@@ -157,6 +173,7 @@ export function ChatView({
         selectedUser={selectedUser}
         dateDisplay={dateDisplay}
         bottomRef={bottomRef}
+        onDelete={handleDeleteMessage}
         t={{
           failedToLoad: t.failedToLoad,
           noMessages: t.noMessages,

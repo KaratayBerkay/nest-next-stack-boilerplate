@@ -137,6 +137,20 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
       if (peerId != null) {
         ref.invalidate(conversationMessagesProvider(peerId));
       }
+    case 'message-deleted':
+      ref.invalidate(conversationsProvider);
+      // scope "me": peerId rides directly on the frame (a sync frame to the
+      // actor's own other devices, not a peer-facing broadcast). scope
+      // "everyone": the frame carries absolute senderId/recipientId (flat,
+      // not nested under "message" like direct-message), so derive it the
+      // same way _peerIdFromMessage does.
+      final myId = ref.read(currentUserProvider)?.id;
+      final deletePeerId = frame['scope'] == 'me'
+          ? frame['peerId'] as String?
+          : _peerIdFromMessage(frame, myId);
+      if (deletePeerId != null) {
+        ref.invalidate(conversationMessagesProvider(deletePeerId));
+      }
     case 'room-message':
       final room = frame['room'] as String?;
       if (room != null) {

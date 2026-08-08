@@ -1,4 +1,4 @@
-import { ForbiddenException, Logger } from '@nestjs/common';
+import { ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CacheAsideService } from '../caching/cache-aside.service';
@@ -8,8 +8,17 @@ import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { displayName } from '../common/utils/display-name';
 import { countLetters } from '../common/utils/letter-count';
 import { UsageService } from '../usage/usage.service';
-import { initials, type MessageAttachment } from './messaging.types';
+import {
+  DELETE_FOR_EVERYONE_WINDOW_MS,
+  initials,
+  type MessageAttachment,
+} from './messaging.types';
 import { resolveAttachmentEnvelopes } from './attachment-envelopes.util';
+
+/** Sentinel `lastMessage` value for a tombstoned conversation preview —
+ *  mirrors the existing `'[Encrypted]'` convention both frontends already
+ *  special-case in the sidebar. */
+export const DELETED_PREVIEW_SENTINEL = '[Deleted]';
 
 export class MessagingDmService {
   private readonly logger = new Logger(MessagingDmService.name);
@@ -116,6 +125,13 @@ export class MessagingDmService {
     // client envelope aren't guaranteed to echo their metadata back out of
     // decryptPreview, so the DB relation is the only source both encryption
     // paths agree on.
+    // Both queries bind $1 = userId (the viewer), so the same
+    // deletion-exclusion clause — "hide anything I deleted for me" — applies
+    // unchanged whether the viewer was the sender or the recipient of a given
+    // row. Deleted-for-everyone rows are NOT excluded here (deletedAt stays
+    // NULL-agnostic in the WHERE) — DISTINCT ON still picks them up as the
+    // latest row, and the aggregation loop below renders them as a tombstone
+    // preview instead of decrypting them.
     const sentMessages = await this.prisma.$queryRawUnsafe<
       Array<{
         id: string;
@@ -124,10 +140,11 @@ export class MessagingDmService {
         v: string;
         ct: string;
         nonce: string;
+        deletedAt: Date | null;
         hasAttachments: boolean;
       }>
     >(
-      `SELECT DISTINCT ON ("recipientId") id, "recipientId", "createdAt", v, ct, nonce, EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) ORDER BY "recipientId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("recipientId") id, "recipientId", "createdAt", v, ct, nonce, "deletedAt", EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "senderId" = $1::uuid AND "recipientId" = ANY($2::uuid[]) AND NOT EXISTS (SELECT 1 FROM "MessageDeletion" md WHERE md."messageId" = "Message"."id" AND md."userId" = $1::uuid) ORDER BY "recipientId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -139,10 +156,11 @@ export class MessagingDmService {
         v: string;
         ct: string;
         nonce: string;
+        deletedAt: Date | null;
         hasAttachments: boolean;
       }>
     >(
-      `SELECT DISTINCT ON ("senderId") id, "senderId", "createdAt", v, ct, nonce, EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) ORDER BY "senderId", "createdAt" DESC`,
+      `SELECT DISTINCT ON ("senderId") id, "senderId", "createdAt", v, ct, nonce, "deletedAt", EXISTS(SELECT 1 FROM "MessageAttachment" WHERE "messageId" = "Message"."id") AS "hasAttachments" FROM "Message" WHERE "recipientId" = $1::uuid AND "senderId" = ANY($2::uuid[]) AND NOT EXISTS (SELECT 1 FROM "MessageDeletion" md WHERE md."messageId" = "Message"."id" AND md."userId" = $1::uuid) ORDER BY "senderId", "createdAt" DESC`,
       userId,
       friendIds,
     );
@@ -157,17 +175,21 @@ export class MessagingDmService {
     >();
     for (const msg of sentMessages)
       latestPerPeer.set(msg.recipientId, {
-        lastMessage: this.decryptPreview(msg, userId),
+        lastMessage: msg.deletedAt
+          ? DELETED_PREVIEW_SENTINEL
+          : this.decryptPreview(msg, userId),
         lastTime: msg.createdAt,
-        hasAttachments: msg.hasAttachments,
+        hasAttachments: msg.deletedAt ? false : msg.hasAttachments,
       });
     for (const msg of receivedMessages) {
       const existing = latestPerPeer.get(msg.senderId);
       if (!existing || msg.createdAt > existing.lastTime)
         latestPerPeer.set(msg.senderId, {
-          lastMessage: this.decryptPreview(msg, userId),
+          lastMessage: msg.deletedAt
+            ? DELETED_PREVIEW_SENTINEL
+            : this.decryptPreview(msg, userId),
           lastTime: msg.createdAt,
-          hasAttachments: msg.hasAttachments,
+          hasAttachments: msg.deletedAt ? false : msg.hasAttachments,
         });
     }
 
@@ -226,6 +248,10 @@ export class MessagingDmService {
         { senderId: userId, recipientId: otherUserId },
         { senderId: otherUserId, recipientId: userId },
       ],
+      // "Delete for me" rows are hidden from this viewer entirely — never
+      // returned, not even as a tombstone (only the deleting viewer's own
+      // deletion is checked; the peer's copy of the message is untouched).
+      deletions: { none: { userId } },
     };
     if (before) where.createdAt = { lt: new Date(before) };
     const messages = await this.prisma.message.findMany({
@@ -256,9 +282,13 @@ export class MessagingDmService {
     });
     const redacted = messages.map((m) => ({
       ...m,
-      attachments: m.attachments.map((a) =>
-        this.storageCrypto.toWireAttachment(a),
-      ),
+      // "Delete for everyone" rows stay in the list (both parties keep
+      // seeing a tombstone at the right point in the thread) but never
+      // expose attachments — the body itself is stripped later by
+      // decryptMessageBody, which every caller of getMessages already runs.
+      attachments: m.deletedAt
+        ? []
+        : m.attachments.map((a) => this.storageCrypto.toWireAttachment(a)),
       sender: this.redactAvatar(m.sender, userId),
       recipient: this.redactAvatar(m.recipient, userId),
     }));
@@ -289,6 +319,10 @@ export class MessagingDmService {
           { senderId: userId, recipientId: otherUserId },
           { senderId: otherUserId, recipientId: userId },
         ],
+        // A deleted photo shouldn't still show up in the media gallery,
+        // whether it was deleted for everyone or just for this viewer.
+        deletedAt: null,
+        deletions: { none: { userId } },
       },
     };
     if (before) where.createdAt = { lt: new Date(before) };
@@ -630,5 +664,182 @@ export class MessagingDmService {
       this.cache.del(`conversations:${otherUserId}`),
     ]);
     return { readAt: now.toISOString() };
+  }
+
+  /**
+   * Recomputes what the sidebar preview for `peerId` should look like from
+   * `viewerId`'s perspective — used after a deletion may have changed which
+   * message is now the latest visible one. A real Prisma query (not raw
+   * SQL): this only runs on the low-QPS delete path, not the hot
+   * conversations list, so `deletions: { none: { userId } }`'s ergonomics
+   * matter more here than raw-SQL performance.
+   */
+  private async getLatestPreviewForPeer(
+    viewerId: string,
+    peerId: string,
+  ): Promise<{
+    lastMessage: string;
+    lastTime: Date;
+    hasAttachments: boolean;
+  } | null> {
+    const msg = await this.prisma.message.findFirst({
+      where: {
+        OR: [
+          { senderId: viewerId, recipientId: peerId },
+          { senderId: peerId, recipientId: viewerId },
+        ],
+        deletions: { none: { userId: viewerId } },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        v: true,
+        ct: true,
+        nonce: true,
+        senderId: true,
+        createdAt: true,
+        deletedAt: true,
+        _count: { select: { attachments: true } },
+      },
+    });
+    if (!msg) return null;
+    return {
+      lastMessage: msg.deletedAt
+        ? DELETED_PREVIEW_SENTINEL
+        : this.decryptPreview(msg, viewerId),
+      lastTime: msg.createdAt,
+      hasAttachments: msg.deletedAt ? false : msg._count.attachments > 0,
+    };
+  }
+
+  /**
+   * "Delete for me" — hides this message only for `userId`, permanently and
+   * across every device/tab of theirs (server-persisted, not a client-local
+   * hide). Never visible to, or affects, the other party in any way. No
+   * sender/recipient asymmetry, no time window, idempotent (upsert).
+   */
+  async deleteMessageForMe(
+    userId: string,
+    messageId: string,
+  ): Promise<{ id: string }> {
+    const message = await this.prisma.message.findFirst({
+      where: {
+        id: messageId,
+        OR: [{ senderId: userId }, { recipientId: userId }],
+      },
+      select: { id: true, senderId: true, recipientId: true },
+    });
+    if (!message) throw new NotFoundException('Message not found');
+    const peerId =
+      message.senderId === userId ? message.recipientId : message.senderId;
+
+    await this.prisma.messageDeletion.upsert({
+      where: { messageId_userId: { messageId, userId } },
+      create: { messageId, userId },
+      update: {},
+    });
+    // Only the actor's own conversation list can have changed.
+    await this.cache.del(`conversations:${userId}`);
+
+    const preview = await this.getLatestPreviewForPeer(userId, peerId);
+    this.realtime.emitToService(
+      userId,
+      'MESSAGE',
+      preview
+        ? {
+            renew: 'Messages',
+            type: 'Conversation',
+            conversation: { user: { id: peerId }, ...preview },
+          }
+        : // Edge case: no visible messages left with this peer at all.
+          { renew: 'Messages', type: 'ConversationRemoved', peerId },
+    );
+
+    // Multi-device/multi-tab sync for the ACTOR only — this frame never
+    // reaches the peer, who still sees the message exactly as before.
+    await this.realtime.emitToUserEncrypted(userId, {
+      type: 'message-deleted',
+      scope: 'me',
+      messageId,
+      peerId,
+    });
+    return { id: messageId };
+  }
+
+  /**
+   * "Delete for everyone" — sender-only, and only within
+   * DELETE_FOR_EVERYONE_WINDOW_MS of sending. Soft-hide only: v/ct/nonce and
+   * attachment rows/files are left exactly as they are at rest; this just
+   * flags the row so every read path (decryptMessageBody, getMessages,
+   * getConversations) stops surfacing its content from this point on.
+   * Idempotent — a second call on an already-tombstoned message is a
+   * harmless no-op rather than an error, so retries/double-clicks are safe.
+   */
+  async deleteMessageForEveryone(
+    userId: string,
+    messageId: string,
+  ): Promise<{ id: string; deletedAt: string }> {
+    const message = await this.prisma.message.findUnique({
+      where: { id: messageId },
+      select: {
+        id: true,
+        senderId: true,
+        recipientId: true,
+        createdAt: true,
+        deletedAt: true,
+      },
+    });
+    if (!message) throw new NotFoundException('Message not found');
+    if (message.senderId !== userId) {
+      throw new ForbiddenException(
+        'Only the sender can delete this message for everyone',
+      );
+    }
+    if (
+      !message.deletedAt &&
+      Date.now() - message.createdAt.getTime() > DELETE_FOR_EVERYONE_WINDOW_MS
+    ) {
+      throw new ForbiddenException('Delete window has expired');
+    }
+
+    const deletedAt = message.deletedAt ?? new Date();
+    if (!message.deletedAt) {
+      await this.prisma.message.update({
+        where: { id: messageId },
+        data: { deletedAt },
+      });
+    }
+    await Promise.all([
+      this.cache.del(`conversations:${message.senderId}`),
+      this.cache.del(`conversations:${message.recipientId}`),
+    ]);
+
+    // Both parties get the same frame — mirrors how deliverDirectMessage
+    // fans a new message out to both sides; each client derives whether
+    // it's the sender or the peer from senderId/recipientId.
+    const frame = {
+      type: 'message-deleted',
+      scope: 'everyone',
+      messageId,
+      senderId: message.senderId,
+      recipientId: message.recipientId,
+      deletedAt: deletedAt.toISOString(),
+    };
+    await this.realtime.emitToUserEncrypted(message.senderId, frame);
+    await this.realtime.emitToUserEncrypted(message.recipientId, frame);
+
+    for (const [viewer, peer] of [
+      [message.senderId, message.recipientId],
+      [message.recipientId, message.senderId],
+    ] as const) {
+      const preview = await this.getLatestPreviewForPeer(viewer, peer);
+      if (preview) {
+        this.realtime.emitToService(viewer, 'MESSAGE', {
+          renew: 'Messages',
+          type: 'Conversation',
+          conversation: { user: { id: peer }, ...preview },
+        });
+      }
+    }
+    return { id: messageId, deletedAt: deletedAt.toISOString() };
   }
 }

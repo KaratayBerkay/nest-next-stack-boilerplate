@@ -10,6 +10,7 @@ export interface Message {
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
+  deletedAt: string | null;
   attachments?: MessageAttachment[];
 }
 

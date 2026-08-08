@@ -175,6 +175,28 @@ describe("dispatchRenew", () => {
       const data = qc.getQueryData(["conversations"]) as unknown[];
       expect(data).toHaveLength(0);
     });
+
+    it("ConversationRemoved: drops the peer row entirely (deleted-for-me on every message)", async () => {
+      qc.setQueryData(
+        ["conversations"],
+        [
+          { user: { id: "u1", name: "Alice" }, lastMessage: "hi" },
+          { user: { id: "u2", name: "Bob" }, lastMessage: "yo" },
+        ],
+      );
+
+      await dispatchRenew(qc, {
+        renew: "Messages",
+        type: "ConversationRemoved",
+        peerId: "u1",
+      });
+
+      const data = qc.getQueryData(["conversations"]) as {
+        user: { id: string };
+      }[];
+      expect(data).toHaveLength(1);
+      expect(data[0].user.id).toBe("u2");
+    });
   });
 
   describe("Feed", () => {

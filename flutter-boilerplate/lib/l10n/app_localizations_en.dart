@@ -3278,6 +3278,28 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose a conversation from the sidebar to start chatting';
 
   @override
+  String get messagesDeletedMessage => 'This message was deleted';
+
+  @override
+  String get messagesDeleteForMe => 'Delete for me';
+
+  @override
+  String get messagesDeleteForEveryone => 'Delete for everyone';
+
+  @override
+  String get messagesDeleteForEveryoneConfirmTitle => 'Delete for everyone?';
+
+  @override
+  String get messagesDeleteForEveryoneConfirm =>
+      'This message will be removed for everyone in this conversation. This cannot be undone.';
+
+  @override
+  String get messagesFailedToDeleteMessage => 'Failed to delete message';
+
+  @override
+  String get messagesCancel => 'Cancel';
+
+  @override
   String get notificationTitle => 'Notifications';
 
   @override

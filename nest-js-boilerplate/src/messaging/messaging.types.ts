@@ -1,3 +1,6 @@
+/** "Delete for everyone" is only allowed within this window after sending. */
+export const DELETE_FOR_EVERYONE_WINDOW_MS = 15 * 60 * 1000;
+
 export interface RoomMember {
   socketId: string;
   userId: string;

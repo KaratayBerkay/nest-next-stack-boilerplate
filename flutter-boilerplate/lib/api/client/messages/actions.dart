@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../types/messages/message_attachment.dart';
 import '../../server/messages/accept_friend_request.dart';
 import '../../server/messages/decline_friend_request.dart';
+import '../../server/messages/delete_message.dart';
 import '../../server/messages/mark_read.dart';
 import '../../server/messages/send_friend_request.dart';
 import '../../server/messages/send_message.dart';
@@ -39,6 +40,16 @@ class MessageActions {
   Future<void> markRead(String conversationId) async {
     final server = _ref.read(markReadServerProvider);
     await server.call(conversationId);
+  }
+
+  Future<void> deleteMessageForMe(String messageId) async {
+    final server = _ref.read(deleteMessageServerProvider);
+    await server.forMe(messageId);
+  }
+
+  Future<void> deleteMessageForEveryone(String messageId) async {
+    final server = _ref.read(deleteMessageServerProvider);
+    await server.forEveryone(messageId);
   }
 
   Future<void> acceptFriendRequest(String requestId) async {

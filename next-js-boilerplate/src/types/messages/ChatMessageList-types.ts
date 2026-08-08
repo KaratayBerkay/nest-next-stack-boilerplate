@@ -13,6 +13,7 @@ export interface ChatMessageListProps {
   selectedUser: UserInfo;
   dateDisplay: DateDisplayFormat;
   bottomRef: RefObject<HTMLDivElement | null>;
+  onDelete: (messageId: string, scope: "me" | "everyone") => void;
   t: {
     failedToLoad: string;
     noMessages: string;

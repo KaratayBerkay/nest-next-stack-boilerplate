@@ -26,6 +26,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { decryptMessageBody } from './message-body.util';
 
 @ApiTags('Messaging')
 @ApiBearerAuth()
@@ -183,7 +184,7 @@ export class MessagingController {
     return {
       ...result,
       messages: result.messages.map((m) =>
-        this.decryptMessageBody(m, user.userId),
+        decryptMessageBody(m, user.userId, this.storageCrypto),
       ),
     };
   }
@@ -237,6 +238,32 @@ export class MessagingController {
     );
   }
 
+  @Post('messages/:messageId/delete-for-me')
+  @ApiOperation({
+    summary: 'Hide a message for the current user only',
+    description:
+      'Server-persisted — stays hidden across reloads and this user’s other devices. Never visible to or affects the peer.',
+  })
+  async deleteMessageForMe(
+    @CurrentUser() user: JwtUser,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.ms.deleteMessageForMe(user.userId, messageId);
+  }
+
+  @Post('messages/:messageId/delete-for-everyone')
+  @ApiOperation({
+    summary: 'Tombstone a message for both parties',
+    description:
+      'Sender-only, within the delete-for-everyone window. Soft-hide: ciphertext and attachments are left at rest, just excluded from API responses.',
+  })
+  async deleteMessageForEveryone(
+    @CurrentUser() user: JwtUser,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.ms.deleteMessageForEveryone(user.userId, messageId);
+  }
+
   @Post('messages/read')
   @ApiOperation({ summary: 'Mark messages from a user as read' })
   async markMessagesRead(
@@ -277,7 +304,7 @@ export class MessagingController {
     return {
       ...result,
       messages: result.messages.map((m: Record<string, unknown>) =>
-        this.decryptMessageBody(m, user.userId),
+        decryptMessageBody(m, user.userId, this.storageCrypto),
       ),
     };
   }
@@ -307,54 +334,6 @@ export class MessagingController {
       user.tier,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
-    );
-  }
-
-  /**
-   * Decrypt a storage envelope in-place so HTTP clients receive plaintext
-   * bodies instead of raw ciphertext. The envelope is rebuilt from the
-   * flattened v/ct/nonce columns (there is no JsonB envelope column anymore).
-   */
-  private decryptMessageBody(
-    message: Record<string, unknown>,
-    userId: string,
-  ): Record<string, unknown> {
-    const envelope = this.storageCrypto.toEnvelope(
-      message as {
-        v: string | null;
-        ct: string | null;
-        nonce: string | null;
-      },
-    );
-    if (!envelope) return message;
-    const { v: _v, ct: _ct, nonce: _nonce, ...rest } = message;
-    const attempt = (
-      decrypt: (e: unknown) => unknown,
-    ): Record<string, unknown> | null => {
-      try {
-        const decrypted = decrypt(envelope) as {
-          text?: string;
-          attachments?: unknown;
-        };
-        return { ...rest, body: decrypted.text ?? '' };
-      } catch {
-        return null;
-      }
-    };
-    return (
-      // Room key first (room messages use encryptForRoom).
-      attempt((e) => this.storageCrypto.decryptForRoom(e)) ??
-      // Then the sender's per-user key (legacy room messages or DMs
-      // encrypted with encryptForStorage(senderId, ...)).
-      attempt((e) =>
-        this.storageCrypto.decryptFromStorage(
-          (message.senderId as string) || userId,
-          e,
-        ),
-      ) ??
-      // Last resort: reader's per-user key (DMs where reader is sender).
-      attempt((e) => this.storageCrypto.decryptFromStorage(userId, e)) ??
-      message
     );
   }
 }

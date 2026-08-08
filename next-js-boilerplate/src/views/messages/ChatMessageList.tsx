@@ -15,10 +15,14 @@ export function ChatMessageList({
   selectedUser,
   dateDisplay,
   bottomRef,
+  onDelete,
   t,
 }: ChatMessageListProps) {
   const hasDecryptionFailure = conversationMessages.some(
-    (m) => (m.body == null || m.body === "") && !m.attachments?.length,
+    (m) =>
+      !m.deletedAt &&
+      (m.body == null || m.body === "") &&
+      !m.attachments?.length,
   );
 
   return (
@@ -60,6 +64,7 @@ export function ChatMessageList({
               userEmail={selectedUser.email ?? "?"}
               userAvatarUrl={selectedUser.avatarUrl}
               dateDisplay={dateDisplay}
+              onDelete={onDelete}
             />
           ))}
         </div>

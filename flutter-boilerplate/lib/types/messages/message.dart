@@ -10,6 +10,11 @@ class ChatMessage {
   final List<MessageAttachment> attachments;
   final DateTime createdAt;
   final bool isRead;
+  // Set once this message was "deleted for everyone" — a tombstone, not a
+  // hard delete: the row still exists, content is just withheld from here
+  // on. Null means not deleted. "Delete for me" never surfaces here at all
+  // — the server excludes those rows from the response entirely.
+  final DateTime? deletedAt;
 
   const ChatMessage({
     required this.id,
@@ -21,6 +26,7 @@ class ChatMessage {
     this.attachments = const [],
     required this.createdAt,
     this.isRead = false,
+    this.deletedAt,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -36,6 +42,9 @@ class ChatMessage {
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
     );
   }
 }

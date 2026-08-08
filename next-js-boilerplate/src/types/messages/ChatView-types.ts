@@ -16,6 +16,7 @@ export type Message = {
   createdAt: string;
   readAt: string | null;
   deliveredAt: string | null;
+  deletedAt: string | null;
   attachments?: MessageAttachment[];
   _tempId?: string;
   pending?: boolean;

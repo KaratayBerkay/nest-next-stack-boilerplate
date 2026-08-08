@@ -8,9 +8,14 @@ describe('MessagingResolver', () => {
     getMessages: jest.Mock;
     sendAndDeliverMessage: jest.Mock;
     markConversationRead: jest.Mock;
+    deleteMessageForMe: jest.Mock;
+    deleteMessageForEveryone: jest.Mock;
   };
   let mockStorageCrypto: {
     encryptForStorage: jest.Mock;
+    toEnvelope: jest.Mock;
+    decryptForRoom: jest.Mock;
+    decryptFromStorage: jest.Mock;
   };
 
   beforeEach(() => {
@@ -20,17 +25,25 @@ describe('MessagingResolver', () => {
       getMessages: jest
         .fn()
         .mockResolvedValue({ messages: [], hasMore: false }),
-      sendAndDeliverMessage: jest
-        .fn()
-        .mockResolvedValue({ id: 'm1', body: 'hello' }),
+      sendAndDeliverMessage: jest.fn().mockResolvedValue({
+        message: { id: 'm1', body: 'hello' },
+        delivery: { recipientPayload: {}, senderPayload: {} },
+      }),
       markConversationRead: jest
         .fn()
         .mockResolvedValue({ readAt: '2026-01-01T00:00:00.000Z' }),
+      deleteMessageForMe: jest.fn().mockResolvedValue({ id: 'm1' }),
+      deleteMessageForEveryone: jest
+        .fn()
+        .mockResolvedValue({ id: 'm1', deletedAt: '2026-01-01T00:00:00.000Z' }),
     };
     mockStorageCrypto = {
       encryptForStorage: jest
         .fn()
         .mockResolvedValue({ v: 'storage-v1', nonce: 'sn', ct: 'sc' }),
+      toEnvelope: jest.fn(),
+      decryptForRoom: jest.fn(),
+      decryptFromStorage: jest.fn(),
     };
 
     resolver = new MessagingResolver(
@@ -116,6 +129,69 @@ describe('MessagingResolver', () => {
       await resolver.markMessagesRead(user, 'u2');
 
       expect(mockMs.markConversationRead).toHaveBeenCalledWith('u1', 'u2');
+    });
+  });
+
+  describe('deleteMessageForMe', () => {
+    it('delegates to the service and returns true', async () => {
+      const user = { userId: 'u1', email: 'a@b.com' };
+      const result = await resolver.deleteMessageForMe(user, 'm1');
+
+      expect(mockMs.deleteMessageForMe).toHaveBeenCalledWith('u1', 'm1');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('deleteMessageForEveryone', () => {
+    it('delegates to the service and returns true', async () => {
+      const user = { userId: 'u1', email: 'a@b.com' };
+      const result = await resolver.deleteMessageForEveryone(user, 'm1');
+
+      expect(mockMs.deleteMessageForEveryone).toHaveBeenCalledWith('u1', 'm1');
+      expect(result).toBe(true);
+    });
+  });
+
+  describe('body (ResolveField)', () => {
+    it('returns the decrypted body for a normal message', () => {
+      const message = { v: 'v1', ct: 'ct1', nonce: 'n1', senderId: 'u1' };
+      mockStorageCrypto.toEnvelope.mockReturnValue({
+        v: 'v1',
+        ct: 'ct1',
+        nonce: 'n1',
+      });
+      mockStorageCrypto.decryptForRoom.mockReturnValue({ text: 'hi' });
+
+      const result = resolver.body(
+        message as never,
+        {
+          userId: 'u1',
+          email: 'a@b.com',
+        } as never,
+      );
+
+      expect(result).toBe('hi');
+    });
+
+    it('returns null without decrypting for a tombstoned message', () => {
+      const message = {
+        v: 'v1',
+        ct: 'ct1',
+        nonce: 'n1',
+        senderId: 'u1',
+        deletedAt: new Date(),
+      };
+
+      const result = resolver.body(
+        message as never,
+        {
+          userId: 'u1',
+          email: 'a@b.com',
+        } as never,
+      );
+
+      expect(result).toBeNull();
+      expect(mockStorageCrypto.toEnvelope).not.toHaveBeenCalled();
     });
   });
 });

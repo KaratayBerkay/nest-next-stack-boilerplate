@@ -1085,6 +1085,13 @@ export type I18nMessages = {
       "allUploadsEmpty": string;
       "allUploadsFailedToLoad": string;
       "loadMore": string;
+      "messageActions": string;
+      "deletedMessage": string;
+      "deleteForMe": string;
+      "deleteForEveryone": string;
+      "deleteForEveryoneConfirmTitle": string;
+      "deleteForEveryoneConfirmDescription": string;
+      "deleteMessageFailed": string;
     }
 
   "notification": {

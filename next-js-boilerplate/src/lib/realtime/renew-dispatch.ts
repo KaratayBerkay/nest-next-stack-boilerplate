@@ -94,6 +94,17 @@ export async function dispatchRenew(
           lastMessage?: string | Record<string, unknown>;
         };
         patchConversationList(qc, conv, { insertIfMissing: true });
+      } else if (frame.type === "ConversationRemoved") {
+        // Edge case: the user deleted-for-me every message they had with
+        // this peer — nothing left to preview, so drop the row entirely.
+        const peerId = frame.peerId as string;
+        qc.setQueryData(["conversations"], (old: unknown[] | undefined) => {
+          const list = (old ?? []) as Record<string, unknown>[];
+          return list.filter(
+            (c) =>
+              (c.user as Record<string, unknown> | undefined)?.id !== peerId,
+          );
+        });
       }
       break;
     }

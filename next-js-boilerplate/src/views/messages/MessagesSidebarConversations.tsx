@@ -75,11 +75,14 @@ export function MessagesSidebarConversations({
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="text-muted min-w-0 truncate text-sm">
                     {typeof c.lastMessage === "string"
-                      ? c.lastMessage !== "" && c.lastMessage !== "[Encrypted]"
-                        ? c.lastMessage
-                        : c.hasAttachments
-                          ? "\uD83D\uDCCE " + t.attachmentPreview
-                          : "\uD83D\uDD12 " + t.decryptionFailed
+                      ? c.lastMessage === "[Deleted]"
+                        ? t.deletedMessage
+                        : c.lastMessage !== "" &&
+                            c.lastMessage !== "[Encrypted]"
+                          ? c.lastMessage
+                          : c.hasAttachments
+                            ? "\uD83D\uDCCE " + t.attachmentPreview
+                            : "\uD83D\uDD12 " + t.decryptionFailed
                       : "\uD83D\uDD12 " + t.decryptionFailed}
                   </p>
                   {c.unread > 0 && (

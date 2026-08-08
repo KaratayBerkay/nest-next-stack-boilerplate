@@ -42,6 +42,25 @@ export async function chatViewHandleSend(
   }
 }
 
+export async function chatViewHandleDelete(
+  deleteMessage: (
+    messageId: string,
+    peerId: string,
+    scope: "me" | "everyone",
+  ) => Promise<void>,
+  peerId: string,
+  messageId: string,
+  scope: "me" | "everyone",
+  setMessageError: Dispatch<SetStateAction<string | null>>,
+  deleteFailedMessage: string,
+) {
+  try {
+    await deleteMessage(messageId, peerId, scope);
+  } catch {
+    setMessageError(deleteFailedMessage);
+  }
+}
+
 export function formatMessageTime(
   dateStr: string,
   dateDisplay: DateDisplayFormat,

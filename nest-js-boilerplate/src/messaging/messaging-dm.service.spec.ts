@@ -6,6 +6,7 @@ describe('MessagingDmService', () => {
     emitToService: jest.Mock;
     emitToPage: jest.Mock;
     hasServiceConnection: jest.Mock;
+    emitToUserEncrypted: jest.Mock;
   };
   let mockPush: { sendToUser: jest.Mock };
   let mockPrisma: {
@@ -14,8 +15,12 @@ describe('MessagingDmService', () => {
       updateMany: jest.Mock;
       count: jest.Mock;
       findMany: jest.Mock;
+      findFirst: jest.Mock;
+      findUnique: jest.Mock;
+      update: jest.Mock;
       groupBy: jest.Mock;
     };
+    messageDeletion: { upsert: jest.Mock };
     pendingUpload: { findMany: jest.Mock; updateMany: jest.Mock };
     messageAttachment: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
@@ -29,6 +34,7 @@ describe('MessagingDmService', () => {
       emitToService: jest.fn(),
       emitToPage: jest.fn(),
       hasServiceConnection: jest.fn().mockReturnValue(true),
+      emitToUserEncrypted: jest.fn().mockResolvedValue(undefined),
     };
     mockPush = { sendToUser: jest.fn().mockResolvedValue(undefined) };
     mockPrisma = {
@@ -37,8 +43,12 @@ describe('MessagingDmService', () => {
         updateMany: jest.fn(),
         count: jest.fn(),
         findMany: jest.fn(),
+        findFirst: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
         groupBy: jest.fn().mockResolvedValue([]),
       },
+      messageDeletion: { upsert: jest.fn().mockResolvedValue(undefined) },
       user: { findMany: jest.fn() },
       pendingUpload: {
         findMany: jest.fn(),
@@ -192,7 +202,11 @@ describe('MessagingDmService', () => {
         [
           // The client frame no longer carries the full-file ciphertext —
           // only the small metadata.
-          { url: 'https://minio/uploads/file-1.png', type: 'image/png', name: 'file-1.png' },
+          {
+            url: 'https://minio/uploads/file-1.png',
+            type: 'image/png',
+            name: 'file-1.png',
+          },
         ],
       );
 
@@ -435,6 +449,59 @@ describe('MessagingDmService', () => {
         }),
       ]);
     });
+
+    it('renders a tombstoned latest message as the [Deleted] sentinel instead of decrypting it', async () => {
+      mockPrisma.message.groupBy.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe
+        .mockResolvedValueOnce([]) // sentMessages
+        .mockResolvedValueOnce([
+          {
+            id: 'm1',
+            senderId: 'u2',
+            createdAt: new Date('2026-08-07T10:00:00Z'),
+            v: 'v1',
+            ct: 'ct1',
+            nonce: 'n1',
+            deletedAt: new Date('2026-08-07T10:05:00Z'),
+            hasAttachments: true,
+          },
+        ]);
+      mockPrisma.user.findMany.mockResolvedValue([
+        {
+          id: 'u2',
+          email: 'u2@x.com',
+          name: 'U2',
+          avatarUrl: null,
+          hideAvatar: false,
+        },
+      ]);
+
+      const result = await service.getConversations('u1', () =>
+        Promise.resolve(['u2']),
+      );
+
+      expect(result).toEqual([
+        expect.objectContaining({
+          lastMessage: '[Deleted]',
+          hasAttachments: false,
+        }),
+      ]);
+    });
+
+    it('excludes messages this viewer deleted-for-me from the DISTINCT ON queries', async () => {
+      mockPrisma.message.groupBy.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe.mockResolvedValue([]);
+      mockPrisma.user.findMany.mockResolvedValue([]);
+
+      await service.getConversations('u1', () => Promise.resolve(['u2']));
+
+      const [sentSql] = mockPrisma.$queryRawUnsafe.mock.calls[0];
+      const [receivedSql] = mockPrisma.$queryRawUnsafe.mock.calls[1];
+      expect(sentSql).toContain('NOT EXISTS');
+      expect(sentSql).toContain('"MessageDeletion"');
+      expect(receivedSql).toContain('NOT EXISTS');
+      expect(receivedSql).toContain('"MessageDeletion"');
+    });
   });
 
   describe('getMessages', () => {
@@ -475,6 +542,52 @@ describe('MessagingDmService', () => {
       expect(messages[0].sender).not.toHaveProperty('hideAvatar');
       expect(messages[0].recipient.avatarUrl).toBe('https://x/alice.png');
       expect(messages[0].recipient).not.toHaveProperty('hideAvatar');
+    });
+
+    it('excludes rows this viewer deleted-for-me via the where clause', async () => {
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.message.findMany.mockResolvedValue([]);
+
+      await service.getMessages('u1', 'u2', areFriendsMock);
+
+      expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            deletions: { none: { userId: 'u1' } },
+          }),
+        }),
+      );
+    });
+
+    it('strips attachments from a tombstoned row instead of decrypting/wiring them', async () => {
+      areFriendsMock.mockResolvedValue(true);
+      const baseUser = {
+        id: 'u2',
+        name: 'Bob',
+        email: 'b@b.com',
+        avatarUrl: null,
+        hideAvatar: false,
+      };
+      mockPrisma.message.findMany.mockResolvedValue([
+        {
+          id: 'm1',
+          senderId: 'u2',
+          recipientId: 'u1',
+          createdAt: new Date(),
+          deletedAt: new Date(),
+          attachments: [{ url: 'https://r2/x.pdf' }],
+          sender: baseUser,
+          recipient: { ...baseUser, id: 'u1', name: 'Alice' },
+        },
+      ]);
+
+      const { messages } = await service.getMessages(
+        'u1',
+        'u2',
+        areFriendsMock,
+      );
+
+      expect(messages[0].attachments).toEqual([]);
     });
   });
 
@@ -520,6 +633,8 @@ describe('MessagingDmService', () => {
               { senderId: 'u1', recipientId: 'u2' },
               { senderId: 'u2', recipientId: 'u1' },
             ],
+            deletedAt: null,
+            deletions: { none: { userId: 'u1' } },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -658,6 +773,181 @@ describe('MessagingDmService', () => {
           value: 0,
         },
       );
+    });
+  });
+
+  describe('deleteMessageForMe', () => {
+    it('throws NotFoundException when the message does not exist or the user is not a party to it', async () => {
+      mockPrisma.message.findFirst.mockResolvedValue(null);
+
+      await expect(service.deleteMessageForMe('u1', 'm1')).rejects.toThrow(
+        'Message not found',
+      );
+    });
+
+    it('upserts the deletion row, invalidates only the actor cache, and syncs only the actor', async () => {
+      mockPrisma.message.findFirst
+        .mockResolvedValueOnce({
+          id: 'm1',
+          senderId: 'u1',
+          recipientId: 'u2',
+        })
+        // getLatestPreviewForPeer's lookup — no visible messages left.
+        .mockResolvedValueOnce(null);
+
+      const result = await service.deleteMessageForMe('u1', 'm1');
+
+      expect(mockPrisma.messageDeletion.upsert).toHaveBeenCalledWith({
+        where: { messageId_userId: { messageId: 'm1', userId: 'u1' } },
+        create: { messageId: 'm1', userId: 'u1' },
+        update: {},
+      });
+      expect(mockCache.del).toHaveBeenCalledWith('conversations:u1');
+      expect(mockCache.del).not.toHaveBeenCalledWith('conversations:u2');
+      expect(mockRealtime.emitToService).toHaveBeenCalledWith('u1', 'MESSAGE', {
+        renew: 'Messages',
+        type: 'ConversationRemoved',
+        peerId: 'u2',
+      });
+      // Only the actor's own connections are synced — the peer never learns
+      // this happened.
+      expect(mockRealtime.emitToUserEncrypted).toHaveBeenCalledTimes(1);
+      expect(mockRealtime.emitToUserEncrypted).toHaveBeenCalledWith('u1', {
+        type: 'message-deleted',
+        scope: 'me',
+        messageId: 'm1',
+        peerId: 'u2',
+      });
+      expect(result).toEqual({ id: 'm1' });
+    });
+
+    it('derives the peer as the sender when the actor is the recipient', async () => {
+      mockPrisma.message.findFirst
+        .mockResolvedValueOnce({
+          id: 'm1',
+          senderId: 'u2',
+          recipientId: 'u1',
+        })
+        .mockResolvedValueOnce(null);
+
+      await service.deleteMessageForMe('u1', 'm1');
+
+      expect(mockRealtime.emitToUserEncrypted).toHaveBeenCalledWith('u1', {
+        type: 'message-deleted',
+        scope: 'me',
+        messageId: 'm1',
+        peerId: 'u2',
+      });
+    });
+
+    it('is idempotent — upsert absorbs a repeat delete without throwing', async () => {
+      mockPrisma.message.findFirst
+        .mockResolvedValueOnce({ id: 'm1', senderId: 'u1', recipientId: 'u2' })
+        .mockResolvedValueOnce(null);
+
+      await expect(service.deleteMessageForMe('u1', 'm1')).resolves.toEqual({
+        id: 'm1',
+      });
+    });
+  });
+
+  describe('deleteMessageForEveryone', () => {
+    const recent = (msAgo: number) => new Date(Date.now() - msAgo);
+
+    it('throws NotFoundException when the message does not exist', async () => {
+      mockPrisma.message.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.deleteMessageForEveryone('u1', 'm1'),
+      ).rejects.toThrow('Message not found');
+    });
+
+    it('throws ForbiddenException when the caller is not the sender', async () => {
+      mockPrisma.message.findUnique.mockResolvedValue({
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        createdAt: recent(1000),
+        deletedAt: null,
+      });
+
+      await expect(
+        service.deleteMessageForEveryone('u2', 'm1'),
+      ).rejects.toThrow('Only the sender can delete this message for everyone');
+      expect(mockPrisma.message.update).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException once the delete window has expired', async () => {
+      mockPrisma.message.findUnique.mockResolvedValue({
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        createdAt: recent(16 * 60 * 1000), // 16 minutes ago > 15-minute window
+        deletedAt: null,
+      });
+
+      await expect(
+        service.deleteMessageForEveryone('u1', 'm1'),
+      ).rejects.toThrow('Delete window has expired');
+      expect(mockPrisma.message.update).not.toHaveBeenCalled();
+    });
+
+    it('tombstones the message and notifies both parties identically', async () => {
+      mockPrisma.message.findUnique.mockResolvedValue({
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        createdAt: recent(1000),
+        deletedAt: null,
+      });
+      mockPrisma.message.update.mockResolvedValue(undefined);
+      // getLatestPreviewForPeer runs once per side — no visible messages left.
+      mockPrisma.message.findFirst.mockResolvedValue(null);
+
+      const result = await service.deleteMessageForEveryone('u1', 'm1');
+
+      expect(mockPrisma.message.update).toHaveBeenCalledWith({
+        where: { id: 'm1' },
+        data: { deletedAt: expect.any(Date) },
+      });
+      expect(mockCache.del).toHaveBeenCalledWith('conversations:u1');
+      expect(mockCache.del).toHaveBeenCalledWith('conversations:u2');
+
+      const expectedFrame = {
+        type: 'message-deleted',
+        scope: 'everyone',
+        messageId: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        deletedAt: result.deletedAt,
+      };
+      expect(mockRealtime.emitToUserEncrypted).toHaveBeenCalledWith(
+        'u1',
+        expectedFrame,
+      );
+      expect(mockRealtime.emitToUserEncrypted).toHaveBeenCalledWith(
+        'u2',
+        expectedFrame,
+      );
+      expect(result).toEqual({ id: 'm1', deletedAt: expect.any(String) });
+    });
+
+    it('is idempotent — a second call on an already-tombstoned message is a harmless no-op', async () => {
+      const alreadyDeletedAt = recent(20 * 60 * 1000); // outside the window,
+      // but that guard is skipped once deletedAt is already set.
+      mockPrisma.message.findUnique.mockResolvedValue({
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        createdAt: recent(30 * 60 * 1000),
+        deletedAt: alreadyDeletedAt,
+      });
+      mockPrisma.message.findFirst.mockResolvedValue(null);
+
+      const result = await service.deleteMessageForEveryone('u1', 'm1');
+
+      expect(mockPrisma.message.update).not.toHaveBeenCalled();
+      expect(result.deletedAt).toBe(alreadyDeletedAt.toISOString());
     });
   });
 });

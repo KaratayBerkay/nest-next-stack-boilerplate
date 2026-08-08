@@ -103,7 +103,10 @@ class MessagesSidebarConversations extends ConsumerWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  conv.lastMessage ?? t.messagesNoMessages,
+                                  conv.lastMessage == '[Deleted]'
+                                      ? t.messagesDeletedMessage
+                                      : conv.lastMessage ??
+                                          t.messagesNoMessages,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(

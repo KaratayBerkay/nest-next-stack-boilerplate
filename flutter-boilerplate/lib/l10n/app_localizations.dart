@@ -6200,6 +6200,48 @@ abstract class AppLocalizations {
   /// **'Choose a conversation from the sidebar to start chatting'**
   String get messagesSelectConversationDescription;
 
+  /// No description provided for @messagesDeletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This message was deleted'**
+  String get messagesDeletedMessage;
+
+  /// No description provided for @messagesDeleteForMe.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for me'**
+  String get messagesDeleteForMe;
+
+  /// No description provided for @messagesDeleteForEveryone.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for everyone'**
+  String get messagesDeleteForEveryone;
+
+  /// No description provided for @messagesDeleteForEveryoneConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete for everyone?'**
+  String get messagesDeleteForEveryoneConfirmTitle;
+
+  /// No description provided for @messagesDeleteForEveryoneConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This message will be removed for everyone in this conversation. This cannot be undone.'**
+  String get messagesDeleteForEveryoneConfirm;
+
+  /// No description provided for @messagesFailedToDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete message'**
+  String get messagesFailedToDeleteMessage;
+
+  /// No description provided for @messagesCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get messagesCancel;
+
   /// No description provided for @notificationTitle.
   ///
   /// In en, this message translates to:
