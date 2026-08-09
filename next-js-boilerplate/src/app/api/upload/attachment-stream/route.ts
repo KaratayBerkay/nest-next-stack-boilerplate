@@ -7,25 +7,27 @@ import {
   STREAM_FILENAME_HEADER,
 } from "@/constants/api/headers";
 import { MAX_ATTACHMENT_SIZE } from "@/constants/upload";
+import { withLogging } from "@/lib/request-logger";
 
-export async function POST(request: Request) {
+export const POST = withLogging(async (request, log) => {
+  const filename = request.headers.get(STREAM_FILENAME_HEADER) ?? "file";
   try {
     const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
     if (!accessToken) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ msg: "Unauthorized" }, { status: 401 });
     }
 
     const announced = Number(request.headers.get("content-length") ?? 0);
     if (announced > MAX_ATTACHMENT_SIZE) {
       return NextResponse.json(
-        { error: "File must be under 10 MB" },
+        { msg: "File must be under 10 MB" },
         { status: 413 },
       );
     }
 
     if (!request.body) {
       return NextResponse.json(
-        { error: "Request body is required" },
+        { msg: "Request body is required" },
         { status: 400 },
       );
     }
@@ -38,8 +40,7 @@ export async function POST(request: Request) {
         headers: {
           "content-type":
             request.headers.get("content-type") ?? "application/octet-stream",
-          [STREAM_FILENAME_HEADER]:
-            request.headers.get(STREAM_FILENAME_HEADER) ?? "file",
+          [STREAM_FILENAME_HEADER]: filename,
           [STREAM_CONTENT_TYPE_HEADER]:
             request.headers.get(STREAM_CONTENT_TYPE_HEADER) ??
             "application/octet-stream",
@@ -49,14 +50,27 @@ export async function POST(request: Request) {
     );
 
     if (!backend.ok) {
+      // The backend's GlobalHttpExceptionFilter always shapes rejections as
+      // {statusCode, exc, msg, key, ...} — forward its real `msg` instead of
+      // a generic string, so the client (and this log line) can show the
+      // actual reason (size/MIME/quota/scope validation, etc).
+      const backendMsg = (backend.data as { msg?: string } | null)?.msg;
+      log.warn(
+        { status: backend.status, filename, backendMsg },
+        "attachment stream: backend rejected upload",
+      );
       return NextResponse.json(
-        { error: "Upload failed" },
+        { msg: backendMsg ?? "Upload failed" },
         { status: backend.status },
       );
     }
 
     return NextResponse.json(backend.data, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
+  } catch (err) {
+    // Previously swallowed with no logging at all — a failure here (network
+    // error to the backend, a duplex-stream hiccup, anything unexpected)
+    // was completely invisible after the fact. Log it so it's diagnosable.
+    log.error({ err, filename }, "attachment stream: proxy threw");
+    return NextResponse.json({ msg: "Upload failed" }, { status: 500 });
   }
-}
+});

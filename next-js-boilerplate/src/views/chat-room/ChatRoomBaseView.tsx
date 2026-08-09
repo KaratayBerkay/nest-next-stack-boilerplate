@@ -21,6 +21,7 @@ import {
 } from "@/views/chat-room/ChatRoomHandlers";
 import { useChatRoomRealtime } from "@/views/chat-room/useChatRoomRealtime";
 import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
+import { useToast } from "@/components/ui/Toast";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
@@ -38,6 +39,7 @@ function ChatRoomContent({
   const t = useMessages("chat-room");
   const tErr = useMessages("error");
   const { user, loading } = useAuth();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const router = useRouter();
   const [room, setRoom] = useState<string>(initialRoom);
@@ -122,9 +124,15 @@ function ChatRoomContent({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!user) return;
-      startUploads(files, { kind: "chat-room", id: room });
+      const duplicates = startUploads(files, { kind: "chat-room", id: room });
+      for (const name of duplicates) {
+        toast({
+          title: t.duplicateAttachment.replace("{name}", name),
+          variant: "warning",
+        });
+      }
     },
-    [user, startUploads, room],
+    [user, startUploads, room, toast, t],
   );
 
   const connectionState = useConnectionState();

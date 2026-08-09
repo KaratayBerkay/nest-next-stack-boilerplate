@@ -219,6 +219,7 @@ export type I18nMessages = {
       "cancel": string;
       "uploaded": string;
       "uploadFailed": string;
+      "duplicateAttachment": string;
       "addMore": string;
       "allUploadsTitle": string;
       "allUploadsEmpty": string;
@@ -1080,6 +1081,7 @@ export type I18nMessages = {
       "cancel": string;
       "uploaded": string;
       "uploadFailed": string;
+      "duplicateAttachment": string;
       "addMore": string;
       "allUploadsTitle": string;
       "allUploadsEmpty": string;

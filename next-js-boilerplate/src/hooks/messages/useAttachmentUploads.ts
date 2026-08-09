@@ -21,6 +21,10 @@ function applyItemUpdate(
  * Files upload in parallel over the streaming endpoint; each one reports
  * real byte-level progress from the XHR transport. Items are keyed by id so
  * per-file cancellation (abort) and removal work independently.
+ *
+ * `startUploads` rejects files that match an already-staged item's name+size
+ * (regardless of that item's status) and returns their names so the caller
+ * can surface feedback — it never silently re-uploads the same file twice.
  */
 export function useAttachmentUploads() {
   const { uploadAttachment } = useMessageUpload();
@@ -32,11 +36,31 @@ export function useAttachmentUploads() {
   }, [items]);
 
   const startUploads = useCallback(
-    (files: File[], scope?: UploadScope) => {
-      if (files.length === 0) return;
+    (files: File[], scope?: UploadScope): string[] => {
+      if (files.length === 0) return [];
+
+      // A file already staged (uploading, done, or errored) can't be added
+      // again — matched on name+size, the same identity a user judges "the
+      // same file" by. Also guards against picking the same file twice
+      // within one native file-picker selection.
+      const seen = new Set(
+        itemsRef.current.map((it) => `${it.file.name}:${it.file.size}`),
+      );
+      const duplicates: string[] = [];
+      const deduped: File[] = [];
+      for (const file of files) {
+        const key = `${file.name}:${file.size}`;
+        if (seen.has(key)) {
+          duplicates.push(file.name);
+          continue;
+        }
+        seen.add(key);
+        deduped.push(file);
+      }
+
       const slots = Math.max(MAX_UPLOADS - itemsRef.current.length, 0);
-      const accepted = files.slice(0, slots);
-      if (accepted.length === 0) return;
+      const accepted = deduped.slice(0, slots);
+      if (accepted.length === 0) return duplicates;
 
       const newItems: UploadItem[] = accepted.map((file) => ({
         id: crypto.randomUUID(),
@@ -80,10 +104,13 @@ export function useAttachmentUploads() {
               applyItemUpdate(prev, item.id, (it) => ({
                 ...it,
                 status: "error",
+                error: err instanceof Error ? err.message : undefined,
               })),
             );
           });
       }
+
+      return duplicates;
     },
     [uploadAttachment],
   );

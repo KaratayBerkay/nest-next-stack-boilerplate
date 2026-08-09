@@ -95,22 +95,14 @@ export const ChatRoomMessageList = forwardRef<
                 >
                   {msg.body}
                 </span>
-              ) : (
-                <span
-                  className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
-                    decryptionFailed
-                      ? "bg-warning/10 text-warning-foreground"
-                      : isMe
-                        ? "bg-brand text-brand-fg"
-                        : "bg-surface text-fg"
-                  }`}
-                >
+              ) : decryptionFailed ? (
+                <span className="bg-warning/10 text-warning-foreground inline-block rounded-xl px-3 py-1.5 text-sm">
                   <span className="inline-flex items-center gap-1.5 text-xs italic">
                     <span>{"\uD83D\uDD12"}</span>
-                    <span>{decryptionFailed ? t.decryptionFailed : ""}</span>
+                    <span>{t.decryptionFailed}</span>
                   </span>
                 </span>
-              )}
+              ) : null}
             </div>
           </div>
         );

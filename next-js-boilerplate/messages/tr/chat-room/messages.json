@@ -24,6 +24,7 @@
   "cancel": "İptal",
   "uploaded": "Yüklendi",
   "uploadFailed": "Yükleme başarısız",
+  "duplicateAttachment": "{name} zaten eklendi",
   "addMore": "Daha fazla ekle",
   "allUploadsTitle": "Tüm yüklemeler",
   "allUploadsEmpty": "Bu odada henüz dosya yüklenmedi",

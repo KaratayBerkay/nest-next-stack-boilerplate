@@ -40,7 +40,10 @@ function itemStatusLabel(
   t: Record<string, string>,
 ): string {
   if (item.status === "done") return t.uploaded ?? "Uploaded";
-  if (item.status === "error") return t.uploadFailed ?? "Upload failed";
+  if (item.status === "error") {
+    const base = t.uploadFailed ?? "Upload failed";
+    return item.error ? `${base}: ${item.error}` : base;
+  }
   return `${t.uploading ?? "Uploading"} ${item.progress}%`;
 }
 

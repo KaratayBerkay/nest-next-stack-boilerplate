@@ -31,6 +31,7 @@ import { ReplyBanner } from "@/views/messages/ReplyBanner";
 import { StorageLimitNotice } from "@/views/messages/StorageLimitNotice";
 import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
 import { AttachmentGallerySheet } from "@/views/messages/AttachmentGallerySheet";
+import { useToast } from "@/components/ui/Toast";
 
 export function ChatView({
   selectedUser,
@@ -41,6 +42,7 @@ export function ChatView({
   connectionState,
 }: ChatViewProps) {
   const t = useMessages("messages");
+  const { toast } = useToast();
   const dateDisplay = useDateDisplayCookie();
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const [input, setInput] = useState("");
@@ -150,9 +152,18 @@ export function ChatView({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!selectedUser) return;
-      startUploads(files, { kind: "messages", id: selectedUser.id });
+      const duplicates = startUploads(files, {
+        kind: "messages",
+        id: selectedUser.id,
+      });
+      for (const name of duplicates) {
+        toast({
+          title: t.duplicateAttachment.replace("{name}", name),
+          variant: "warning",
+        });
+      }
     },
-    [selectedUser, startUploads],
+    [selectedUser, startUploads, toast, t],
   );
 
   const groupedMessages = useMemo(

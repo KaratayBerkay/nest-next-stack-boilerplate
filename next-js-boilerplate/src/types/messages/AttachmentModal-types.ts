@@ -8,6 +8,8 @@ export interface UploadItem {
   progress: number;
   status: UploadItemStatus;
   attachment?: MessageAttachment;
+  /** Set only when status is "error" — the real reason, for display. */
+  error?: string;
 }
 
 export interface AttachmentModalProps {
