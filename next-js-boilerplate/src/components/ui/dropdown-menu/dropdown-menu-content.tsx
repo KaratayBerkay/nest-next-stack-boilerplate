@@ -38,9 +38,15 @@ export function DropdownMenuContent({
   useEffect(() => {
     if (open && triggerRef.current && isDesktop) {
       const rect = triggerRef.current.getBoundingClientRect();
+      const contentWidth = contentRef.current?.offsetWidth ?? 0;
+      const margin = 8;
+      const overflowsRight =
+        rect.left + contentWidth + margin > window.innerWidth;
       setPosition({
         top: rect.bottom + 4,
-        left: rect.left,
+        left: overflowsRight
+          ? Math.max(margin, rect.right - contentWidth)
+          : rect.left,
       });
     }
   }, [open, triggerRef, isDesktop]);
