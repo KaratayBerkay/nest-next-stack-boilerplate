@@ -151,43 +151,46 @@ export function ChatMessageBubble({
         </div>
       </div>
       {showActions && (
-        <div
-          className={`self-center opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${
-            isMe ? "order-first" : "order-last"
-          }`}
+        <ConfirmDialog
+          title={t.deleteForEveryoneConfirmTitle}
+          description={t.deleteForEveryoneConfirmDescription}
+          confirmLabel={t.deleteForEveryone}
+          onConfirm={() => onDelete(msg.id, "everyone")}
         >
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <IconButton
-                icon={<IconDotsVertical size={16} stroke={1.5} />}
-                label={t.messageActions}
-                size="icon-xs"
-              />
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onReply(msg)}>
-                {t.reply}
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(msg.id, "me")}>
-                {t.deleteForMe}
-              </DropdownMenuItem>
-              {canDeleteForEveryone && (
-                <ConfirmDialog
-                  title={t.deleteForEveryoneConfirmTitle}
-                  description={t.deleteForEveryoneConfirmDescription}
-                  confirmLabel={t.deleteForEveryone}
-                  onConfirm={() => onDelete(msg.id, "everyone")}
-                >
-                  {(open) => (
-                    <DropdownMenuItem className="text-error" onClick={open}>
+          {(openDeleteForEveryone) => (
+            <div
+              className={`self-center opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 ${
+                isMe ? "order-first" : "order-last"
+              }`}
+            >
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <IconButton
+                    icon={<IconDotsVertical size={16} stroke={1.5} />}
+                    label={t.messageActions}
+                    size="icon-xs"
+                  />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem onClick={() => onReply(msg)}>
+                    {t.reply}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => onDelete(msg.id, "me")}>
+                    {t.deleteForMe}
+                  </DropdownMenuItem>
+                  {canDeleteForEveryone && (
+                    <DropdownMenuItem
+                      className="text-error"
+                      onClick={openDeleteForEveryone}
+                    >
                       {t.deleteForEveryone}
                     </DropdownMenuItem>
                   )}
-                </ConfirmDialog>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
+        </ConfirmDialog>
       )}
     </div>
   );
