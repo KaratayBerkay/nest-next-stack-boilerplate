@@ -320,8 +320,8 @@ export class MessagingRoomService {
         // upload time + roomMessageId backfilled here).
         if (row.attachments.length > 0) {
           // Each attachment's auto-generated thumbnail is its own
-          // PendingUpload row (a separate R2 object under `thumbs/`), so it
-          // must be linked here too — otherwise its access-control check
+          // PendingUpload row (a separate R2 object under `thumbnails/`), so
+          // it must be linked here too — otherwise its access-control check
           // (uploader-only, since roomMessageId stays null) 404s the
           // thumbnail for every room member but the uploader themselves.
           const uploadUrls = row.attachments.flatMap((a) =>

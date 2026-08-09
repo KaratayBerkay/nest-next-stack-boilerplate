@@ -61,6 +61,11 @@ interface UploadScope {
   kind: 'MESSAGES' | 'CHAT_ROOM';
   scopeId: string;
   prefix: string;
+  // Thumbnails live under a top-level `thumbnails/` folder next to (not
+  // nested inside) the scope folder, e.g.
+  // `uploads/chat-room/thumbnails/<roomId>/<uuid>.webp`, so the bucket can
+  // be browsed/lifecycle-ruled by originals vs thumbnails independently.
+  thumbnailPrefix: string;
 }
 
 function resolveUploadScope(
@@ -79,6 +84,7 @@ function resolveUploadScope(
       kind: 'CHAT_ROOM',
       scopeId: roomId,
       prefix: `uploads/chat-room/${roomId}/`,
+      thumbnailPrefix: `uploads/chat-room/thumbnails/${roomId}/`,
     };
   }
   // Direct-message uploads always land in the uploader's own folder.
@@ -86,6 +92,7 @@ function resolveUploadScope(
     kind: 'MESSAGES',
     scopeId: user.userId,
     prefix: `uploads/messages/${user.userId}/`,
+    thumbnailPrefix: `uploads/messages/thumbnails/${user.userId}/`,
   };
 }
 
@@ -181,7 +188,7 @@ export class UploadController {
     );
     if (!thumbnail) return null;
 
-    const objectName = `${scope.prefix}thumbs/${randomUUID()}.webp`;
+    const objectName = `${scope.thumbnailPrefix}${randomUUID()}.webp`;
     const envelope = this.storageCrypto.encryptBytes(
       userId,
       new Uint8Array(thumbnail),

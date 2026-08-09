@@ -479,7 +479,7 @@ export class MessagingDmService {
     // message so uploads are traceable from the DB end-to-end.
     if (storedAttachments.length > 0) {
       // Each attachment's auto-generated thumbnail is its own PendingUpload
-      // row (a separate R2 object under `thumbs/`), so it must be linked
+      // row (a separate R2 object under `thumbnails/`), so it must be linked
       // here too — otherwise its access-control check (uploader-only, since
       // messageId stays null) 404s the thumbnail for every recipient but the
       // uploader themselves.
