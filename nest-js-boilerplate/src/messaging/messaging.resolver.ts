@@ -63,6 +63,7 @@ export class MessagingResolver {
       input.attachments,
       input.envelope,
       { text: input.text, attachments: input.attachments },
+      input.replyToId,
     );
     // sendAndDeliverMessage resolves { message, delivery } — only `message`
     // is the actual Message-shaped row this mutation declares as its return

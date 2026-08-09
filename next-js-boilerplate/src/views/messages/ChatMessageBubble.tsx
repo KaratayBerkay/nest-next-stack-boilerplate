@@ -27,6 +27,7 @@ export function ChatMessageBubble({
   userAvatarUrl,
   dateDisplay,
   onDelete,
+  onReply,
 }: ChatMessageBubbleProps) {
   const t = useMessages("messages");
   // Lazy initializer isolates the impure Date.now() read to component mount
@@ -44,6 +45,21 @@ export function ChatMessageBubble({
     renderedAt - new Date(msg.createdAt).getTime() <
       DELETE_FOR_EVERYONE_WINDOW_MS;
   const showActions = !isDeleted && !msg.pending && !msg.failed;
+  // A DM only ever has 2 participants, so the current viewer's id is
+  // whichever of sender/recipient this message's own `isMe` didn't already
+  // resolve to — no separate viewer-id prop needed just for this.
+  const currentUserId = isMe ? msg.senderId : msg.recipientId;
+  const isReplyToMe = msg.replyTo?.senderId === currentUserId;
+  const replySenderLabel = isReplyToMe ? t.you : userName || userEmail;
+  const replyPreviewText = !msg.replyTo
+    ? null
+    : msg.replyTo.deletedAt
+      ? t.deletedMessage
+      : msg.replyTo.body
+        ? msg.replyTo.body
+        : msg.replyTo.hasAttachments
+          ? t.attachmentPreview
+          : t.decryptionFailed;
 
   return (
     <div
@@ -71,6 +87,16 @@ export function ChatMessageBubble({
           </span>
         ) : (
           <>
+            {msg.replyTo && (
+              <div className="bg-surface border-l-brand max-w-full rounded-lg border-l-2 px-2.5 py-1.5">
+                <div className="text-brand truncate text-[11px] font-medium">
+                  {replySenderLabel}
+                </div>
+                <div className="text-muted truncate text-xs">
+                  {replyPreviewText}
+                </div>
+              </div>
+            )}
             {msg.attachments?.length ? (
               <div className="flex flex-wrap gap-2">
                 {msg.attachments.map((att) => (
@@ -139,6 +165,9 @@ export function ChatMessageBubble({
               />
             </DropdownMenuTrigger>
             <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => onReply(msg)}>
+                {t.reply}
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDelete(msg.id, "me")}>
                 {t.deleteForMe}
               </DropdownMenuItem>

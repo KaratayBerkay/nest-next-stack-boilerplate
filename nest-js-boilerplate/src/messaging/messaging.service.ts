@@ -98,6 +98,7 @@ export class MessagingService {
     friends?: string[],
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
+    replyToId?: string,
   ) {
     return this.dm.sendMessage(
       senderId,
@@ -107,6 +108,7 @@ export class MessagingService {
       friends,
       attachments,
       envelope,
+      replyToId,
     );
   }
 
@@ -118,6 +120,7 @@ export class MessagingService {
     attachments?: MessageAttachment[],
     storageEnvelope?: Record<string, unknown>,
     deliveryPlaintext?: { text?: string; attachments?: unknown },
+    replyToId?: string,
   ) {
     const result = await this.dm.sendAndDeliverMessage(
       senderId,
@@ -129,6 +132,7 @@ export class MessagingService {
       attachments,
       storageEnvelope,
       deliveryPlaintext,
+      replyToId,
     );
     // REST/GraphQL send path — the WS hub emits these itself. Push the
     // plaintext `direct-message` payload to every device of both peers so

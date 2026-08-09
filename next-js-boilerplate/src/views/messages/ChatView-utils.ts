@@ -2,8 +2,18 @@ import type { Dispatch, SetStateAction } from "react";
 import { sendMessageSchema } from "@/validators/messages/schema";
 import { formatDateByPreference } from "@/lib/date-time";
 import type { DateDisplayFormat } from "@/constants/date-display";
-import type { Message } from "@/types/messages/ChatView-types";
+import type { Message, ReplyPreview } from "@/types/messages/ChatView-types";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+
+export function toReplyPreview(msg: Message): ReplyPreview {
+  return {
+    id: msg.id,
+    senderId: msg.senderId,
+    body: msg.body,
+    deletedAt: msg.deletedAt,
+    hasAttachments: !!msg.attachments?.length,
+  };
+}
 
 export async function chatViewHandleSend(
   selectedUser: { id: string } | null,
@@ -12,11 +22,14 @@ export async function chatViewHandleSend(
     recipientId: string,
     text: string,
     attachments?: MessageAttachment[],
+    replyTo?: ReplyPreview | null,
   ) => Promise<void>,
   setInput: Dispatch<SetStateAction<string>>,
   setMessageError: Dispatch<SetStateAction<string | null>>,
   scrollToBottom: () => void,
   attachments: MessageAttachment[] = [],
+  replyTo?: ReplyPreview | null,
+  clearReply?: () => void,
 ) {
   if (!selectedUser) return;
   const parsed = sendMessageSchema.safeParse({ text: input });
@@ -34,8 +47,10 @@ export async function chatViewHandleSend(
       selectedUser.id,
       parsed.data.text,
       attachments.length > 0 ? attachments : undefined,
+      replyTo,
     );
     setInput("");
+    clearReply?.();
     scrollToBottom();
   } catch {
     setMessageError("Failed to send message. Try again.");

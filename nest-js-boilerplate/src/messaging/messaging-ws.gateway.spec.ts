@@ -271,8 +271,27 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         undefined,
         attachments,
         undefined,
+        undefined,
       );
       expect(mockMs.deliverDirectMessage).toHaveBeenCalled();
+    });
+
+    it('passes replyToId through when the payload is a reply', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: 'hello',
+        replyToId: 'm0',
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        'hello',
+        undefined,
+        [],
+        undefined,
+        'm0',
+      );
     });
 
     it('allows direct-message with many attachments', async () => {
@@ -293,6 +312,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         undefined,
         attachments,
         undefined,
+        undefined,
       );
     });
 
@@ -311,6 +331,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         undefined,
         [],
         envelope,
+        undefined,
       );
     });
 

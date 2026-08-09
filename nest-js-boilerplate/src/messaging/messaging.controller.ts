@@ -235,6 +235,7 @@ export class MessagingController {
       body.attachments,
       body.envelope,
       { text: body.text, attachments: body.attachments },
+      body.replyToId,
     );
   }
 

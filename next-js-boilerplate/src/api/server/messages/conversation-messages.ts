@@ -1,6 +1,7 @@
 import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_CONVERSATION_MESSAGES_PREFIX } from "@/constants/api/urls";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { ReplyPreview } from "@/types/messages/ChatView-types";
 
 export interface Message {
   id: string;
@@ -12,6 +13,7 @@ export interface Message {
   deliveredAt: string | null;
   deletedAt: string | null;
   attachments?: MessageAttachment[];
+  replyTo?: ReplyPreview | null;
 }
 
 export interface ConversationPage {

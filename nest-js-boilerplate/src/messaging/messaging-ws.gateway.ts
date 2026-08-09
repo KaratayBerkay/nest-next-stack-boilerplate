@@ -38,6 +38,7 @@ interface IncomingMessagePayload {
   tempId?: string;
   attachments?: MessageAttachment[];
   envelope?: Record<string, unknown>;
+  replyToId?: string;
 }
 
 function toAttachments(data: IncomingMessagePayload): MessageAttachment[] {
@@ -177,6 +178,7 @@ export class MessagingWsGateway implements OnModuleInit {
       undefined,
       toAttachments(data),
       storageEnvelope,
+      data.replyToId,
     );
     // Echo the client tempId back in the wire payloads so the sender's
     // optimistic entry can be replaced (mirrors sendAndDeliverMessage's

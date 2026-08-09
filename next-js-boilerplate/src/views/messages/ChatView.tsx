@@ -10,7 +10,11 @@ import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { messageUsageQueryOptions } from "@/api/client/usage/query";
-import type { ChatViewProps } from "@/types/messages/ChatView-types";
+import type {
+  ChatViewProps,
+  Message,
+  ReplyPreview,
+} from "@/types/messages/ChatView-types";
 import { useMessageActions } from "@/api/client/messages/actions";
 import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
 import { useTypingUsers } from "@/hooks/useTypingUsers";
@@ -18,10 +22,12 @@ import {
   chatViewHandleSend,
   chatViewHandleDelete,
   groupMessagesByDate,
+  toReplyPreview,
 } from "@/views/messages/ChatView-utils";
 import { ChatViewHeader } from "@/views/messages/ChatViewHeader";
 import { ChatInputBar } from "@/views/messages/ChatInputBar";
 import { ChatMessageList } from "@/views/messages/ChatMessageList";
+import { ReplyBanner } from "@/views/messages/ReplyBanner";
 import { StorageLimitNotice } from "@/views/messages/StorageLimitNotice";
 import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
 import { AttachmentGallerySheet } from "@/views/messages/AttachmentGallerySheet";
@@ -40,6 +46,17 @@ export function ChatView({
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<ReplyPreview | null>(null);
+  // ChatView isn't remounted on peer switch (no key={selectedUser.id} at the
+  // call site), so a reply started in one conversation would otherwise
+  // linger into the next — reset during render (React's recommended
+  // adjust-state-on-prop-change pattern) rather than in an effect, since an
+  // unconditional setState in an effect causes an extra render pass.
+  const [replyTargetPeerId, setReplyTargetPeerId] = useState(selectedUser.id);
+  if (selectedUser.id !== replyTargetPeerId) {
+    setReplyTargetPeerId(selectedUser.id);
+    setReplyTarget(null);
+  }
   const {
     items: uploadItems,
     startUploads,
@@ -75,6 +92,14 @@ export function ChatView({
   const { sendMessage, deleteMessage } = useMessageActions();
   const { typingUsers, sendTypingStart, sendTypingStop } = useTypingUsers();
 
+  const handleReply = useCallback((msg: Message) => {
+    setReplyTarget(toReplyPreview(msg));
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyTarget(null);
+  }, []);
+
   const handleSend = useCallback(
     () =>
       chatViewHandleSend(
@@ -84,8 +109,18 @@ export function ChatView({
         setInput,
         setMessageError,
         scrollToBottom,
+        undefined,
+        replyTarget,
+        handleCancelReply,
       ),
-    [selectedUser, input, sendMessage, scrollToBottom],
+    [
+      selectedUser,
+      input,
+      sendMessage,
+      scrollToBottom,
+      replyTarget,
+      handleCancelReply,
+    ],
   );
 
   const handleSendAttachments = useCallback(() => {
@@ -97,6 +132,8 @@ export function ChatView({
       setMessageError,
       scrollToBottom,
       doneAttachments(),
+      replyTarget,
+      handleCancelReply,
     );
     clearUploads();
   }, [
@@ -106,6 +143,8 @@ export function ChatView({
     scrollToBottom,
     doneAttachments,
     clearUploads,
+    replyTarget,
+    handleCancelReply,
   ]);
 
   const handleAttachFiles = useCallback(
@@ -174,6 +213,7 @@ export function ChatView({
         dateDisplay={dateDisplay}
         bottomRef={bottomRef}
         onDelete={handleDeleteMessage}
+        onReply={handleReply}
         t={{
           failedToLoad: t.failedToLoad,
           noMessages: t.noMessages,
@@ -188,21 +228,31 @@ export function ChatView({
       {storageLimitReached ? (
         <StorageLimitNotice />
       ) : (
-        <ChatInputBar
-          input={input}
-          setInput={setInput}
-          messageError={messageError}
-          handleSend={handleSend}
-          connectionState={connectionState}
-          inputPlaceholder={t.inputPlaceholder}
-          connectingLabel={t.connecting}
-          recipientId={selectedUser.id}
-          onTypingStart={sendTypingStart}
-          onTypingStop={sendTypingStop}
-          attaching={anyUploading}
-          uploadItems={uploadItems}
-          onAttachFiles={handleAttachFiles}
-        />
+        <>
+          {replyTarget && (
+            <ReplyBanner
+              replyTarget={replyTarget}
+              isReplyToMe={replyTarget.senderId === user.id}
+              peerName={selectedUser.name ?? selectedUser.email ?? "?"}
+              onCancel={handleCancelReply}
+            />
+          )}
+          <ChatInputBar
+            input={input}
+            setInput={setInput}
+            messageError={messageError}
+            handleSend={handleSend}
+            connectionState={connectionState}
+            inputPlaceholder={t.inputPlaceholder}
+            connectingLabel={t.connecting}
+            recipientId={selectedUser.id}
+            onTypingStart={sendTypingStart}
+            onTypingStop={sendTypingStop}
+            attaching={anyUploading}
+            uploadItems={uploadItems}
+            onAttachFiles={handleAttachFiles}
+          />
+        </>
       )}
 
       <AttachmentModal

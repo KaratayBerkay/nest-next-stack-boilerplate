@@ -16,6 +16,7 @@ export function ChatMessageList({
   dateDisplay,
   bottomRef,
   onDelete,
+  onReply,
   t,
 }: ChatMessageListProps) {
   const hasDecryptionFailure = conversationMessages.some(
@@ -65,6 +66,7 @@ export function ChatMessageList({
               userAvatarUrl={selectedUser.avatarUrl}
               dateDisplay={dateDisplay}
               onDelete={onDelete}
+              onReply={onReply}
             />
           ))}
         </div>

@@ -1092,6 +1092,10 @@ export type I18nMessages = {
       "deleteForEveryoneConfirmTitle": string;
       "deleteForEveryoneConfirmDescription": string;
       "deleteMessageFailed": string;
+      "reply": string;
+      "replyingTo": string;
+      "you": string;
+      "cancelReply": string;
     }
 
   "notification": {

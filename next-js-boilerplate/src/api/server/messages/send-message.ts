@@ -9,10 +9,12 @@ export async function sendMessageServer(
   text: string,
   tempId?: string,
   attachments?: MessageAttachment[],
+  replyToId?: string,
 ): Promise<Record<string, unknown>> {
   const body: Record<string, unknown> = { text };
   if (tempId) body._tempId = tempId;
   if (attachments && attachments.length > 0) body.attachments = attachments;
+  if (replyToId) body.replyToId = replyToId;
   const res = await apiFetch(
     `${MESSAGES_CONVERSATIONS_PREFIX}${recipientId}/messages`,
     {

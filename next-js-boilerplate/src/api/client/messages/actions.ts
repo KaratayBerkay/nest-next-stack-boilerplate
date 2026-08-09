@@ -4,6 +4,7 @@ import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { trackTempId } from "@/lib/realtime/event-dispatch";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 import type { UploadScope } from "@/types/messages/UploadScope-types";
+import type { ReplyPreview } from "@/types/messages/ChatView-types";
 
 export function useMessageActions() {
   const queryClient = useQueryClient();
@@ -14,6 +15,7 @@ export function useMessageActions() {
     recipientId: string,
     text: string,
     attachments?: MessageAttachment[],
+    replyTo?: ReplyPreview | null,
   ) => {
     const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -33,6 +35,7 @@ export function useMessageActions() {
           recipientId,
           body: text,
           attachments,
+          replyTo: replyTo ?? null,
           createdAt: new Date().toISOString(),
           pending: true,
         };
@@ -53,6 +56,7 @@ export function useMessageActions() {
         text,
         tempId,
         ...(attachments && attachments.length > 0 ? { attachments } : {}),
+        ...(replyTo ? { replyToId: replyTo.id } : {}),
       });
       return;
     }
@@ -61,7 +65,13 @@ export function useMessageActions() {
     try {
       const { sendMessageServer } =
         await import("@/api/server/messages/send-message");
-      message = await sendMessageServer(recipientId, text, tempId, attachments);
+      message = await sendMessageServer(
+        recipientId,
+        text,
+        tempId,
+        attachments,
+        replyTo?.id,
+      );
     } catch {
       if (user?.id) {
         queryClient.setQueryData(["messages", recipientId], (old: unknown) => {

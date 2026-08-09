@@ -38,5 +38,9 @@
   "deleteForEveryone": "Delete for everyone",
   "deleteForEveryoneConfirmTitle": "Delete for everyone?",
   "deleteForEveryoneConfirmDescription": "This message will be removed for everyone in this conversation. This cannot be undone.",
-  "deleteMessageFailed": "Failed to delete message. Try again."
+  "deleteMessageFailed": "Failed to delete message. Try again.",
+  "reply": "Reply",
+  "replyingTo": "Replying to {name}",
+  "you": "You",
+  "cancelReply": "Cancel reply"
 }

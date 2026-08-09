@@ -14,6 +14,7 @@ export interface ChatMessageListProps {
   dateDisplay: DateDisplayFormat;
   bottomRef: RefObject<HTMLDivElement | null>;
   onDelete: (messageId: string, scope: "me" | "everyone") => void;
+  onReply: (msg: Message) => void;
   t: {
     failedToLoad: string;
     noMessages: string;

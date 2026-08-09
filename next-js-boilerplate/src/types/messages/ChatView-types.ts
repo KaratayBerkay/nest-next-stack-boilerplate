@@ -8,6 +8,14 @@ export type UserInfo = {
   avatarUrl: string | null;
 };
 
+export type ReplyPreview = {
+  id: string;
+  senderId: string;
+  body: string | null;
+  deletedAt: string | null;
+  hasAttachments: boolean;
+};
+
 export type Message = {
   id: string;
   senderId: string;
@@ -18,6 +26,7 @@ export type Message = {
   deliveredAt: string | null;
   deletedAt: string | null;
   attachments?: MessageAttachment[];
+  replyTo?: ReplyPreview | null;
   _tempId?: string;
   pending?: boolean;
   failed?: boolean;

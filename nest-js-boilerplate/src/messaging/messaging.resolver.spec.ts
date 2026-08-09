@@ -71,8 +71,29 @@ describe('MessagingResolver', () => {
         undefined,
         undefined,
         { text: 'hello', attachments: undefined },
+        undefined,
       );
       expect(result).toEqual({ id: 'm1', body: 'hello' });
+    });
+
+    it('passes replyToId through when the input is a reply', async () => {
+      const user = { userId: 'u1', email: 'a@b.com' };
+      await resolver.sendMessage(user, {
+        recipientId: 'u2',
+        text: 'hello',
+        replyToId: 'm0',
+      });
+
+      expect(mockMs.sendAndDeliverMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        'hello',
+        undefined,
+        undefined,
+        undefined,
+        { text: 'hello', attachments: undefined },
+        'm0',
+      );
     });
 
     it('passes attachments through as MessageAttachment array', async () => {
@@ -99,6 +120,7 @@ describe('MessagingResolver', () => {
         attachments,
         undefined,
         { text: 'hello', attachments },
+        undefined,
       );
     });
 
@@ -119,6 +141,7 @@ describe('MessagingResolver', () => {
         undefined,
         envelope,
         { text: '', attachments: undefined },
+        undefined,
       );
     });
   });

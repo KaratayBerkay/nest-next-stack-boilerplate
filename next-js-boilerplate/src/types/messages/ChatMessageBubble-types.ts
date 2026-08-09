@@ -9,4 +9,5 @@ export interface ChatMessageBubbleProps {
   userAvatarUrl?: string | null;
   dateDisplay: DateDisplayFormat;
   onDelete: (messageId: string, scope: "me" | "everyone") => void;
+  onReply: (msg: Message) => void;
 }
