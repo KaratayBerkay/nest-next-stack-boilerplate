@@ -106,4 +106,13 @@ export class SendMessageInput {
     required: false,
   })
   envelope?: Record<string, unknown>;
+
+  @Field({ nullable: true })
+  @IsUUID()
+  @IsOptional()
+  @ApiProperty({
+    description: 'ID of the message this one is replying to (same conversation only)',
+    required: false,
+  })
+  replyToId?: string;
 }

@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   IsUrl,
+  IsUUID,
   IsObject,
   IsArray,
   MaxLength,
@@ -92,4 +93,12 @@ export class SendMessageRestDto {
     required: false,
   })
   envelope?: Record<string, unknown>;
+
+  @IsUUID()
+  @IsOptional()
+  @ApiProperty({
+    description: 'ID of the message this one is replying to (same conversation only)',
+    required: false,
+  })
+  replyToId?: string;
 }

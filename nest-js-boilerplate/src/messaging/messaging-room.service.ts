@@ -319,8 +319,16 @@ export class MessagingRoomService {
         // upload is traceable from PendingUpload (kind/scopeId written at
         // upload time + roomMessageId backfilled here).
         if (row.attachments.length > 0) {
+          // Each attachment's auto-generated thumbnail is its own
+          // PendingUpload row (a separate R2 object under `thumbs/`), so it
+          // must be linked here too — otherwise its access-control check
+          // (uploader-only, since roomMessageId stays null) 404s the
+          // thumbnail for every room member but the uploader themselves.
+          const uploadUrls = row.attachments.flatMap((a) =>
+            a.thumbnailUrl ? [a.url, a.thumbnailUrl] : [a.url],
+          );
           await this.prisma.pendingUpload.updateMany({
-            where: { url: { in: row.attachments.map((a) => a.url) } },
+            where: { url: { in: uploadUrls } },
             data: { roomMessageId: row.id },
           });
         }

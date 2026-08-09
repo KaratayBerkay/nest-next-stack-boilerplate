@@ -126,6 +126,7 @@ describe('MessagingDmService', () => {
           ct: 'sc',
           nonce: 'sn',
           letterCount: 5,
+          replyToId: null,
           attachments: undefined,
         },
         include: {
@@ -148,6 +149,7 @@ describe('MessagingDmService', () => {
             },
           },
           attachments: true,
+          replyTo: { include: { attachments: true } },
         },
       });
       expect(mockRealtime.emitToService).toHaveBeenCalled();

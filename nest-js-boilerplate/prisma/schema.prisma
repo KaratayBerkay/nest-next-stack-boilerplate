@@ -846,6 +846,20 @@ model Message {
   deletions   MessageDeletion[]
   createdAt   DateTime  @default(now()) @db.Timestamptz(6)
 
+  // Quoted-reply pointer. SetNull (not Cascade, unlike Comment.parent below)
+  // — a reply must survive its parent being removed; messages are never
+  // hard-deleted today, but Cascade would be actively wrong if that changed
+  // (deleting one message must never cascade-delete every reply to it).
+  // All three fields are @HideField()'d: GraphQL clients only ever see the
+  // hand-written ReplyPreview shape via MessagingResolver's custom
+  // replyTo field resolver, never the raw relation.
+  /// @HideField()
+  replyToId String?   @db.Uuid
+  /// @HideField()
+  replyTo   Message?  @relation("MessageReplyTo", fields: [replyToId], references: [id], onDelete: SetNull)
+  /// @HideField()
+  replies   Message[] @relation("MessageReplyTo")
+
   @@index([senderId, recipientId])
   @@index([recipientId, readAt])
 }

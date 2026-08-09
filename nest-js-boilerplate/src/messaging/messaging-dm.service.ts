@@ -278,6 +278,7 @@ export class MessagingDmService {
           },
         },
         attachments: true,
+        replyTo: { include: { attachments: true } },
       },
     });
     const redacted = messages.map((m) => ({
@@ -289,6 +290,19 @@ export class MessagingDmService {
       attachments: m.deletedAt
         ? []
         : m.attachments.map((a) => this.storageCrypto.toWireAttachment(a)),
+      // Same wire-formatting one level down, for the quoted message (if
+      // any) this row replies to — decryptMessageBody resolves its
+      // ciphertext into `body` later, same as the top-level row.
+      replyTo: m.replyTo
+        ? {
+            ...m.replyTo,
+            attachments: m.replyTo.deletedAt
+              ? []
+              : m.replyTo.attachments.map((a) =>
+                  this.storageCrypto.toWireAttachment(a),
+                ),
+          }
+        : null,
       sender: this.redactAvatar(m.sender, userId),
       recipient: this.redactAvatar(m.recipient, userId),
     }));
@@ -352,6 +366,7 @@ export class MessagingDmService {
     friends?: string[],
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
+    replyToId?: string,
   ) {
     if (senderId === recipientId) {
       this.logger.warn(`User ${senderId} attempted to message self`);
@@ -365,6 +380,30 @@ export class MessagingDmService {
         `User ${senderId} attempted to message non-friend ${recipientId}`,
       );
       throw new ForbiddenException('You can only send messages to friends');
+    }
+    // A replyToId must point at a message that's actually part of THIS
+    // DM thread (either party as sender/recipient, either direction) —
+    // otherwise a crafted replyToId could pull a decrypted plaintext
+    // preview from a conversation the sender has no business quoting from
+    // into a thread its participants never shared it in.
+    let validReplyToId: string | undefined;
+    if (replyToId) {
+      const target = await this.prisma.message.findUnique({
+        where: { id: replyToId },
+        select: { id: true, senderId: true, recipientId: true },
+      });
+      const inThisThread =
+        target &&
+        ((target.senderId === senderId &&
+          target.recipientId === recipientId) ||
+          (target.senderId === recipientId &&
+            target.recipientId === senderId));
+      if (!inThisThread) {
+        throw new ForbiddenException(
+          'Cannot reply to a message outside this conversation',
+        );
+      }
+      validReplyToId = replyToId;
     }
     await this.usage.assertCanSendMessage(senderId, countLetters(text));
     // Messages are ALWAYS stored encrypted: a caller-supplied envelope is
@@ -392,6 +431,7 @@ export class MessagingDmService {
         ct,
         nonce,
         letterCount: countLetters(text),
+        replyToId: validReplyToId ?? null,
         attachments:
           storedAttachments.length > 0
             ? {
@@ -428,6 +468,7 @@ export class MessagingDmService {
           },
         },
         attachments: true,
+        replyTo: { include: { attachments: true } },
       },
     });
     this.logger.log(
@@ -437,8 +478,16 @@ export class MessagingDmService {
     // the PendingUpload row is the upload-time record, this links it to the
     // message so uploads are traceable from the DB end-to-end.
     if (storedAttachments.length > 0) {
+      // Each attachment's auto-generated thumbnail is its own PendingUpload
+      // row (a separate R2 object under `thumbs/`), so it must be linked
+      // here too — otherwise its access-control check (uploader-only, since
+      // messageId stays null) 404s the thumbnail for every recipient but the
+      // uploader themselves.
+      const uploadUrls = storedAttachments.flatMap((a) =>
+        a.thumbnailUrl ? [a.url, a.thumbnailUrl] : [a.url],
+      );
       await this.prisma.pendingUpload.updateMany({
-        where: { url: { in: storedAttachments.map((a) => a.url) } },
+        where: { url: { in: uploadUrls } },
         data: { messageId: message.id },
       });
     }
@@ -452,6 +501,16 @@ export class MessagingDmService {
       attachments: message.attachments.map((a) =>
         this.storageCrypto.toWireAttachment(a),
       ),
+      replyTo: message.replyTo
+        ? {
+            ...message.replyTo,
+            attachments: message.replyTo.deletedAt
+              ? []
+              : message.replyTo.attachments.map((a) =>
+                  this.storageCrypto.toWireAttachment(a),
+                ),
+          }
+        : null,
       sender: {
         ...senderRest,
         avatar: initials(message.sender.name || message.sender.email),
@@ -479,6 +538,15 @@ export class MessagingDmService {
         size?: number;
         storageEnvelope?: { v: string; nonce: string; ct?: string } | null;
       }[];
+      replyTo?: {
+        id: string;
+        senderId: string;
+        v: string | null;
+        ct: string | null;
+        nonce: string | null;
+        deletedAt: Date | null;
+        attachments?: unknown[];
+      } | null;
       _tempId?: string;
     },
     deliveryPlaintext?: { text?: string; attachments?: unknown },
@@ -536,6 +604,24 @@ export class MessagingDmService {
       ...(message.attachments && message.attachments.length > 0
         ? { attachments: message.attachments }
         : {}),
+      // Already-decrypted quote preview, built here (not via
+      // decryptMessageBody/buildReplyPreview) since this is the one call
+      // site that already has decryptPreview in scope and needs to hand a
+      // plaintext-ready payload straight to both WS clients — no GraphQL
+      // field resolution happens on this path at all.
+      replyTo: message.replyTo
+        ? {
+            id: message.replyTo.id,
+            senderId: message.replyTo.senderId,
+            body: message.replyTo.deletedAt
+              ? null
+              : this.decryptPreview(message.replyTo, message.senderId),
+            deletedAt: message.replyTo.deletedAt ?? null,
+            hasAttachments:
+              !message.replyTo.deletedAt &&
+              (message.replyTo.attachments?.length ?? 0) > 0,
+          }
+        : null,
     };
 
     if (
@@ -590,6 +676,7 @@ export class MessagingDmService {
     attachments?: MessageAttachment[],
     storageEnvelope?: Record<string, unknown>,
     deliveryPlaintext?: { text?: string; attachments?: unknown },
+    replyToId?: string,
   ) {
     const message = await this.sendMessage(
       senderId,
@@ -599,6 +686,7 @@ export class MessagingDmService {
       friends,
       attachments,
       storageEnvelope,
+      replyToId,
     );
     if (tempId) (message as Record<string, unknown>)._tempId = tempId;
     const delivery = await this.deliverDirectMessage(
