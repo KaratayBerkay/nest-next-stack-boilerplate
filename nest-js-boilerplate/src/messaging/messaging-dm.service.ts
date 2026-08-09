@@ -394,10 +394,8 @@ export class MessagingDmService {
       });
       const inThisThread =
         target &&
-        ((target.senderId === senderId &&
-          target.recipientId === recipientId) ||
-          (target.senderId === recipientId &&
-            target.recipientId === senderId));
+        ((target.senderId === senderId && target.recipientId === recipientId) ||
+          (target.senderId === recipientId && target.recipientId === senderId));
       if (!inThisThread) {
         throw new ForbiddenException(
           'Cannot reply to a message outside this conversation',
@@ -441,9 +439,6 @@ export class MessagingDmService {
                   name: a.name,
                   size: a.size,
                   thumbnailUrl: a.thumbnailUrl ?? null,
-                  v: a.storageEnvelope?.v ?? null,
-                  ct: a.storageEnvelope?.ct ?? null,
-                  nonce: a.storageEnvelope?.nonce ?? null,
                 })),
               }
             : undefined,

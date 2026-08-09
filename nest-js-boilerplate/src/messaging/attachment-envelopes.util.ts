@@ -34,7 +34,12 @@ export async function resolveAttachmentEnvelopes(
       storageEnvelope: {
         v: stored.v,
         nonce: stored.nonce,
-        ct: stored.ct,
+        // PendingUpload.ct is nullable now that R2 is the sole copy of
+        // ciphertext (rows created before the R2-backfill migration are the
+        // only ones where it's still populated) — neither caller reads this
+        // field anymore (see MessageAttachment/RoomMessageAttachment), but
+        // the envelope shape stays as-is for now.
+        ct: stored.ct ?? undefined,
       },
     };
   });

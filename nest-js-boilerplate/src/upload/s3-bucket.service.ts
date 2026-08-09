@@ -86,4 +86,35 @@ export class S3BucketService implements OnModuleInit {
   async remove(objectName: string): Promise<void> {
     await this.client.removeObject(this.bucket, objectName);
   }
+
+  /**
+   * Fully buffers an R2 object. The sole caller (GET /upload/serve) always
+   * needs the complete ciphertext anyway — AEAD decryption can't verify the
+   * auth tag from a partial buffer — so there's no benefit to exposing a raw
+   * stream here. Objects are capped at MAX_FILE_SIZE_BYTES (10 MB).
+   */
+  async download(objectName: string): Promise<Buffer> {
+    const stream = await this.client.getObject(this.bucket, objectName);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(
+        Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array),
+      );
+    }
+    return Buffer.concat(chunks);
+  }
+
+  /**
+   * Existence check used by the R2 backfill script. Any error (not-found,
+   * network) reads as "doesn't exist" — safe because the caller's fallback
+   * (re-upload) is idempotent.
+   */
+  async exists(objectName: string): Promise<boolean> {
+    try {
+      await this.client.statObject(this.bucket, objectName);
+      return true;
+    } catch {
+      return false;
+    }
+  }
 }

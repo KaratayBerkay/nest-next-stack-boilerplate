@@ -205,7 +205,6 @@ export class UploadController {
         objectName,
         url,
         v: envelope.v,
-        ct: envelope.ct,
         nonce: envelope.nonce,
         uploadedBy: userId,
         size: thumbnail.length,
@@ -337,7 +336,6 @@ export class UploadController {
         objectName,
         url,
         v: envelope.v,
-        ct: envelope.ct,
         nonce: envelope.nonce,
         uploadedBy: user.userId,
         size: file.size,
@@ -455,7 +453,6 @@ export class UploadController {
         objectName,
         url,
         v: envelope.v,
-        ct: envelope.ct,
         nonce: envelope.nonce,
         uploadedBy: user.userId,
         size: buffer.length,
@@ -496,15 +493,23 @@ export class UploadController {
     }
     const pending = await this.prisma.pendingUpload.findUnique({
       where: { objectName },
+      select: {
+        uploadedBy: true,
+        v: true,
+        nonce: true,
+        messageId: true,
+        roomMessageId: true,
+      },
     });
     if (!pending) throw new NotFoundException('Attachment not found');
     await this.assertCanAccessUpload(user, pending);
 
     let plain: Uint8Array;
     try {
+      const ciphertext = await this.s3bucket.download(objectName);
       plain = this.storageCrypto.decryptBytes(pending.uploadedBy, {
         v: pending.v,
-        ct: pending.ct,
+        ct: ciphertext.toString('base64'),
         nonce: pending.nonce,
       });
     } catch {

@@ -302,9 +302,6 @@ export class MessagingRoomService {
                     name: a.name,
                     size: a.size,
                     thumbnailUrl: a.thumbnailUrl ?? null,
-                    v: a.storageEnvelope?.v ?? null,
-                    ct: a.storageEnvelope?.ct ?? null,
-                    nonce: a.storageEnvelope?.nonce ?? null,
                   })),
                 }
               : undefined,
