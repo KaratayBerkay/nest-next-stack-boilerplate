@@ -892,15 +892,6 @@ model MessageAttachment {
   // thumbnailed (e.g. doc/docx) or generation failed — the client falls back
   // to the icon+name chip in that case.
   thumbnailUrl String?
-  // No longer written going forward (R2 is the sole copy of ciphertext —
-  // see PendingUpload) and never read back by any resolver; hidden so the
-  // GraphQL schema can't shape-match a client asking for raw ciphertext.
-  /// @HideField()
-  v            String?
-  /// @HideField()
-  ct           String?  @db.Text
-  /// @HideField()
-  nonce        String?
   createdAt    DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([messageId])
@@ -932,14 +923,6 @@ model RoomMessageAttachment {
   size          Int         @default(0)
   // See MessageAttachment.thumbnailUrl.
   thumbnailUrl  String?
-  // See MessageAttachment.v/ct/nonce — same "never populated, never read,
-  // hidden anyway" reasoning.
-  /// @HideField()
-  v             String?
-  /// @HideField()
-  ct            String?     @db.Text
-  /// @HideField()
-  nonce         String?
   createdAt     DateTime    @default(now()) @db.Timestamptz(6)
 
   @@index([roomMessageId])
