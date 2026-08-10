@@ -14,7 +14,7 @@ import { useApiKeyMutations } from "@/views/forms/api-key/useApiKeyMutations";
 export default function ApiKeyPage() {
   const t = useMessages("forms");
   const { toast } = useToast();
-  const { createMutation, revokeMutation, form } = useApiKeyMutations(t, {
+  const { revokeMutation, form } = useApiKeyMutations(t, {
     onCreated: (fullKey) => {
       setNewKeySecret(fullKey);
       setShowForm(false);

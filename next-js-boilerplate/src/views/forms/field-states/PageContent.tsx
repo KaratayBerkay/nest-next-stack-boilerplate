@@ -17,7 +17,7 @@ export default function FieldStatesPage() {
 
       <section>
         <h3 className="text-muted mb-3 text-xs font-semibold tracking-wider uppercase">
-          Field States
+          {t.fieldStates.statesSectionHeading}
         </h3>
         <FieldStatesGrid />
       </section>
@@ -38,7 +38,7 @@ export default function FieldStatesPage() {
 
       <section>
         <h3 className="text-muted mb-3 text-xs font-semibold tracking-wider uppercase">
-          Programmatic Meta &amp; A11y
+          {t.fieldStates.programmaticHeading}
         </h3>
         <ProgrammaticMetaSection />
       </section>

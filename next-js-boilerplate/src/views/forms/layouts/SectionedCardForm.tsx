@@ -53,7 +53,7 @@ export function SectionedCardForm() {
             {isDirty && (
               <span className="text-warning text-xxs flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                Unsaved changes
+                {t.layouts.unsaved}
               </span>
             )}
           </div>

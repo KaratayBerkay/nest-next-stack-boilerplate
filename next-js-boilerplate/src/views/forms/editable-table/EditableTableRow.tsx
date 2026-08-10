@@ -5,7 +5,7 @@ import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { Input } from "@/components/ui/Input";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
-import { TAX_OPTIONS } from "./EditableTable-constants";
+import { getTaxOptions } from "./EditableTable-constants";
 import type { InvoiceRow } from "./EditableTable-constants";
 import type { EditableTableRowProps } from "@/types/forms/EditableTableRow-types";
 import { EditableTableRowActions } from "./EditableTableRowActions";
@@ -110,7 +110,7 @@ export function EditableTableRow({
         >
           {(subField: any) => (
             <Dropdown
-              options={TAX_OPTIONS}
+              options={getTaxOptions(t.editableTable)}
               value={subField.state.value}
               onChange={(value) => subField.handleChange(value)}
             />

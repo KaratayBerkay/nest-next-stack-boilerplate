@@ -8,15 +8,10 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { ERROR_SCENARIOS } from "@/lib/forms/error-scenarios";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { useAllMessages, useMessages } from "@/lib/i18n/MessagesProvider";
-import { getSurface } from "@/lib/exception-handler";
 import type { ExceptionResponse } from "@/lib/api-client";
 import type { ClientException } from "@/lib/exception-handler";
 import type { ErrorLabPageProps } from "@/types/forms/ErrorLabPage-types";
-import {
-  GROUPS,
-  NETWORK_OPTIONS,
-  handleTriggerErrorLab,
-} from "@/views/forms/error-lab/trigger-handler";
+import { handleTriggerErrorLab } from "@/views/forms/error-lab/trigger-handler";
 import { ScenarioSelectors } from "./ScenarioSelectors";
 import { ErrorResultDisplay } from "./ErrorResultDisplay";
 

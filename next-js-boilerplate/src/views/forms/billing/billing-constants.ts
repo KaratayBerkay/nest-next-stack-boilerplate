@@ -5,6 +5,17 @@ export const PLANS = [
   { value: "enterprise", label: "Enterprise", monthly: 99, yearly: 950 },
 ];
 
+export function getPlanLabels(
+  t: Record<string, string>,
+): Record<string, string> {
+  return {
+    free: t.planFree,
+    basic: t.planBasic,
+    pro: t.planPro,
+    enterprise: t.planEnterprise,
+  };
+}
+
 export const PAYMENT_METHODS = [
   { value: "visa", label: "Visa **** 4242" },
   { value: "mastercard", label: "Mastercard **** 5555" },

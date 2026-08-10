@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
 import { createFieldStateSchemas } from "@/validators/forms/field-states";
-import { ROLE_OPTIONS, validationFormOpts } from "./FieldStatesHelpers";
+import { getRoleOptions, validationFormOpts } from "./FieldStatesHelpers";
 
 export function EagerForm() {
   const t = useMessages("forms");
@@ -12,6 +12,7 @@ export function EagerForm() {
     () => createFieldStateSchemas(t.fieldStates),
     [t],
   );
+  const roleOptions = useMemo(() => getRoleOptions(t.fieldStates), [t]);
   const form = useAppForm({
     ...validationFormOpts,
   });
@@ -19,17 +20,17 @@ export function EagerForm() {
   return (
     <form className="flex flex-col gap-3">
       <form.AppField name="name" validators={{ onChange: fieldSchemas.name }}>
-        {(field) => <field.TextField label="Name" />}
+        {(field) => <field.TextField label={t.fieldStates.nameLabel} />}
       </form.AppField>
       <form.AppField name="email" validators={{ onChange: fieldSchemas.email }}>
-        {(field) => <field.TextField label="Email" />}
+        {(field) => <field.TextField label={t.fieldStates.emailLabel} />}
       </form.AppField>
       <form.AppField name="role" validators={{ onChange: fieldSchemas.role }}>
         {(field) => (
           <field.SelectField
-            label="Role"
-            options={ROLE_OPTIONS}
-            placeholder="Select a role..."
+            label={t.fieldStates.roleLabel}
+            options={roleOptions}
+            placeholder={t.fieldStates.rolePlaceholder}
           />
         )}
       </form.AppField>
@@ -43,6 +44,7 @@ export function ClassicForm() {
     () => createFieldStateSchemas(t.fieldStates),
     [t],
   );
+  const roleOptions = useMemo(() => getRoleOptions(t.fieldStates), [t]);
   const form = useAppForm({
     ...validationFormOpts,
   });
@@ -50,17 +52,17 @@ export function ClassicForm() {
   return (
     <form className="flex flex-col gap-3">
       <form.AppField name="name" validators={{ onBlur: fieldSchemas.name }}>
-        {(field) => <field.TextField label="Name" />}
+        {(field) => <field.TextField label={t.fieldStates.nameLabel} />}
       </form.AppField>
       <form.AppField name="email" validators={{ onBlur: fieldSchemas.email }}>
-        {(field) => <field.TextField label="Email" />}
+        {(field) => <field.TextField label={t.fieldStates.emailLabel} />}
       </form.AppField>
       <form.AppField name="role" validators={{ onBlur: fieldSchemas.role }}>
         {(field) => (
           <field.SelectField
-            label="Role"
-            options={ROLE_OPTIONS}
-            placeholder="Select a role..."
+            label={t.fieldStates.roleLabel}
+            options={roleOptions}
+            placeholder={t.fieldStates.rolePlaceholder}
           />
         )}
       </form.AppField>

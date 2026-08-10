@@ -11,7 +11,7 @@ import { useToast } from "@/components/ui/Toast";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
 import { billingDefaultValues } from "@/validators/forms/billing-inits";
-import { PLANS, PAYMENT_METHODS } from "./billing-constants";
+import { PLANS, PAYMENT_METHODS, getPlanLabels } from "./billing-constants";
 import { calcPrice, validateTaxId } from "./billing-utils";
 import { CouponStatus } from "./CouponStatus";
 import { handleCouponBlur } from "./billing-handlers";
@@ -44,6 +44,7 @@ export default function BillingPage() {
     () => calcPrice(plan, billingPeriod),
     [plan, billingPeriod],
   );
+  const planLabels = useMemo(() => getPlanLabels(t.billing), [t]);
 
   useEffect(() => {
     if (plan !== prevPlan.current) {
@@ -57,7 +58,9 @@ export default function BillingPage() {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold">{t.billing.heading}</h2>
         <div className="flex items-center gap-2">
-          {isDirty && <span className="text-xxs text-muted">{t.billing.unsaved}</span>}
+          {isDirty && (
+            <span className="text-xxs text-muted">{t.billing.unsaved}</span>
+          )}
         </div>
       </div>
 
@@ -68,7 +71,7 @@ export default function BillingPage() {
               label={t.billing.plan}
               options={PLANS.map((p) => ({
                 value: p.value,
-                label: `${p.label} — $${p.monthly}/mo${p.yearly > 0 ? ` ($${p.yearly}/yr)` : ""}`,
+                label: `${planLabels[p.value]} — $${p.monthly}/mo${p.yearly > 0 ? ` ($${p.yearly}/yr)` : ""}`,
               }))}
             />
           )}
@@ -101,7 +104,8 @@ export default function BillingPage() {
         <form.AppField
           name="couponCode"
           validators={{
-            onBlurAsync: async ({ value }) => handleCouponBlur(value, { simulateError, toast, allMessages }),
+            onBlurAsync: async ({ value }) =>
+              handleCouponBlur(value, { simulateError, toast, allMessages }),
             onBlurAsyncDebounceMs: 300,
           }}
         >
@@ -114,7 +118,12 @@ export default function BillingPage() {
           )}
         </form.AppField>
 
-        <CouponStatus code={couponCode} period={billingPeriod} t={t.billing} />
+        <CouponStatus
+          code={couponCode}
+          plan={plan}
+          period={billingPeriod}
+          t={t.billing}
+        />
 
         <form.AppField
           name="taxId"

@@ -6,7 +6,7 @@ import type { ProfileFieldsProps } from "./ProfileFields-types";
 export function ProfileFields(props: ProfileFieldsProps) {
   return (
     <>
-      <ProfileAvatarField form={props.form} />
+      <ProfileAvatarField form={props.form} t={props.t} />
       <ProfileBasicFields {...props} />
       <ProfilePreferencesFields form={props.form} t={props.t} />
     </>

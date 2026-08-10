@@ -3,7 +3,11 @@ import { Separator } from "@/components/ui/Separator";
 import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { convertTextToDate, formatDateOnly } from "@/lib/date-time";
 import { FilterSection } from "./FilterSection";
-import { ALL_CATEGORIES, SORT_OPTIONS } from "./constants";
+import {
+  getCategoryOptions,
+  getSortOptions,
+  getStatusOptions,
+} from "./constants";
 import type { FiltersFormProps } from "@/types/views/forms/FiltersForm-types";
 
 export function FiltersForm({
@@ -13,6 +17,10 @@ export function FiltersForm({
   handleReset,
   t,
 }: FiltersFormProps) {
+  const categoryOptions = getCategoryOptions(t.filters);
+  const sortOptions = getSortOptions(t.filters);
+  const statusOptions = getStatusOptions(t.filters);
+
   return (
     <form className="flex flex-col gap-4">
       <form.AppField name="search">
@@ -27,8 +35,9 @@ export function FiltersForm({
       <form.AppField name="category">
         {(field) => (
           <field.ComboboxField
-            label={t.filters.category ?? "Category"}
-            options={ALL_CATEGORIES}
+            label={t.filters.category}
+            placeholder={t.filters.categoryPlaceholder}
+            options={categoryOptions}
             multiple
           />
         )}
@@ -38,13 +47,14 @@ export function FiltersForm({
         {(field) => (
           <field.ComboboxField
             label={t.filters.tags}
-            options={ALL_CATEGORIES}
+            placeholder={t.filters.tagsPlaceholder}
+            options={categoryOptions}
           />
         )}
       </form.AppField>
 
       <div className="grid grid-cols-2 gap-4">
-        <FilterSection label={t.filters.dateRange ?? "Date Range"}>
+        <FilterSection label={t.filters.dateRange}>
           <DateRangePicker
             value={{
               from: dateFrom
@@ -67,10 +77,7 @@ export function FiltersForm({
 
         <form.AppField name="sortBy">
           {(field) => (
-            <field.SelectField
-              label={t.filters.sortBy}
-              options={SORT_OPTIONS}
-            />
+            <field.SelectField label={t.filters.sortBy} options={sortOptions} />
           )}
         </form.AppField>
       </div>
@@ -104,12 +111,7 @@ export function FiltersForm({
           {(field) => (
             <field.SelectField
               label={t.filters.status}
-              options={[
-                { value: "", label: "All" },
-                { value: "active", label: "Active" },
-                { value: "pending", label: "Pending" },
-                { value: "archived", label: "Archived" },
-              ]}
+              options={statusOptions}
             />
           )}
         </form.AppField>

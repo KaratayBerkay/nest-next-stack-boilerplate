@@ -7,10 +7,12 @@ export function BillingSummary({ price, t }: BillingSummaryProps) {
         <span>{t.subtotal}</span>
         <span>${price.subtotal}</span>
       </div>
-      {price.discountLabel && (
+      {price.discountPercent !== null && (
         <div className="text-success flex justify-between">
           <span>{t.discount}</span>
-          <span>-{price.discountLabel}</span>
+          <span>
+            -{price.discountPercent}% {t.couponOff}
+          </span>
         </div>
       )}
       <div className="flex justify-between font-semibold">

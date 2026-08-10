@@ -1,5 +1,6 @@
 "use client";
 
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -7,12 +8,12 @@ import { Label } from "@/components/ui/Label";
 import { StateCard } from "./StateCard";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleSetError(form: any) {
+function handleSetError(form: any, serverRejectedError: string) {
   form.setFieldMeta(
     "metaField",
     (prev: { errors: string[]; isValidating: boolean }) => ({
       ...prev,
-      errors: ["Server rejected this value"],
+      errors: [serverRejectedError],
       isValidating: false,
     }),
   );
@@ -43,30 +44,33 @@ function handleClear(form: any) {
 }
 
 export function ProgrammaticMetaSection() {
+  const t = useMessages("forms");
   const form = useAppForm({
     defaultValues: { metaField: "" },
   });
 
   return (
     <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4">
-      <p className="text-xs font-medium">Programmatic Field Meta</p>
+      <p className="text-xs font-medium">{t.fieldStates.metaSectionTitle}</p>
       <p className="text-xxs text-muted">
-        Setting meta via <code>form.setFieldMeta</code> — server errors,
-        validating state.
+        {t.fieldStates.metaDescriptionPrefix} <code>form.setFieldMeta</code>{" "}
+        {t.fieldStates.metaDescriptionSuffix}
       </p>
 
       <form.AppField name="metaField">
         {(field) => (
           <div className="flex flex-col gap-2">
-            <field.TextField label="Target field" />
+            <field.TextField label={t.fieldStates.targetFieldLabel} />
             <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={() => handleSetError(form)}
+                onClick={() =>
+                  handleSetError(form, t.fieldStates.serverRejectedError)
+                }
               >
-                Set Error
+                {t.fieldStates.setErrorButton}
               </Button>
               <Button
                 type="button"
@@ -74,7 +78,7 @@ export function ProgrammaticMetaSection() {
                 variant="outline"
                 onClick={() => handleSetValidating(form)}
               >
-                Set Validating
+                {t.fieldStates.setValidatingButton}
               </Button>
               <Button
                 type="button"
@@ -82,7 +86,7 @@ export function ProgrammaticMetaSection() {
                 variant="outline"
                 onClick={() => handleClear(form)}
               >
-                Clear
+                {t.fieldStates.clearButton}
               </Button>
             </div>
 
@@ -98,23 +102,25 @@ export function ProgrammaticMetaSection() {
       </form.AppField>
 
       <div className="flex flex-wrap gap-2">
-        <StateCard label="aria-invalid example">
-          <Label htmlFor="a11y-invalid">Invalid input</Label>
+        <StateCard label={t.fieldStates.ariaInvalidExampleLabel}>
+          <Label htmlFor="a11y-invalid">
+            {t.fieldStates.invalidInputLabel}
+          </Label>
           <Input
             id="a11y-invalid"
             aria-invalid
-            placeholder="aria-invalid on this"
+            placeholder={t.fieldStates.ariaInvalidPlaceholder}
           />
         </StateCard>
-        <StateCard label="aria-describedby example">
-          <Label htmlFor="a11y-desc">Described input</Label>
+        <StateCard label={t.fieldStates.ariaDescribedbyExampleLabel}>
+          <Label htmlFor="a11y-desc">{t.fieldStates.describedInputLabel}</Label>
           <Input
             id="a11y-desc"
             aria-describedby="desc-field-states"
-            placeholder="Linked to description"
+            placeholder={t.fieldStates.linkedPlaceholder}
           />
           <p id="desc-field-states" className="text-xxs text-muted">
-            This description is linked via aria-describedby
+            {t.fieldStates.describedByText}
           </p>
         </StateCard>
       </div>

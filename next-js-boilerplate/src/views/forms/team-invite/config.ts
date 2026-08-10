@@ -4,7 +4,22 @@ import { getSurface } from "@/lib/exception-handler";
 import { inviteDefaultValues } from "@/validators/forms/invite-inits";
 import type { useToast } from "@/components/ui/Toast";
 
-export const STEPS = ["Emails", "Role", "Message", "Review"];
+export function getSteps(t: Record<string, string>): string[] {
+  return [
+    t.stepShortEmails,
+    t.stepShortRole,
+    t.stepShortMessage,
+    t.stepShortReview,
+  ];
+}
+
+export function getRoleOptions(t: Record<string, string>) {
+  return [
+    { value: "member", label: t.roleMember },
+    { value: "admin", label: t.roleAdmin },
+    { value: "owner", label: t.roleOwner },
+  ];
+}
 
 export const teamFormOpts = formOptions({
   defaultValues: inviteDefaultValues,

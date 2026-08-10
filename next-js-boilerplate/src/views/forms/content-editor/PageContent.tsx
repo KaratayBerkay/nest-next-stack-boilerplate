@@ -9,7 +9,13 @@ import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { createEditorSchema } from "@/validators/forms/editor";
 import { FormLevelError } from "@/components/ui/FormLevelError";
-import { draftKey, loadDraft, saveDraft, clearDraft, type Draft } from "./draft-utils";
+import {
+  draftKey,
+  loadDraft,
+  saveDraft,
+  clearDraft,
+  type Draft,
+} from "./draft-utils";
 import { editorFormOpts, submitContent } from "./submit-content";
 import { EditorHeader } from "./EditorHeader";
 import { DraftAlert } from "./DraftAlert";
@@ -25,7 +31,9 @@ export default function ContentEditorPage() {
   const { simulateError } = useFormsDemoActions();
   const dk = draftKey(user?.id);
   const [preview, setPreview] = useState(false);
-  const [draftAlert, setDraftAlert] = useState<Draft | null>(() => loadDraft(dk));
+  const [draftAlert, setDraftAlert] = useState<Draft | null>(() =>
+    loadDraft(dk),
+  );
   const dirtyRef = useRef(false);
   const slugEditedByUser = useRef(false);
   const [schedule, setSchedule] = useState(false);
@@ -36,20 +44,29 @@ export default function ContentEditorPage() {
   const form = useAppForm({
     ...editorFormOpts,
     validators: {
-      onChange: () => { dirtyRef.current = true; return undefined; },
+      onChange: () => {
+        dirtyRef.current = true;
+        return undefined;
+      },
       onSubmitAsync: ({ value }) =>
-        submitContent({ value }, {
-          simulateError,
-          scheduleDateRequired: t.contentEditor.scheduleDateRequired,
-          failRate: simulateFailure ? 1 : 0,
-          intent: submitIntentRef.current,
-          unknownError: t.errors.unknown,
-        }),
+        submitContent(
+          { value },
+          {
+            simulateError,
+            scheduleDateRequired: t.contentEditor.scheduleDateRequired,
+            failRate: simulateFailure ? 1 : 0,
+            intent: submitIntentRef.current,
+            unknownError: t.errors.unknown,
+            allMessages,
+          },
+        ),
     },
     onSubmit: async () => {
       toast({
-        description: submitIntentRef.current === "schedule"
-          ? t.contentEditor.scheduled : t.contentEditor.published,
+        description:
+          submitIntentRef.current === "schedule"
+            ? t.contentEditor.scheduled
+            : t.contentEditor.published,
         variant: "default",
       });
       dirtyRef.current = false;
@@ -58,11 +75,19 @@ export default function ContentEditorPage() {
   });
 
   const values = useStore(form.store, (s) => ({
-    title: s.values.title, slug: s.values.slug, tags: s.values.tags, body: s.values.body,
+    title: s.values.title,
+    slug: s.values.slug,
+    tags: s.values.tags,
+    body: s.values.body,
   }));
 
   const handleSaveDraft = useCallback(() => {
-    saveDraft(dk, { title: values.title, slug: values.slug, tags: values.tags, body: values.body });
+    saveDraft(dk, {
+      title: values.title,
+      slug: values.slug,
+      tags: values.tags,
+      body: values.body,
+    });
     dirtyRef.current = false;
     toast({ description: t.contentEditor.draftSaved, variant: "default" });
   }, [values, toast, t, dk]);
@@ -74,33 +99,80 @@ export default function ContentEditorPage() {
     form.setFieldValue("tags", draftAlert.tags);
     form.setFieldValue("body", draftAlert.body);
     toast({
-      description: t.contentEditor.draftRestored.replace("{time}", new Date(draftAlert.savedAt).toLocaleString()),
+      description: t.contentEditor.draftRestored.replace(
+        "{time}",
+        new Date(draftAlert.savedAt).toLocaleString(),
+      ),
       variant: "default",
     });
     setDraftAlert(null);
   }, [draftAlert, form, toast, t]);
 
-  const handleDiscard = useCallback(() => { clearDraft(dk); setDraftAlert(null); }, [dk]);
+  const handleDiscard = useCallback(() => {
+    clearDraft(dk);
+    setDraftAlert(null);
+  }, [dk]);
   const ce = t.contentEditor;
 
   return (
     <div className="flex flex-col gap-6">
-      <EditorEffects draftKey={dk} values={values} formSetFieldValue={form.setFieldValue} dirtyRef={dirtyRef} slugEditedByUser={slugEditedByUser} />
-      <EditorHeader heading={ce.heading} editLabel={ce.edit} previewLabel={ce.preview} preview={preview} onToggle={setPreview} />
+      <EditorEffects
+        draftKey={dk}
+        values={values}
+        formSetFieldValue={form.setFieldValue}
+        dirtyRef={dirtyRef}
+        slugEditedByUser={slugEditedByUser}
+      />
+      <EditorHeader
+        heading={ce.heading}
+        editLabel={ce.edit}
+        previewLabel={ce.preview}
+        preview={preview}
+        onToggle={setPreview}
+      />
       {draftAlert && (
-        <DraftAlert draft={draftAlert} restoreLabel={ce.draftRestored} discardLabel={ce.draftDiscard} discardConfirmLabel={ce.draftDiscardConfirm} onRestore={handleRestore} onDiscard={handleDiscard} />
+        <DraftAlert
+          draft={draftAlert}
+          restoreLabel={ce.draftRestored}
+          restoreButtonLabel={ce.draftRestore}
+          discardLabel={ce.draftDiscard}
+          discardConfirmLabel={ce.draftDiscardConfirm}
+          onRestore={handleRestore}
+          onDiscard={handleDiscard}
+        />
       )}
       <FormLevelError form={form} />
       <form className="flex flex-col gap-4">
-        {preview && <EditorPreview title={values.title} tags={values.tags} body={values.body} untitledLabel={ce.untitled} />}
+        {preview && (
+          <EditorPreview
+            title={values.title}
+            tags={values.tags}
+            body={values.body}
+            untitledLabel={ce.untitled}
+          />
+        )}
         <EditorFormFields
-          form={form} preview={preview} schedule={schedule} simulateFailure={simulateFailure}
-          onSetSchedule={setSchedule} onSetSimulateFailure={setSimulateFailure}
-          onSaveDraft={handleSaveDraft} t={ce} editorSchemas={editorSchemas}
-          slugEditedByUser={slugEditedByUser} simulateError={simulateError}
-          allMessages={allMessages} toast={toast}
-          onPublish={() => { submitIntentRef.current = "publish"; form.handleSubmit(); }}
-          onSchedule={() => { submitIntentRef.current = "schedule"; form.handleSubmit(); }}
+          form={form}
+          preview={preview}
+          schedule={schedule}
+          simulateFailure={simulateFailure}
+          onSetSchedule={setSchedule}
+          onSetSimulateFailure={setSimulateFailure}
+          onSaveDraft={handleSaveDraft}
+          t={ce}
+          editorSchemas={editorSchemas}
+          slugEditedByUser={slugEditedByUser}
+          simulateError={simulateError}
+          allMessages={allMessages}
+          toast={toast}
+          onPublish={() => {
+            submitIntentRef.current = "publish";
+            form.handleSubmit();
+          }}
+          onSchedule={() => {
+            submitIntentRef.current = "schedule";
+            form.handleSubmit();
+          }}
         />
       </form>
     </div>

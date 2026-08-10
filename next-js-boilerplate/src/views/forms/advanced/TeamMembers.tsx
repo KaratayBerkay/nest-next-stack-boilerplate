@@ -84,7 +84,7 @@ export function TeamMembers({
             {(field: any) => (
               <field.SelectField
                 label={t.memberRole}
-                placeholder={t.memberRole}
+                placeholder={t.memberRolePlaceholder}
                 options={ROLE_OPTIONS(t)}
               />
             )}

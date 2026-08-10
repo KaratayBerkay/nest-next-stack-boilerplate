@@ -28,7 +28,15 @@ export default function CheckoutPage() {
     ...checkoutFormOpts,
     validators: {
       onSubmitAsync: ({ value }) =>
-        submitCheckout({ value }, { simulateError, toast, allMessages }),
+        submitCheckout(
+          { value },
+          {
+            simulateError,
+            toast,
+            allMessages,
+            orderFailed: t.checkoutTab.orderFailed,
+          },
+        ),
     },
     onSubmit: async () => {
       toast({ description: t.checkoutTab.orderPlaced, variant: "default" });
@@ -99,7 +107,9 @@ export default function CheckoutPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <form.AppField name="email">
-              {(field) => <field.TextField label={t.checkoutTab.email} required />}
+              {(field) => (
+                <field.TextField label={t.checkoutTab.email} required />
+              )}
             </form.AppField>
             <form.AppField
               name="confirmEmail"
@@ -125,8 +135,8 @@ export default function CheckoutPage() {
               <field.RadioGroupField
                 label={t.checkoutTab.paymentMethod}
                 options={[
-                  { value: "stripe", label: "Credit Card (Stripe)" },
-                  { value: "paypal", label: "PayPal" },
+                  { value: "stripe", label: t.checkoutTab.paymentStripe },
+                  { value: "paypal", label: t.checkoutTab.paymentPaypal },
                 ]}
               />
             )}

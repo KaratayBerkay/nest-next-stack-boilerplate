@@ -1,14 +1,10 @@
 "use client";
 
 import type { ReviewStepProps } from "@/types/views/forms/ReviewStep-types";
-
-const ROLE_OPTIONS = [
-  { value: "member", label: "Member" },
-  { value: "admin", label: "Admin" },
-  { value: "owner", label: "Owner" },
-];
+import { getRoleOptions } from "./config";
 
 export function ReviewStep({ emails, role, message, t }: ReviewStepProps) {
+  const roleOptions = getRoleOptions(t as Record<string, string>);
   return (
     <div className="surface border-border flex flex-col gap-2 rounded-lg border p-4">
       <p className="text-xs font-semibold">{t.stepReview as string}</p>
@@ -18,7 +14,7 @@ export function ReviewStep({ emails, role, message, t }: ReviewStepProps) {
         </span>
         <span>
           {t.role as string}:{" "}
-          {ROLE_OPTIONS.find((r) => r.value === role)?.label ?? role}
+          {roleOptions.find((r) => r.value === role)?.label ?? role}
         </span>
         {message && (
           <span>

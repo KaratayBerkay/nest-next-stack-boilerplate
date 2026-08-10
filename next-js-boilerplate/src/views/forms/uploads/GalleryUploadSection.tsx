@@ -18,7 +18,8 @@ export function GalleryUploadSection({
     uploaded: t.uploads.labels.uploaded,
     uploadFailed: t.uploads.labels.uploadFailed,
     uploading: t.uploads.labels.uploading,
-    uploadButton: (count: number) => `Upload ${count} image(s)`,
+    uploadButton: (count: number) =>
+      t.uploads.labels.uploadButton.replace("{count}", String(count)),
     remove: (file: string) => t.uploads.labels.remove.replace("{file}", file),
     invalidTypeTitle: t.uploads.invalidFileType,
     maxSizeLabel: (max: string) =>

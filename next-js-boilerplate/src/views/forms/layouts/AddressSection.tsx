@@ -11,7 +11,7 @@ export function AddressSection({ form }: AddressSectionProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
-        Address
+        {t.layouts.sectioned_address}
       </p>
       <form.AppField name="street">
         {(field: any) => (

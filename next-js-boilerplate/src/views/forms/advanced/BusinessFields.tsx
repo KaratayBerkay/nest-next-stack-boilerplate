@@ -53,11 +53,14 @@ export function BusinessFields({ form, fieldSchemas, t }: BusinessFieldsProps) {
         validators={{ onChange: fieldSchemas.industry }}
       >
         {(field: any) => (
-          <field.SelectField
-            label={t.industry}
-            placeholder={t.industry}
-            options={INDUSTRY_OPTIONS(t)}
-          />
+          <div className="flex items-center gap-1">
+            <field.SelectField
+              label={t.industry}
+              placeholder={t.industryPlaceholder}
+              options={INDUSTRY_OPTIONS(t)}
+            />
+            <FieldInfoButton description={t.industryInfo} />
+          </div>
         )}
       </form.AppField>
     </div>

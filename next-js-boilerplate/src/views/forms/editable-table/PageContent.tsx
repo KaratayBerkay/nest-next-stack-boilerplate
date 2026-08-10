@@ -78,11 +78,11 @@ export default function EditableTablePage() {
         id: ++saveResultIdRef.current,
         variant: "error",
         title: t.editableTable.saveFailed,
-        description: exc ? exceptionHandler(exc, {}) : undefined,
+        description: exc ? exceptionHandler(exc, allMessages) : undefined,
       });
     }
     setSavingAll(false);
-  }, [simulateError, t]);
+  }, [simulateError, t, allMessages]);
 
   return (
     <div className="flex flex-col gap-6">

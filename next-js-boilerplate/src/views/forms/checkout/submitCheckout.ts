@@ -20,6 +20,7 @@ export async function submitCheckout(
     ) => Promise<ExceptionResponse>;
     toast: ReturnType<typeof useToast>["toast"];
     allMessages: Record<string, unknown>;
+    orderFailed?: string;
   },
 ) {
   try {
@@ -31,7 +32,7 @@ export async function submitCheckout(
     return null;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (!exc) return { form: "Order failed", fields: {} };
+    if (!exc) return { form: deps.orderFailed ?? "Order failed", fields: {} };
     if (getSurface(exc.exc) === "toast") {
       deps.toast({
         description: exceptionHandler(exc, deps.allMessages),

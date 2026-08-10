@@ -14,7 +14,7 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
-        Personal Info
+        {t.layouts.sectioned_personalInfo}
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <form.AppField
@@ -53,10 +53,15 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
           name="email"
           validators={{ onChange: sectionedFieldSchemas.email }}
         >
-          {(field: any) => <field.TextField label="Email" />}
+          {(field: any) => (
+            <field.TextField label={t.layouts.sectionedEmail_label} />
+          )}
         </form.AppField>
         <div className="flex flex-col gap-1">
-          <Label>Date of Birth</Label>
+          <div className="flex items-center gap-1">
+            <Label>{t.layouts.sectionedDob_label}</Label>
+            <FieldInfoButton description={t.layouts.sectionedDob_info} />
+          </div>
           <DatePicker
             value={
               form.getFieldValue("dateOfBirth")
@@ -105,9 +110,18 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
         >
           <div className="flex gap-4">
             {[
-              { value: "tech" as const, label: "Technology" },
-              { value: "design" as const, label: "Design" },
-              { value: "business" as const, label: "Business" },
+              {
+                value: "tech" as const,
+                label: t.layouts.sectionedCategory_tech,
+              },
+              {
+                value: "design" as const,
+                label: t.layouts.sectionedCategory_design,
+              },
+              {
+                value: "business" as const,
+                label: t.layouts.sectionedCategory_business,
+              },
             ].map((c) => (
               <label key={c.value} className="flex items-center gap-2 text-sm">
                 <RadioGroupItem value={c.value} />

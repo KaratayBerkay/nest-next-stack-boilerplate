@@ -27,11 +27,9 @@ export default function UploadsPage() {
   const handleDocSimulate = useCallback(
     async (_file: File, _reportProgress: (pct: number) => void) => {
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      setError(
-        "Document uploads are simulated — the backend only accepts images",
-      );
+      setError(t.uploads.simulatedNote);
     },
-    [],
+    [t],
   );
 
   return (
@@ -41,10 +39,7 @@ export default function UploadsPage() {
         <p className="text-muted text-xs">{t.examples.uploadsDescription}</p>
       </div>
 
-      <AvatarUploadSection
-        files={avatarFiles}
-        onChange={setAvatarFiles}
-      />
+      <AvatarUploadSection files={avatarFiles} onChange={setAvatarFiles} />
 
       <GalleryUploadSection
         files={galleryFiles}

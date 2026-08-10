@@ -15,7 +15,7 @@ import { FormLevelError } from "@/components/ui/FormLevelError";
 import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { createInviteSchema } from "@/validators/forms/invite";
 import { inviteAction } from "@/features/forms/actions/invite";
-import { STEPS, teamFormOpts, submitTeamInvite } from "./config";
+import { getSteps, teamFormOpts, submitTeamInvite } from "./config";
 import { EmailsStep } from "./EmailsStep";
 import { RoleStep } from "./RoleStep";
 import { MessageStep } from "./MessageStep";
@@ -69,6 +69,7 @@ export default function TeamInvitePage() {
         heading={t.teamInvite.heading}
         quotaTitle={t.teamInvite.quotaTitle}
         quotaBody={t.teamInvite.quotaBody}
+        backLabel={t.teamInvite.back}
         onReset={() => {
           setQuotaExceeded(false);
           setStep(0);
@@ -83,7 +84,7 @@ export default function TeamInvitePage() {
         <h2 className="text-sm font-semibold">{t.teamInvite.heading}</h2>
       </div>
 
-      <StepIndicator steps={STEPS} currentStep={step} />
+      <StepIndicator steps={getSteps(t.teamInvite)} currentStep={step} />
 
       <FormLevelError form={form} />
 

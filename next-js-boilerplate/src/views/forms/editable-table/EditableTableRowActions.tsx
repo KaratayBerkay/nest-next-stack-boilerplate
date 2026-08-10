@@ -29,7 +29,7 @@ export function EditableTableRowActions({
           const r = field.state.value[i];
           field.insertValue(i + 1, {
             ...r,
-            description: `${r.description} (copy)`,
+            description: `${r.description} ${t.editableTable.copySuffix}`,
           });
         }}
         label={t.editableTable.duplicateRow}

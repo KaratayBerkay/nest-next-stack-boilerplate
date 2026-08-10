@@ -2,7 +2,12 @@
 "use client";
 
 import { Separator } from "@/components/ui/Separator";
-import { COUNTRY_OPTIONS, INTEREST_OPTIONS, LANGUAGE_OPTIONS, ROLE_OPTIONS } from "./profile-constants";
+import {
+  getCountryOptions,
+  getInterestOptions,
+  getLanguageOptions,
+  getRoleOptions,
+} from "./profile-constants";
 import type { ProfileFieldsProps } from "./ProfileFields-types";
 
 export function ProfilePreferencesFields({
@@ -24,11 +29,7 @@ export function ProfilePreferencesFields({
         {(field: any) => (
           <field.ComboboxField
             label={profile.country}
-            options={COUNTRY_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-              group: o.group,
-            }))}
+            options={getCountryOptions(profile)}
           />
         )}
       </form.AppField>
@@ -37,7 +38,7 @@ export function ProfilePreferencesFields({
         {(field: any) => (
           <field.SelectField
             label={profile.language}
-            options={LANGUAGE_OPTIONS}
+            options={getLanguageOptions(profile)}
           />
         )}
       </form.AppField>
@@ -50,10 +51,7 @@ export function ProfilePreferencesFields({
         {(field: any) => (
           <field.CheckboxField
             label={profile.interests}
-            options={INTEREST_OPTIONS.map((o) => ({
-              value: o.value,
-              label: o.label,
-            }))}
+            options={getInterestOptions(profile)}
           />
         )}
       </form.AppField>
@@ -62,7 +60,7 @@ export function ProfilePreferencesFields({
         {(field: any) => (
           <field.RadioGroupField
             label={profile.role}
-            options={ROLE_OPTIONS}
+            options={getRoleOptions(profile)}
           />
         )}
       </form.AppField>

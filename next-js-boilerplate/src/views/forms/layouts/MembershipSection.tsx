@@ -11,7 +11,7 @@ export function MembershipSection({ form }: MembershipSectionProps) {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-xxs text-muted border-brand border-l-2 pl-3 tracking-wider uppercase">
-        Membership
+        {t.layouts.sectioned_membership}
       </p>
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-1">
@@ -24,9 +24,12 @@ export function MembershipSection({ form }: MembershipSectionProps) {
         >
           <div className="flex gap-4">
             {[
-              { value: "free" as const, label: "Free" },
-              { value: "basic" as const, label: "Basic" },
-              { value: "premium" as const, label: "Premium" },
+              { value: "free" as const, label: t.layouts.sectionedPlan_free },
+              { value: "basic" as const, label: t.layouts.sectionedPlan_basic },
+              {
+                value: "premium" as const,
+                label: t.layouts.sectionedPlan_premium,
+              },
             ].map((p) => (
               <label key={p.value} className="flex items-center gap-2 text-sm">
                 <RadioGroupItem value={p.value} />

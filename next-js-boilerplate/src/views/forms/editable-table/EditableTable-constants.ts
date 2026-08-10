@@ -11,11 +11,13 @@ export const TAX_RATES: Record<string, number> = {
   zero: 0,
 };
 
-export const TAX_OPTIONS = [
-  { value: "standard", label: "Standard (20%)" },
-  { value: "reduced", label: "Reduced (8%)" },
-  { value: "zero", label: "Zero (0%)" },
-];
+export function getTaxOptions(t: Record<string, string>) {
+  return [
+    { value: "standard", label: t.taxStandard },
+    { value: "reduced", label: t.taxReduced },
+    { value: "zero", label: t.taxZero },
+  ];
+}
 
 export const EMPTY_ROW: InvoiceRow = {
   description: "",

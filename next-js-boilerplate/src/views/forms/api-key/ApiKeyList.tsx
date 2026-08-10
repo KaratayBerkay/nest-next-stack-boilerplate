@@ -60,9 +60,19 @@ export function ApiKeyList({
             </div>
           </div>
           <div className="text-xxs text-muted flex items-center gap-3">
-            <span>Created {key.createdAt}</span>
-            {key.expiresAt && <span>Expires {key.expiresAt}</span>}
-            {key.lastUsedAt && <span>Last used {key.lastUsedAt}</span>}
+            <span>
+              {t.apiKey.createdLabel.replace("{date}", key.createdAt)}
+            </span>
+            {key.expiresAt && (
+              <span>
+                {t.apiKey.expiresAtLabel.replace("{date}", key.expiresAt)}
+              </span>
+            )}
+            {key.lastUsedAt && (
+              <span>
+                {t.apiKey.lastUsedLabel.replace("{date}", key.lastUsedAt)}
+              </span>
+            )}
           </div>
           {revealedSecrets.has(key.id) && (
             <code className="bg-emphasis text-xxs block rounded p-2 break-all">

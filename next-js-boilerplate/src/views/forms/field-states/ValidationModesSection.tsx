@@ -11,29 +11,30 @@ export function ValidationModesSection() {
   return (
     <div className="flex flex-col gap-4">
       <p className="text-muted text-xs">
-        The same 3-field form mounted with three different validation
-        strategies.
+        {t.fieldStates.validationModesDescription}
       </p>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
         <StateCard label={t.fieldStates.eager}>
           <p className="text-xxs text-muted mb-2">
-            Validates on every keystroke
+            {t.fieldStates.eagerDescription}
           </p>
           <EagerForm />
         </StateCard>
         <StateCard label={t.fieldStates.classic}>
-          <p className="text-xxs text-muted mb-2">Validates only on blur</p>
+          <p className="text-xxs text-muted mb-2">
+            {t.fieldStates.classicDescription}
+          </p>
           <ClassicForm />
         </StateCard>
         <StateCard label={t.fieldStates.dynamic}>
           <p className="text-xxs text-muted mb-2">
-            Quiet until first blur, then live
+            {t.fieldStates.dynamicDescription}
           </p>
           <DynamicForm />
         </StateCard>
         <StateCard label={t.fieldStates.asyncChecked}>
           <p className="text-xxs text-muted mb-2">
-            Checked against the server on blur
+            {t.fieldStates.asyncCheckedDescription}
           </p>
           <AsyncCheckedForm />
         </StateCard>

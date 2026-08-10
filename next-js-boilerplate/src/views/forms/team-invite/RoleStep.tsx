@@ -3,12 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { RoleStepProps } from "@/types/views/forms/RoleStep-types";
-
-const ROLE_OPTIONS = [
-  { value: "member", label: "Member" },
-  { value: "admin", label: "Admin" },
-  { value: "owner", label: "Owner" },
-];
+import { getRoleOptions } from "./config";
 
 export function RoleStep({ form, t, roleSchema }: RoleStepProps) {
   return (
@@ -21,7 +16,7 @@ export function RoleStep({ form, t, roleSchema }: RoleStepProps) {
         {(field: any) => (
           <field.RadioGroupField
             label={t.roleLabel as string}
-            options={ROLE_OPTIONS}
+            options={getRoleOptions(t as Record<string, string>)}
           />
         )}
       </form.AppField>

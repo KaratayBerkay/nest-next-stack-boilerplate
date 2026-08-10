@@ -17,14 +17,16 @@ export function CheckboxSection() {
           </label>
         </div>
         <div className="flex items-center gap-2 text-sm">
-          <Checkbox id="chk-checked" checked />
+          <Checkbox id="chk-checked" defaultChecked />
           <label htmlFor="chk-checked">
             {t.elements.checkboxChecked_label}
           </label>
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Checkbox id="chk-disabled" disabled />
-          <label htmlFor="chk-disabled">Disabled</label>
+          <label htmlFor="chk-disabled">
+            {t.elements.checkboxDisabled_label}
+          </label>
         </div>
       </div>
     </SectionCard>
@@ -40,7 +42,9 @@ export function RadioSection() {
         <RadioGroup defaultValue="selected">
           <div className="flex items-center gap-2 text-sm">
             <RadioGroupItem value="default" id="radio-default" />
-            <label htmlFor="radio-default">Default</label>
+            <label htmlFor="radio-default">
+              {t.elements.radioDefault_label}
+            </label>
           </div>
           <div className="flex items-center gap-2 text-sm">
             <RadioGroupItem value="selected" id="radio-selected" />
@@ -82,7 +86,9 @@ export function ToggleSection() {
         </div>
         <div className="flex items-center gap-2 text-sm">
           <Switch id="toggle-disabled" disabled />
-          <label htmlFor="toggle-disabled">Disabled</label>
+          <label htmlFor="toggle-disabled">
+            {t.elements.toggleDisabled_label}
+          </label>
         </div>
       </div>
     </SectionCard>

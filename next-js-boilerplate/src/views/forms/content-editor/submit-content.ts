@@ -18,6 +18,7 @@ export async function submitContent(
     failRate: number;
     intent: "publish" | "schedule";
     unknownError: string;
+    allMessages: Record<string, unknown>;
   },
 ) {
   if (deps.intent === "schedule" && !value.publishAt) {
@@ -31,7 +32,8 @@ export async function submitContent(
     return null;
   } catch (err) {
     const exc = (err as { exception?: ExceptionResponse }).exception;
-    if (exc) return { form: exceptionHandler(exc, {}), fields: {} };
+    if (exc)
+      return { form: exceptionHandler(exc, deps.allMessages), fields: {} };
     return { form: deps.unknownError, fields: {} };
   }
 }

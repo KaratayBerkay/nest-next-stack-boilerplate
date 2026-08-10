@@ -33,8 +33,8 @@ export function InputStatesSection() {
           />
         </div>
         <div className="flex flex-col gap-1">
-          <Label>Disabled</Label>
-          <Input placeholder="Cannot edit" disabled />
+          <Label>{t.elements.disabledState_label}</Label>
+          <Input placeholder={t.elements.disabledState_placeholder} disabled />
         </div>
       </div>
     </SectionCard>

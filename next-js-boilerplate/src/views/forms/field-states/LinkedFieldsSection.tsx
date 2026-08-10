@@ -13,8 +13,7 @@ export function LinkedFieldsSection() {
     <div className="surface border-border flex flex-col gap-4 rounded-lg border p-4">
       <p className="text-xs font-medium">{t.fieldStates.linkedFields}</p>
       <p className="text-xxs text-muted">
-        Changing the password field re-validates the confirm field. Uses{" "}
-        <code>onChangeListenTo</code>.
+        {t.fieldStates.linkedFieldsDescription} <code>onChangeListenTo</code>.
       </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <form.AppField name="password">
@@ -26,7 +25,7 @@ export function LinkedFieldsSection() {
             onChangeListenTo: ["password"],
             onChange: ({ value, fieldApi }) => {
               const pw = fieldApi.form.getFieldValue("password");
-              return value === pw ? undefined : "Passwords must match";
+              return value === pw ? undefined : t.fieldStates.passwordMismatch;
             },
           }}
         >

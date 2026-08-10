@@ -83,7 +83,7 @@ export function EmailsStep({
                   field.handleChange("");
                 }}
               >
-                Add
+                {t.add as string}
               </Button>
             </div>
             {emailInputError && (

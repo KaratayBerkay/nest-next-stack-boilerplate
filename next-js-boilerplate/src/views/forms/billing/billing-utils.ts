@@ -3,11 +3,11 @@ import { PLANS } from "./billing-constants";
 export function calcPrice(
   plan: string,
   period: string,
-): { subtotal: number; discountLabel: string | null; total: number } {
+): { subtotal: number; discountPercent: number | null; total: number } {
   const p = PLANS.find((x) => x.value === plan) ?? PLANS[0];
   const subtotal = period === "yearly" ? p.yearly : p.monthly;
-  const discountLabel = period === "yearly" && p.monthly > 0 ? "20% off" : null;
-  return { subtotal, discountLabel, total: subtotal };
+  const discountPercent = period === "yearly" && p.monthly > 0 ? 20 : null;
+  return { subtotal, discountPercent, total: subtotal };
 }
 
 export function validateTaxId(

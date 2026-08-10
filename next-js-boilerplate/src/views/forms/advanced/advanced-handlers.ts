@@ -2,10 +2,18 @@ import { exceptionToFormErrors } from "@/lib/forms/exception-to-form-errors";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { advancedFormOpts } from "@/validators/forms/advanced-inits";
 
+// "taken@example.com" is the designated trigger for the email-conflict demo
+// path — any other address succeeds, mirroring checkout's "00000" postal
+// code and billing's "EXPIRED10" coupon convention.
+const TAKEN_EMAIL = "taken@example.com";
+
 export async function handleAdvancedSubmit(
-  { value: _value }: { value: typeof advancedFormOpts.defaultValues },
+  { value }: { value: typeof advancedFormOpts.defaultValues },
   deps: {
-    simulateError: (id: string) => Promise<ExceptionResponse>;
+    simulateError: (
+      id: string,
+      opts?: { failRate?: number },
+    ) => Promise<ExceptionResponse>;
     allMessages: Record<string, unknown>;
     toast: { toast: (opts: { description: string; variant: string }) => void };
     unknownError: string;
@@ -14,7 +22,9 @@ export async function handleAdvancedSubmit(
   },
 ) {
   try {
-    await deps.simulateError("email-taken");
+    await deps.simulateError("auth-email-taken", {
+      failRate: value.email.toLowerCase() === TAKEN_EMAIL ? 1 : 0,
+    });
     deps.toast.toast({ description: deps.saveSuccess, variant: "default" });
     return null;
   } catch (err) {

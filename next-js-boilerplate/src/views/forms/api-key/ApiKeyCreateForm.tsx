@@ -10,22 +10,29 @@ import { Badge } from "@/components/ui/Badge";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import type { ApiKeyCreateFormProps } from "@/types/views/forms/ApiKeyCreateForm-types";
 
-const PERMISSION_OPTIONS = [
-  { value: "read:users", label: "Read Users" },
-  { value: "write:users", label: "Write Users" },
-  { value: "read:posts", label: "Read Posts" },
-  { value: "write:posts", label: "Write Posts" },
-  { value: "read:billing", label: "Read Billing" },
-  { value: "write:billing", label: "Write Billing" },
-  { value: "admin", label: "Admin (all)" },
-];
+const IPV4_RE =
+  /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
 
-const EXPIRY_OPTIONS = [
-  { value: "30", label: "30 Days" },
-  { value: "60", label: "60 Days" },
-  { value: "90", label: "90 Days" },
-  { value: "never", label: "No Expiry" },
-];
+function getPermissionOptions(t: Record<string, string>) {
+  return [
+    { value: "read:users", label: t.permissionReadUsers },
+    { value: "write:users", label: t.permissionWriteUsers },
+    { value: "read:posts", label: t.permissionReadPosts },
+    { value: "write:posts", label: t.permissionWritePosts },
+    { value: "read:billing", label: t.permissionReadBilling },
+    { value: "write:billing", label: t.permissionWriteBilling },
+    { value: "admin", label: t.permissionAdmin },
+  ];
+}
+
+function getExpiryOptions(t: Record<string, string>) {
+  return [
+    { value: "30", label: t.expires30 },
+    { value: "60", label: t.expires60 },
+    { value: "90", label: t.expires90 },
+    { value: "never", label: t.expiresNever },
+  ];
+}
 
 export function ApiKeyCreateForm({
   form,
@@ -35,14 +42,20 @@ export function ApiKeyCreateForm({
 }: ApiKeyCreateFormProps) {
   const [ipInput, setIpInput] = useState("");
   const [ipWhitelist, setIpWhitelist] = useState<string[]>([]);
+  const [ipError, setIpError] = useState<string | null>(null);
 
   const handleAddIp = useCallback(() => {
     const ip = ipInput.trim();
     if (!ip) return;
+    if (!IPV4_RE.test(ip)) {
+      setIpError(t.apiKey.ipInvalid);
+      return;
+    }
+    setIpError(null);
     if (ipWhitelist.includes(ip)) return;
     setIpWhitelist((prev) => [...prev, ip]);
     setIpInput("");
-  }, [ipInput, ipWhitelist]);
+  }, [ipInput, ipWhitelist, t]);
 
   const handleRemoveIp = useCallback((ip: string) => {
     setIpWhitelist((prev) => prev.filter((v) => v !== ip));
@@ -87,7 +100,7 @@ export function ApiKeyCreateForm({
         {(field: any) => (
           <field.SelectField
             label={t.apiKey.expiresLabel}
-            options={EXPIRY_OPTIONS}
+            options={getExpiryOptions(t.apiKey)}
           />
         )}
       </form.AppField>
@@ -95,7 +108,7 @@ export function ApiKeyCreateForm({
         {(field: any) => (
           <field.CheckboxField
             label={t.apiKey.permissionsLabel}
-            options={PERMISSION_OPTIONS}
+            options={getPermissionOptions(t.apiKey)}
           />
         )}
       </form.AppField>
@@ -109,7 +122,10 @@ export function ApiKeyCreateForm({
             className="flex-1 text-xs"
             placeholder={t.apiKey.ipPlaceholder}
             value={ipInput}
-            onChange={(e) => setIpInput(e.target.value)}
+            onChange={(e) => {
+              setIpInput(e.target.value);
+              if (ipError) setIpError(null);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -126,6 +142,7 @@ export function ApiKeyCreateForm({
             {t.apiKey.addIp}
           </Button>
         </div>
+        {ipError && <span className="text-xxs text-error">{ipError}</span>}
         <div className="flex flex-wrap gap-1.5">
           {ipWhitelist.map((ip) => (
             <Badge key={ip} variant="secondary" className="gap-1">

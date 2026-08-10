@@ -5,6 +5,7 @@ import type { DraftAlertProps } from "@/types/views/forms/DraftAlert-types";
 export function DraftAlert({
   draft,
   restoreLabel,
+  restoreButtonLabel,
   discardLabel,
   discardConfirmLabel,
   onRestore,
@@ -32,7 +33,7 @@ export function DraftAlert({
           )}
         </ConfirmDialog>
         <Button size="sm" onClick={onRestore}>
-          {restoreLabel}
+          {restoreButtonLabel}
         </Button>
       </div>
     </div>

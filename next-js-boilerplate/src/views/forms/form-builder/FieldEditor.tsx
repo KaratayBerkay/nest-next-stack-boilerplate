@@ -1,4 +1,4 @@
-import { FIELD_TYPES } from "@/types/forms/BuilderField-types";
+import { getFieldTypes } from "@/types/forms/BuilderField-types";
 import type { BuilderField } from "@/types/forms/BuilderField-types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -52,7 +52,7 @@ export function FieldEditor({
         <div className="flex flex-col gap-1">
           <span className="text-xxs text-muted">{t.formBuilder.fieldType}</span>
           <Dropdown
-            options={FIELD_TYPES}
+            options={getFieldTypes(t.formBuilder)}
             value={field.type}
             onChange={(value) =>
               onUpdate(field.id, {

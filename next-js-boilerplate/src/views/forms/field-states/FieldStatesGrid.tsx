@@ -67,7 +67,9 @@ export function FieldStatesGrid() {
                 onChange={(e) => field.handleChange(e.target.value)}
                 className="border-warning"
               />
-              <p className="text-warning text-xs">This value looks unusual</p>
+              <p className="text-warning text-xs">
+                {t.fieldStates.warningMessage}
+              </p>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <FormFieldInfo field={field as any} />
             </>

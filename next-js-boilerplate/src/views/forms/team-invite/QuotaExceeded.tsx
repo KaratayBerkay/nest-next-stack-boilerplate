@@ -7,6 +7,7 @@ export function QuotaExceeded({
   heading,
   quotaTitle,
   quotaBody,
+  backLabel,
   onReset,
 }: QuotaExceededProps) {
   return (
@@ -15,7 +16,7 @@ export function QuotaExceeded({
       <div className="surface border-border flex flex-col items-center gap-4 rounded-lg border p-8 text-center">
         <h3 className="text-base font-semibold">{quotaTitle}</h3>
         <p className="text-muted text-xs">{quotaBody}</p>
-        <Button onClick={onReset}>Back</Button>
+        <Button onClick={onReset}>{backLabel}</Button>
       </div>
     </div>
   );
