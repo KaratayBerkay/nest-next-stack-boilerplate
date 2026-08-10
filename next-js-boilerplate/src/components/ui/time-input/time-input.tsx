@@ -6,6 +6,12 @@ import { resolveVariant } from "@/lib/resolve-variant";
 import { globalStyleVariants } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
 import { useFieldMessages } from "@/components/ui/field-messages";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/Select";
 import type {
   TimeInputProps,
   TimeInputVariant,
@@ -21,11 +27,6 @@ const variantStyles: Record<TimeInputVariant, string> = {
   default: "border border-border bg-bg rounded-md",
 };
 
-const selectClasses: Record<TimeInputVariant, string> = {
-  ...globalStyleVariants,
-  default: "bg-bg border-border focus-visible:ring-brand",
-};
-
 function formatHour(h: number, use24Hour: boolean): string {
   if (use24Hour) return pad(h);
   const period = h >= 12 ? "PM" : "AM";
@@ -38,54 +39,45 @@ function TimeUnitSelect({
   max,
   onChange,
   disabled,
-  selectClassName,
+  variant,
   use24Hour: is24,
   isHour,
   describedBy,
   ariaLabel,
 }: TimeUnitSelectProps) {
   const options = useMemo(() => {
-    const arr: { value: number; label: string }[] = [];
+    const arr: { value: string; label: string }[] = [];
     for (let i = 0; i <= max; i++) {
       arr.push({
-        value: i,
+        value: String(i),
         label: isHour && !is24 ? formatHour(i, false) : pad(i),
       });
     }
     return arr;
   }, [max, isHour, is24]);
 
+  const selected = options.find((opt) => opt.value === String(value));
+
   return (
-    <div className="relative">
-      <select
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+    <Select value={String(value)} onValueChange={(v) => onChange(Number(v))}>
+      <SelectTrigger
+        variant={variant}
+        size="sm"
+        className="w-20"
         disabled={disabled}
         aria-label={ariaLabel}
         aria-describedby={describedBy}
-        className={cn(
-          "h-9 w-[72px] appearance-none rounded-md border px-2 pr-7 text-sm font-medium shadow-sm focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
-          selectClassName,
-        )}
       >
+        {selected?.label}
+      </SelectTrigger>
+      <SelectContent>
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+          <SelectItem key={opt.value} value={opt.value}>
             {opt.label}
-          </option>
+          </SelectItem>
         ))}
-      </select>
-      <svg
-        className="pointer-events-none absolute top-0 right-0 mr-2 h-full"
-        width="14"
-        height="14"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="m6 9 6 6 6-6" />
-      </svg>
-    </div>
+      </SelectContent>
+    </Select>
   );
 }
 
@@ -151,7 +143,7 @@ export function TimeInput({
               }
             }}
             disabled={disabled}
-            selectClassName={resolveVariant(selectClasses, effectiveVariant)}
+            variant={effectiveVariant}
             use24Hour={use24Hour}
             isHour
             describedBy={describedBy}
@@ -165,7 +157,7 @@ export function TimeInput({
             max={59}
             onChange={(val) => update("minutes", val)}
             disabled={disabled}
-            selectClassName={resolveVariant(selectClasses, effectiveVariant)}
+            variant={effectiveVariant}
             describedBy={describedBy}
             ariaLabel="Minutes"
           />
@@ -178,10 +170,7 @@ export function TimeInput({
                 max={59}
                 onChange={(val) => update("seconds", val)}
                 disabled={disabled}
-                selectClassName={resolveVariant(
-                  selectClasses,
-                  effectiveVariant,
-                )}
+                variant={effectiveVariant}
                 describedBy={describedBy}
                 ariaLabel="Seconds"
               />

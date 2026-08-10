@@ -10,7 +10,7 @@ export interface TimeUnitSelectProps {
   max: number;
   onChange: (val: number) => void;
   disabled?: boolean;
-  selectClassName?: string;
+  variant?: TimeInputVariant;
   use24Hour?: boolean;
   isHour?: boolean;
   describedBy?: string;
