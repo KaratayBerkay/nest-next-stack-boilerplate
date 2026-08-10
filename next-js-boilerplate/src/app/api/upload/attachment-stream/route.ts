@@ -5,6 +5,8 @@ import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import {
   STREAM_CONTENT_TYPE_HEADER,
   STREAM_FILENAME_HEADER,
+  UPLOAD_SCOPE_ID_HEADER,
+  UPLOAD_SCOPE_KIND_HEADER,
 } from "@/constants/api/headers";
 import { MAX_ATTACHMENT_SIZE } from "@/constants/upload";
 import { withLogging } from "@/lib/request-logger";
@@ -44,6 +46,20 @@ export const POST = withLogging(async (request, log) => {
           [STREAM_CONTENT_TYPE_HEADER]:
             request.headers.get(STREAM_CONTENT_TYPE_HEADER) ??
             "application/octet-stream",
+          ...(request.headers.get(UPLOAD_SCOPE_KIND_HEADER)
+            ? {
+                [UPLOAD_SCOPE_KIND_HEADER]: request.headers.get(
+                  UPLOAD_SCOPE_KIND_HEADER,
+                )!,
+              }
+            : {}),
+          ...(request.headers.get(UPLOAD_SCOPE_ID_HEADER)
+            ? {
+                [UPLOAD_SCOPE_ID_HEADER]: request.headers.get(
+                  UPLOAD_SCOPE_ID_HEADER,
+                )!,
+              }
+            : {}),
         },
       },
       accessToken,
