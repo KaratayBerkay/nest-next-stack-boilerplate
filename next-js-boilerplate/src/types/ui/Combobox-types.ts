@@ -1,5 +1,7 @@
 export interface ComboboxProps {
-  options: { value: string; label: string }[];
+  /** `group` is optional — when any option sets it, the list renders as
+   * headed sections (in first-seen order) instead of one flat list. */
+  options: { value: string; label: string; group?: string }[];
   value?: string | string[];
   onValueChange?: (value: string | string[]) => void;
   multiple?: boolean;

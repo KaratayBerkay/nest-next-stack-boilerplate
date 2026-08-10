@@ -92,6 +92,20 @@ export function Combobox({
     return `${value.length} selected`;
   })();
 
+  const filteredOptions = options.filter((o) =>
+    o.label.toLowerCase().includes(query.toLowerCase()),
+  );
+  const optionGroups = Array.from(
+    filteredOptions
+      .reduce((map, opt) => {
+        const key = opt.group ?? "";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(opt);
+        return map;
+      }, new Map<string, typeof filteredOptions>())
+      .entries(),
+  );
+
   return (
     <div ref={wrapperRef} className={cn("relative", className)}>
       <button
@@ -142,12 +156,12 @@ export function Combobox({
               onChange={(e) => setQuery(e.target.value)}
             />
             <CommandList id={listId}>
-              <CommandGroup>
-                {options
-                  .filter((o) =>
-                    o.label.toLowerCase().includes(query.toLowerCase()),
-                  )
-                  .map((opt) => {
+              {optionGroups.map(([group, groupOptions]) => (
+                <CommandGroup
+                  key={group || "_ungrouped"}
+                  heading={group || undefined}
+                >
+                  {groupOptions.map((opt) => {
                     const isSelected =
                       multiple && selectedValues.includes(opt.value);
                     return (
@@ -190,10 +204,9 @@ export function Combobox({
                       </CommandItem>
                     );
                   })}
-              </CommandGroup>
-              {options.filter((o) =>
-                o.label.toLowerCase().includes(query.toLowerCase()),
-              ).length === 0 && (
+                </CommandGroup>
+              ))}
+              {filteredOptions.length === 0 && (
                 <Empty
                   icon={
                     <svg
