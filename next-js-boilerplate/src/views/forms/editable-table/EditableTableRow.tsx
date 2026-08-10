@@ -2,6 +2,9 @@
 "use client";
 
 import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
+import { Input } from "@/components/ui/Input";
+import { NativeSelect } from "@/components/ui/NativeSelect";
+import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import { TAX_OPTIONS } from "./EditableTable-constants";
 import type { InvoiceRow } from "./EditableTable-constants";
 import type { EditableTableRowProps } from "@/types/forms/EditableTableRow-types";
@@ -23,33 +26,24 @@ export function EditableTableRow({
 
   return (
     <tr className="border-border border-b">
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 align-top">
         <form.AppField
           name={`rows[${i}].description`}
           validators={{ onChange: rowSchemas.description }}
         >
           {(subField: any) => (
             <div className="flex flex-col">
-              <input
-                className="border-border bg-field w-32 rounded border px-1.5 py-1 text-xs"
+              <Input
+                className="w-32 text-xs"
                 value={subField.state.value}
                 onChange={(e) => subField.handleChange(e.target.value)}
               />
-              {subField.state.meta.errors.length > 0 && (
-                <span className="text-destructive text-xxs">
-                  {String(subField.state.meta.errors[0])}
-                </span>
-              )}
-              {subField.state.meta.errors.length === 0 && (
-                <span className="text-muted text-xxs">
-                  {t.editableTable.quantityHint}
-                </span>
-              )}
+              <FormFieldInfo field={subField} />
             </div>
           )}
         </form.AppField>
       </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 align-top">
         <form.AppField
           name={`rows[${i}].quantity`}
           validators={{
@@ -58,70 +52,65 @@ export function EditableTableRow({
             onBlurAsync: async ({ value }: { value: any }) => {
               if (!value || Number(value) <= 100) return undefined;
               return blurAsyncCheck(String(value), "row-rejected", {
-                simulateError, toast, allMessages,
+                simulateError,
+                toast,
+                allMessages,
               });
             },
           }}
         >
           {(subField: any) => (
             <div className="flex flex-col items-end">
-              <input
+              <Input
                 type="number"
-                className="border-border bg-field w-16 rounded border px-1.5 py-1 text-right text-xs"
+                className="w-20 text-right text-xs"
                 value={subField.state.value}
                 min={0}
                 onChange={(e) =>
                   subField.handleChange(Math.max(0, Number(e.target.value)))
                 }
               />
-              {subField.state.meta.errors.length > 0 && (
-                <span className="text-destructive text-xxs">
-                  {String(subField.state.meta.errors[0])}
-                </span>
-              )}
+              <FormFieldInfo
+                field={subField}
+                hint={t.editableTable.quantityHint}
+              />
             </div>
           )}
         </form.AppField>
       </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 align-top">
         <form.AppField
           name={`rows[${i}].unitPrice`}
           validators={{ onChange: rowSchemas.unitPrice }}
         >
           {(subField: any) => (
             <div className="flex flex-col items-end">
-              <input
+              <Input
                 type="number"
                 step="0.01"
-                className="border-border bg-field w-20 rounded border px-1.5 py-1 text-right text-xs"
+                className="w-24 text-right text-xs"
                 value={subField.state.value}
                 min={0}
                 onChange={(e) =>
                   subField.handleChange(Math.max(0, Number(e.target.value)))
                 }
               />
-              {subField.state.meta.errors.length > 0 && (
-                <span className="text-destructive text-xxs">
-                  {String(subField.state.meta.errors[0])}
-                </span>
-              )}
-              {subField.state.meta.errors.length === 0 && (
-                <span className="text-muted text-xxs">
-                  {t.editableTable.unitPriceHint}
-                </span>
-              )}
+              <FormFieldInfo
+                field={subField}
+                hint={t.editableTable.unitPriceHint}
+              />
             </div>
           )}
         </form.AppField>
       </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 align-top">
         <form.AppField
           name={`rows[${i}].taxClass`}
           validators={{ onChange: rowSchemas.taxClass }}
         >
           {(subField: any) => (
-            <select
-              className="border-border bg-field rounded border px-1.5 py-1 text-xs"
+            <NativeSelect
+              className="text-xs"
               value={subField.state.value}
               onChange={(e) => subField.handleChange(e.target.value)}
             >
@@ -130,14 +119,12 @@ export function EditableTableRow({
                   {opt.label}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           )}
         </form.AppField>
       </td>
-      <td className="px-2 py-1 text-right">
-        ${net.toFixed(2)}
-      </td>
-      <td className="px-2 py-1">
+      <td className="px-2 py-1 text-right align-top">${net.toFixed(2)}</td>
+      <td className="px-2 py-1 align-top">
         <EditableTableRowActions
           field={field}
           index={i}
