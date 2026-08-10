@@ -1,7 +1,7 @@
 "use client";
 
 import { useFieldContext } from "@/lib/forms/form-context";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Label } from "@/components/ui/Label";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import type { SelectFieldProps } from "@/types/forms/SelectField-types";
@@ -20,19 +20,14 @@ export function SelectField({
           {label}
         </Label>
       )}
-      <NativeSelect
+      <Dropdown
         id={field.name}
+        options={options}
         value={field.state.value}
         onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value)}
-      >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </NativeSelect>
+        onChange={(value) => field.handleChange(value)}
+        placeholder={placeholder}
+      />
       <FormFieldInfo field={field} />
     </div>
   );

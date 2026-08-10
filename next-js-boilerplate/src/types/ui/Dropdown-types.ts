@@ -11,11 +11,13 @@ export interface DropdownProps {
   options: DropdownOption[];
   value?: string;
   onChange?: (value: string) => void;
+  onBlur?: React.FocusEventHandler<HTMLButtonElement>;
   placeholder?: string;
   className?: string;
   variant?: DropdownVariant;
   size?: SelectSize;
   disabled?: boolean;
+  id?: string;
   name?: string;
   error?: string;
   description?: string;

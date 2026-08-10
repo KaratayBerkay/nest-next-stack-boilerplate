@@ -18,11 +18,13 @@ export function Dropdown({
   options,
   value,
   onChange,
+  onBlur,
   placeholder,
   className,
   variant,
   size,
   disabled,
+  id,
   name,
   error,
   description,
@@ -36,9 +38,11 @@ export function Dropdown({
     <div className={className}>
       <Select value={value} onValueChange={(v) => onChange?.(v)} name={name}>
         <SelectTrigger
+          id={id}
           variant={variant}
           size={size}
           disabled={disabled}
+          onBlur={onBlur}
           aria-label={ariaLabel}
           error={error}
           description={description}
