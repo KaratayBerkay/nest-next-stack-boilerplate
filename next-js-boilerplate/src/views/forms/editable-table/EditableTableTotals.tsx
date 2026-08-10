@@ -4,7 +4,7 @@ import type { EditableTableTotalsProps } from "@/types/forms/EditableTableTotals
 
 export function EditableTableTotals({ totals, t }: EditableTableTotalsProps) {
   return (
-    <div className="flex flex-col gap-1 self-end text-xs">
+    <div className="flex flex-col gap-1 text-xs">
       <div className="flex justify-between gap-8">
         <span>{t.editableTable.subtotal}</span>
         <span>${totals.subtotal.toFixed(2)}</span>

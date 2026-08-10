@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { formOptions, useStore } from "@tanstack/react-form";
@@ -11,14 +11,12 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { exceptionHandler } from "@/lib/exception-handler";
 import { createTableRowFieldSchemas } from "@/validators/forms/table";
 import type { ExceptionResponse } from "@/lib/api-client";
-import {
-  EMPTY_ROW,
-  INITIAL_ROWS,
-  TAX_RATES,
-} from "./EditableTable-constants";
+import { EMPTY_ROW, INITIAL_ROWS, TAX_RATES } from "./EditableTable-constants";
 import type { InvoiceRow, RowStatus } from "./EditableTable-constants";
 import { EditableTableRow } from "./EditableTableRow";
 import { EditableTableTotals } from "./EditableTableTotals";
+import { EditableTableSaveAlert } from "./EditableTableSaveAlert";
+import type { EditableTableSaveResult } from "@/types/forms/EditableTableSaveAlert-types";
 const tableFormOpts = formOptions({
   defaultValues: { rows: structuredClone(INITIAL_ROWS) },
 });
@@ -30,6 +28,10 @@ export default function EditableTablePage() {
   const { simulateError } = useFormsDemoActions();
   const [rowStatus, setRowStatus] = useState<Record<number, RowStatus>>({});
   const [savingAll, setSavingAll] = useState(false);
+  const [saveResult, setSaveResult] = useState<EditableTableSaveResult | null>(
+    null,
+  );
+  const saveResultIdRef = useRef(0);
   const rowSchemas = useMemo(
     () => createTableRowFieldSchemas(t.editableTable),
     [t],
@@ -65,22 +67,45 @@ export default function EditableTablePage() {
     setSavingAll(true);
     try {
       await simulateError("row-rejected");
-      toast({ description: t.editableTable.saveSuccess, variant: "default" });
+      setSaveResult({
+        id: ++saveResultIdRef.current,
+        variant: "success",
+        title: t.editableTable.saveSuccess,
+      });
     } catch (err) {
       const exc = (err as { exception?: ExceptionResponse }).exception;
-      toast({
-        description: exc ? exceptionHandler(exc, {}) : t.editableTable.saveFailed,
-        variant: "destructive",
+      setSaveResult({
+        id: ++saveResultIdRef.current,
+        variant: "error",
+        title: t.editableTable.saveFailed,
+        description: exc ? exceptionHandler(exc, {}) : undefined,
       });
     }
     setSavingAll(false);
-  }, [simulateError, toast, t]);
+  }, [simulateError, t]);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h2 className="text-sm font-semibold">{t.editableTable.heading}</h2>
       </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <EditableTableTotals totals={totals} t={t} />
+        <Button onClick={handleSaveAll} loading={savingAll}>
+          {savingAll ? t.editableTable.saving : t.editableTable.saveAll}
+        </Button>
+      </div>
+
+      {saveResult && (
+        <EditableTableSaveAlert
+          key={saveResult.id}
+          result={saveResult}
+          onDone={() => setSaveResult(null)}
+        />
+      )}
+      <Separator />
+
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
@@ -97,7 +122,9 @@ export default function EditableTablePage() {
               <th className="px-2 py-1 font-medium">
                 {t.editableTable.taxClass}
               </th>
-              <th className="px-2 py-1 text-right font-medium">{t.editableTable.net}</th>
+              <th className="px-2 py-1 text-right font-medium">
+                {t.editableTable.net}
+              </th>
               <th className="px-2 py-1" />
             </tr>
           </thead>
@@ -134,15 +161,6 @@ export default function EditableTablePage() {
           onClick={() => form.pushFieldValue("rows", { ...EMPTY_ROW })}
         >
           {t.editableTable.addRow}
-        </Button>
-      </div>
-      <Separator />
-
-      <EditableTableTotals totals={totals} t={t} />
-
-      <div>
-        <Button onClick={handleSaveAll} loading={savingAll}>
-          {savingAll ? t.editableTable.saving : t.editableTable.saveAll}
         </Button>
       </div>
     </div>
