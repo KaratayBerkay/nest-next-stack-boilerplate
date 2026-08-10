@@ -66,7 +66,7 @@ export default function EditableTablePage() {
   const handleSaveAll = useCallback(async () => {
     setSavingAll(true);
     try {
-      await simulateError("row-rejected");
+      await simulateError("row-rejected", { failRate: 0.5 });
       setSaveResult({
         id: ++saveResultIdRef.current,
         variant: "success",
