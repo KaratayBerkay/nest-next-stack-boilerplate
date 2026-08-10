@@ -1236,6 +1236,20 @@ dialog.dialog-closing::backdrop {
   }
 }
 
+/* ── Hide native number input spinners (can't be restyled to match
+   the theme) — arrow keys still increment/decrement. ─────────────── */
+@layer base {
+  input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
 /* ── Device-type utilities (set by useDeviceType) ────────────────── */
 @utility touch-only {
   display: none;
