@@ -34,13 +34,15 @@ export function TeamMembers({
             <span className="text-xxs text-muted">
               {t.memberName} {i + 1}
             </span>
-            <button
+            <Button
               type="button"
-              className="text-destructive text-xxs hover:underline"
+              variant="ghost"
+              size="xs"
+              className="text-error"
               onClick={() => form.removeFieldValue("members", i)}
             >
               {t.removeMember}
-            </button>
+            </Button>
           </div>
 
           <form.AppField

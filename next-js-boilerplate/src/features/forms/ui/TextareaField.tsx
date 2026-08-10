@@ -17,11 +17,7 @@ export function TextareaField({
   const charCount = value.length;
   const ratio = maxLength ? charCount / maxLength : 0;
   const countColor =
-    ratio >= 0.9
-      ? "text-destructive"
-      : ratio >= 0.7
-        ? "text-warning"
-        : "text-muted";
+    ratio >= 0.9 ? "text-error" : ratio >= 0.7 ? "text-warning" : "text-muted";
 
   return (
     <div className="flex flex-col gap-1">

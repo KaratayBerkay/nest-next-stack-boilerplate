@@ -5,6 +5,7 @@ import { useState, useCallback } from "react";
 import { IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { Badge } from "@/components/ui/Badge";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import type { ApiKeyCreateFormProps } from "@/types/views/forms/ApiKeyCreateForm-types";
@@ -129,14 +130,14 @@ export function ApiKeyCreateForm({
           {ipWhitelist.map((ip) => (
             <Badge key={ip} variant="secondary" className="gap-1">
               {ip}
-              <button
-                type="button"
+              <IconButton
+                icon={<IconX size={12} />}
+                variant="ghost"
+                size="icon-xs"
+                className="text-error"
                 onClick={() => handleRemoveIp(ip)}
-                className="text-error inline-flex items-center"
-                aria-label={`${t.apiKey.removeIp} ${ip}`}
-              >
-                <IconX size={12} />
-              </button>
+                label={`${t.apiKey.removeIp} ${ip}`}
+              />
             </Badge>
           ))}
         </div>

@@ -5,6 +5,7 @@
 import { IconX } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { Badge } from "@/components/ui/Badge";
 import type { EmailsStepProps } from "@/types/views/forms/EmailsStep-types";
 
@@ -99,14 +100,14 @@ export function EmailsStep({
             <div key={email} className="flex flex-col gap-0.5">
               <Badge variant="secondary" className="gap-1">
                 {email}
-                <button
-                  type="button"
+                <IconButton
+                  icon={<IconX size={12} />}
+                  variant="ghost"
+                  size="icon-xs"
+                  className="text-error"
                   onClick={() => form.removeFieldValue("emails", index)}
-                  className="text-error inline-flex items-center"
-                  aria-label={`${t.emailChipRemove as string} ${email}`}
-                >
-                  <IconX size={12} />
-                </button>
+                  label={`${t.emailChipRemove as string} ${email}`}
+                />
               </Badge>
               {chipError && (
                 <p className="text-xxs text-error">{chipError as string}</p>

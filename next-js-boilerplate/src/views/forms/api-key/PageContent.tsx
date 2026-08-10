@@ -78,9 +78,7 @@ export default function ApiKeyPage() {
           <code className="bg-emphasis mt-1 block rounded p-2 text-xs break-all">
             {newKeySecret}
           </code>
-          <p className="text-xxs text-destructive mt-1">
-            {t.apiKey.secretNote}
-          </p>
+          <p className="text-xxs text-error mt-1">{t.apiKey.secretNote}</p>
           <div className="mt-2 flex gap-2">
             <Button
               size="sm"
