@@ -29,7 +29,7 @@ export const POST = withLogging(async (request, log) => {
 
   const { data, errors } = await graphqlFetch<{
     enrollMfa: { otpauthUrl: string; secret: string };
-  }>(ENROLL_MFA_MUTATION, {}, accessToken);
+  }>(ENROLL_MFA_MUTATION, {}, accessToken, undefined, true);
 
   if (errors || !data?.enrollMfa) {
     const body = graphqlErrorBody(errors, "MFA enrollment failed");

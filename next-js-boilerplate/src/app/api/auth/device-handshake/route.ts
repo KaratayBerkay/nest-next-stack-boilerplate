@@ -11,6 +11,7 @@ export async function POST() {
     "/devices/handshake",
     {
       method: POST_METHOD,
+      next: { revalidate: 0 },
     },
   );
 

@@ -36,6 +36,9 @@ export async function POST(request: Request) {
   const { data, errors } = await graphqlFetch<{ devActivateUser: boolean }>(
     DEV_ACTIVATE_MUTATION,
     { email },
+    undefined,
+    undefined,
+    true,
   );
 
   if (errors) {

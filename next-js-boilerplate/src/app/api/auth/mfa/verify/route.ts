@@ -56,7 +56,7 @@ export const POST = withLogging(async (request, log) => {
 
   const { data, errors } = await graphqlFetch<{
     verifyMfa: { enabled: boolean; backupCodes: string[] };
-  }>(VERIFY_MFA_MUTATION, { code }, accessToken);
+  }>(VERIFY_MFA_MUTATION, { code }, accessToken, undefined, true);
 
   if (errors || !data?.verifyMfa) {
     const body = graphqlErrorBody(errors, "MFA verification failed");

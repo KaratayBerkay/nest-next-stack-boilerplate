@@ -111,7 +111,7 @@ export const GET = async (
           refreshToken?: string;
           user: unknown;
         };
-      }>(LOGIN_WITH_OAUTH, { input: { state } });
+      }>(LOGIN_WITH_OAUTH, { input: { state } }, undefined, undefined, true);
 
       if (errors || !data?.loginWithOAuth) {
         log.warn(
@@ -156,6 +156,7 @@ export const GET = async (
             ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
             [USER_TOKEN_HEADER]: userToken,
           },
+          true,
         );
         if (meResult.data?.me) {
           sessionUser = {

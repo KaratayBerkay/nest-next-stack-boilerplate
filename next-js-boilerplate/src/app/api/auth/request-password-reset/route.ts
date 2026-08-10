@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
   const { data, errors } = await graphqlFetch<{
     requestPasswordReset: boolean;
-  }>(MUTATION, { input: { email } });
+  }>(MUTATION, { input: { email } }, undefined, undefined, true);
 
   if (errors || data?.requestPasswordReset === undefined) {
     const body = graphqlErrorBody(errors, "Request failed");

@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
   const { data, errors } = await graphqlFetch<{
     verifyEmail: { id: string };
-  }>(MUTATION, { token });
+  }>(MUTATION, { token }, undefined, undefined, true);
 
   if (errors || !data?.verifyEmail) {
     const body = graphqlErrorBody(errors, "Verification failed");

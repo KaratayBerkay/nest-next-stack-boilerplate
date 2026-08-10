@@ -54,6 +54,8 @@ export const GET = withLogging(async (_request, log) => {
     ME_QUERY,
     undefined,
     accessToken,
+    undefined,
+    true,
   );
 
   if (errors || !data?.me) {

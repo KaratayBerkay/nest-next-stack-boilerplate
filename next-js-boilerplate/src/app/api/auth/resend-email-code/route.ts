@@ -41,7 +41,7 @@ export const POST = withLogging(async (request, log) => {
 
   const { data, errors } = await graphqlFetch<{
     resendEmailCode: boolean;
-  }>(RESEND_CODE_MUTATION, { userId, email });
+  }>(RESEND_CODE_MUTATION, { userId, email }, undefined, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to resend code");

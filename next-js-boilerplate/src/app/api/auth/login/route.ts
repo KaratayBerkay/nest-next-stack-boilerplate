@@ -106,9 +106,15 @@ export const POST = withLogging(async (request, log) => {
       mfaMethod?: "TOTP" | "EMAIL";
       user: unknown;
     };
-  }>(LOGIN_QUERY, {
-    input: { email, password, ...(timezone ? { timezone } : {}) },
-  });
+  }>(
+    LOGIN_QUERY,
+    {
+      input: { email, password, ...(timezone ? { timezone } : {}) },
+    },
+    undefined,
+    undefined,
+    true,
+  );
 
   if (errors || !data?.login) {
     const body = graphqlErrorBody(errors, "Login failed");
@@ -151,6 +157,7 @@ export const POST = withLogging(async (request, log) => {
         ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
         [USER_TOKEN_HEADER]: userToken,
       },
+      true,
     );
     if (meResult.data?.me) {
       sessionUser = {

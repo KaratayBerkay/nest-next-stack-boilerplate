@@ -29,6 +29,7 @@ export async function POST() {
       undefined,
       accessToken,
       extraHeaders,
+      true,
     );
     revoked = !errors && data?.logout === true;
   }

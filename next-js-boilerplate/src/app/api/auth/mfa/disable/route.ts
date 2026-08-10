@@ -53,7 +53,7 @@ export const POST = withLogging(async (request, log) => {
 
   const { data, errors } = await graphqlFetch<{
     disableMfa: boolean;
-  }>(DISABLE_MFA_MUTATION, { code }, accessToken);
+  }>(DISABLE_MFA_MUTATION, { code }, accessToken, undefined, true);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to disable MFA");

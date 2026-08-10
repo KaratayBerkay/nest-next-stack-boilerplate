@@ -31,6 +31,7 @@ export async function POST(_req: NextRequest) {
     undefined,
     accessToken,
     extraHeaders ?? undefined,
+    true,
   );
 
   if (errors || !data?.trustCurrentDevice) {

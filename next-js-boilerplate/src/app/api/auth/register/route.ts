@@ -85,14 +85,20 @@ export async function POST(request: Request) {
       refreshToken?: string;
       user: unknown;
     };
-  }>(REGISTER_QUERY, {
-    input: {
-      email,
-      password,
-      ...(name ? { name } : {}),
-      ...(timezone ? { timezone } : {}),
+  }>(
+    REGISTER_QUERY,
+    {
+      input: {
+        email,
+        password,
+        ...(name ? { name } : {}),
+        ...(timezone ? { timezone } : {}),
+      },
     },
-  });
+    undefined,
+    undefined,
+    true,
+  );
 
   if (errors || !data?.register) {
     const body = graphqlErrorBody(errors, "Registration failed");
@@ -122,6 +128,7 @@ export async function POST(request: Request) {
         ...(deviceToken ? { [DEVICE_TOKEN_HEADER]: deviceToken } : {}),
         [USER_TOKEN_HEADER]: userToken,
       },
+      true,
     );
     if (meResult.data?.me) {
       sessionUser = {

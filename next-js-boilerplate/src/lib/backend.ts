@@ -196,12 +196,6 @@ interface GraphQlResponse<T> {
 const CSRF_COOKIE_DEV = "csrf-token";
 const CSRF_COOKIE_PROD = "__Host-csrf";
 
-function csrfCookieName(): string {
-  return process.env.NODE_ENV === "production"
-    ? CSRF_COOKIE_PROD
-    : CSRF_COOKIE_DEV;
-}
-
 interface CsrfCacheEntry {
   token: string;
   cookie: string;
@@ -285,9 +279,15 @@ export async function csrfEchoHeaders(): Promise<Record<
     return null;
   }
 
+  // Read the name the backend actually used instead of guessing from our own
+  // NODE_ENV: the frontend and backend are deployed independently, and
+  // `next dev` always forces development mode even when it's pointed at a
+  // production-mode backend (e.g. local testing against the compose stack),
+  // so the two sides' "prod-ness" can't be assumed to match.
   const setCookieHeader = csrfRes.headers.get("set-cookie");
   const csrfCookieValue = setCookieHeader
-    ? parseSetCookieValue(setCookieHeader, csrfCookieName())
+    ? (parseSetCookieValue(setCookieHeader, CSRF_COOKIE_PROD) ??
+      parseSetCookieValue(setCookieHeader, CSRF_COOKIE_DEV))
     : null;
 
   csrfCache.set(key, {
