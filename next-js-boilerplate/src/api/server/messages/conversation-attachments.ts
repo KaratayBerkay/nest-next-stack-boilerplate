@@ -17,14 +17,24 @@ export interface ConversationAttachmentsPage {
   hasMore: boolean;
 }
 
+export interface ConversationAttachmentsFilters {
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
 export async function fetchConversationAttachmentsServer(
   peerId: string,
   before?: string,
   take: number = 30,
+  filters?: ConversationAttachmentsFilters,
 ): Promise<ConversationAttachmentsPage> {
   const params = new URLSearchParams();
   if (before) params.set("before", before);
   params.set("take", String(take));
+  if (filters?.search) params.set("search", filters.search);
+  if (filters?.from) params.set("from", filters.from);
+  if (filters?.to) params.set("to", filters.to);
   const res = await apiFetch(
     `${MESSAGES_CONVERSATION_ATTACHMENTS_PREFIX}${peerId}/attachments?${params.toString()}`,
   );

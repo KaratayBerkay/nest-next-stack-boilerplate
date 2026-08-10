@@ -29,5 +29,8 @@
   "allUploadsTitle": "Tüm yüklemeler",
   "allUploadsEmpty": "Bu odada henüz dosya yüklenmedi",
   "allUploadsFailedToLoad": "Yüklemeler yüklenemedi",
+  "allUploadsSearchPlaceholder": "Dosya adına göre ara...",
+  "allUploadsNoResults": "Filtrelerinize uyan yükleme yok",
+  "allUploadsClearFilters": "Filtreleri temizle",
   "loadMore": "Daha fazla yükle"
 }

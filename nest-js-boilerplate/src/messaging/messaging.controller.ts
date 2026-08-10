@@ -203,17 +203,38 @@ export class MessagingController {
     required: false,
     description: 'Page size (default 30)',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Case-insensitive filter on attachment file name',
+  })
+  @ApiQuery({
+    name: 'from',
+    required: false,
+    description: 'Only attachments at/after this timestamp (ISO)',
+  })
+  @ApiQuery({
+    name: 'to',
+    required: false,
+    description: 'Only attachments at/before this timestamp (ISO)',
+  })
   async getConversationAttachments(
     @CurrentUser() user: JwtUser,
     @Param('userId') otherUserId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
+    @Query('search') search?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
     return this.ms.getConversationAttachments(
       user.userId,
       otherUserId,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
+      search,
+      from,
+      to,
     );
   }
 
@@ -324,17 +345,38 @@ export class MessagingController {
     required: false,
     description: 'Page size (default 30)',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    description: 'Case-insensitive filter on attachment file name',
+  })
+  @ApiQuery({
+    name: 'from',
+    required: false,
+    description: 'Only attachments at/after this timestamp (ISO)',
+  })
+  @ApiQuery({
+    name: 'to',
+    required: false,
+    description: 'Only attachments at/before this timestamp (ISO)',
+  })
   async getRoomAttachments(
     @CurrentUser() user: JwtUser,
     @Param('roomId') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
+    @Query('search') search?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
     return this.ms.getRoomAttachments(
       roomId,
       user.tier,
       before,
       take ? Math.min(parseInt(take, 10), 100) : 30,
+      search,
+      from,
+      to,
     );
   }
 }

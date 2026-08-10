@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { IconChevronDown, IconFolderOpen } from "@tabler/icons-react";
+import {
+  IconChevronDown,
+  IconFolderOpen,
+  IconSearch,
+} from "@tabler/icons-react";
 import {
   Sheet,
   SheetContent,
@@ -16,17 +20,21 @@ import {
   AccordionContent,
 } from "@/components/ui/Accordion";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { DateRangePicker } from "@/components/ui/DateRangePicker";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
 import { roomAttachmentsQueryOptions } from "@/api/client/messages/query";
 import { groupRoomAttachmentsByDay } from "@/views/chat-room/RoomAttachmentGallerySheet-utils";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { useDebounce } from "@/hooks/ui/useDebounce";
 import {
   formatDateByPreference,
   formatDateTimeByPreference,
 } from "@/lib/date-time";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { RoomAttachmentGallerySheetProps } from "@/types/chat-room/RoomAttachmentGallerySheet-types";
+import type { DateRangeValue } from "@/types/ui/DateRangePicker-types";
 
 export function RoomAttachmentGallerySheet({
   open,
@@ -35,6 +43,11 @@ export function RoomAttachmentGallerySheet({
 }: RoomAttachmentGallerySheetProps) {
   const t = useMessages("chat-room");
   const dateDisplay = useDateDisplayCookie();
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounce(searchInput, 300);
+  const [dateRange, setDateRange] = useState<DateRangeValue | undefined>();
+  const hasFilters = !!search.trim() || !!dateRange?.from;
+
   const {
     data,
     isLoading,
@@ -43,7 +56,11 @@ export function RoomAttachmentGallerySheet({
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    ...roomAttachmentsQueryOptions(room),
+    ...roomAttachmentsQueryOptions(room, {
+      search,
+      from: dateRange?.from,
+      to: dateRange?.to,
+    }),
     enabled: open && !!room,
   });
 
@@ -65,12 +82,39 @@ export function RoomAttachmentGallerySheet({
     [dayGroups],
   );
 
+  function handleClearFilters() {
+    setSearchInput("");
+    setDateRange(undefined);
+  }
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="flex w-3/4 flex-col lg:max-w-3xl">
         <SheetHeader>
           <SheetTitle>{t.allUploadsTitle}</SheetTitle>
         </SheetHeader>
+
+        <div className="flex flex-wrap items-center gap-2 py-3">
+          <div className="relative min-w-[10rem] flex-1">
+            <IconSearch
+              size={14}
+              stroke={1.5}
+              className="text-muted pointer-events-none absolute top-1/2 left-2.5 z-10 -translate-y-1/2"
+            />
+            <Input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder={t.allUploadsSearchPlaceholder}
+              className="w-full pl-8 text-sm"
+            />
+          </div>
+          <DateRangePicker
+            value={dateRange}
+            onChange={setDateRange}
+            className="w-64"
+          />
+        </div>
 
         <div className="-mx-6 flex-1 overflow-y-auto px-6">
           {isLoading ? (
@@ -86,7 +130,18 @@ export function RoomAttachmentGallerySheet({
           ) : dayGroups.length === 0 ? (
             <div className="text-muted flex flex-col items-center gap-3 py-12 text-center">
               <IconFolderOpen size={40} />
-              <span className="text-sm">{t.allUploadsEmpty}</span>
+              <span className="text-sm">
+                {hasFilters ? t.allUploadsNoResults : t.allUploadsEmpty}
+              </span>
+              {hasFilters ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearFilters}
+                >
+                  {t.allUploadsClearFilters}
+                </Button>
+              ) : null}
             </div>
           ) : (
             <Accordion type="multiple" defaultValue={defaultOpenGroups}>

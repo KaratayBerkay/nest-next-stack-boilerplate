@@ -324,6 +324,9 @@ export class MessagingDmService {
     areFriends: (a: string, b: string) => Promise<boolean>,
     before?: string,
     take = 30,
+    search?: string,
+    from?: string,
+    to?: string,
   ) {
     if (!(await areFriends(userId, otherUserId)))
       return { attachments: [], hasMore: false };
@@ -339,7 +342,14 @@ export class MessagingDmService {
         deletions: { none: { userId } },
       },
     };
-    if (before) where.createdAt = { lt: new Date(before) };
+    if (before || from || to) {
+      where.createdAt = {
+        ...(before && { lt: new Date(before) }),
+        ...(from && { gte: new Date(from) }),
+        ...(to && { lte: new Date(to) }),
+      };
+    }
+    if (search) where.name = { contains: search, mode: 'insensitive' };
     const attachments = await this.prisma.messageAttachment.findMany({
       where,
       orderBy: { createdAt: 'desc' },

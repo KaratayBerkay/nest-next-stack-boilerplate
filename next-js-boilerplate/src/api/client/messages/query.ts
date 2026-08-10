@@ -5,6 +5,35 @@ import type { ConversationPage } from "@/api/server/messages/conversation-messag
 import type { ConversationAttachmentsPage } from "@/api/server/messages/conversation-attachments";
 import type { RoomAttachmentsPage } from "@/api/server/messages/room-attachments";
 import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
+import { startOfDay, endOfDay } from "@/lib/date-time";
+
+/** Search text + date range for the "All uploads" gallery, shared by the DM
+ * and room variants. `from`/`to` are plain calendar-day picks — converted to
+ * inclusive ISO day boundaries here, once, rather than in every caller. */
+export interface AttachmentDateFilters {
+  search?: string;
+  from?: Date;
+  to?: Date;
+}
+
+interface ResolvedAttachmentFilters {
+  search?: string;
+  from?: string;
+  to?: string;
+}
+
+function resolveAttachmentFilters(
+  filters?: AttachmentDateFilters,
+): ResolvedAttachmentFilters | undefined {
+  if (!filters) return undefined;
+  const search = filters.search?.trim() || undefined;
+  const from = filters.from
+    ? startOfDay(filters.from).toISOString()
+    : undefined;
+  const to = filters.to ? endOfDay(filters.to).toISOString() : undefined;
+  if (!search && !from && !to) return undefined;
+  return { search, from, to };
+}
 
 async function fetchConversations(): Promise<Conversation[]> {
   const { fetchConversationsServer } =
@@ -30,19 +59,21 @@ async function fetchRoomMessages(room: string): Promise<ChatRoomMessage[]> {
 async function fetchConversationAttachments(
   peerId: string,
   before?: string,
+  filters?: ResolvedAttachmentFilters,
 ): Promise<ConversationAttachmentsPage> {
   const { fetchConversationAttachmentsServer } =
     await import("@/api/server/messages/conversation-attachments");
-  return fetchConversationAttachmentsServer(peerId, before);
+  return fetchConversationAttachmentsServer(peerId, before, 30, filters);
 }
 
 async function fetchRoomAttachments(
   room: string,
   before?: string,
+  filters?: ResolvedAttachmentFilters,
 ): Promise<RoomAttachmentsPage> {
   const { fetchRoomAttachmentsServer } =
     await import("@/api/server/messages/room-attachments");
-  return fetchRoomAttachmentsServer(room, before);
+  return fetchRoomAttachmentsServer(room, before, 30, filters);
 }
 
 // Module-level own user ID cache (set by the query hooks)
@@ -88,14 +119,22 @@ export function conversationMessagesQueryOptions(peerId: string | null) {
  * bottom gallery (not a bottom-anchored chat scroll), so pages should be
  * flattened in fetch order. The next cursor is therefore the *last* item of
  * the current page (the oldest one loaded so far), not the first.
+ *
+ * `filters` is folded into the query key, so changing the search text or
+ * date range naturally starts a fresh paginated query from page 1.
  */
-export function conversationAttachmentsQueryOptions(peerId: string | null) {
+export function conversationAttachmentsQueryOptions(
+  peerId: string | null,
+  filters?: AttachmentDateFilters,
+) {
+  const resolvedFilters = resolveAttachmentFilters(filters);
   return infiniteQueryOptions<ConversationAttachmentsPage>({
-    queryKey: ["conversation-attachments", peerId],
+    queryKey: ["conversation-attachments", peerId, resolvedFilters ?? null],
     queryFn: async ({ pageParam }) => {
       return fetchConversationAttachments(
         peerId!,
         pageParam as string | undefined,
+        resolvedFilters,
       );
     },
     initialPageParam: undefined as string | undefined,
@@ -125,13 +164,22 @@ export function roomMessagesQueryOptions(room: string | null) {
  * `conversationAttachmentsQueryOptions`: pages are already newest-first from
  * the backend and are flattened in fetch order (flat gallery, not a
  * bottom-anchored chat scroll), so the next cursor is the *last* item of the
- * current page.
+ * current page. `filters` is folded into the query key — see
+ * `conversationAttachmentsQueryOptions` for why.
  */
-export function roomAttachmentsQueryOptions(room: string | null) {
+export function roomAttachmentsQueryOptions(
+  room: string | null,
+  filters?: AttachmentDateFilters,
+) {
+  const resolvedFilters = resolveAttachmentFilters(filters);
   return infiniteQueryOptions<RoomAttachmentsPage>({
-    queryKey: ["room-attachments", room],
+    queryKey: ["room-attachments", room, resolvedFilters ?? null],
     queryFn: async ({ pageParam }) => {
-      return fetchRoomAttachments(room!, pageParam as string | undefined);
+      return fetchRoomAttachments(
+        room!,
+        pageParam as string | undefined,
+        resolvedFilters,
+      );
     },
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (lastPage) =>

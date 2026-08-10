@@ -29,5 +29,8 @@
   "allUploadsTitle": "All uploads",
   "allUploadsEmpty": "No files uploaded in this room yet",
   "allUploadsFailedToLoad": "Failed to load uploads",
+  "allUploadsSearchPlaceholder": "Search by file name...",
+  "allUploadsNoResults": "No uploads match your filters",
+  "allUploadsClearFilters": "Clear filters",
   "loadMore": "Load more"
 }

@@ -83,6 +83,7 @@ export {
 } from "./context-menu";
 export { Counter } from "./counter";
 export { DatePicker } from "./date-picker";
+export { DateRangePicker } from "./date-range-picker";
 export {
   Dialog,
   DialogTrigger,

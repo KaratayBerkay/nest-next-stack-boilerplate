@@ -224,6 +224,9 @@ export type I18nMessages = {
       "allUploadsTitle": string;
       "allUploadsEmpty": string;
       "allUploadsFailedToLoad": string;
+      "allUploadsSearchPlaceholder": string;
+      "allUploadsNoResults": string;
+      "allUploadsClearFilters": string;
       "loadMore": string;
     }
 
@@ -1086,6 +1089,9 @@ export type I18nMessages = {
       "allUploadsTitle": string;
       "allUploadsEmpty": string;
       "allUploadsFailedToLoad": string;
+      "allUploadsSearchPlaceholder": string;
+      "allUploadsNoResults": string;
+      "allUploadsClearFilters": string;
       "loadMore": string;
       "messageActions": string;
       "deletedMessage": string;

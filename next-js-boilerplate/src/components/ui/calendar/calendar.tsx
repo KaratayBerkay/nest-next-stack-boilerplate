@@ -316,14 +316,19 @@ export function Calendar({
         NextMonthButton: MonthNavButton,
         MonthsDropdown: renderCaptionDropdown,
         YearsDropdown: renderCaptionDropdown,
-        DayButton: (dayButtonProps) => {
-          const dayDate = dayButtonProps.day.date;
+        DayButton: ({
+          day,
+          modifiers,
+          className: _dayButtonClassName,
+          ...buttonProps
+        }) => {
+          const dayDate = day.date;
 
           // Outside days (previous/next month's overflow, shown for grid
           // continuity via showOutsideDays) are a plain label, not a button —
           // they fill the leading/trailing cells but stay unselectable.
           // `classNames.outside` on the parent <td> already dims them.
-          if (dayButtonProps.modifiers.outside) {
+          if (modifiers.outside) {
             return (
               <span
                 className="inline-flex h-12 w-full items-center justify-center px-0 text-sm font-normal"
@@ -339,19 +344,26 @@ export function Calendar({
 
           return (
             <button
+              // Spreads DayPicker's own onClick/onKeyDown/onFocus/onBlur/
+              // onMouseEnter/onMouseLeave/disabled/tabIndex/aria-label/type —
+              // these carry the library's real selection engine (what
+              // `mode="range"`'s two-click accumulation and `onSelect` need),
+              // keyboard nav, and hover-preview. A previous version of this
+              // button only had a bespoke onClick calling `handleDayClick`
+              // directly, which bypassed all of that — DayPicker's own
+              // `onSelect`/`onDayClick` callbacks never fired because nothing
+              // ever invoked the handler DayPicker attaches per day.
+              {...buttonProps}
               className={cn(
                 "hover:bg-surface-hover inline-flex h-12 w-full items-center justify-center rounded-md px-0 text-sm font-normal transition-colors",
-                dayButtonProps.modifiers.selected && "bg-brand text-brand-fg",
-                dayButtonProps.modifiers.today &&
-                  !dayButtonProps.modifiers.selected &&
+                modifiers.selected && "bg-brand text-brand-fg",
+                modifiers.today &&
+                  !modifiers.selected &&
                   "bg-surface text-fg font-semibold",
                 "relative",
-                hasEvents &&
-                  !dayButtonProps.modifiers.selected &&
-                  "font-semibold",
+                hasEvents && !modifiers.selected && "font-semibold",
               )}
               data-day-button
-              onClick={() => handleDayClick(dayDate)}
             >
               <div className="flex flex-col items-center gap-0.5">
                 <span>{dayDate.getDate()}</span>

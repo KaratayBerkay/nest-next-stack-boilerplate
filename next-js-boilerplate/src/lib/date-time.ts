@@ -1,7 +1,12 @@
 export type DateInput = string | number | Date;
 
 export type TodayFormat =
-  "ISO" | "only_date" | "year" | "month" | "day" | "weekday";
+  | "ISO"
+  | "only_date"
+  | "year"
+  | "month"
+  | "day"
+  | "weekday";
 
 export type DateField<T> = (item: T) => DateInput;
 
@@ -26,6 +31,20 @@ export function nowMs(): number {
 
 export function toISOString(input?: DateInput): string {
   return toDate(input).toISOString();
+}
+
+/**
+ * `YYYY-MM-DD` in the *local* calendar day — not `toISOString().slice(0, 9)`,
+ * which converts to UTC first and can shift the date by one day for anyone
+ * west of UTC. Matches the shape `<input type="date">` and this app's
+ * `DatePicker`/`DateRangePicker` day-click values already use.
+ */
+export function formatDateOnly(input: DateInput): string {
+  const d = toDate(input);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function getToday(type: TodayFormat): string | number {

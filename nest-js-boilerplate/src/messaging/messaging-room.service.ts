@@ -390,6 +390,9 @@ export class MessagingRoomService {
     tier: string | undefined,
     before?: string,
     take = 30,
+    search?: string,
+    from?: string,
+    to?: string,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
@@ -398,7 +401,14 @@ export class MessagingRoomService {
     const where: Prisma.RoomMessageAttachmentWhereInput = {
       roomMessage: { roomId },
     };
-    if (before) where.createdAt = { lt: new Date(before) };
+    if (before || from || to) {
+      where.createdAt = {
+        ...(before && { lt: new Date(before) }),
+        ...(from && { gte: new Date(from) }),
+        ...(to && { lte: new Date(to) }),
+      };
+    }
+    if (search) where.name = { contains: search, mode: 'insensitive' };
     const attachments = await this.prisma.roomMessageAttachment.findMany({
       where,
       orderBy: { createdAt: 'desc' },

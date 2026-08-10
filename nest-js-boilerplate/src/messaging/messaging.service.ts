@@ -81,6 +81,9 @@ export class MessagingService {
     otherUserId: string,
     before?: string,
     take?: number,
+    search?: string,
+    from?: string,
+    to?: string,
   ) {
     return this.dm.getConversationAttachments(
       userId,
@@ -88,6 +91,9 @@ export class MessagingService {
       (a, b) => this.friends.areFriends(a, b),
       before,
       take,
+      search,
+      from,
+      to,
     );
   }
 
@@ -287,8 +293,19 @@ export class MessagingService {
     tier: string | undefined,
     before?: string,
     take?: number,
+    search?: string,
+    from?: string,
+    to?: string,
   ) {
-    return this.rooms.getRoomAttachments(roomId, tier, before, take);
+    return this.rooms.getRoomAttachments(
+      roomId,
+      tier,
+      before,
+      take,
+      search,
+      from,
+      to,
+    );
   }
 }
 
