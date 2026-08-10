@@ -2,6 +2,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { createFormSubmitHandler } from "@/lib/forms/shared";
+import { useToast } from "@/components/ui/Toast";
 import { sectionedFormOpts } from "@/validators/forms/layouts-inits";
 import { Button } from "@/components/ui/Button";
 import { LayoutCard } from "./LayoutCard";
@@ -11,8 +12,16 @@ import { MembershipSection } from "./MembershipSection";
 
 export function SectionedCardForm() {
   const t = useMessages("forms");
+  const { toast } = useToast();
   const form = useAppForm({
     ...sectionedFormOpts,
+    onSubmit: async () => {
+      toast({
+        description: t.layouts.sectionedSubmitSuccess,
+        variant: "default",
+      });
+      form.reset();
+    },
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
   const onSubmit = createFormSubmitHandler(form);
@@ -33,7 +42,11 @@ export function SectionedCardForm() {
           <div className="flex items-center justify-between">
             <div className="flex gap-3">
               <form.SubmitButton label={t.layouts.sectionedSubmit} />
-              <Button type="button" variant="outline">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => form.reset()}
+              >
                 {t.layouts.sectionedCancel}
               </Button>
             </div>

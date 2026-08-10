@@ -2,6 +2,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { createFormSubmitHandler } from "@/lib/forms/shared";
+import { useToast } from "@/components/ui/Toast";
 import { iconFormOpts } from "@/validators/forms/layouts-inits";
 import { iconFieldSchemas } from "@/validators/forms/layouts-validation";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -13,8 +14,16 @@ import { IconField } from "./IconField";
 
 export function IconPrefixedForm() {
   const t = useMessages("forms");
+  const { toast } = useToast();
   const form = useAppForm({
     ...iconFormOpts,
+    onSubmit: async () => {
+      toast({
+        description: t.layouts.iconSubmitSuccess,
+        variant: "default",
+      });
+      form.reset();
+    },
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
   const onSubmit = createFormSubmitHandler(form);

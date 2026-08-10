@@ -3,6 +3,7 @@ import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { useStore } from "@tanstack/react-form";
 import { useAppForm } from "@/features/forms/form-hook";
 import { createFormSubmitHandler } from "@/lib/forms/shared";
+import { useToast } from "@/components/ui/Toast";
 import { basicFormOpts } from "@/validators/forms/layouts-inits";
 import { contactFieldSchemas } from "@/validators/forms/layouts-validation";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -11,8 +12,16 @@ import { LayoutCard } from "./LayoutCard";
 
 export function ContactForm() {
   const t = useMessages("forms");
+  const { toast } = useToast();
   const form = useAppForm({
     ...basicFormOpts,
+    onSubmit: async () => {
+      toast({
+        description: t.layouts.contactSubmitSuccess,
+        variant: "default",
+      });
+      form.reset();
+    },
   });
   const isDirty = useStore(form.store, (s) => s.isDirty);
   const onSubmit = createFormSubmitHandler(form);

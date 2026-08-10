@@ -822,6 +822,8 @@ export type I18nMessages = {
         "referralGroup_label": string;
         "referralGroup_placeholder": string;
         "referralGroup_info": string;
+        "referralGroup_copied": string;
+        "copy": string;
         "amountGroup_label": string;
         "amountGroup_placeholder": string;
         "amountGroup_info": string;
@@ -923,6 +925,7 @@ export type I18nMessages = {
         "contactMessage_info": string;
         "contactSubmit": string;
         "contactSubmitting": string;
+        "contactSubmitSuccess": string;
         "twoColumn_label": string;
         "twoColumn_description": string;
         "twoColumnFirstName_label": string;
@@ -945,6 +948,7 @@ export type I18nMessages = {
         "twoColumnMessage_info": string;
         "twoColumnSubmit": string;
         "twoColumnSubmitting": string;
+        "twoColumnSubmitSuccess": string;
         "icon_label": string;
         "icon_description": string;
         "iconName_label": string;
@@ -959,6 +963,7 @@ export type I18nMessages = {
         "iconRemember_label": string;
         "iconRemember_info": string;
         "iconSubmit": string;
+        "iconSubmitSuccess": string;
         "sectioned_label": string;
         "sectioned_description": string;
         "sectioned_personalInfo": string;
@@ -1012,6 +1017,7 @@ export type I18nMessages = {
         "sectionedAgree_label": string;
         "sectionedAgree_info": string;
         "sectionedSubmit": string;
+        "sectionedSubmitSuccess": string;
         "sectionedCancel": string;
         "unsaved": string;
       };

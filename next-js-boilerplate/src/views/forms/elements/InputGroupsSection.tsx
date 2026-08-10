@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import { AffixGroup } from "@/features/forms/ui/AffixGroup";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
@@ -9,6 +11,13 @@ import { SectionCard } from "./SectionCard";
 
 export function InputGroupsSection() {
   const t = useMessages("forms");
+  const { toast } = useToast();
+  const [referralCode] = useState("REF-4829-XQ");
+
+  const handleCopyReferral = async () => {
+    await navigator.clipboard.writeText(referralCode);
+    toast({ description: t.elements.referralGroup_copied, variant: "default" });
+  };
 
   const COUNTRY_OPTIONS = [
     { value: "us", label: t.elements.countryOption_us },
@@ -102,12 +111,19 @@ export function InputGroupsSection() {
           </div>
           <AffixGroup>
             <Input
+              value={referralCode}
+              readOnly
               placeholder={t.elements.referralGroup_placeholder}
               className="rounded-none rounded-l-md"
             />
             <AffixGroup.Suffix>
-              <Button type="button" variant="link" size="xs" onClick={() => {}}>
-                Copy
+              <Button
+                type="button"
+                variant="link"
+                size="xs"
+                onClick={handleCopyReferral}
+              >
+                {t.elements.copy}
               </Button>
             </AffixGroup.Suffix>
           </AffixGroup>
