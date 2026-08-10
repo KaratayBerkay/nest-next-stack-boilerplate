@@ -63,6 +63,7 @@ function EmojiPicker({ onEmojiSelect }: EmojiPickerInlineProps) {
       dynamicWidth: true,
       perLine: 8,
       noCountryFlags: true,
+      autoFocus: true,
       categoryIcons,
       onEmojiSelect: (emoji: { native: string }) => {
         onEmojiSelect(emoji.native);
@@ -70,6 +71,13 @@ function EmojiPicker({ onEmojiSelect }: EmojiPickerInlineProps) {
       },
     });
     const node = picker as unknown as HTMLElement;
+    // emoji-mart's own shadow-DOM stylesheet hardcodes `:host { width:
+    // min-content }`, so the element shrinks to fit its content no matter
+    // how wide this wrapper is. An inline style from the light DOM beats
+    // that internal :host rule and lets `dynamicWidth`'s own ResizeObserver
+    // (which watches this same element) see the real available width and
+    // recompute how many emoji fit per row.
+    node.style.width = "100%";
     containerRef.current?.appendChild(node);
     return () => {
       node.remove();
@@ -83,6 +91,7 @@ export function EmojiPickerButton({
   onEmojiSelect,
   label,
   className,
+  matchWidthRef,
   ...props
 }: EmojiPickerButtonProps) {
   return (
@@ -97,7 +106,11 @@ export function EmojiPickerButton({
       >
         <IconMoodSmile size={20} />
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[22rem] p-1">
+      <PopoverContent
+        align="start"
+        className="w-[22rem] p-1"
+        matchWidthRef={matchWidthRef}
+      >
         <EmojiPicker onEmojiSelect={onEmojiSelect} />
       </PopoverContent>
     </Popover>

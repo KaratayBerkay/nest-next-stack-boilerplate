@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
@@ -45,6 +45,7 @@ export function ChatView({
   const { toast } = useToast();
   const dateDisplay = useDateDisplayCookie();
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
+  const chatWindowRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
@@ -202,7 +203,10 @@ export function ChatView({
   }
 
   return (
-    <div className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border">
+    <div
+      ref={chatWindowRef}
+      className="border-border bg-bg relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border"
+    >
       <ChatViewHeader
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
@@ -262,6 +266,7 @@ export function ChatView({
             attaching={anyUploading}
             uploadItems={uploadItems}
             onAttachFiles={handleAttachFiles}
+            chatWindowRef={chatWindowRef}
           />
         </>
       )}

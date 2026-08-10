@@ -28,6 +28,7 @@ export function PopoverContent({
   title,
   variant,
   forceBottomSheet,
+  matchWidthRef,
   ...props
 }: PopoverContentLocalProps) {
   const effectiveVariant = useComponentVariant(variant);
@@ -36,6 +37,7 @@ export function PopoverContent({
   const [position, setPosition] = useState<{
     top: number;
     left: number;
+    width?: number;
   } | null>(null);
   // Hook always runs (rules of hooks); forceBottomSheet just overrides the
   // result so callers like DatePicker can opt into the bottom sheet at every
@@ -48,11 +50,15 @@ export function PopoverContent({
 
     const updatePosition = () => {
       const triggerRect = triggerRef.current!.getBoundingClientRect();
-      const contentWidth = contentRef.current?.offsetWidth ?? 0;
+      const widthRect = matchWidthRef?.current?.getBoundingClientRect();
+      const contentWidth =
+        widthRect?.width ?? contentRef.current?.offsetWidth ?? 0;
       const contentHeight = contentRef.current?.offsetHeight ?? 0;
 
       let left: number;
-      if (align === "end") {
+      if (widthRect) {
+        left = widthRect.left;
+      } else if (align === "end") {
         left = Math.max(8, triggerRect.right - contentWidth);
       } else {
         left = Math.max(8, triggerRect.left);
@@ -67,7 +73,7 @@ export function PopoverContent({
         top = triggerRect.bottom + sideOffset;
       }
 
-      setPosition({ top, left });
+      setPosition({ top, left, width: widthRect?.width });
     };
 
     updatePosition();
@@ -77,7 +83,7 @@ export function PopoverContent({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open, align, sideOffset, triggerRef, isDesktop]);
+  }, [open, align, sideOffset, triggerRef, isDesktop, matchWidthRef]);
 
   useEffect(() => {
     if (!open || !isDesktop) return;
@@ -133,6 +139,12 @@ export function PopoverContent({
     // fixed-position panel on screen that recomputes on window scroll.
     // preventScroll is defense in depth (we position the panel ourselves).
     if (!open || (isDesktop && !position) || !contentRef.current) return;
+    // Don't yank focus away from something the content already focused
+    // itself (e.g. emoji-mart's own `autoFocus` landing on its search
+    // input) — this effect also re-fires on every scroll/resize while open
+    // (position is a fresh object each time), so without this guard it
+    // would steal focus back on every one of those, not just on open.
+    if (contentRef.current.contains(document.activeElement)) return;
     const target = initialFocus?.current ?? contentRef.current;
     target.focus({ preventScroll: true });
   }, [open, initialFocus, isDesktop, position]);
@@ -157,7 +169,7 @@ export function PopoverContent({
         data-portal-layer=""
         style={
           isDesktop && position
-            ? { top: position.top, left: position.left }
+            ? { top: position.top, left: position.left, width: position.width }
             : undefined
         }
         className={cn(

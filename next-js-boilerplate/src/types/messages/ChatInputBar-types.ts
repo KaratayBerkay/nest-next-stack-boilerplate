@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import type { Dispatch, RefObject, SetStateAction } from "react";
 import type { UploadItem } from "./AttachmentModal-types";
 
 export interface ChatInputBarProps {
@@ -15,4 +15,5 @@ export interface ChatInputBarProps {
   attaching: boolean;
   uploadItems: UploadItem[];
   onAttachFiles: (files: File[]) => void;
+  chatWindowRef?: RefObject<HTMLDivElement | null>;
 }

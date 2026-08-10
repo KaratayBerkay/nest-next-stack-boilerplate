@@ -29,4 +29,11 @@ export interface PopoverContentProps extends React.ComponentPropsWithoutRef<"div
   title?: string;
   /** Always render as the mobile bottom sheet, regardless of viewport width. */
   forceBottomSheet?: boolean;
+  /**
+   * Match left position + width to this element instead of the trigger
+   * (which stays the anchor for vertical placement). For panels like the
+   * emoji picker that should span a whole chat pane rather than float at
+   * the trigger's own (small icon-button) width.
+   */
+  matchWidthRef?: React.RefObject<HTMLElement | null>;
 }
