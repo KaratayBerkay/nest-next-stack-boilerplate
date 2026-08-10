@@ -123,7 +123,11 @@ export function EditableTableRow({
           )}
         </form.AppField>
       </td>
-      <td className="px-2 py-1 text-right align-top">${net.toFixed(2)}</td>
+      <td className="px-2 py-1 text-right align-top">
+        <div className="flex h-9 items-center justify-end">
+          ${net.toFixed(2)}
+        </div>
+      </td>
       <td className="px-2 py-1 align-top">
         <EditableTableRowActions
           field={field}

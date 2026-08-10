@@ -20,7 +20,7 @@ export function EditableTableRowActions({
   t,
 }: EditableTableRowActionsProps) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex h-9 items-center gap-1">
       <IconButton
         icon={<IconCopy size={14} />}
         variant="ghost"
