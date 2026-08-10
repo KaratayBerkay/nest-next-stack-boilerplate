@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/Button";
 import type { ProviderIconProps } from "@/types/auth/ProviderIcon-types";
 import type { SocialLoginButtonProps } from "@/types/auth/SocialLoginButton-types";
 import { AUTH_OAUTH_PREFIX } from "@/constants/api/urls";
@@ -63,48 +64,38 @@ function ProviderIcon({ provider }: ProviderIconProps) {
   }
 }
 
-const providerStyles: Record<
-  string,
-  { bg: string; hover: string; text: string }
-> = {
-  google: { bg: "bg-white", hover: "hover:bg-zinc-100", text: "text-zinc-800" },
-  github: { bg: "bg-zinc-900", hover: "hover:bg-black", text: "text-white" },
-  linkedin: {
-    bg: "bg-[#0A66C2]",
-    hover: "hover:bg-[#004182]",
-    text: "text-white",
-  },
-  huggingface: {
-    bg: "bg-[#FFD21E]",
-    hover: "hover:bg-[#E5BC00]",
-    text: "text-zinc-900",
-  },
-  twitch: {
-    bg: "bg-[#9146FF]",
-    hover: "hover:bg-[#772CE8]",
-    text: "text-white",
-  },
-  x: { bg: "bg-black", hover: "hover:bg-zinc-900", text: "text-white" },
+// Fixed OAuth provider brand colors — deliberately NOT semantic tokens (these
+// are external brand identities, not part of this app's theme). Applied via
+// inline `style`, not className: Tailwind's generated stylesheet order for
+// arbitrary-value utilities (`bg-[#0A66C2]`) isn't guaranteed to win over
+// Button's own variant classes the way appending a className normally would
+// — inline style has higher specificity than any class, so it's the only
+// reliable way to force an exact color here.
+const providerStyles: Record<string, { bg: string; text: string }> = {
+  google: { bg: "#ffffff", text: "#27272a" },
+  github: { bg: "#18181b", text: "#ffffff" },
+  linkedin: { bg: "#0A66C2", text: "#ffffff" },
+  huggingface: { bg: "#FFD21E", text: "#18181b" },
+  twitch: { bg: "#9146FF", text: "#ffffff" },
+  x: { bg: "#000000", text: "#ffffff" },
 };
 
 export function SocialLoginButton({ provider, label }: SocialLoginButtonProps) {
-  const style = providerStyles[provider] ?? {
-    bg: "bg-zinc-800",
-    hover: "hover:bg-zinc-700",
-    text: "text-white",
-  };
+  const style = providerStyles[provider] ?? { bg: "#27272a", text: "#ffffff" };
 
   return (
-    <button
+    <Button
+      variant="outline"
       onClick={() => {
         window.location.href = `${AUTH_OAUTH_PREFIX}${provider}`;
       }}
-      className={`border-border flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-all hover:shadow-md ${style.bg} ${style.hover} ${style.text}`}
+      className="w-full justify-start rounded-xl shadow-sm hover:shadow-md"
+      style={{ backgroundColor: style.bg, color: style.text }}
     >
       <span className={provider === "google" ? "" : "text-inherit"}>
         <ProviderIcon provider={provider} />
       </span>
       <span>{label}</span>
-    </button>
+    </Button>
   );
 }
