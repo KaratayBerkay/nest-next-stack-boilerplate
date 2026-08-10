@@ -2,6 +2,7 @@
 
 import { IconSearch } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
+import { NativeSelect } from "@/components/ui/NativeSelect";
 import type { AuditLogsFiltersProps } from "@/types/admin/audit-logs/AuditLogsFilters-types";
 
 export function AuditLogsFilters({
@@ -16,13 +17,13 @@ export function AuditLogsFilters({
 }: AuditLogsFiltersProps) {
   return (
     <div className="flex flex-wrap gap-3">
-      <select
+      <NativeSelect
         value={actionFilter}
         onChange={(e) => {
           setActionFilter(e.target.value);
           setPage(0);
         }}
-        className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
+        className="text-xs"
       >
         <option value="">{t.allActions}</option>
         <option value="CREATE">Create</option>
@@ -43,15 +44,15 @@ export function AuditLogsFilters({
         <option value="IMPORT">Import</option>
         <option value="API_KEY_CREATED">API Key Created</option>
         <option value="API_KEY_REVOKED">API Key Revoked</option>
-      </select>
+      </NativeSelect>
 
-      <select
+      <NativeSelect
         value={levelFilter}
         onChange={(e) => {
           setLevelFilter(e.target.value);
           setPage(0);
         }}
-        className="border-border bg-surface text-fg rounded-lg border px-2 py-1.5 text-xs"
+        className="text-xs"
       >
         <option value="">{t.allLevels}</option>
         <option value="TRACE">TRACE</option>
@@ -60,7 +61,7 @@ export function AuditLogsFilters({
         <option value="WARN">WARN</option>
         <option value="ERROR">ERROR</option>
         <option value="FATAL">FATAL</option>
-      </select>
+      </NativeSelect>
 
       <div className="relative">
         <IconSearch

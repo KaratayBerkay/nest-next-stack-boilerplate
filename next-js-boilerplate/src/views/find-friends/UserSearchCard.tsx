@@ -1,5 +1,6 @@
 import type { UserSearchCardProps } from "@/types/find-friends/UserSearchCard-types";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
 
 export function UserSearchCard({
@@ -22,12 +23,9 @@ export function UserSearchCard({
           {pendingLabel}
         </span>
       ) : (
-        <button
-          onClick={onSendRequest}
-          className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-sm hover:opacity-80"
-        >
+        <Button size="sm" onClick={onSendRequest}>
           {addFriendLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

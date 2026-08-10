@@ -78,9 +78,7 @@ export function FileTableScenario() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-error text-error-fg hover:bg-error/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction variant="destructive">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

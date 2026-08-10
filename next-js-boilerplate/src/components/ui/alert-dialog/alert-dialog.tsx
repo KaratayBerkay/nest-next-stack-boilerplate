@@ -18,16 +18,78 @@ import {
   type GlobalVariant,
 } from "@/components/ui/global-style-variants";
 import { useComponentVariant } from "@/hooks/useComponentVariant";
+import {
+  variants as buttonVariants,
+  sizes as buttonSizes,
+  sizeFonts as buttonSizeFonts,
+  type Variant as ButtonVariant,
+  type Size as ButtonSize,
+} from "@/components/ui/button-styles";
+import type { AlertDialogButtonProps } from "@/types/ui/AlertDialog-types";
 
 const alertDialogVariants = {
   ...globalStyleVariants,
   default: "bg-bg border-border border shadow-xl rounded-xl",
 };
 
+// Same interactive base Button itself uses (button/button.tsx) — Trigger/
+// Cancel/Action are semantically buttons (they render Radix's own <button>),
+// so they should look pixel-identical to <Button> given the same variant.
+const alertDialogButtonBase =
+  "ring-offset-bg relative inline-flex items-center justify-center rounded-md whitespace-nowrap transition-all duration-150 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1 focus-visible:outline-none active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
+
+function useAlertDialogButtonClasses(
+  variant: ButtonVariant | undefined,
+  size: ButtonSize,
+  className: string | undefined,
+) {
+  const effectiveVariant = useComponentVariant(variant);
+  return cn(
+    alertDialogButtonBase,
+    buttonSizes[size],
+    buttonSizeFonts[size],
+    resolveVariant(buttonVariants, effectiveVariant),
+    className,
+  );
+}
+
 export const AlertDialog = Root;
-export const AlertDialogTrigger = Trigger;
-export const AlertDialogCancel = Cancel;
-export const AlertDialogAction = Action;
+
+export const AlertDialogTrigger = forwardRef<
+  React.ElementRef<typeof Trigger>,
+  AlertDialogButtonProps
+>(({ className, variant, size = "md", ...props }, ref) => (
+  <Trigger
+    ref={ref}
+    className={useAlertDialogButtonClasses(variant, size, className)}
+    {...props}
+  />
+));
+AlertDialogTrigger.displayName = "AlertDialogTrigger";
+
+export const AlertDialogCancel = forwardRef<
+  React.ElementRef<typeof Cancel>,
+  AlertDialogButtonProps
+>(({ className, variant = "outline", size = "md", ...props }, ref) => (
+  <Cancel
+    ref={ref}
+    className={useAlertDialogButtonClasses(variant, size, className)}
+    {...props}
+  />
+));
+AlertDialogCancel.displayName = "AlertDialogCancel";
+
+export const AlertDialogAction = forwardRef<
+  React.ElementRef<typeof Action>,
+  AlertDialogButtonProps
+>(({ className, variant = "primary", size = "md", ...props }, ref) => (
+  <Action
+    ref={ref}
+    className={useAlertDialogButtonClasses(variant, size, className)}
+    {...props}
+  />
+));
+AlertDialogAction.displayName = "AlertDialogAction";
 export const AlertDialogHeader = forwardRef<
   HTMLDivElement,
   React.ComponentPropsWithoutRef<"div">

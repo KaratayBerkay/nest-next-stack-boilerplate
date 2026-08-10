@@ -2,6 +2,7 @@
 
 import { IconBell, IconBellOff, IconArrowLeft } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
+import { Button } from "@/components/ui/Button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { notificationPageInfo } from "@/constants/page-info";
 import type { NotificationHeaderProps } from "@/types/views/notification/NotificationHeader-types";
@@ -46,12 +47,9 @@ export function NotificationHeader({
           />
         )}
         {unreadCount > 0 && (
-          <button
-            onClick={markAllRead}
-            className="text-brand text-xs font-medium hover:underline"
-          >
+          <Button variant="link" size="xs" onClick={markAllRead}>
             {markAllReadLabel}
-          </button>
+          </Button>
         )}
         <PageInfoButton content={notificationPageInfo} />
       </div>

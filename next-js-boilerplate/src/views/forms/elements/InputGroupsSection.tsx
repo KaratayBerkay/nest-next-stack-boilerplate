@@ -1,9 +1,10 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { InputGroup } from "@/features/forms/ui/InputGroup";
+import { AffixGroup } from "@/features/forms/ui/AffixGroup";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { NativeSelect } from "@/components/ui/NativeSelect";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
+import { Button } from "@/components/ui/Button";
 import { SectionCard } from "./SectionCard";
 
 export function InputGroupsSection() {
@@ -25,21 +26,21 @@ export function InputGroupsSection() {
             <Label>{t.elements.emailGroup_label}</Label>
             <FieldInfoButton description={t.elements.emailGroup_info} />
           </div>
-          <InputGroup>
-            <InputGroup.Prefix>@</InputGroup.Prefix>
+          <AffixGroup>
+            <AffixGroup.Prefix>@</AffixGroup.Prefix>
             <Input
               placeholder={t.elements.emailGroup_placeholder}
               className="rounded-none rounded-r-md"
             />
-          </InputGroup>
+          </AffixGroup>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.phoneGroup_label}</Label>
             <FieldInfoButton description={t.elements.phoneGroup_info} />
           </div>
-          <InputGroup>
-            <InputGroup.Prefix>
+          <AffixGroup>
+            <AffixGroup.Prefix>
               <NativeSelect className="border-0 bg-transparent p-0 text-xs">
                 {COUNTRY_OPTIONS.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -47,20 +48,20 @@ export function InputGroupsSection() {
                   </option>
                 ))}
               </NativeSelect>
-            </InputGroup.Prefix>
+            </AffixGroup.Prefix>
             <Input
               placeholder={t.elements.phoneGroup_placeholder}
               className="rounded-none rounded-r-md"
             />
-          </InputGroup>
+          </AffixGroup>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.cardNumberGroup_label}</Label>
             <FieldInfoButton description={t.elements.cardNumberGroup_info} />
           </div>
-          <InputGroup>
-            <InputGroup.Prefix>
+          <AffixGroup>
+            <AffixGroup.Prefix>
               <svg
                 width="16"
                 height="16"
@@ -74,63 +75,59 @@ export function InputGroupsSection() {
                 <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
                 <line x1="1" y1="10" x2="23" y2="10" />
               </svg>
-            </InputGroup.Prefix>
+            </AffixGroup.Prefix>
             <Input
               placeholder={t.elements.cardNumberGroup_placeholder}
               className="rounded-none rounded-r-md"
             />
-          </InputGroup>
+          </AffixGroup>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.websiteGroup_label}</Label>
             <FieldInfoButton description={t.elements.websiteGroup_info} />
           </div>
-          <InputGroup>
-            <InputGroup.Prefix className="text-xxs">http://</InputGroup.Prefix>
+          <AffixGroup>
+            <AffixGroup.Prefix className="text-xxs">http://</AffixGroup.Prefix>
             <Input
               placeholder={t.elements.websiteGroup_placeholder}
               className="rounded-none rounded-r-md"
             />
-          </InputGroup>
+          </AffixGroup>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.referralGroup_label}</Label>
             <FieldInfoButton description={t.elements.referralGroup_info} />
           </div>
-          <InputGroup>
+          <AffixGroup>
             <Input
               placeholder={t.elements.referralGroup_placeholder}
               className="rounded-none rounded-l-md"
             />
-            <InputGroup.Suffix>
-              <button
-                type="button"
-                onClick={() => {}}
-                className="text-xs font-medium"
-              >
+            <AffixGroup.Suffix>
+              <Button type="button" variant="link" size="xs" onClick={() => {}}>
                 Copy
-              </button>
-            </InputGroup.Suffix>
-          </InputGroup>
+              </Button>
+            </AffixGroup.Suffix>
+          </AffixGroup>
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.amountGroup_label}</Label>
             <FieldInfoButton description={t.elements.amountGroup_info} />
           </div>
-          <InputGroup>
-            <InputGroup.Prefix className="text-xs font-medium">
+          <AffixGroup>
+            <AffixGroup.Prefix className="text-xs font-medium">
               $
-            </InputGroup.Prefix>
+            </AffixGroup.Prefix>
             <Input
               type="number"
               placeholder={t.elements.amountGroup_placeholder}
               className="rounded-none rounded-r-md"
             />
-            <InputGroup.Suffix className="text-xs">USD</InputGroup.Suffix>
-          </InputGroup>
+            <AffixGroup.Suffix className="text-xs">USD</AffixGroup.Suffix>
+          </AffixGroup>
         </div>
       </div>
     </SectionCard>

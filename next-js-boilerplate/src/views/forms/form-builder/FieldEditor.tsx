@@ -1,6 +1,9 @@
 import { FIELD_TYPES } from "@/types/forms/BuilderField-types";
 import type { BuilderField } from "@/types/forms/BuilderField-types";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Checkbox } from "@/components/ui/Checkbox";
 import type { FieldEditorProps } from "@/types/views/forms/FieldEditor-types";
 
 export function FieldEditor({
@@ -48,8 +51,8 @@ export function FieldEditor({
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
           <span className="text-xxs text-muted">{t.formBuilder.fieldType}</span>
-          <select
-            className="border-border bg-field rounded border px-2 py-1 text-xs"
+          <NativeSelect
+            className="text-xs"
             value={field.type}
             onChange={(e) =>
               onUpdate(field.id, {
@@ -62,14 +65,14 @@ export function FieldEditor({
                 {ft.label}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xxs text-muted">
             {t.formBuilder.fieldLabel}
           </span>
-          <input
-            className="border-border bg-field rounded border px-2 py-1 text-xs"
+          <Input
+            className="text-xs"
             value={field.label}
             onChange={(e) => onUpdate(field.id, { label: e.target.value })}
           />
@@ -80,8 +83,8 @@ export function FieldEditor({
           <span className="text-xxs text-muted">
             {t.formBuilder.fieldOptions}
           </span>
-          <input
-            className="border-border bg-field rounded border px-2 py-1 text-xs"
+          <Input
+            className="text-xs"
             placeholder={t.formBuilder.optionsPlaceholder}
             value={field.options.join(", ")}
             onChange={(e) =>
@@ -96,8 +99,7 @@ export function FieldEditor({
         </div>
       )}
       <label className="text-xxs flex items-center gap-2">
-        <input
-          type="checkbox"
+        <Checkbox
           checked={field.required}
           onChange={(e) => onUpdate(field.id, { required: e.target.checked })}
         />

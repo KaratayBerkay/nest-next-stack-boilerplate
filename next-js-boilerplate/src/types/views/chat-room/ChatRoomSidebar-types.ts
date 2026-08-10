@@ -1,5 +1,4 @@
 export interface ChatRoomSidebarProps {
-  useNativeControls: boolean;
   sidebarOpen: boolean;
   rooms: string[];
   room: string;

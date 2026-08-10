@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
+import { DateRangePicker } from "@/components/ui/DateRangePicker";
+import { convertTextToDate, formatDateOnly } from "@/lib/date-time";
 import { FilterSection } from "./FilterSection";
 import { ALL_CATEGORIES, SORT_OPTIONS } from "./constants";
 import type { FiltersFormProps } from "@/types/views/forms/FiltersForm-types";
@@ -43,20 +45,24 @@ export function FiltersForm({
 
       <div className="grid grid-cols-2 gap-4">
         <FilterSection label={t.filters.dateRange ?? "Date Range"}>
-          <div className="grid grid-cols-2 gap-2">
-            <input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => form.setFieldValue("dateFrom", e.target.value)}
-              className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            />
-            <input
-              type="date"
-              value={dateTo}
-              onChange={(e) => form.setFieldValue("dateTo", e.target.value)}
-              className="border-border bg-bg text-fg focus-visible:ring-brand flex h-9 w-full rounded-md border px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            />
-          </div>
+          <DateRangePicker
+            value={{
+              from: dateFrom
+                ? (convertTextToDate(dateFrom) as Date)
+                : undefined,
+              to: dateTo ? (convertTextToDate(dateTo) as Date) : undefined,
+            }}
+            onChange={(range) => {
+              form.setFieldValue(
+                "dateFrom",
+                range?.from ? formatDateOnly(range.from) : "",
+              );
+              form.setFieldValue(
+                "dateTo",
+                range?.to ? formatDateOnly(range.to) : "",
+              );
+            }}
+          />
         </FilterSection>
 
         <form.AppField name="sortBy">

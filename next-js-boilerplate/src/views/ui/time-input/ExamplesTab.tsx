@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TimeInput } from "@/components/ui/TimeInput";
+import { Button } from "@/components/ui/Button";
 import { formatTime } from "./utils";
 import type { Time } from "./utils";
 
@@ -35,9 +36,7 @@ export function ExamplesTab() {
             <p className="text-muted text-xs">
               Meeting at {formatTime(meetingTime)}
             </p>
-            <button className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-3 py-1.5 text-xs font-medium">
-              Confirm
-            </button>
+            <Button size="xs">Confirm</Button>
           </div>
         </div>
       </section>
@@ -79,9 +78,9 @@ export function ExamplesTab() {
           />
           <div className="mt-4 flex items-center justify-between border-t pt-4">
             <p className="text-muted text-xs">{formatTime(timerTime, true)}</p>
-            <button className="bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-md px-3 py-1.5 text-xs font-medium">
+            <Button variant="secondary" size="xs">
               Start Timer
-            </button>
+            </Button>
           </div>
         </div>
       </section>

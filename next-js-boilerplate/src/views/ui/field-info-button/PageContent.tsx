@@ -1,6 +1,8 @@
 "use client";
 
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
+import { Label } from "@/components/ui/Label";
+import { Input } from "@/components/ui/Input";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
@@ -18,17 +20,10 @@ function InFormDemo() {
   return (
     <div className="flex max-w-sm flex-col gap-3">
       <div className="flex items-center gap-2">
-        <label className="text-sm font-medium" htmlFor="demo-email">
-          Email
-        </label>
+        <Label htmlFor="demo-email">Email</Label>
         <FieldInfoButton description="We'll never share your email with anyone." />
       </div>
-      <input
-        id="demo-email"
-        type="email"
-        placeholder="you@example.com"
-        className="rounded-md border px-3 py-2 text-sm"
-      />
+      <Input id="demo-email" type="email" placeholder="you@example.com" />
     </div>
   );
 }

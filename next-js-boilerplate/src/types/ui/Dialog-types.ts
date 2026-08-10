@@ -1,5 +1,9 @@
 import type React from "react";
 import type { ReactNode } from "react";
+import type {
+  Variant as ButtonVariant,
+  Size as ButtonSize,
+} from "@/components/ui/button-styles";
 
 export interface DialogProps {
   open?: boolean;
@@ -19,10 +23,14 @@ export type DialogFooterProps = React.ComponentPropsWithoutRef<"div"> & {
   fontFamily?: string;
 };
 
+/** Trigger/Close render a real <button> — same variant/size vocabulary as
+ * `Button` so they look identical given the same variant. */
 export type DialogTriggerProps = React.ComponentPropsWithoutRef<"button"> & {
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 };
 
 export type DialogHeaderProps = React.ComponentPropsWithoutRef<"div"> & {
@@ -41,6 +49,8 @@ export type DialogCloseProps = React.ComponentPropsWithoutRef<"button"> & {
   fontSize?: string;
   fontWeight?: string;
   fontFamily?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
 };
 
 export type DialogTitleProps = React.ComponentPropsWithoutRef<"h2"> & {

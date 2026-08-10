@@ -6,7 +6,6 @@ import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
-import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -93,23 +92,27 @@ export function FreePageView({ className }: ClassNameProps) {
               options={CURRENCY_OPTIONS}
             />
 
-            <div className="flex flex-col gap-1.5">
-              <Label>{t.dateDisplay}</Label>
-              <select
-                value={dateDisplay}
-                onChange={(e) =>
-                  setDateDisplay(
-                    e.target.value as DateDisplayFormat,
-                    setDateDisplayState,
-                  )
-                }
-                className="border-border bg-bg rounded-lg border px-3 py-2 text-sm"
-              >
-                <option value="long">{`${t.dateDisplayLong} (${formatDateLong(now)})`}</option>
-                <option value="iso">{`${t.dateDisplayIso} (${toISOString(now)})`}</option>
-                <option value="short">{`${t.dateDisplayShort} (${formatDateShort(now)})`}</option>
-              </select>
-            </div>
+            <SettingsSelect
+              label={t.dateDisplay}
+              value={dateDisplay}
+              onChange={(v) =>
+                setDateDisplay(v as DateDisplayFormat, setDateDisplayState)
+              }
+              options={[
+                {
+                  value: "long",
+                  label: `${t.dateDisplayLong} (${formatDateLong(now)})`,
+                },
+                {
+                  value: "iso",
+                  label: `${t.dateDisplayIso} (${toISOString(now)})`,
+                },
+                {
+                  value: "short",
+                  label: `${t.dateDisplayShort} (${formatDateShort(now)})`,
+                },
+              ]}
+            />
           </div>
 
           <Button

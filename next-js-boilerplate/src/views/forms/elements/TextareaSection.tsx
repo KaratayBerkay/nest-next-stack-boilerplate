@@ -1,5 +1,6 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Label } from "@/components/ui/Label";
+import { Textarea } from "@/components/ui/Textarea";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { SectionCard } from "./SectionCard";
 
@@ -14,18 +15,14 @@ export function TextareaSection() {
             <Label>{t.elements.textareaDefault_label}</Label>
             <FieldInfoButton description={t.elements.textareaDefault_info} />
           </div>
-          <textarea
-            className="border-border placeholder:text-muted/70 focus-visible:ring-brand text-fg min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
-            placeholder={t.elements.textareaDefault_placeholder}
-          />
+          <Textarea placeholder={t.elements.textareaDefault_placeholder} />
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.textareaCharCount_label}</Label>
             <FieldInfoButton description={t.elements.textareaCharCount_info} />
           </div>
-          <textarea
-            className="border-border placeholder:text-muted/70 focus-visible:ring-brand text-fg min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-2 focus-visible:outline-none"
+          <Textarea
             placeholder={t.elements.textareaCharCount_placeholder}
             maxLength={100}
             defaultValue=""
@@ -37,8 +34,7 @@ export function TextareaSection() {
             <Label>{t.elements.textareaDisabled_label}</Label>
             <FieldInfoButton description={t.elements.textareaDisabled_info} />
           </div>
-          <textarea
-            className="border-border placeholder:text-muted/70 min-h-20 w-full resize-none rounded-md border bg-transparent px-3 py-2 text-sm opacity-50 shadow-sm"
+          <Textarea
             placeholder={t.elements.textareaDisabled_placeholder}
             disabled
           />

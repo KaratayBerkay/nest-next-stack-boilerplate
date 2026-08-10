@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useForm } from "@tanstack/react-form";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Button } from "@/components/ui/Button";
 import { cardRegisterFormSchema } from "@/validators/auth/schema";
 import { RegisterForm } from "./RegisterForm";
 
@@ -75,13 +76,14 @@ export function RegisterTab() {
 
       <p className="text-muted mt-10 text-center text-sm">
         {t.form.register.hasAccount}{" "}
-        <button
+        <Button
           type="button"
+          variant="link"
+          className="font-semibold"
           onClick={() => router.push(`${pathname}?tab=login`)}
-          className="text-brand hover:text-brand/80 font-semibold"
         >
           {t.form.register.loginLink}
-        </button>
+        </Button>
       </p>
     </div>
   );

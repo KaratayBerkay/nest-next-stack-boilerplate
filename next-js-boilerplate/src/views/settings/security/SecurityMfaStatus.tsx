@@ -1,6 +1,7 @@
 "use client";
 
 import { InputOTP } from "@/components/ui/InputOTP";
+import { Button } from "@/components/ui/Button";
 import type { SecurityMfaStatusProps } from "@/types/views/settings/SecurityPageContent-types";
 
 export function SecurityMfaStatus({
@@ -28,31 +29,30 @@ export function SecurityMfaStatus({
               value={disableCode}
               onChange={onDisableCodeChange}
             />
-            <button
+            <Button
+              variant="destructive"
               onClick={onDisable}
               disabled={disableCode.length < 6}
-              className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+              className="w-full"
             >
               {t.securityDisableTwoFactor}
-            </button>
+            </Button>
           </div>
         ) : (
-          <button
+          <Button
+            variant="destructive"
             onClick={onConfirmDisable}
-            className="w-full rounded-lg bg-red-600 py-2.5 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            className="w-full"
           >
             {t.securityDisableTwoFactor}
-          </button>
+          </Button>
         )
       ) : (
-        <button
-          onClick={onEnable}
-          className="bg-brand hover:bg-brand-hover w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
-        >
+        <Button onClick={onEnable} className="w-full">
           {t.securitySetupTwoFactor}
-        </button>
+        </Button>
       )}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      {error && <p className="text-error text-sm">{error}</p>}
       <div className="pt-4">
         <a
           href={`/v1/${lang}/settings/sessions`}

@@ -14,12 +14,9 @@ export function AuthStatus() {
 
   if (!user) {
     return (
-      <Link
-        href={LOGIN_PATH}
-        className="bg-brand rounded-lg px-3 py-1.5 text-xs font-medium text-brand-fg hover:opacity-90"
-      >
-        Sign In
-      </Link>
+      <Button size="xs" asChild>
+        <Link href={LOGIN_PATH}>Sign In</Link>
+      </Button>
     );
   }
 

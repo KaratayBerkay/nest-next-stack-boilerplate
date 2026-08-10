@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { Label } from "@/components/ui/Label";
 
 export const COUNTRIES = [
   { value: "de", label: "Germany" },
@@ -16,9 +17,7 @@ export function CountryTab() {
 
   return (
     <div className="flex flex-col gap-2">
-      <label htmlFor="country-dropdown" className="text-fg text-sm font-medium">
-        Country
-      </label>
+      <Label htmlFor="country-dropdown">Country</Label>
       <Dropdown
         aria-label="Country"
         options={COUNTRIES}

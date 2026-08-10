@@ -1,6 +1,9 @@
 "use client";
 
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Input } from "@/components/ui/Input";
+import { Textarea } from "@/components/ui/Textarea";
+import { Button } from "@/components/ui/Button";
 import type { Post } from "@/types/posts/Post-types";
 import type { PostEditFormProps } from "@/types/views/posts/PostEditForm-types";
 
@@ -17,31 +20,22 @@ export function PostEditForm({
 
   return (
     <div className="flex flex-col gap-3">
-      <input
+      <Input
         type="text"
         value={editTitle}
         onChange={(e) => onEditTitleChange(e.target.value)}
-        className="border-border bg-bg text-fg focus:ring-brand/30 w-full rounded-lg border px-3 py-2 text-lg font-bold focus:ring-2 focus:outline-none"
+        className="text-lg font-bold"
       />
-      <textarea
+      <Textarea
         value={editContent}
         onChange={(e) => onEditContentChange(e.target.value)}
-        className="border-border bg-bg text-fg focus:ring-brand/30 w-full rounded-lg border px-3 py-2 text-sm focus:ring-2 focus:outline-none"
         rows={5}
       />
       <div className="flex items-center gap-2">
-        <button
-          onClick={onSave}
-          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90"
-        >
-          {t.save}
-        </button>
-        <button
-          onClick={onCancel}
-          className="text-muted hover:text-fg text-sm underline transition-colors"
-        >
+        <Button onClick={onSave}>{t.save}</Button>
+        <Button variant="link" onClick={onCancel}>
           {t.cancel}
-        </button>
+        </Button>
       </div>
     </div>
   );

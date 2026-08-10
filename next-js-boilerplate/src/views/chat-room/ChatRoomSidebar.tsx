@@ -11,7 +11,6 @@ import {
 import type { ChatRoomSidebarProps } from "@/types/views/chat-room/ChatRoomSidebar-types";
 
 export function ChatRoomSidebar({
-  useNativeControls,
   sidebarOpen,
   rooms,
   room,
@@ -34,10 +33,7 @@ export function ChatRoomSidebar({
     >
       <div className="flex items-center justify-between pb-3 md:hidden">
         <p className="text-muted text-xs font-semibold uppercase">Rooms</p>
-        <SidebarCloseButton
-          useNativeControls={useNativeControls}
-          onClick={() => onSetSidebarOpen(false)}
-        />
+        <SidebarCloseButton onClick={() => onSetSidebarOpen(false)} />
       </div>
 
       <Tabs defaultValue="rooms" className="flex flex-1 flex-col">
@@ -60,7 +56,6 @@ export function ChatRoomSidebar({
             return (
               <RoomButton
                 key={r}
-                useNativeControls={useNativeControls}
                 room={r}
                 isActive={room === r}
                 count={count}

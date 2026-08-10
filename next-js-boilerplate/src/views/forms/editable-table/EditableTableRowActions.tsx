@@ -1,6 +1,14 @@
 "use client";
 
+import {
+  IconCopy,
+  IconArrowUp,
+  IconArrowDown,
+  IconCheck,
+  IconX,
+} from "@tabler/icons-react";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { Badge } from "@/components/ui/Badge";
 import type { EditableTableRowActionsProps } from "@/types/forms/EditableTableRowActions-types";
 
@@ -13,8 +21,10 @@ export function EditableTableRowActions({
 }: EditableTableRowActionsProps) {
   return (
     <div className="flex items-center gap-1">
-      <button
-        className="text-muted hover:text-fg"
+      <IconButton
+        icon={<IconCopy size={14} />}
+        variant="ghost"
+        size="icon-xs"
         onClick={() => {
           const r = field.state.value[i];
           field.insertValue(i + 1, {
@@ -22,29 +32,24 @@ export function EditableTableRowActions({
             description: `${r.description} (copy)`,
           });
         }}
-        title={t.editableTable.duplicateRow}
-        aria-label={t.editableTable.duplicateRow}
-      >
-        ⧉
-      </button>
-      <button
-        className="text-muted hover:text-fg"
+        label={t.editableTable.duplicateRow}
+      />
+      <IconButton
+        icon={<IconArrowUp size={14} />}
+        variant="ghost"
+        size="icon-xs"
         disabled={i === 0}
         onClick={() => field.moveValue(i, i - 1)}
-        title={t.editableTable.moveUp}
-        aria-label={t.editableTable.moveUp}
-      >
-        ↑
-      </button>
-      <button
-        className="text-muted hover:text-fg"
+        label={t.editableTable.moveUp}
+      />
+      <IconButton
+        icon={<IconArrowDown size={14} />}
+        variant="ghost"
+        size="icon-xs"
         disabled={i >= field.state.value.length - 1}
         onClick={() => field.moveValue(i, i + 1)}
-        title={t.editableTable.moveDown}
-        aria-label={t.editableTable.moveDown}
-      >
-        ↓
-      </button>
+        label={t.editableTable.moveDown}
+      />
       <ConfirmDialog
         title={t.editableTable.removeRow}
         description={t.editableTable.removeRowConfirm}
@@ -52,24 +57,22 @@ export function EditableTableRowActions({
         onConfirm={() => field.removeValue(i)}
       >
         {(open) => (
-          <button
-            className="text-destructive"
+          <IconButton
+            icon={<IconX size={14} />}
+            variant="ghost"
+            size="icon-xs"
             onClick={open}
-            title={t.editableTable.removeRow}
-            aria-label={t.editableTable.removeRow}
-          >
-            ×
-          </button>
+            label={t.editableTable.removeRow}
+          />
         )}
       </ConfirmDialog>
-      <button
-        className="text-muted hover:text-success"
+      <IconButton
+        icon={<IconCheck size={14} />}
+        variant="ghost"
+        size="icon-xs"
         onClick={() => onSaveRow(i)}
-        title={t.editableTable.saveRow}
-        aria-label={t.editableTable.saveRow}
-      >
-        ✓
-      </button>
+        label={t.editableTable.saveRow}
+      />
       {status === "saved" && (
         <Badge variant="success" className="text-xxs">
           {t.editableTable.savedBadge}

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { IconButton } from "@/components/ui/button/icon-button";
 import type { PopupAlertProps } from "@/types/views/ui/PopupAlert-types";
 import { AUTO_DISMISS_SECONDS } from "./PopupAlertsExample";
 import { FullWidthModalStyles } from "./FullWidthModalStyles";
@@ -85,25 +86,25 @@ export function FullWidthModalAlert({
                 your work before the window starts.
               </p>
             </div>
-            <button
-              type="button"
-              aria-label="Dismiss alert"
+            <IconButton
+              icon={
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              }
+              label="Dismiss alert"
               onClick={onDismiss}
-              className="hover:bg-warning/20 focus-visible:ring-brand -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                aria-hidden="true"
-              >
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
+              className="hover:bg-warning/20 -mt-1 -mr-1"
+            />
           </div>
           <div
             role="progressbar"

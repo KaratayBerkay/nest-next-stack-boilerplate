@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { IconButton } from "@/components/ui/button/icon-button";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/Alert";
 import type { DismissibleAlertSectionProps } from "@/types/views/ui/AlertDemo-types";
 
@@ -61,23 +62,23 @@ export function DismissibleAlertSection({
                   {descriptions[alertVariant]}
                 </AlertDescription>
               </div>
-              <button
+              <IconButton
+                icon={
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                }
                 onClick={onDismiss}
-                className="hover:bg-surface-hover inline-flex size-10 shrink-0 items-center justify-center rounded-md transition-colors"
-                aria-label="Dismiss"
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
+                label="Dismiss"
+              />
             </div>
           </Alert>
         </div>

@@ -2,6 +2,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { Switch } from "@/components/ui/Switch";
 import { Label } from "@/components/ui/Label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import type { MembershipSectionProps } from "@/types/views/forms/MembershipSection-types";
 
 export function MembershipSection({ form }: MembershipSectionProps) {
@@ -17,25 +18,23 @@ export function MembershipSection({ form }: MembershipSectionProps) {
           <Label>{t.layouts.sectionedPlan_label}</Label>
           <FieldInfoButton description={t.layouts.sectionedPlan_info} />
         </div>
-        <div className="flex gap-4">
-          {[
-            { value: "free" as const, label: "Free" },
-            { value: "basic" as const, label: "Basic" },
-            { value: "premium" as const, label: "Premium" },
-          ].map((p) => (
-            <label key={p.value} className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="plan"
-                value={p.value}
-                className="accent-brand"
-                checked={form.getFieldValue("plan") === p.value}
-                onChange={() => form.setFieldValue("plan", p.value)}
-              />
-              {p.label}
-            </label>
-          ))}
-        </div>
+        <RadioGroup
+          value={form.getFieldValue("plan")}
+          onValueChange={(v) => form.setFieldValue("plan", v)}
+        >
+          <div className="flex gap-4">
+            {[
+              { value: "free" as const, label: "Free" },
+              { value: "basic" as const, label: "Basic" },
+              { value: "premium" as const, label: "Premium" },
+            ].map((p) => (
+              <label key={p.value} className="flex items-center gap-2 text-sm">
+                <RadioGroupItem value={p.value} />
+                {p.label}
+              </label>
+            ))}
+          </div>
+        </RadioGroup>
       </div>
       <div className="flex items-center gap-2 text-sm">
         <Switch

@@ -15,9 +15,7 @@ import { Button } from "@/components/ui/Button";
 export function NestedConfirmTab() {
   return (
     <Dialog>
-      <DialogTrigger className="bg-error text-error-fg focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-xs transition-all hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none">
-        Delete Account
-      </DialogTrigger>
+      <DialogTrigger variant="destructive">Delete Account</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete Account</DialogTitle>
@@ -32,9 +30,7 @@ export function NestedConfirmTab() {
           </p>
         </DialogBody>
         <DialogFooter>
-          <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
-            Cancel
-          </DialogClose>
+          <DialogClose>Cancel</DialogClose>
           <ConfirmDialog
             title="Confirm Deletion"
             description="Are you absolutely sure? This cannot be undone."

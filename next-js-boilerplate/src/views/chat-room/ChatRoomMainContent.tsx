@@ -36,7 +36,6 @@ function insertEmojiAtCursor(
 }
 
 export function ChatRoomMainContent({
-  useNativeControls,
   room,
   roomCounts,
   connectionState,
@@ -63,6 +62,7 @@ export function ChatRoomMainContent({
   onSendAttachments,
 }: ChatRoomMainContentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const chatWindowRef = useRef<HTMLDivElement>(null);
 
   if (connectionState === "locked") {
     return (
@@ -79,10 +79,12 @@ export function ChatRoomMainContent({
   }
 
   return (
-    <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border">
+    <div
+      ref={chatWindowRef}
+      className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border"
+    >
       <div className="flex items-center gap-2 border-b px-4 py-3">
         <HamburgerButton
-          useNativeControls={useNativeControls}
           onClick={() => onSetSidebarOpen(true)}
           ariaLabel={t.openRooms}
           room={room}
@@ -130,22 +132,20 @@ export function ChatRoomMainContent({
 
       <div className="flex gap-2 border-t p-2">
         <AttachButton
-          useNativeControls={useNativeControls}
           disabled={connectionState !== "online" || attaching}
           onAttachFile={onAttachFiles}
           label={t.attachFile}
         />
         <EmojiButton
-          useNativeControls={useNativeControls}
           disabled={connectionState !== "online"}
           onEmojiSelect={(emoji) =>
             insertEmojiAtCursor(input, onSetInput, inputRef, emoji)
           }
           label={t.openEmojiPicker}
+          chatWindowRef={chatWindowRef}
         />
         <div className="flex flex-1 flex-col">
           <MessageInput
-            useNativeControls={useNativeControls}
             value={input}
             onChange={(e) => onSetInput(e.target.value)}
             onKeyDown={(e) => {
@@ -166,7 +166,6 @@ export function ChatRoomMainContent({
           />
         </div>
         <SendButton
-          useNativeControls={useNativeControls}
           onClick={onSend}
           disabled={
             connectionState !== "online" ||

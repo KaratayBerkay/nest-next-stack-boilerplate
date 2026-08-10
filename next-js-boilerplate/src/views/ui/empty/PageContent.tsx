@@ -1,5 +1,6 @@
 "use client";
 import { Empty } from "@/components/ui/Empty";
+import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
@@ -54,14 +55,7 @@ const examples: UIExample[] = [
           <Empty
             title="No items yet"
             description="Get started by creating your first item."
-            action={
-              <button
-                type="button"
-                className="bg-brand text-brand-fg hover:bg-brand/90 inline-flex items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors"
-              >
-                Create Item
-              </button>
-            }
+            action={<Button>Create Item</Button>}
           />
         </section>
       </div>

@@ -5,6 +5,7 @@ import type { FindFriendsContentProps } from "@/types/find-friends/FindFriendsCo
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { usePathname } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Input } from "@/components/ui/Input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   friendsQueryOptions,
@@ -67,11 +68,10 @@ export function MediumFindFriendsContent({
             </TabsTrigger>
           </TabsList>
           <TabsContent value="add" className="mt-4 flex flex-col gap-4">
-            <input
+            <Input
               value={query}
               onChange={onQueryChange}
               placeholder={t.searchHint}
-              className="w-full rounded border px-3 py-2 text-sm"
             />
             <div className="flex flex-col gap-2">
               {query.trim().length < 3 && (

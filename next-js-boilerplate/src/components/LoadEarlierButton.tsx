@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/Button";
 import type { LoadEarlierButtonProps } from "@/types/components/LoadEarlierButton-types";
 
 export function LoadEarlierButton({
@@ -6,14 +7,13 @@ export function LoadEarlierButton({
 }: LoadEarlierButtonProps) {
   return (
     <div className={`flex justify-center ${compact ? "py-2" : "py-3"}`}>
-      <button
+      <Button
+        variant="secondary"
+        size={compact ? "xs" : "sm"}
         onClick={onClick}
-        className={`bg-surface hover:bg-surface-hover text-muted font-medium ${
-          compact ? "rounded px-3 py-1 text-xs" : "rounded-lg px-4 py-2 text-xs"
-        }`}
       >
         Load earlier messages
-      </button>
+      </Button>
     </div>
   );
 }

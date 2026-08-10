@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Separator } from "@/components/ui/Separator";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { TAKEN_SLUGS } from "./draft-utils";
 import type { EditorFormFieldsProps } from "@/types/views/forms/EditorFormFields-types";
@@ -80,20 +81,16 @@ export function EditorFormFields({
 
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={schedule}
             onChange={() => onSetSchedule(!schedule)}
-            className="h-4 w-4"
           />
           {t.schedule}
         </label>
         <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={simulateFailure}
             onChange={() => onSetSimulateFailure(!simulateFailure)}
-            className="h-4 w-4"
           />
           {t.simulateFailure}
         </label>

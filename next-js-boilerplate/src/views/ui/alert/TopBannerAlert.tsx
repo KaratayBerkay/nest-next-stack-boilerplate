@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
+import { IconButton } from "@/components/ui/button/icon-button";
 import type { PopupAlertProps } from "@/types/views/ui/PopupAlert-types";
 import { AUTO_DISMISS_SECONDS } from "./PopupAlertsExample";
 import { CountdownRing } from "./CountdownRing";
@@ -58,25 +59,25 @@ export function TopBannerAlert({
             remainingMs={remainingMs}
             totalSeconds={AUTO_DISMISS_SECONDS}
           />
-          <button
-            type="button"
-            aria-label="Dismiss notification"
+          <IconButton
+            icon={
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                aria-hidden="true"
+              >
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            }
+            label="Dismiss notification"
             onClick={onDismiss}
-            className="hover:bg-info/20 focus-visible:ring-brand inline-flex size-12 shrink-0 items-center justify-center rounded-md transition-colors focus-visible:ring-2 focus-visible:outline-none"
-          >
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
+            className="hover:bg-info/20 size-12"
+          />
         </div>
       </div>
     </div>,

@@ -11,6 +11,7 @@ import {
   AlertDialogAction,
 } from "@/components/ui/AlertDialog";
 import { Button } from "@/components/ui/Button";
+import { Textarea } from "@/components/ui/Textarea";
 import { useToast } from "@/components/ui/Toast";
 
 const INITIAL_CONTENT =
@@ -63,8 +64,8 @@ export function UnsavedChangesContent() {
           {isDirty ? "Unsaved changes" : "All saved"}
         </span>
       </div>
-      <textarea
-        className="border-border bg-bg min-h-[120px] w-full rounded border p-3 text-sm"
+      <Textarea
+        className="min-h-[120px]"
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
@@ -96,13 +97,12 @@ export function UnsavedChangesContent() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-error text-error-fg rounded px-4 py-2 text-sm"
+              variant="destructive"
               onClick={() => handleDiscard(setText, originalText)}
             >
               Discard
             </AlertDialogAction>
             <AlertDialogAction
-              className="bg-brand rounded px-4 py-2 text-sm text-brand-fg"
               onClick={() => handleSave(setOriginalText, text, toast)}
             >
               Save

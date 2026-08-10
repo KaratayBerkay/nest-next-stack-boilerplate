@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/Collapsible";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { Switch } from "@/components/ui/Switch";
 import { Chevron } from "@/views/ui/collapsible/Chevron";
 
@@ -16,21 +17,11 @@ export function AdvancedSettingsTab() {
       onSubmit={(e) => e.preventDefault()}
     >
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="collapsible-project-name"
-          className="text-fg text-sm font-medium"
-        >
-          Project name
-        </label>
+        <Label htmlFor="collapsible-project-name">Project name</Label>
         <Input id="collapsible-project-name" defaultValue="marketing-site" />
       </div>
       <div className="flex flex-col gap-1.5">
-        <label
-          htmlFor="collapsible-project-url"
-          className="text-fg text-sm font-medium"
-        >
-          Production URL
-        </label>
+        <Label htmlFor="collapsible-project-url">Production URL</Label>
         <Input
           id="collapsible-project-url"
           type="url"
@@ -49,12 +40,7 @@ export function AdvancedSettingsTab() {
             <Switch label="Enable edge caching" defaultChecked />
             <Switch label="Verbose build logs" />
             <div className="flex flex-col gap-1.5">
-              <label
-                htmlFor="collapsible-webhook"
-                className="text-fg text-sm font-medium"
-              >
-                Deploy webhook
-              </label>
+              <Label htmlFor="collapsible-webhook">Deploy webhook</Label>
               <Input
                 id="collapsible-webhook"
                 type="url"

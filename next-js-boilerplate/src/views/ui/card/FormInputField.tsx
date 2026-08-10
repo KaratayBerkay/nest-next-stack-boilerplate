@@ -1,5 +1,5 @@
-import type { AnyFieldApi } from "@tanstack/react-form";
 import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import { FieldInfo } from "./FieldInfo";
 import type { FormInputFieldProps } from "@/types/views/ui/CardDemo-types";
 
@@ -13,9 +13,7 @@ export function FormInputField({
 }: FormInputFieldProps) {
   return (
     <div>
-      <label htmlFor={field.name} className="block text-sm font-medium">
-        {label}
-      </label>
+      <Label htmlFor={field.name}>{label}</Label>
       <div className="mt-2">
         <Input
           id={field.name}

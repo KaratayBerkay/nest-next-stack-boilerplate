@@ -1,6 +1,7 @@
 "use client";
 
 import { IconCode, IconEye } from "@tabler/icons-react";
+import { Button } from "@/components/ui/Button";
 import { CodeBlock } from "./CodeBlock";
 import type { ExamplePanelProps } from "@/types/views/ui/ExampleTabsShared-types";
 
@@ -19,21 +20,21 @@ export function ExamplePanel({
     >
       <p className="text-muted text-sm italic">{example.description}</p>
       {example.code && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="xs"
           onClick={onToggleView}
-          className="text-muted hover:text-fg flex items-center gap-1.5 text-xs font-medium transition-colors"
+          leftIcon={
+            viewMode === "preview" ? (
+              <IconCode size={14} />
+            ) : (
+              <IconEye size={14} />
+            )
+          }
         >
-          {viewMode === "preview" ? (
-            <>
-              <IconCode size={14} /> View Code
-            </>
-          ) : (
-            <>
-              <IconEye size={14} /> Preview
-            </>
-          )}
-        </button>
+          {viewMode === "preview" ? "View Code" : "Preview"}
+        </Button>
       )}
       {viewMode === "preview" ? (
         <div>{example.render()}</div>

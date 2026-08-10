@@ -25,7 +25,7 @@ const examples: UIExample[] = [
         <section className="flex flex-col gap-3">
           <h3 className="text-lg font-semibold">Default</h3>
           <AlertDialog>
-            <AlertDialogTrigger className="bg-brand text-brand-fg rounded px-4 py-2 text-sm font-medium hover:opacity-90">
+            <AlertDialogTrigger variant="primary">
               Open Alert Dialog
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -36,10 +36,8 @@ const examples: UIExample[] = [
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="border-border hover:bg-surface-hover rounded border px-4 py-2 text-sm">
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction className="bg-error text-error-fg rounded px-4 py-2 text-sm">
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="destructive">
                   Continue
                 </AlertDialogAction>
               </AlertDialogFooter>

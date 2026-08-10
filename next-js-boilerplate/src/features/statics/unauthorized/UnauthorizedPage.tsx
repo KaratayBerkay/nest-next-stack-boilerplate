@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import { LOGIN_PATH } from "@/constants/routes";
 import type { UnauthorizedPageProps } from "@/types/features/statics/UnauthorizedPage-types";
 
@@ -8,12 +10,9 @@ export function UnauthorizedPage({
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20">
       <p className="text-muted text-sm">{message}</p>
-      <a
-        href={LOGIN_PATH}
-        className="bg-brand rounded-lg px-4 py-2 text-sm text-brand-fg"
-      >
-        {label ?? "Sign in"}
-      </a>
+      <Button asChild>
+        <Link href={LOGIN_PATH}>{label ?? "Sign in"}</Link>
+      </Button>
     </div>
   );
 }

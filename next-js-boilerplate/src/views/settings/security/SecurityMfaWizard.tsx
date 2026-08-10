@@ -2,6 +2,8 @@
 
 import { QRCodeSVG } from "qrcode.react";
 import { InputOTP } from "@/components/ui/InputOTP";
+import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import type { SecurityMfaWizardProps } from "@/types/views/settings/SecurityPageContent-types";
 
 export function SecurityMfaWizard({
@@ -32,12 +34,9 @@ export function SecurityMfaWizard({
           <code className="bg-surface-alt block rounded px-4 py-3 text-center font-mono text-sm tracking-widest">
             {enrollData.secret}
           </code>
-          <button
-            onClick={onContinueToVerify}
-            className="bg-brand hover:bg-brand-hover w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
-          >
+          <Button onClick={onContinueToVerify} className="w-full">
             {t.securityContinue}
-          </button>
+          </Button>
         </div>
       )}
       {step === "verify" && (
@@ -53,20 +52,17 @@ export function SecurityMfaWizard({
             // eslint-disable-next-line jsx-a11y/no-autofocus
             autoFocus
           />
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <button
+          {error && <p className="text-error text-sm">{error}</p>}
+          <Button
             onClick={onVerify}
             disabled={verifyCode.length < 6}
-            className="bg-brand hover:bg-brand-hover disabled:bg-brand/50 w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
+            className="w-full"
           >
             {t.securityVerify}
-          </button>
-          <button
-            onClick={onRegenerateQr}
-            className="text-brand w-full text-sm underline"
-          >
+          </Button>
+          <Button variant="link" onClick={onRegenerateQr} className="w-full">
             {t.securityRegenerateQr}
-          </button>
+          </Button>
         </div>
       )}
       {step === "backup-codes" && (
@@ -83,21 +79,15 @@ export function SecurityMfaWizard({
             ))}
           </div>
           <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={codesSaved}
               onChange={(e) => onCodesSavedChange(e.target.checked)}
-              className="h-4 w-4"
             />
             {t.securityConfirmCodesSaved}
           </label>
-          <button
-            onClick={onDone}
-            disabled={!codesSaved}
-            className="bg-brand hover:bg-brand-hover disabled:bg-brand/50 w-full rounded-lg py-2.5 text-sm font-medium text-white transition-colors"
-          >
+          <Button onClick={onDone} disabled={!codesSaved} className="w-full">
             {t.securityDone}
-          </button>
+          </Button>
         </div>
       )}
     </div>

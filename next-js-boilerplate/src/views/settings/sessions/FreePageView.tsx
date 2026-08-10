@@ -6,6 +6,7 @@ import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useCallback, useEffect, useState } from "react";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { PageHeader } from "@/components/ui";
+import { Button } from "@/components/ui/Button";
 import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -106,12 +107,13 @@ export function FreePageView({ className }: { className?: string }) {
         actions={
           <>
             {sessions.length > 1 && (
-              <button
+              <Button
+                variant="link"
+                size="xs"
                 onClick={handleRevokeAllOtherSessions}
-                className="text-xs text-red-600 transition-colors hover:text-red-700"
               >
                 {t.logOutAllOtherSessions}
-              </button>
+              </Button>
             )}
             <PageInfoButton content={settingsSessionsPageInfo} />
           </>
@@ -122,13 +124,10 @@ export function FreePageView({ className }: { className?: string }) {
         <SessionSkeleton />
       ) : sessionsError ? (
         <div className="flex flex-col items-start gap-3">
-          <p className="text-sm text-red-600">{t.sessionsLoadFailed}</p>
-          <button
-            onClick={handleRetry}
-            className="border-border bg-surface text-fg hover:bg-surface-hover rounded-md border px-3 py-1.5 text-xs transition-colors"
-          >
+          <p className="text-error text-sm">{t.sessionsLoadFailed}</p>
+          <Button variant="outline" size="xs" onClick={handleRetry}>
             {t.sessionsRetry}
-          </button>
+          </Button>
         </div>
       ) : sessions.length === 0 ? (
         <EmptySessions />

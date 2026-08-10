@@ -17,9 +17,7 @@ export function SizeScaleTab() {
     <div className="flex flex-wrap gap-3">
       {sizes.map((s) => (
         <Dialog key={s}>
-          <DialogTrigger className="border-border hover:bg-surface-hover focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded-md border bg-transparent px-4 py-2 text-sm font-medium shadow-xs transition-all focus-visible:ring-2 focus-visible:outline-none">
-            {s}
-          </DialogTrigger>
+          <DialogTrigger variant="outline">{s}</DialogTrigger>
           <DialogContent size={s}>
             <DialogHeader>
               <DialogTitle>Size: {s}</DialogTitle>
@@ -33,9 +31,7 @@ export function SizeScaleTab() {
               </p>
             </DialogBody>
             <DialogFooter>
-              <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
-                Close
-              </DialogClose>
+              <DialogClose>Close</DialogClose>
             </DialogFooter>
           </DialogContent>
         </Dialog>

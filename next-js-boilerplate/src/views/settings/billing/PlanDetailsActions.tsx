@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/Button";
 import { plansPath } from "@/constants/routes";
 import type { PlanDetailsActionsProps } from "@/types/views/settings/PlanDetails-types";
 
@@ -20,28 +21,23 @@ export function PlanDetailsActions({
   return (
     <div className="mt-4 flex items-center gap-2">
       {hasPendingChange ? (
-        <button
+        <Button
           type="button"
+          variant="outline"
+          className="w-full"
           onClick={onCancelPendingChange}
-          className="border-border hover:bg-surface-hover w-full rounded-lg border px-4 py-2 text-sm font-medium"
         >
           {cancelPendingChangeLabel}
-        </button>
+        </Button>
       ) : tier === "FREE" ? (
-        <Link
-          href={plansPath()}
-          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-        >
-          {upgradePlanLabel}
-        </Link>
+        <Button asChild>
+          <Link href={plansPath()}>{upgradePlanLabel}</Link>
+        </Button>
       ) : (
         <>
-          <Link
-            href={plansPath()}
-            className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90"
-          >
-            {upgradePlanLabel}
-          </Link>
+          <Button asChild>
+            <Link href={plansPath()}>{upgradePlanLabel}</Link>
+          </Button>
           {cancelAtPeriodEnd ? (
             <p className="text-warning text-xs">{cancelsOnLabel}</p>
           ) : (
@@ -52,13 +48,9 @@ export function PlanDetailsActions({
               onConfirm={onCancel}
             >
               {(open) => (
-                <button
-                  type="button"
-                  onClick={open}
-                  className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-                >
+                <Button type="button" variant="outline" onClick={open}>
                   {cancelSubscriptionLabel}
-                </button>
+                </Button>
               )}
             </ConfirmDialog>
           )}

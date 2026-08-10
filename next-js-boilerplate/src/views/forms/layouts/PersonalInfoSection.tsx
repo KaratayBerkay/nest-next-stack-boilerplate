@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
-import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { sectionedFieldSchemas } from "@/validators/forms/layouts-validation";
+import { convertTextToDate, formatDateOnly } from "@/lib/date-time";
 import type { PersonalInfoSectionProps } from "@/types/views/forms/PersonalInfoSection-types";
 
 export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
@@ -55,10 +57,18 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
         </form.AppField>
         <div className="flex flex-col gap-1">
           <Label>Date of Birth</Label>
-          <Input
-            type="date"
-            value={form.getFieldValue("dateOfBirth")}
-            onChange={(e) => form.setFieldValue("dateOfBirth", e.target.value)}
+          <DatePicker
+            value={
+              form.getFieldValue("dateOfBirth")
+                ? (convertTextToDate(form.getFieldValue("dateOfBirth")) as Date)
+                : undefined
+            }
+            onChange={(date) =>
+              form.setFieldValue(
+                "dateOfBirth",
+                date ? formatDateOnly(date) : "",
+              )
+            }
           />
         </div>
       </div>
@@ -67,50 +77,45 @@ export function PersonalInfoSection({ form }: PersonalInfoSectionProps) {
           <Label>{t.layouts.sectionedGender_label}</Label>
           <FieldInfoButton description={t.layouts.sectionedGender_info} />
         </div>
-        <div className="flex gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="gender" className="accent-brand" />
-            {t.layouts.sectionedGender_male}
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="gender"
-              defaultChecked
-              className="accent-brand"
-            />
-            {t.layouts.sectionedGender_female}
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="radio" name="gender" className="accent-brand" />
-            {t.layouts.sectionedGender_other}
-          </label>
-        </div>
+        <RadioGroup defaultValue="female">
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value="male" />
+              {t.layouts.sectionedGender_male}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value="female" />
+              {t.layouts.sectionedGender_female}
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <RadioGroupItem value="other" />
+              {t.layouts.sectionedGender_other}
+            </label>
+          </div>
+        </RadioGroup>
       </div>
       <div className="flex flex-col gap-1">
         <div className="flex items-center gap-1">
           <Label>{t.layouts.sectionedCategory_label}</Label>
           <FieldInfoButton description={t.layouts.sectionedCategory_info} />
         </div>
-        <div className="flex gap-4">
-          {[
-            { value: "tech" as const, label: "Technology" },
-            { value: "design" as const, label: "Design" },
-            { value: "business" as const, label: "Business" },
-          ].map((c) => (
-            <label key={c.value} className="flex items-center gap-2 text-sm">
-              <input
-                type="radio"
-                name="category"
-                value={c.value}
-                className="accent-brand"
-                checked={form.getFieldValue("category") === c.value}
-                onChange={() => form.setFieldValue("category", c.value)}
-              />
-              {c.label}
-            </label>
-          ))}
-        </div>
+        <RadioGroup
+          value={form.getFieldValue("category")}
+          onValueChange={(v) => form.setFieldValue("category", v)}
+        >
+          <div className="flex gap-4">
+            {[
+              { value: "tech" as const, label: "Technology" },
+              { value: "design" as const, label: "Design" },
+              { value: "business" as const, label: "Business" },
+            ].map((c) => (
+              <label key={c.value} className="flex items-center gap-2 text-sm">
+                <RadioGroupItem value={c.value} />
+                {c.label}
+              </label>
+            ))}
+          </div>
+        </RadioGroup>
       </div>
     </div>
   );

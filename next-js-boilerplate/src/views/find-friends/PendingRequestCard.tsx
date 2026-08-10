@@ -1,5 +1,6 @@
 import type { PendingRequestCardProps } from "@/types/find-friends/PendingRequestCard-types";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
 
 export function PendingRequestCard({
@@ -26,18 +27,16 @@ export function PendingRequestCard({
       </span>
       {direction === "incoming" ? (
         <>
-          <button
-            onClick={() => onAccept(user.id)}
-            className="bg-success rounded px-3 py-1 text-xs text-white hover:brightness-90"
-          >
+          <Button size="xs" onClick={() => onAccept(user.id)}>
             {acceptLabel}
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="outline"
+            size="xs"
             onClick={() => onDecline(user.id)}
-            className="bg-surface hover:bg-surface-hover rounded px-3 py-1 text-xs"
           >
             {declineLabel}
-          </button>
+          </Button>
         </>
       ) : (
         <span className="bg-surface text-muted rounded px-3 py-1 text-xs">

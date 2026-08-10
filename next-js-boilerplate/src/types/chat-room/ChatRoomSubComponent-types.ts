@@ -1,12 +1,10 @@
 import type { ChangeEvent, KeyboardEvent, RefObject } from "react";
 
 export interface SidebarCloseButtonProps {
-  useNativeControls: boolean;
   onClick: () => void;
 }
 
 export interface RoomButtonProps {
-  useNativeControls: boolean;
   room: string;
   isActive: boolean;
   count: number;
@@ -15,7 +13,6 @@ export interface RoomButtonProps {
 }
 
 export interface HamburgerButtonProps {
-  useNativeControls: boolean;
   onClick: () => void;
   ariaLabel: string;
   room: string;
@@ -23,7 +20,6 @@ export interface HamburgerButtonProps {
 }
 
 export interface MessageInputProps {
-  useNativeControls: boolean;
   value: string;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
@@ -33,22 +29,20 @@ export interface MessageInputProps {
 }
 
 export interface SendButtonProps {
-  useNativeControls: boolean;
   onClick: () => void;
   disabled: boolean;
   label: string;
 }
 
 export interface AttachButtonProps {
-  useNativeControls: boolean;
   disabled: boolean;
   onAttachFile: (files: File[]) => void;
   label: string;
 }
 
 export interface EmojiButtonProps {
-  useNativeControls: boolean;
   disabled: boolean;
   onEmojiSelect: (emoji: string) => void;
   label: string;
+  chatWindowRef?: RefObject<HTMLDivElement | null>;
 }

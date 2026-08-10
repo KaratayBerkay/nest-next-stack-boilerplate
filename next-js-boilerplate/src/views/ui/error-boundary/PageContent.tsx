@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
+import { Button } from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { ErrorBoundaryCustomFallback } from "@/fallbacks/views/error-boundary/ErrorBoundaryCustomFallback";
@@ -15,12 +16,13 @@ function Bomb({ label = "Throw Error" }: BombProps) {
     throw new Error("Boom!");
   }
   return (
-    <button
+    <Button
+      variant="destructive"
+      size="sm"
       onClick={() => setShouldThrow(true)}
-      className="bg-error text-error-fg rounded-lg px-3 py-1.5 text-sm font-medium hover:opacity-90"
     >
       {label}
-    </button>
+    </Button>
   );
 }
 
@@ -29,7 +31,10 @@ function AsyncFailureDemo() {
   return (
     <div className="flex flex-col gap-3">
       <p className="text-muted text-xs">Click to simulate a failed API call:</p>
-      <button
+      <Button
+        variant="destructive"
+        size="sm"
+        className="w-fit"
         onClick={() => {
           toast({
             title: "Fetch failed",
@@ -37,10 +42,9 @@ function AsyncFailureDemo() {
             variant: "destructive",
           });
         }}
-        className="bg-error text-error-fg rounded-lg px-3 py-1.5 text-sm font-medium hover:opacity-90"
       >
         Fail Request
-      </button>
+      </Button>
       <div className="border-border/50 bg-bg text-fg rounded-md border p-3 text-xs">
         <span className="font-semibold">ⓘ </span>
         Async errors must be caught in the handler and surfaced via toast or

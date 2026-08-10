@@ -32,7 +32,6 @@ function ChatRoomContent({
   initialRoom = "general",
   showPageInfo = false,
   vipRooms = [],
-  useNativeControls = false,
   showSelfCrown = false,
   className,
 }: ChatRoomBaseViewProps) {
@@ -179,7 +178,6 @@ function ChatRoomContent({
         )}
 
         <ChatRoomSidebar
-          useNativeControls={useNativeControls}
           sidebarOpen={sidebarOpen}
           rooms={rooms}
           room={room}
@@ -194,7 +192,6 @@ function ChatRoomContent({
         />
 
         <ChatRoomMainContent
-          useNativeControls={useNativeControls}
           room={room}
           roomCounts={roomCounts}
           connectionState={connectionState}

@@ -6,6 +6,15 @@ import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { cn } from "@/lib/cn";
 import { formatCurrency, toCurrencyCode } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Button } from "@/components/ui/Button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
 import type { InvoiceTableProps } from "@/types/billing/InvoiceTable-types";
 import { StatusBadge } from "./StatusBadge";
 import { InvoicePagination } from "./InvoicePagination";
@@ -66,64 +75,56 @@ export function InvoiceTable({
         </p>
       </div>
 
-      <div className="border-border overflow-x-auto rounded-lg border">
-        <table className="w-full text-left text-sm">
-          <thead>
-            <tr className="border-border border-b">
-              <th className="px-4 py-3 font-medium">
-                {t.invoiceNumber.replace("{number}", "#")}
-              </th>
-              <th className="px-4 py-3 font-medium">{t.date}</th>
-              <th className="px-4 py-3 font-medium">{t.price}</th>
-              <th className="px-4 py-3 font-medium">{t.status || "Status"}</th>
-              <th className="px-4 py-3 font-medium">{t.viewInvoice}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedTransactions.map((tx) => (
-              <tr
-                key={tx.id}
-                className="border-border border-b last:border-b-0"
-              >
-                <td className="px-4 py-3">
-                  <span className="text-sm font-medium">
-                    {extractInvoiceNumber(tx.reference)}
-                  </span>
-                </td>
-                <td className="text-muted px-4 py-3 text-sm">
-                  {formatDateByPreference(tx.createdAt, dateDisplay)}
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  {tx.amount > 0
-                    ? formatCurrency(tx.amount, toCurrencyCode(tx.currency))
-                    : "\u2014"}
-                </td>
-                <td className="px-4 py-3">
-                  <StatusBadge
-                    status={tx.status}
-                    paidLabel={t.paid}
-                    unpaidLabel={t.unpaid}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  {tx.stripeInvoiceUrl ? (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t.invoiceNumber.replace("{number}", "#")}</TableHead>
+            <TableHead>{t.date}</TableHead>
+            <TableHead>{t.price}</TableHead>
+            <TableHead>{t.status || "Status"}</TableHead>
+            <TableHead>{t.viewInvoice}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedTransactions.map((tx) => (
+            <TableRow key={tx.id}>
+              <TableCell className="font-medium">
+                {extractInvoiceNumber(tx.reference)}
+              </TableCell>
+              <TableCell className="text-muted">
+                {formatDateByPreference(tx.createdAt, dateDisplay)}
+              </TableCell>
+              <TableCell>
+                {tx.amount > 0
+                  ? formatCurrency(tx.amount, toCurrencyCode(tx.currency))
+                  : "\u2014"}
+              </TableCell>
+              <TableCell>
+                <StatusBadge
+                  status={tx.status}
+                  paidLabel={t.paid}
+                  unpaidLabel={t.unpaid}
+                />
+              </TableCell>
+              <TableCell>
+                {tx.stripeInvoiceUrl ? (
+                  <Button variant="link" size="xs" asChild>
                     <a
                       href={tx.stripeInvoiceUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-brand text-sm font-medium hover:underline"
                     >
                       {t.viewInvoice}
                     </a>
-                  ) : (
-                    <span className="text-muted text-sm">{"\u2014"}</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                  </Button>
+                ) : (
+                  <span className="text-muted text-sm">{"\u2014"}</span>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {totalPages > 1 && (
         <InvoicePagination

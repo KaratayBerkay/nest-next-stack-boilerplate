@@ -10,6 +10,7 @@ import {
   type SetStateAction,
 } from "react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { EmojiPickerButton } from "@/components/ui/EmojiPickerButton";
 import { IconPaperclip, IconSend } from "@tabler/icons-react";
 import { ATTACHMENT_ACCEPT } from "@/constants/upload";
@@ -65,6 +66,7 @@ export function ChatInputBar({
   attaching,
   uploadItems,
   onAttachFiles,
+  chatWindowRef,
 }: ChatInputBarProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const attachInputId = useId();
@@ -119,17 +121,18 @@ export function ChatInputBar({
           onEmojiSelect={(emoji) =>
             insertEmojiAtCursor(input, setInput, inputRef, emoji)
           }
+          matchWidthRef={chatWindowRef}
         />
       </div>
       <div className="flex flex-1 flex-col">
-        <input
+        <Input
           ref={inputRef}
           value={input}
           onChange={(e) => handleChange(e.target.value)}
           onKeyDown={(e) => handleKeyDown(e, doSend)}
           placeholder={online ? inputPlaceholder : connectingLabel}
           disabled={!online}
-          className="bg-surface text-fg placeholder:text-muted focus:ring-brand/30 w-full rounded-lg border-0 px-4 py-3 text-sm focus:ring-1 focus:outline-none"
+          className="border-0"
         />
         {messageError && (
           <p className="text-error mt-1.5 text-xs">{messageError}</p>

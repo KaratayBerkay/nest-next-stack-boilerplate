@@ -1,16 +1,26 @@
 "use client";
 
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/Table";
+import type { BadgeVariant } from "@/types/ui/Badge-types";
 import { formatDateTimeByPreference } from "@/lib/date-time";
 import type { AuditLogsTableProps } from "@/types/admin/audit-logs/AuditLogsTable-types";
 
-const LEVEL_COLORS: Record<string, string> = {
-  ERROR: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  WARN: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  INFO: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  DEBUG: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-  TRACE: "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500",
-  FATAL: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
+const LEVEL_VARIANTS: Record<string, BadgeVariant> = {
+  ERROR: "error",
+  WARN: "warning",
+  INFO: "info",
+  DEBUG: "secondary",
+  TRACE: "secondary",
+  FATAL: "error",
 };
 
 export function AuditLogsTable({
@@ -26,80 +36,69 @@ export function AuditLogsTable({
 }: AuditLogsTableProps) {
   return (
     <>
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-xs">
-          <thead>
-            <tr className="text-muted border-border border-b">
-              <th className="py-2 pr-2 font-medium">{t.time}</th>
-              <th className="py-2 pr-2 font-medium">{t.action}</th>
-              <th className="py-2 pr-2 font-medium">{t.level}</th>
-              <th className="py-2 pr-2 font-medium">{t.actor}</th>
-              <th className="py-2 pr-2 font-medium">{t.entity}</th>
-              <th className="py-2 pr-2 font-medium">{t.summary}</th>
-              <th className="py-2 pr-2 font-medium">{t.ip}</th>
-              <th className="py-2 pr-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {entries.map((entry) => (
-              <tr
-                key={entry.id}
-                className="border-border hover:bg-surface/50 border-b transition-colors"
-              >
-                <td className="text-muted py-2 pr-2 whitespace-nowrap">
-                  {formatDateTimeByPreference(entry.createdAt, dateDisplay)}
-                </td>
-                <td className="py-2 pr-2 font-medium whitespace-nowrap">
-                  {entry.action.replace(/_/g, " ")}
-                </td>
-                <td className="py-2 pr-2">
-                  <span
-                    className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
-                      LEVEL_COLORS[entry.level] ?? ""
-                    }`}
-                  >
-                    {entry.level}
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t.time}</TableHead>
+            <TableHead>{t.action}</TableHead>
+            <TableHead>{t.level}</TableHead>
+            <TableHead>{t.actor}</TableHead>
+            <TableHead>{t.entity}</TableHead>
+            <TableHead>{t.summary}</TableHead>
+            <TableHead>{t.ip}</TableHead>
+            <TableHead></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {entries.map((entry) => (
+            <TableRow key={entry.id}>
+              <TableCell className="text-muted whitespace-nowrap">
+                {formatDateTimeByPreference(entry.createdAt, dateDisplay)}
+              </TableCell>
+              <TableCell className="font-medium whitespace-nowrap">
+                {entry.action.replace(/_/g, " ")}
+              </TableCell>
+              <TableCell>
+                <Badge variant={LEVEL_VARIANTS[entry.level] ?? "secondary"}>
+                  {entry.level}
+                </Badge>
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                {entry.actor?.name ?? (
+                  <span className="text-muted">{t.system}</span>
+                )}
+              </TableCell>
+              <TableCell className="whitespace-nowrap">
+                {entry.entityType}
+                {entry.entityId && (
+                  <span className="text-muted">
+                    #{entry.entityId.slice(0, 8)}
                   </span>
-                </td>
-                <td className="py-2 pr-2 whitespace-nowrap">
-                  {entry.actor?.name ?? (
-                    <span className="text-muted">{t.system}</span>
-                  )}
-                </td>
-                <td className="py-2 pr-2 whitespace-nowrap">
-                  {entry.entityType}
-                  {entry.entityId && (
-                    <span className="text-muted">
-                      #{entry.entityId.slice(0, 8)}
-                    </span>
-                  )}
-                </td>
-                <td className="max-w-[200px] truncate py-2 pr-2">
-                  {entry.summary ?? "-"}
-                </td>
-                <td className="text-muted py-2 pr-2 font-mono whitespace-nowrap">
-                  {entry.ip ?? "-"}
-                </td>
-                <td className="py-2 pr-2">
-                  {Boolean(entry.before || entry.after) && (
-                    <Button
-                      variant="link"
-                      size="xs"
-                      onClick={() =>
-                        setExpandedId(
-                          expandedId === entry.id ? null : entry.id,
-                        )
-                      }
-                    >
-                      {expandedId === entry.id ? t.hide : t.diff}
-                    </Button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                )}
+              </TableCell>
+              <TableCell className="max-w-[200px] truncate">
+                {entry.summary ?? "-"}
+              </TableCell>
+              <TableCell className="text-muted font-mono whitespace-nowrap">
+                {entry.ip ?? "-"}
+              </TableCell>
+              <TableCell>
+                {Boolean(entry.before || entry.after) && (
+                  <Button
+                    variant="link"
+                    size="xs"
+                    onClick={() =>
+                      setExpandedId(expandedId === entry.id ? null : entry.id)
+                    }
+                  >
+                    {expandedId === entry.id ? t.hide : t.diff}
+                  </Button>
+                )}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       <div className="flex items-center justify-between">
         <p className="text-muted text-[10px]">

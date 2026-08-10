@@ -7,6 +7,7 @@ import {
   PopoverContent,
 } from "@/components/ui/Popover";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
@@ -26,21 +27,11 @@ function InlineFormTab() {
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Name</Label>
-            <input
-              id="name"
-              ref={inputRef}
-              placeholder="Enter name"
-              className="border-border bg-bg focus-visible:ring-brand focus-visible:border-brand rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-            />
+            <Input id="name" ref={inputRef} placeholder="Enter name" />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
-            <input
-              id="email"
-              type="email"
-              placeholder="Enter email"
-              className="border-border bg-bg focus-visible:ring-brand focus-visible:border-brand rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-            />
+            <Input id="email" type="email" placeholder="Enter email" />
           </div>
           <Button variant="primary" type="submit">
             Submit

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { paymentMethodsQueryOptions } from "@/api/client/billing/payment-methods";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { PaymentMethodsProps } from "@/types/billing/PaymentMethods-types";
@@ -85,9 +86,9 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
               <div className="flex items-center gap-2">
                 <p className="text-sm font-medium capitalize">{method.brand}</p>
                 {method.isDefault && (
-                  <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700">
+                  <Badge variant="success" pill>
                     {t.makeDefault}
-                  </span>
+                  </Badge>
                 )}
               </div>
               <p className="text-muted text-xs">

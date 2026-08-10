@@ -1,3 +1,12 @@
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/components/ui/Pagination";
 import type { PaginationBarProps } from "@/types/find-friends/PaginationBar-types";
 
 export function PaginationBar({
@@ -18,41 +27,59 @@ export function PaginationBar({
     }
   }
 
+  const isFirst = page <= 1;
+  const isLast = page >= totalPages;
+
   return (
-    <div className="flex items-center justify-center gap-1 pt-2">
-      <button
-        onClick={() => onPageChange(page - 1)}
-        disabled={page <= 1}
-        className="text-muted hover:bg-surface-hover rounded px-2 py-1 text-xs disabled:opacity-30"
-      >
-        {prevLabel}
-      </button>
-      {pages.map((p, i) =>
-        p === "..." ? (
-          <span key={`ellipsis-${i}`} className="text-muted px-1 text-xs">
-            ...
-          </span>
-        ) : (
-          <button
-            key={p}
-            onClick={() => onPageChange(p)}
-            className={`flex h-7 w-7 items-center justify-center rounded text-xs font-medium ${
-              p === page
-                ? "bg-brand text-brand-fg"
-                : "text-muted hover:bg-surface-hover"
-            }`}
+    <Pagination className="pt-2">
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            aria-disabled={isFirst}
+            className={isFirst ? "pointer-events-none opacity-30" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isFirst) onPageChange(page - 1);
+            }}
           >
-            {p}
-          </button>
-        ),
-      )}
-      <button
-        onClick={() => onPageChange(page + 1)}
-        disabled={page >= totalPages}
-        className="text-muted hover:bg-surface-hover rounded px-2 py-1 text-xs disabled:opacity-30"
-      >
-        {nextLabel}
-      </button>
-    </div>
+            {prevLabel}
+          </PaginationPrevious>
+        </PaginationItem>
+        {pages.map((p, i) =>
+          p === "..." ? (
+            <PaginationItem key={`ellipsis-${i}`}>
+              <PaginationEllipsis />
+            </PaginationItem>
+          ) : (
+            <PaginationItem key={p}>
+              <PaginationLink
+                href="#"
+                isActive={p === page}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPageChange(p);
+                }}
+              >
+                {p}
+              </PaginationLink>
+            </PaginationItem>
+          ),
+        )}
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            aria-disabled={isLast}
+            className={isLast ? "pointer-events-none opacity-30" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLast) onPageChange(page + 1);
+            }}
+          >
+            {nextLabel}
+          </PaginationNext>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }

@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { createUsernameValidator, createEmailValidator } from "./profile-validators";
+import {
+  createUsernameValidator,
+  createEmailValidator,
+} from "./profile-validators";
 import type { ProfileFieldsProps } from "./ProfileFields-types";
 
 export function ProfileBasicFields({
@@ -24,13 +27,17 @@ export function ProfileBasicFields({
           name="firstName"
           validators={{ onChange: (fieldSchemas as any).firstName }}
         >
-          {(field: any) => <field.TextField label={profile.firstName} required />}
+          {(field: any) => (
+            <field.TextField label={profile.firstName} required />
+          )}
         </form.AppField>
         <form.AppField
           name="lastName"
           validators={{ onChange: (fieldSchemas as any).lastName }}
         >
-          {(field: any) => <field.TextField label={profile.lastName} required />}
+          {(field: any) => (
+            <field.TextField label={profile.lastName} required />
+          )}
         </form.AppField>
       </div>
 
@@ -41,14 +48,22 @@ export function ProfileBasicFields({
         }}
         validators={{
           onChange: (fieldSchemas as any).username,
-          ...createUsernameValidator(checkUsername, setUsernameAvailable, profile.usernameTaken),
+          ...createUsernameValidator(
+            checkUsername,
+            setUsernameAvailable,
+            profile.usernameTaken,
+          ),
         }}
       >
         {(field: any) => (
           <div className="flex flex-col gap-0.5">
-            <field.TextField label={profile.username} hint={profile.usernameHint} required />
+            <field.TextField
+              label={profile.username}
+              hint={profile.usernameHint}
+              required
+            />
             {usernameAvailable && (
-              <span className="text-xxs text-green-600">
+              <span className="text-xxs text-success">
                 {profile.usernameAvailable}
               </span>
             )}
@@ -73,10 +88,7 @@ export function ProfileBasicFields({
 
       <form.AppField name="bio">
         {(field: any) => (
-          <field.TextareaField
-            label={profile.bio}
-            hint={profile.bioHint}
-          />
+          <field.TextareaField label={profile.bio} hint={profile.bioHint} />
         )}
       </form.AppField>
     </>

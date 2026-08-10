@@ -3,6 +3,7 @@
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import { handleRevokeApiKey } from "./api-key-handlers";
 import type { ApiKeyListProps } from "@/types/views/settings/ApiKeyList-types";
 
@@ -37,15 +38,9 @@ export function ApiKeyList({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="font-medium">{key.name}</span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                  key.enabled
-                    ? "bg-green-100 text-green-700"
-                    : "bg-gray-100 text-gray-500"
-                }`}
-              >
+              <Badge variant={key.enabled ? "success" : "secondary"} pill>
                 {key.enabled ? "Active" : "Disabled"}
-              </span>
+              </Badge>
             </div>
             <code className="text-muted font-mono text-xs">
               {key.keyPrefix}...

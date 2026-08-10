@@ -1,6 +1,13 @@
 "use client";
 
-import { cn } from "@/lib/cn";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+} from "@/components/ui/Pagination";
 import type { InvoicePaginationProps } from "@/types/views/settings/InvoicePagination-types";
 
 export function InvoicePagination({
@@ -10,36 +17,53 @@ export function InvoicePagination({
   previousLabel,
   nextLabel,
 }: InvoicePaginationProps) {
+  const isFirst = currentPage === 1;
+  const isLast = currentPage === totalPages;
+
   return (
-    <div className="flex items-center justify-center gap-1">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {previousLabel}
-      </button>
-      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-        <button
-          key={page}
-          onClick={() => onPageChange(page)}
-          className={cn(
-            "rounded-lg px-3 py-1.5 text-sm font-medium",
-            page === currentPage
-              ? "bg-brand text-brand-fg"
-              : "hover:bg-surface-hover",
-          )}
-        >
-          {page}
-        </button>
-      ))}
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="border-border hover:bg-surface-hover disabled:text-muted rounded-lg border px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {nextLabel}
-      </button>
-    </div>
+    <Pagination>
+      <PaginationContent>
+        <PaginationItem>
+          <PaginationPrevious
+            href="#"
+            aria-disabled={isFirst}
+            className={isFirst ? "pointer-events-none opacity-50" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isFirst) onPageChange(currentPage - 1);
+            }}
+          >
+            {previousLabel}
+          </PaginationPrevious>
+        </PaginationItem>
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <PaginationItem key={page}>
+            <PaginationLink
+              href="#"
+              isActive={page === currentPage}
+              onClick={(e) => {
+                e.preventDefault();
+                onPageChange(page);
+              }}
+            >
+              {page}
+            </PaginationLink>
+          </PaginationItem>
+        ))}
+        <PaginationItem>
+          <PaginationNext
+            href="#"
+            aria-disabled={isLast}
+            className={isLast ? "pointer-events-none opacity-50" : undefined}
+            onClick={(e) => {
+              e.preventDefault();
+              if (!isLast) onPageChange(currentPage + 1);
+            }}
+          >
+            {nextLabel}
+          </PaginationNext>
+        </PaginationItem>
+      </PaginationContent>
+    </Pagination>
   );
 }

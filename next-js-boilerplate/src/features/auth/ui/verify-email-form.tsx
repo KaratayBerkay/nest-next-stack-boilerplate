@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LOGIN_PATH } from "@/constants/routes";
+import { InputOTP } from "@/components/ui/InputOTP";
+import { Button } from "@/components/ui/Button";
 import {
   verifyEmailServer,
   verifyEmailCodeServer,
@@ -91,9 +93,7 @@ export function VerifyEmailForm({
         <h2 className="text-brand text-sm font-semibold">
           {t.form.verifyEmail.title}
         </h2>
-        <p className="text-sm text-red-600">
-          {t.errors.verifyEmailTokenMissing}
-        </p>
+        <p className="text-error text-sm">{t.errors.verifyEmailTokenMissing}</p>
       </div>
     );
   }
@@ -110,46 +110,30 @@ export function VerifyEmailForm({
 
       {status === "success" && (
         <>
-          <p className="text-sm text-green-600">{t.form.verifyEmail.success}</p>
+          <p className="text-success text-sm">{t.form.verifyEmail.success}</p>
           <Link href={LOGIN_PATH} className="text-brand text-sm underline">
             {t.form.verifyEmail.loginLink}
           </Link>
         </>
       )}
 
-      {status === "error" && <p className="text-sm text-red-600">{errorMsg}</p>}
+      {status === "error" && <p className="text-error text-sm">{errorMsg}</p>}
 
       {hasCodeMode && status !== "success" && (
         <div className="space-y-4">
           <p className="text-muted text-sm">
             {t.form.verifyEmail.codeDescription}
           </p>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={6}
-            value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-            placeholder="000000"
-            className="border-border focus:border-brand w-full rounded-lg border px-4 py-3 text-center text-2xl tracking-widest outline-none"
-          />
+          <InputOTP maxLength={6} value={code} onChange={setCode} />
           <div className="flex items-center gap-3">
-            <button
-              onClick={onVerifyCode}
-              disabled={code.length < 6}
-              className="bg-brand hover:bg-brand-hover disabled:bg-brand/50 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-colors"
-            >
+            <Button onClick={onVerifyCode} disabled={code.length < 6}>
               {t.form.verifyEmail.verify}
-            </button>
-            <button
-              onClick={onResend}
-              disabled={resending}
-              className="text-brand text-sm underline disabled:opacity-50"
-            >
+            </Button>
+            <Button variant="link" onClick={onResend} disabled={resending}>
               {resending
                 ? t.form.verifyEmail.resending
                 : t.form.verifyEmail.resendCode}
-            </button>
+            </Button>
           </div>
         </div>
       )}

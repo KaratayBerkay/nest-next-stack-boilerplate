@@ -173,9 +173,7 @@ export function AttachmentModal({
           })}
         </DialogBody>
         <DialogFooter>
-          <DialogClose className="text-muted hover:bg-surface-hover rounded-md px-3 py-2 text-sm">
-            {t.cancel ?? "Cancel"}
-          </DialogClose>
+          <DialogClose variant="ghost">{t.cancel ?? "Cancel"}</DialogClose>
           <Button
             variant="primary"
             size="md"

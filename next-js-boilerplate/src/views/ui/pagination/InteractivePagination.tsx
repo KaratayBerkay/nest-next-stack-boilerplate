@@ -26,15 +26,17 @@ export function InteractivePagination({
     <Pagination>
       <PaginationContent>
         <PaginationItem>
-          <button
-            type="button"
-            onClick={() => onPageChange(Math.max(1, currentPage - 1))}
+          <PaginationPrevious
+            href="#"
+            aria-disabled={currentPage === 1}
             className={
-              currentPage === 1 ? "pointer-events-none opacity-50" : ""
+              currentPage === 1 ? "pointer-events-none opacity-50" : undefined
             }
-          >
-            <PaginationPrevious href="#" />
-          </button>
+            onClick={(e) => {
+              e.preventDefault();
+              onPageChange(Math.max(1, currentPage - 1));
+            }}
+          />
         </PaginationItem>
         {pages.map((p, i) =>
           p === "..." ? (
@@ -57,15 +59,19 @@ export function InteractivePagination({
           ),
         )}
         <PaginationItem>
-          <button
-            type="button"
-            onClick={() => onPageChange(Math.min(totalPages, currentPage + 1))}
+          <PaginationNext
+            href="#"
+            aria-disabled={currentPage === totalPages}
             className={
-              currentPage === totalPages ? "pointer-events-none opacity-50" : ""
+              currentPage === totalPages
+                ? "pointer-events-none opacity-50"
+                : undefined
             }
-          >
-            <PaginationNext href="#" />
-          </button>
+            onClick={(e) => {
+              e.preventDefault();
+              onPageChange(Math.min(totalPages, currentPage + 1));
+            }}
+          />
         </PaginationItem>
       </PaginationContent>
     </Pagination>

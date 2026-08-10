@@ -1,6 +1,7 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Switch } from "@/components/ui/Switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 import { SectionCard } from "./SectionCard";
 
 export function CheckboxSection() {
@@ -36,39 +37,26 @@ export function RadioSection() {
   return (
     <SectionCard label={t.elements.section_radioButtons}>
       <div className="flex flex-wrap gap-6">
-        <div className="flex items-center gap-2 text-sm">
-          <input
-            type="radio"
-            name="radio-demo"
-            id="radio-default"
-            className="accent-brand"
-          />
-          <label htmlFor="radio-default">Default</label>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <input
-            type="radio"
-            name="radio-demo"
-            id="radio-selected"
-            defaultChecked
-            className="accent-brand"
-          />
-          <label htmlFor="radio-selected">
-            {t.elements.radioSelected_label}
-          </label>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <input
-            type="radio"
-            name="radio-demo-disabled"
-            id="radio-disabled"
-            disabled
-            className="accent-brand"
-          />
-          <label htmlFor="radio-disabled">
-            {t.elements.radioDisabled_label}
-          </label>
-        </div>
+        <RadioGroup defaultValue="selected">
+          <div className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="default" id="radio-default" />
+            <label htmlFor="radio-default">Default</label>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="selected" id="radio-selected" />
+            <label htmlFor="radio-selected">
+              {t.elements.radioSelected_label}
+            </label>
+          </div>
+        </RadioGroup>
+        <RadioGroup>
+          <div className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="disabled" id="radio-disabled" disabled />
+            <label htmlFor="radio-disabled">
+              {t.elements.radioDisabled_label}
+            </label>
+          </div>
+        </RadioGroup>
       </div>
     </SectionCard>
   );

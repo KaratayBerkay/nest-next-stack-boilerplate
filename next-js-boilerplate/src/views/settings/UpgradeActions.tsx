@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
 import { plansPath } from "@/constants/routes";
 import type { UpgradeActionsProps } from "@/types/settings/UpgradeActions-types";
 
@@ -20,12 +21,9 @@ export default function UpgradeActions({ tier, t, lang }: UpgradeActionsProps) {
       )}
 
       {tier === "FREE" && (
-        <Link
-          href={plansPath(lang)}
-          className="bg-brand text-brand-fg mt-2 block rounded-lg px-4 py-2 text-center text-sm font-medium hover:opacity-90"
-        >
-          {t.upgradePlan}
-        </Link>
+        <Button asChild className="mt-2 w-full">
+          <Link href={plansPath(lang)}>{t.upgradePlan}</Link>
+        </Button>
       )}
     </>
   );

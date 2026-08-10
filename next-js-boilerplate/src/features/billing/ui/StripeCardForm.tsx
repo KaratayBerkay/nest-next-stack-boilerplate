@@ -13,6 +13,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 import { StripeElements } from "@/components/StripeProvider";
+import { Button } from "@/components/ui/Button";
 import type { StripeCardFormProps } from "@/types/billing/StripeCardForm-types";
 import type { SubscribeResult } from "@/api/server/billing/stripe";
 import { useBillingActions } from "@/api/client/billing/actions";
@@ -163,13 +164,13 @@ function StripeCardFormInner({
       className="flex flex-col gap-4"
     >
       <PaymentElement />
-      <button
+      <Button
         type="submit"
         disabled={!stripe || submitting}
-        className="bg-brand text-brand-fg mt-2 w-full rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 disabled:opacity-50"
+        className="mt-2 w-full"
       >
         {submitting ? "Processing..." : "Subscribe"}
-      </button>
+      </Button>
     </form>
   );
 }

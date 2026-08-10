@@ -1,9 +1,20 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
-import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { TimeInput } from "@/components/ui/TimeInput";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
+import { convertTextToDate, formatDateOnly } from "@/lib/date-time";
 import { SectionCard } from "./SectionCard";
+
+function parseTimeValue(value: string): { hours: number; minutes: number } {
+  const [hours, minutes] = value.split(":").map(Number);
+  return { hours: hours || 0, minutes: minutes || 0 };
+}
+
+function formatTimeValue(time: { hours: number; minutes: number }): string {
+  return `${String(time.hours).padStart(2, "0")}:${String(time.minutes).padStart(2, "0")}`;
+}
 
 export function DateTimeSection() {
   const t = useMessages("forms");
@@ -27,11 +38,15 @@ export function DateTimeSection() {
                       description={t.elements.dateTimeDate_info}
                     />
                   </div>
-                  <Input
-                    id={field.name}
-                    type="date"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                  <DatePicker
+                    value={
+                      field.state.value
+                        ? (convertTextToDate(field.state.value) as Date)
+                        : undefined
+                    }
+                    onChange={(date) =>
+                      field.handleChange(date ? formatDateOnly(date) : "")
+                    }
                   />
                 </div>
               )}
@@ -47,11 +62,15 @@ export function DateTimeSection() {
                       description={t.elements.dateTimeTime_info}
                     />
                   </div>
-                  <Input
-                    id={field.name}
-                    type="time"
-                    value={field.state.value}
-                    onChange={(e) => field.handleChange(e.target.value)}
+                  <TimeInput
+                    value={
+                      field.state.value
+                        ? parseTimeValue(field.state.value)
+                        : { hours: 0, minutes: 0 }
+                    }
+                    onChange={(time) =>
+                      field.handleChange(formatTimeValue(time))
+                    }
                   />
                 </div>
               )}

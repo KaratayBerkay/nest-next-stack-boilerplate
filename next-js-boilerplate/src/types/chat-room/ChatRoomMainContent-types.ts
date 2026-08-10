@@ -3,7 +3,6 @@ import type { ChatRoomMessage } from "./ChatRoomMessage-types";
 import type { UploadItem } from "@/types/messages/AttachmentModal-types";
 
 export interface ChatRoomMainContentProps {
-  useNativeControls: boolean;
   room: string;
   roomCounts: Record<string, number>;
   connectionState: string;

@@ -1,6 +1,7 @@
 "use client";
 import { InputGroup } from "@/components/ui/InputGroup";
 import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 
@@ -15,9 +16,7 @@ const examples: UIExample[] = [
           <h3 className="text-lg font-semibold">Default</h3>
           <InputGroup>
             <Input placeholder="Search..." />
-            <button className="bg-brand text-brand-fg rounded px-4 py-2 text-sm">
-              Go
-            </button>
+            <Button>Go</Button>
           </InputGroup>
         </section>
       </div>
@@ -33,21 +32,23 @@ const examples: UIExample[] = [
           <h3 className="text-lg font-semibold">Search + Submit</h3>
           <InputGroup>
             <Input placeholder="Search products, docs, and more..." />
-            <button className="bg-brand text-brand-fg rounded-md px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="inline"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
-              <span className="ml-1">Search</span>
-            </button>
+            <Button
+              leftIcon={
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+              }
+            >
+              Search
+            </Button>
           </InputGroup>
         </section>
       </div>

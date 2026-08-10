@@ -2,8 +2,10 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { IconX } from "@tabler/icons-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
 import type { EmailsStepProps } from "@/types/views/forms/EmailsStep-types";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -95,17 +97,17 @@ export function EmailsStep({
             ?.errors?.[0];
           return (
             <div key={email} className="flex flex-col gap-0.5">
-              <span className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1">
+              <Badge variant="secondary" className="gap-1">
                 {email}
                 <button
                   type="button"
                   onClick={() => form.removeFieldValue("emails", index)}
-                  className="text-destructive"
+                  className="text-error inline-flex items-center"
                   aria-label={`${t.emailChipRemove as string} ${email}`}
                 >
-                  &times;
+                  <IconX size={12} />
                 </button>
-              </span>
+              </Badge>
               {chipError && (
                 <p className="text-xxs text-error">{chipError as string}</p>
               )}

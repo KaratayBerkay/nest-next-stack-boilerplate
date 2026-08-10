@@ -2,7 +2,10 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { IconX } from "@tabler/icons-react";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Badge } from "@/components/ui/Badge";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import type { ApiKeyCreateFormProps } from "@/types/views/forms/ApiKeyCreateForm-types";
 
@@ -101,8 +104,8 @@ export function ApiKeyCreateForm({
           {t.apiKey.ipWhitelistLabel}
         </span>
         <div className="flex gap-2">
-          <input
-            className="border-border bg-field flex-1 rounded border px-2 py-1.5 text-xs"
+          <Input
+            className="flex-1 text-xs"
             placeholder={t.apiKey.ipPlaceholder}
             value={ipInput}
             onChange={(e) => setIpInput(e.target.value)}
@@ -124,20 +127,17 @@ export function ApiKeyCreateForm({
         </div>
         <div className="flex flex-wrap gap-1.5">
           {ipWhitelist.map((ip) => (
-            <span
-              key={ip}
-              className="bg-emphasis text-xxs flex items-center gap-1 rounded px-2 py-1"
-            >
+            <Badge key={ip} variant="secondary" className="gap-1">
               {ip}
               <button
                 type="button"
                 onClick={() => handleRemoveIp(ip)}
-                className="text-destructive"
+                className="text-error inline-flex items-center"
                 aria-label={`${t.apiKey.removeIp} ${ip}`}
               >
-                &times;
+                <IconX size={12} />
               </button>
-            </span>
+            </Badge>
           ))}
         </div>
       </div>

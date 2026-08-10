@@ -1,6 +1,7 @@
 "use client";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { TypedConfirmationDemo } from "@/views/ui/confirm-dialog/TypedConfirmationDemo";
 import { AsyncConfirmDemo } from "@/views/ui/confirm-dialog/AsyncConfirmDemo";
@@ -20,12 +21,9 @@ const examples: UIExample[] = [
         onConfirm={() => {}}
       >
         {(open) => (
-          <button
-            onClick={open}
-            className="bg-error text-error-fg rounded-lg px-3 py-1.5 text-sm font-medium hover:opacity-90"
-          >
+          <Button variant="destructive" size="sm" onClick={open}>
             Delete Account
-          </button>
+          </Button>
         )}
       </ConfirmDialog>
     ),
@@ -43,12 +41,9 @@ const examples: UIExample[] = [
         onConfirm={() => {}}
       >
         {(open) => (
-          <button
-            onClick={open}
-            className="bg-surface hover:bg-surface-hover text-fg rounded-lg px-3 py-1.5 text-sm font-medium transition-colors"
-          >
+          <Button variant="secondary" size="sm" onClick={open}>
             Leave Channel
-          </button>
+          </Button>
         )}
       </ConfirmDialog>
     ),

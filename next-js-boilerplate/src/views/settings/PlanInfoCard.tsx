@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/Button";
 import { TIER_PRICES_CENTS, tierLabel } from "@/lib/tier";
 import { formatPrice } from "@/lib/currency";
 import { formatDateByPreference } from "@/lib/date-time";
@@ -31,12 +32,9 @@ export default function PlanInfoCard({
           </p>
         )}
       </div>
-      <Link
-        href={`/v1/${lang}/settings/billing`}
-        className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-      >
-        {t.navBilling}
-      </Link>
+      <Button variant="outline" asChild>
+        <Link href={`/v1/${lang}/settings/billing`}>{t.navBilling}</Link>
+      </Button>
     </Card>
   );
 }

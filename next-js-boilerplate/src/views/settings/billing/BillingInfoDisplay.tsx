@@ -1,6 +1,7 @@
 "use client";
 
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Button } from "@/components/ui/Button";
 import type { BillingAddress } from "@/api/server/billing/address";
 import type { BillingInfoDisplayProps } from "@/types/views/settings/BillingInfoDisplay-types";
 
@@ -13,13 +14,9 @@ export function BillingInfoDisplay({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{t.billingInfo}</h3>
-        <button
-          type="button"
-          onClick={onEdit}
-          className="text-brand text-xs font-medium hover:underline"
-        >
+        <Button type="button" variant="link" size="xs" onClick={onEdit}>
           {t.editAddress}
-        </button>
+        </Button>
       </div>
 
       {!address ? (

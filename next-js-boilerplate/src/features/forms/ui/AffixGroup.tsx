@@ -2,11 +2,11 @@
 
 import { cn } from "@/lib/cn";
 import type {
-  InputGroupProps,
-  InputGroupPartProps,
-} from "@/types/forms/InputGroup-types";
+  AffixGroupProps,
+  AffixGroupPartProps,
+} from "@/types/forms/AffixGroup-types";
 
-function Prefix({ children, className }: InputGroupPartProps) {
+function Prefix({ children, className }: AffixGroupPartProps) {
   return (
     <div
       className={cn(
@@ -19,7 +19,7 @@ function Prefix({ children, className }: InputGroupPartProps) {
   );
 }
 
-function Suffix({ children, className }: InputGroupPartProps) {
+function Suffix({ children, className }: AffixGroupPartProps) {
   return (
     <div
       className={cn(
@@ -32,9 +32,9 @@ function Suffix({ children, className }: InputGroupPartProps) {
   );
 }
 
-export function InputGroup({ children, className }: InputGroupProps) {
+export function AffixGroup({ children, className }: AffixGroupProps) {
   return <div className={cn("flex items-stretch", className)}>{children}</div>;
 }
 
-InputGroup.Prefix = Prefix;
-InputGroup.Suffix = Suffix;
+AffixGroup.Prefix = Prefix;
+AffixGroup.Suffix = Suffix;

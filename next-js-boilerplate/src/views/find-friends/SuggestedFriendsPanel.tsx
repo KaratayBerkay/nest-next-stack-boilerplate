@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
 import { fetchSuggestedFriendsServer } from "@/api/server/friends/suggested";
 import type { SuggestedUser } from "@/types/find-friends/SuggestedFriendsPanel-types";
@@ -43,15 +44,22 @@ export function SuggestedFriendsPanel() {
         {t.suggestedFriends}
       </h3>
       {!suggested.length && (
-        <button
+        <Button
+          variant="soft"
+          size="xs"
+          className="w-full"
+          loading={loading}
           onClick={() =>
-            loadSuggested(setLoading, setSuggested, toast, t.failedToLoadSuggestions)
+            loadSuggested(
+              setLoading,
+              setSuggested,
+              toast,
+              t.failedToLoadSuggestions,
+            )
           }
-          disabled={loading}
-          className="bg-brand/10 text-brand hover:bg-brand/20 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors disabled:opacity-50"
         >
-          {loading ? t.loadingSuggestions : t.loadSuggestions}
-        </button>
+          {t.loadSuggestions}
+        </Button>
       )}
       {suggested.length > 0 && (
         <div className="flex flex-col gap-2">

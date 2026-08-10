@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { NativeSelect } from "@/components/ui/NativeSelect";
+import { DatePicker } from "@/components/ui/DatePicker";
+import { TimeInput } from "@/components/ui/TimeInput";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { SectionCard } from "./SectionCard";
 
 export function DefaultInputsSection() {
   const t = useMessages("forms");
+  const [demoDate, setDemoDate] = useState<Date | undefined>();
+  const [demoTime, setDemoTime] = useState({ hours: 9, minutes: 0 });
 
   return (
     <SectionCard label={t.elements.section_defaultInputs}>
@@ -57,14 +62,14 @@ export function DefaultInputsSection() {
             <Label>{t.elements.datePicker_label}</Label>
             <FieldInfoButton description={t.elements.datePicker_info} />
           </div>
-          <Input type="date" />
+          <DatePicker value={demoDate} onChange={setDemoDate} />
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">
             <Label>{t.elements.timeSelect_label}</Label>
             <FieldInfoButton description={t.elements.timeSelect_info} />
           </div>
-          <Input type="time" />
+          <TimeInput value={demoTime} onChange={setDemoTime} />
         </div>
       </div>
     </SectionCard>

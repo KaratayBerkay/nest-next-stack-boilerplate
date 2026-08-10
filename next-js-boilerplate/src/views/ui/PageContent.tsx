@@ -8,7 +8,8 @@ import { THEMES } from "@/constants/theme";
 import { useTheme } from "@/hooks/useTheme";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconSearch } from "@tabler/icons-react";
-import { cn } from "@/lib/cn";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/ToggleGroup";
+import { InputWithIcon } from "@/components/ui/Input";
 
 const CATEGORY_ORDER = [
   "Feedback",
@@ -53,37 +54,28 @@ export default function UIPage() {
         <p className="text-muted text-xs">{t.pageDescription}</p>
       </div>
 
-      <div className="flex flex-wrap gap-1.5">
+      <ToggleGroup
+        type="single"
+        value={theme}
+        onValueChange={(v) =>
+          v && setTheme(v as (typeof THEMES)[number]["name"])
+        }
+        className="flex-wrap gap-1.5 divide-x-0 border-0"
+      >
         {THEMES.map((th) => (
-          <button
-            key={th.name}
-            type="button"
-            onClick={() => setTheme(th.name)}
-            className={cn(
-              "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-              theme === th.name
-                ? "bg-fg text-bg"
-                : "bg-surface hover:bg-surface-hover text-muted",
-            )}
-          >
+          <ToggleGroupItem key={th.name} value={th.name} size="sm">
             {th.label}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
 
-      <div className="relative">
-        <IconSearch
-          size={16}
-          className="text-muted absolute top-1/2 left-3 -translate-y-1/2"
-        />
-        <input
-          type="text"
-          placeholder="Search components..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="border-border bg-surface placeholder:text-muted focus:ring-ring w-full rounded-md border py-2 pr-3 pl-9 text-sm focus:ring-2 focus:outline-none"
-        />
-      </div>
+      <InputWithIcon
+        icon={<IconSearch size={16} />}
+        type="text"
+        placeholder="Search components..."
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
 
       {filtered.length === 0 && (
         <p className="text-muted text-sm">No components match your search.</p>

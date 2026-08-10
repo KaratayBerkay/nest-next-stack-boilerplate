@@ -10,16 +10,13 @@ import {
   DialogBody,
 } from "@/components/ui/Dialog";
 import { Button } from "@/components/ui/Button";
-
-const inputClass =
-  "border-border bg-bg rounded-md border px-3 py-2 text-sm focus-visible:ring-brand focus-visible:border-brand focus-visible:ring-2 focus-visible:outline-none";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 
 export function EditProfileTab() {
   return (
     <Dialog>
-      <DialogTrigger className="bg-brand text-brand-fg focus-visible:ring-brand inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium shadow-xs transition-all hover:opacity-90 focus-visible:ring-2 focus-visible:outline-none">
-        Edit Profile
-      </DialogTrigger>
+      <DialogTrigger variant="primary">Edit Profile</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Profile</DialogTitle>
@@ -30,27 +27,17 @@ export function EditProfileTab() {
         <DialogBody>
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="name" className="text-sm font-medium">
-                Name
-              </label>
-              <input id="name" defaultValue="John Doe" className={inputClass} />
+              <Label htmlFor="name">Name</Label>
+              <Input id="name" defaultValue="John Doe" />
             </div>
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
-              <input
-                id="email"
-                defaultValue="john@example.com"
-                className={inputClass}
-              />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" defaultValue="john@example.com" />
             </div>
           </div>
         </DialogBody>
         <DialogFooter>
-          <DialogClose className="border-border hover:bg-surface-hover inline-flex items-center justify-center rounded-md border bg-transparent px-4 py-2 text-sm font-medium transition-colors">
-            Cancel
-          </DialogClose>
+          <DialogClose variant="outline">Cancel</DialogClose>
           <Button variant="primary">Save Changes</Button>
         </DialogFooter>
       </DialogContent>

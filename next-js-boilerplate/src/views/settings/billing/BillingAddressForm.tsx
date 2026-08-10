@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Button } from "@/components/ui/Button";
 import type { BillingAddressFormProps } from "@/types/billing/BillingAddressForm-types";
 import type { BillingAddress } from "@/api/server/billing/address";
 import { BillingAddressField } from "./BillingAddressField";
@@ -96,20 +97,12 @@ export function BillingAddressForm({
       </div>
 
       <div className="flex items-center gap-2">
-        <button
-          type="submit"
-          disabled={isSaving}
-          className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={isSaving}>
           {isSaving ? t.saving : t.save}
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="border-border hover:bg-surface-hover rounded-lg border px-4 py-2 text-sm font-medium"
-        >
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
           {t.cancelSubscription || "Cancel"}
-        </button>
+        </Button>
       </div>
     </form>
   );

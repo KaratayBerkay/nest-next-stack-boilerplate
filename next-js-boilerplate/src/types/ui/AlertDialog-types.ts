@@ -1,4 +1,9 @@
 import type React from "react";
+import type { Trigger } from "@radix-ui/react-alert-dialog";
+import type {
+  Variant as ButtonVariant,
+  Size as ButtonSize,
+} from "@/components/ui/button-styles";
 
 export interface AlertDialogProps {
   children: React.ReactNode;
@@ -6,10 +11,19 @@ export interface AlertDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-export interface AlertDialogTriggerProps {
-  children: React.ReactNode;
-  asChild?: boolean;
-}
+/**
+ * Shared by Trigger/Cancel/Action — all three render Radix's own <button>,
+ * so all three take the same variant/size vocabulary as `Button` and should
+ * look identical given the same variant.
+ */
+export type AlertDialogButtonProps = React.ComponentPropsWithoutRef<
+  typeof Trigger
+> & {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+};
+
+export type AlertDialogTriggerProps = AlertDialogButtonProps;
 
 export interface AlertDialogContentProps {
   children: React.ReactNode;
@@ -30,6 +44,6 @@ export type AlertDialogTitleProps = React.ComponentPropsWithoutRef<"h2">;
 
 export type AlertDialogDescriptionProps = React.ComponentPropsWithoutRef<"p">;
 
-export type AlertDialogActionProps = React.ComponentPropsWithoutRef<"button">;
+export type AlertDialogActionProps = AlertDialogButtonProps;
 
-export type AlertDialogCancelProps = React.ComponentPropsWithoutRef<"button">;
+export type AlertDialogCancelProps = AlertDialogButtonProps;

@@ -8,6 +8,8 @@ import {
 import { formatDateTimeByPreference } from "@/lib/date-time";
 import { deviceLabel } from "@/lib/sessions/device-label";
 import { cn } from "@/lib/cn";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
 import type { SessionCardProps } from "@/types/settings/SessionCard-types";
 
 export function SessionCard({
@@ -51,14 +53,14 @@ export function SessionCard({
               {deviceLabel(session.userAgent, session.deviceType)}
             </span>
             {isCurrent && (
-              <span className="bg-brand/10 text-brand rounded-full px-2 py-0.5 text-[10px] font-medium whitespace-nowrap">
+              <Badge variant="soft" pill className="text-[10px]">
                 Current
-              </span>
+              </Badge>
             )}
             {session.trusted && (
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium whitespace-nowrap text-green-700">
+              <Badge variant="success" pill className="text-[10px]">
                 Trusted
-              </span>
+              </Badge>
             )}
           </div>
           <div className="text-muted flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -91,13 +93,15 @@ export function SessionCard({
         </div>
       </div>
       {!isCurrent && (
-        <button
+        <Button
+          variant="link"
+          size="xs"
+          className="shrink-0"
           onClick={() => onRevoke(session.sessionId)}
-          className="shrink-0 text-xs whitespace-nowrap text-red-600 transition-colors hover:text-red-700"
           aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
         >
           Revoke
-        </button>
+        </Button>
       )}
     </div>
   );

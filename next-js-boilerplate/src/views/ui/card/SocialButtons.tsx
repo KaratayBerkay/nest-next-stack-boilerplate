@@ -1,4 +1,5 @@
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { Button } from "@/components/ui/Button";
 
 export function SocialButtons() {
   const t = useMessages("auth");
@@ -14,10 +15,7 @@ export function SocialButtons() {
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-4">
-        <button
-          type="button"
-          className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
-        >
+        <Button variant="outline" className="w-full">
           <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
             <path
               d="M12.0003 4.75C13.7703 4.75 15.3553 5.36002 16.6053 6.54998L20.0303 3.125C17.9502 1.19 15.2353 0 12.0003 0C7.31028 0 3.25527 2.69 1.28027 6.60998L5.27028 9.70498C6.21525 6.86002 8.87028 4.75 12.0003 4.75Z"
@@ -37,11 +35,8 @@ export function SocialButtons() {
             />
           </svg>
           <span>Google</span>
-        </button>
-        <button
-          type="button"
-          className="bg-surface hover:bg-surface-hover ring-border flex w-full items-center justify-center gap-3 rounded-md px-3 py-2 text-sm font-semibold shadow-xs ring-1 transition-colors ring-inset"
-        >
+        </Button>
+        <Button variant="outline" className="w-full">
           <svg
             viewBox="0 0 20 20"
             fill="currentColor"
@@ -55,7 +50,7 @@ export function SocialButtons() {
             />
           </svg>
           <span>GitHub</span>
-        </button>
+        </Button>
       </div>
     </div>
   );

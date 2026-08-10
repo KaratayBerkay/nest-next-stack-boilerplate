@@ -1,11 +1,11 @@
 import type React from "react";
 
-export interface InputGroupProps {
+export interface AffixGroupProps {
   children: React.ReactNode;
   className?: string;
 }
 
-export interface InputGroupPartProps {
+export interface AffixGroupPartProps {
   children: React.ReactNode;
   className?: string;
 }

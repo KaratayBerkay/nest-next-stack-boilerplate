@@ -14,6 +14,7 @@ import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { InputOTP } from "@/components/ui/input-otp/input-otp";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { Checkbox } from "@/components/ui/Checkbox";
 import { resendLoginCodeServer } from "@/api/server/auth/mfa";
 import type { MfaChallengeFormProps } from "@/types/auth/LoginForms-types";
 import type { MfaState } from "@/types/auth/LoginForm-types";
@@ -180,32 +181,31 @@ export function MfaChallengeForm({
         </div>
 
         {mfaError && (
-          <p className="text-sm text-red-600" data-testid="mfa-error">
+          <p className="text-error text-sm" data-testid="mfa-error">
             {mfaError}
           </p>
         )}
 
         {isEmailMethod && (
-          <button
+          <Button
             type="button"
+            variant="link"
+            size="xs"
             onClick={onResend}
             disabled={resending || cooldownRemaining > 0}
-            className="text-brand text-xs underline disabled:opacity-50"
           >
             {cooldownRemaining > 0
               ? `${t.form.login.mfaResendCooldown} ${cooldownRemaining}s`
               : resending
                 ? t.form.login.mfaResending
                 : t.form.login.mfaResendCode}
-          </button>
+          </Button>
         )}
 
         <label className="flex items-center gap-2 text-xs">
-          <input
-            type="checkbox"
+          <Checkbox
             checked={trustDevice}
             onChange={(e) => setTrustDevice(e.target.checked)}
-            className="h-4 w-4"
           />
           {t.form.login.trustDevice}
         </label>
@@ -220,9 +220,11 @@ export function MfaChallengeForm({
         </Button>
       </form>
 
-      <button
+      <Button
         type="button"
-        className="text-muted hover:text-brand text-xs underline"
+        variant="link"
+        size="xs"
+        className="text-muted hover:text-brand"
         onClick={() =>
           handleUseDifferentAccount(
             onBackToCredentials,
@@ -232,7 +234,7 @@ export function MfaChallengeForm({
         }
       >
         {t.form.login.useDifferentAccount}
-      </button>
+      </Button>
     </div>
   );
 }

@@ -22,19 +22,7 @@ import type {
   EmojiButtonProps,
 } from "@/types/chat-room/ChatRoomSubComponent-types";
 
-export function SidebarCloseButton({
-  useNativeControls,
-  onClick,
-}: SidebarCloseButtonProps) {
-  if (useNativeControls) {
-    return (
-      <IconButton
-        icon={<IconX size={18} />}
-        label="Close rooms sidebar"
-        onClick={onClick}
-      />
-    );
-  }
+export function SidebarCloseButton({ onClick }: SidebarCloseButtonProps) {
   return (
     <Button
       variant="ghost"
@@ -48,31 +36,12 @@ export function SidebarCloseButton({
 }
 
 export function RoomButton({
-  useNativeControls,
   room,
   isActive,
   count,
   isVip,
   onSelect,
 }: RoomButtonProps) {
-  if (useNativeControls) {
-    return (
-      <button
-        onClick={onSelect}
-        className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
-          isActive
-            ? "bg-brand text-brand-fg"
-            : "text-muted hover:bg-surface-hover"
-        }`}
-      >
-        <span className="flex items-center gap-1">
-          {isVip && <IconCrown size={12} stroke={2} className="text-brand" />}#{" "}
-          {room}
-        </span>
-        {count > 0 && <span className="text-[10px] opacity-60">{count}</span>}
-      </button>
-    );
-  }
   return (
     <Button
       variant="ghost"
@@ -83,37 +52,21 @@ export function RoomButton({
         isActive ? "bg-brand hover:bg-brand/90 text-brand-fg" : "text-muted",
       )}
     >
-      <span># {room}</span>
+      <span className="flex items-center gap-1">
+        {isVip && <IconCrown size={12} stroke={2} className="text-brand" />}#{" "}
+        {room}
+      </span>
       {count > 0 && <span className="text-[10px] opacity-60">{count}</span>}
     </Button>
   );
 }
 
 export function HamburgerButton({
-  useNativeControls,
   onClick,
   ariaLabel,
   room,
   countLabel,
 }: HamburgerButtonProps) {
-  const content = (
-    <>
-      <IconMenu2 size={18} className="text-muted shrink-0" />
-      <span className="text-sm font-semibold"># {room}</span>
-      <span className="text-muted text-xs">{countLabel}</span>
-    </>
-  );
-  if (useNativeControls) {
-    return (
-      <button
-        onClick={onClick}
-        className="hover:bg-surface-hover flex w-full items-center gap-2 md:hidden"
-        aria-label={ariaLabel}
-      >
-        {content}
-      </button>
-    );
-  }
   return (
     <Button
       variant="ghost"
@@ -122,13 +75,14 @@ export function HamburgerButton({
       className="w-full justify-start gap-2 md:hidden"
       aria-label={ariaLabel}
     >
-      {content}
+      <IconMenu2 size={18} className="text-muted shrink-0" />
+      <span className="text-sm font-semibold"># {room}</span>
+      <span className="text-muted text-xs">{countLabel}</span>
     </Button>
   );
 }
 
 export function MessageInput({
-  useNativeControls,
   value,
   onChange,
   onKeyDown,
@@ -136,19 +90,6 @@ export function MessageInput({
   disabled,
   inputRef,
 }: MessageInputProps) {
-  if (useNativeControls) {
-    return (
-      <input
-        ref={inputRef}
-        value={value}
-        onChange={onChange}
-        onKeyDown={onKeyDown}
-        placeholder={placeholder}
-        disabled={disabled}
-        className="rounded border px-3 py-2 text-sm disabled:opacity-50"
-      />
-    );
-  }
   return (
     <Input
       ref={inputRef}
@@ -161,23 +102,7 @@ export function MessageInput({
   );
 }
 
-export function SendButton({
-  useNativeControls,
-  onClick,
-  disabled,
-  label,
-}: SendButtonProps) {
-  if (useNativeControls) {
-    return (
-      <button
-        onClick={onClick}
-        disabled={disabled}
-        className="bg-brand text-brand-fg rounded-lg px-4 py-2 text-sm disabled:opacity-50"
-      >
-        {label}
-      </button>
-    );
-  }
+export function SendButton({ onClick, disabled, label }: SendButtonProps) {
   return (
     <Button
       variant="primary"
@@ -201,18 +126,11 @@ function handleFileChange(
 }
 
 export function AttachButton({
-  useNativeControls,
   disabled,
   onAttachFile,
   label,
 }: AttachButtonProps) {
   const inputId = useId();
-  const cls = cn(
-    "flex shrink-0 cursor-pointer items-center justify-center transition-colors disabled:pointer-events-none disabled:opacity-50",
-    useNativeControls
-      ? "border-border rounded-lg border px-3 py-2 text-sm"
-      : "text-muted hover:bg-surface-hover size-9 rounded-md",
-  );
   return (
     <>
       <input
@@ -224,7 +142,11 @@ export function AttachButton({
         className="sr-only"
         onChange={(e) => handleFileChange(e, onAttachFile)}
       />
-      <label htmlFor={inputId} aria-label={label} className={cls}>
+      <label
+        htmlFor={inputId}
+        aria-label={label}
+        className="text-muted hover:bg-surface-hover flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+      >
         <IconPaperclip size={18} />
       </label>
     </>
@@ -232,21 +154,18 @@ export function AttachButton({
 }
 
 export function EmojiButton({
-  useNativeControls,
   disabled,
   onEmojiSelect,
   label,
+  chatWindowRef,
 }: EmojiButtonProps) {
   return (
     <EmojiPickerButton
       label={label}
       disabled={disabled}
       onEmojiSelect={onEmojiSelect}
-      className={cn(
-        useNativeControls
-          ? "border-border size-auto rounded-lg border px-3 py-2 text-sm"
-          : "size-9",
-      )}
+      matchWidthRef={chatWindowRef}
+      className="size-9"
     />
   );
 }

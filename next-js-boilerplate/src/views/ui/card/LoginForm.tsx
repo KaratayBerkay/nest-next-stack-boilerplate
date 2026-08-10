@@ -87,12 +87,9 @@ export function LoginForm({
               </label>
             </div>
             <div className="text-sm">
-              <button
-                type="button"
-                className="text-brand hover:text-brand/80 font-semibold"
-              >
+              <Button type="button" variant="link" className="font-semibold">
                 {t.form.login.forgotPassword}
-              </button>
+              </Button>
             </div>
           </div>
 

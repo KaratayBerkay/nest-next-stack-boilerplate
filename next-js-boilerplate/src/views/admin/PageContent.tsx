@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { IconSearch } from "@tabler/icons-react";
+import { InputWithIcon } from "@/components/ui/Input";
 import { UserTierRow } from "./UserTierRow";
 import {
   onQueryChange,
@@ -45,29 +46,23 @@ export default function PageContent({ className }: ClassNameProps) {
         <PageInfoButton content={adminPageInfo} />
       </div>
 
-      <div className="relative">
-        <IconSearch
-          size={14}
-          stroke={1.5}
-          className="text-muted pointer-events-none absolute top-1/2 left-2 -translate-y-1/2"
-        />
-        <input
-          type="text"
-          value={query}
-          onChange={(e) =>
-            onQueryChange(e, setQuery, setResults, setSearching, searchTimer)
-          }
-          placeholder={t.searchPlaceholder}
-          className="border-border bg-surface text-fg w-full rounded-lg border py-1.5 pr-3 pl-7 text-xs"
-        />
-      </div>
+      <InputWithIcon
+        icon={<IconSearch size={14} stroke={1.5} />}
+        type="text"
+        value={query}
+        onChange={(e) =>
+          onQueryChange(e, setQuery, setResults, setSearching, searchTimer)
+        }
+        placeholder={t.searchPlaceholder}
+        className="text-xs"
+      />
 
       {statusMsg && (
         <div
           className={`rounded-lg px-3 py-2 text-xs font-medium ${
             statusMsg.type === "success"
-              ? "bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-              : "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+              ? "bg-success/10 text-success"
+              : "bg-error/10 text-error"
           }`}
         >
           {statusMsg.text}

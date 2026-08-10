@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/cn";
+import { Input } from "@/components/ui/Input";
 import type { BillingAddressFieldProps } from "@/types/views/settings/BillingAddressField-types";
 
 export function BillingAddressField({
@@ -16,12 +17,11 @@ export function BillingAddressField({
       <label htmlFor={id} className="text-muted text-xs font-medium">
         {label}
       </label>
-      <input
+      <Input
         id={id}
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="border-border bg-surface rounded-lg border px-3 py-2 text-sm"
         placeholder={placeholder}
       />
     </div>

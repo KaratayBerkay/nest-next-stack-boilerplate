@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useCallback } from "react";
 import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 import { FRIEND_GROUPS } from "./pagination-data";
 
 function scrollToPageModuleLevel(
@@ -93,12 +94,9 @@ export function OnlineFriendsTab({
                         {friend.online ? "Online" : "Offline"}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="bg-brand text-brand-fg shrink-0 rounded-md px-3 py-1.5 text-xs font-medium transition-opacity hover:opacity-90"
-                    >
+                    <Button size="xs" className="shrink-0">
                       Message
-                    </button>
+                    </Button>
                   </div>
                 ))}
               </div>

@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { IconArrowLeft } from "@tabler/icons-react";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/hooks/useAuth";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,13 +83,15 @@ function PostDetailContent({
         className,
       )}
     >
-      <button
+      <Button
+        variant="ghost"
+        size="xs"
+        className="text-muted hover:text-fg"
+        leftIcon={<IconArrowLeft size={16} stroke={1.5} />}
         onClick={() => router.push(`/v1/${params?.lang ?? "en"}/feed`)}
-        className="text-muted hover:text-fg flex items-center gap-1 text-xs transition-colors"
       >
-        <IconArrowLeft size={16} stroke={1.5} />
         {t.back}
-      </button>
+      </Button>
 
       <div className="surface flex flex-col gap-4 p-5">
         <PostHeader

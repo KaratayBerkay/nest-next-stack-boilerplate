@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Textarea, AutoResizeTextarea } from "@/components/ui/Textarea";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 export function ExamplesTab() {
@@ -31,16 +32,8 @@ export function ExamplesTab() {
       <section className="flex flex-col gap-4">
         <h3 className="text-lg font-semibold">Contact Form</h3>
         <div className="surface max-w-md space-y-3 rounded-xl p-6">
-          <input
-            type="text"
-            placeholder="Your name"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
-          <input
-            type="email"
-            placeholder="Your email"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
+          <Input type="text" placeholder="Your name" />
+          <Input type="email" placeholder="Your email" />
           <Textarea placeholder="Your message..." />
           <Button size="sm" variant="primary">
             Send Message
@@ -54,11 +47,7 @@ export function ExamplesTab() {
           <h4 className="text-sm font-semibold tracking-wider uppercase">
             Feedback
           </h4>
-          <input
-            type="text"
-            placeholder="Subject"
-            className="border-border placeholder:text-muted focus-visible:ring-primary w-full rounded border bg-transparent px-3 py-2 text-sm focus-visible:ring-2 focus-visible:outline-none"
-          />
+          <Input type="text" placeholder="Subject" />
           <Textarea placeholder="Tell us what you think..." />
           <div className="flex justify-end">
             <Button size="sm" variant="primary">
