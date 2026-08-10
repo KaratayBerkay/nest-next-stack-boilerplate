@@ -5,7 +5,7 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { createFormSubmitHandler } from "@/lib/forms/shared";
 import { basicFormOpts } from "@/validators/forms/layouts-inits";
 import { contactFieldSchemas } from "@/validators/forms/layouts-validation";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Label } from "@/components/ui/Label";
 import { LayoutCard } from "./LayoutCard";
 
@@ -57,22 +57,20 @@ export function ContactForm() {
               <Label>{t.layouts.contactSubject_label}</Label>
               <FieldInfoButton description={t.layouts.contactSubject_info} />
             </div>
-            <NativeSelect
+            <Dropdown
+              options={[
+                { value: "general", label: t.layouts.contactSubject_general },
+                { value: "support", label: t.layouts.contactSubject_support },
+                {
+                  value: "feedback",
+                  label: t.layouts.contactSubject_feedback,
+                },
+                { value: "other", label: t.layouts.contactSubject_other },
+              ]}
               value={form.getFieldValue("subject")}
-              onChange={(e) => form.setFieldValue("subject", e.target.value)}
-            >
-              <option value="">{t.layouts.contactSubject_placeholder}</option>
-              <option value="general">
-                {t.layouts.contactSubject_general}
-              </option>
-              <option value="support">
-                {t.layouts.contactSubject_support}
-              </option>
-              <option value="feedback">
-                {t.layouts.contactSubject_feedback}
-              </option>
-              <option value="other">{t.layouts.contactSubject_other}</option>
-            </NativeSelect>
+              onChange={(value) => form.setFieldValue("subject", value)}
+              placeholder={t.layouts.contactSubject_placeholder}
+            />
           </div>
           <form.AppField
             name="message"

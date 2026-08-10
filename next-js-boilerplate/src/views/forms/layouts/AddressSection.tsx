@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Label } from "@/components/ui/Label";
 import type { AddressSectionProps } from "@/types/views/forms/AddressSection-types";
 
@@ -64,16 +64,17 @@ export function AddressSection({ form }: AddressSectionProps) {
           <Label>{t.layouts.sectionedCountry_label}</Label>
           <FieldInfoButton description={t.layouts.sectionedCountry_info} />
         </div>
-        <NativeSelect
+        <Dropdown
+          options={[
+            { value: "us", label: t.layouts.sectionedCountry_us },
+            { value: "ca", label: t.layouts.sectionedCountry_ca },
+            { value: "uk", label: t.layouts.sectionedCountry_uk },
+            { value: "tr", label: t.layouts.sectionedCountry_tr },
+          ]}
           value={form.getFieldValue("country")}
-          onChange={(e) => form.setFieldValue("country", e.target.value)}
-        >
-          <option value="">{t.layouts.sectionedCountry_placeholder}</option>
-          <option value="us">{t.layouts.sectionedCountry_us}</option>
-          <option value="ca">{t.layouts.sectionedCountry_ca}</option>
-          <option value="uk">{t.layouts.sectionedCountry_uk}</option>
-          <option value="tr">{t.layouts.sectionedCountry_tr}</option>
-        </NativeSelect>
+          onChange={(value) => form.setFieldValue("country", value)}
+          placeholder={t.layouts.sectionedCountry_placeholder}
+        />
       </div>
     </div>
   );

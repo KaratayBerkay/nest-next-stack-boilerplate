@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Label } from "@/components/ui/Label";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Combobox } from "@/components/ui/Combobox";
 import { FieldInfoButton } from "@/components/ui/FieldInfoButton";
 import { SectionCard } from "./SectionCard";
 
 export function SelectsSection() {
   const t = useMessages("forms");
+  const [singleValue, setSingleValue] = useState("");
   const [multiValue, setMultiValue] = useState<string[]>([]);
 
   const SINGLE_OPTIONS = [
@@ -30,14 +31,12 @@ export function SelectsSection() {
             <Label>{t.elements.singleSelect_label}</Label>
             <FieldInfoButton description={t.elements.singleSelect_info} />
           </div>
-          <NativeSelect>
-            <option value="">{t.elements.singleSelect_placeholder}</option>
-            {SINGLE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </NativeSelect>
+          <Dropdown
+            options={SINGLE_OPTIONS}
+            value={singleValue}
+            onChange={setSingleValue}
+            placeholder={t.elements.singleSelect_placeholder}
+          />
         </div>
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-1">

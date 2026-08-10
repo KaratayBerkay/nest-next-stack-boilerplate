@@ -3,7 +3,7 @@
 
 import { blurAsyncCheck } from "@/lib/forms/blur-async-check";
 import { Input } from "@/components/ui/Input";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { FormFieldInfo } from "@/components/ui/FormFieldInfo";
 import { TAX_OPTIONS } from "./EditableTable-constants";
 import type { InvoiceRow } from "./EditableTable-constants";
@@ -109,17 +109,11 @@ export function EditableTableRow({
           validators={{ onChange: rowSchemas.taxClass }}
         >
           {(subField: any) => (
-            <NativeSelect
-              className="text-xs"
+            <Dropdown
+              options={TAX_OPTIONS}
               value={subField.state.value}
-              onChange={(e) => subField.handleChange(e.target.value)}
-            >
-              {TAX_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </NativeSelect>
+              onChange={(value) => subField.handleChange(value)}
+            />
           )}
         </form.AppField>
       </td>

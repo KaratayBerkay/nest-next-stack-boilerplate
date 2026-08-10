@@ -2,7 +2,7 @@ import { FIELD_TYPES } from "@/types/forms/BuilderField-types";
 import type { BuilderField } from "@/types/forms/BuilderField-types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Checkbox } from "@/components/ui/Checkbox";
 import type { FieldEditorProps } from "@/types/views/forms/FieldEditor-types";
 
@@ -51,21 +51,15 @@ export function FieldEditor({
       <div className="grid grid-cols-2 gap-2">
         <div className="flex flex-col gap-1">
           <span className="text-xxs text-muted">{t.formBuilder.fieldType}</span>
-          <NativeSelect
-            className="text-xs"
+          <Dropdown
+            options={FIELD_TYPES}
             value={field.type}
-            onChange={(e) =>
+            onChange={(value) =>
               onUpdate(field.id, {
-                type: e.target.value as BuilderField["type"],
+                type: value as BuilderField["type"],
               })
             }
-          >
-            {FIELD_TYPES.map((ft) => (
-              <option key={ft.value} value={ft.value}>
-                {ft.label}
-              </option>
-            ))}
-          </NativeSelect>
+          />
         </div>
         <div className="flex flex-col gap-1">
           <span className="text-xxs text-muted">

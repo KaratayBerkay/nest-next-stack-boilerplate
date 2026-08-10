@@ -5,7 +5,7 @@ import { useAppForm } from "@/features/forms/form-hook";
 import { createFormSubmitHandler } from "@/lib/forms/shared";
 import { twoColumnFormOpts } from "@/validators/forms/layouts-inits";
 import { twoColumnFieldSchemas } from "@/validators/forms/layouts-validation";
-import { NativeSelect } from "@/components/ui/NativeSelect";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { Label } from "@/components/ui/Label";
 import { LayoutCard } from "./LayoutCard";
 
@@ -77,24 +77,29 @@ export function TwoColumnGridForm() {
               <Label>{t.layouts.twoColumnSubject_label}</Label>
               <FieldInfoButton description={t.layouts.twoColumnSubject_info} />
             </div>
-            <NativeSelect
+            <Dropdown
+              options={[
+                {
+                  value: "option1",
+                  label: t.layouts.twoColumnSubject_option1,
+                },
+                {
+                  value: "option2",
+                  label: t.layouts.twoColumnSubject_option2,
+                },
+                {
+                  value: "option3",
+                  label: t.layouts.twoColumnSubject_option3,
+                },
+                {
+                  value: "option4",
+                  label: t.layouts.twoColumnSubject_option4,
+                },
+              ]}
               value={form.getFieldValue("subject")}
-              onChange={(e) => form.setFieldValue("subject", e.target.value)}
-            >
-              <option value="">{t.layouts.twoColumnSubject_placeholder}</option>
-              <option value="option1">
-                {t.layouts.twoColumnSubject_option1}
-              </option>
-              <option value="option2">
-                {t.layouts.twoColumnSubject_option2}
-              </option>
-              <option value="option3">
-                {t.layouts.twoColumnSubject_option3}
-              </option>
-              <option value="option4">
-                {t.layouts.twoColumnSubject_option4}
-              </option>
-            </NativeSelect>
+              onChange={(value) => form.setFieldValue("subject", value)}
+              placeholder={t.layouts.twoColumnSubject_placeholder}
+            />
           </div>
           <form.AppField
             name="message"
