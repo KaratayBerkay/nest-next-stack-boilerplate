@@ -1225,6 +1225,28 @@ export type I18nMessages = {
       "back": string;
     }
 
+  "pages": {
+      "gallery": {
+        "pageTitle": string;
+        "pageDescription": string;
+        "back": string;
+        "breadcrumbLabel": string;
+        "title": string;
+        "description": string;
+      };
+      "examples": {
+        "aboutTitle": string;
+        "aboutDescription": string;
+      };
+      "about": {
+        "heading": string;
+        "intro": string;
+        "workplaceHeading": string;
+        "workplaceParagraph1": string;
+        "workplaceParagraph2": string;
+      };
+    }
+
   "posts": {
       "back": string;
       "deletePost": string;
@@ -1673,5 +1695,6 @@ export type I18nMessages = {
       "skipToContent": string;
       "decryptionFailed": string;
       "attachmentPreview": string;
+      "navPages": string;
     }
 };

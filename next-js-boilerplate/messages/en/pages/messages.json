@@ -1,0 +1,21 @@
+{
+  "gallery": {
+    "pageTitle": "Pages",
+    "pageDescription": "Landing page sections built with the custom UI components",
+    "back": "Back",
+    "breadcrumbLabel": "Pages",
+    "title": "Pages",
+    "description": "Landing page sections built with the custom UI components"
+  },
+  "examples": {
+    "aboutTitle": "About",
+    "aboutDescription": "Story and workplace photo grid — about6"
+  },
+  "about": {
+    "heading": "About Us",
+    "intro": "We are a team of makers, engineers, and storytellers who believe great products come from curiosity, care, and close collaboration.",
+    "workplaceHeading": "Workplace",
+    "workplaceParagraph1": "Our studio is a quiet corner of the internet — a place where small, focused teams ship work that feels personal. Every project starts with a conversation and ends with something we are proud to put our name on.",
+    "workplaceParagraph2": "We keep the team small on purpose. That way every person owns their work end to end, every idea gets heard, and quality never becomes a negotiation."
+  }
+}

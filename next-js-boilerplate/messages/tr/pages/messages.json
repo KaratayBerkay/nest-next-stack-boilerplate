@@ -1,0 +1,21 @@
+{
+  "gallery": {
+    "pageTitle": "Sayfalar",
+    "pageDescription": "Özel UI bileşenleriyle oluşturulan açılış sayfası bölümleri",
+    "back": "Geri",
+    "breadcrumbLabel": "Sayfalar",
+    "title": "Sayfalar",
+    "description": "Özel UI bileşenleriyle oluşturulan açılış sayfası bölümleri"
+  },
+  "examples": {
+    "aboutTitle": "Hakkımızda",
+    "aboutDescription": "Hikaye ve çalışma ortamı fotoğraf ızgarası — about6"
+  },
+  "about": {
+    "heading": "Hakkımızda",
+    "intro": "Harika ürünlerin merak, özen ve yakın iş birliğinden doğduğuna inanan bir yapımcı, mühendis ve hikaye anlatıcısı ekibiyiz.",
+    "workplaceHeading": "Çalışma Ortamı",
+    "workplaceParagraph1": "Stüdyomuz internetin sessiz bir köşesi — küçük, odaklı ekiplerin kişisel hissettiren işler ürettiği bir yer. Her proje bir sohbetle başlar ve adımızı koymaktan gurur duyduğumuz bir sonuçla biter.",
+    "workplaceParagraph2": "Ekibi bilerek küçük tutuyoruz. Böylece herkes işinin tamamına sahip çıkar, her fikir duyulur ve kalite asla bir pazarlık konusu olmaz."
+  }
+}

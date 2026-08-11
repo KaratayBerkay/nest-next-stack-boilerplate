@@ -14,6 +14,7 @@ import {
   IconUserPlus,
   IconComponents,
   IconForms,
+  IconFileText,
   IconAlertTriangle,
   IconQuestionMark,
   IconRss,
@@ -61,6 +62,7 @@ export function V1Nav({ onNav }: V1NavProps) {
     },
     { href: "/ui", label: t.navUiComponents, Icon: IconComponents },
     { href: "/forms", label: t.navForms, Icon: IconForms },
+    { href: "/pages", label: t.navPages, Icon: IconFileText },
     { href: "/boom", label: t.navErrorTest, Icon: IconAlertTriangle },
     { href: "/missing", label: t.navNotFound, Icon: IconQuestionMark },
   ];
