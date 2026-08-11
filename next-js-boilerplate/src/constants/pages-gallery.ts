@@ -42,4 +42,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "blogTitle",
     descKey: "blogDescription",
   },
+  {
+    name: "Blog Post",
+    slug: "blog-post",
+    titleKey: "blogPostTitle",
+    descKey: "blogPostDescription",
+  },
 ];
