@@ -12,14 +12,16 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Separator } from "@/components/ui/Separator";
 import { Input } from "@/components/ui/Input";
+import { useToast } from "@/components/ui/Toast";
 
 export function CartSummaryDemo() {
   const [promoCode, setPromoCode] = useState("");
+  const { toast } = useToast();
 
   return (
     <section className="flex flex-col gap-3">
       <Drawer>
-        <DrawerTrigger className="bg-brand rounded px-4 py-2 text-sm font-medium text-brand-fg">
+        <DrawerTrigger className="bg-brand text-brand-fg rounded px-4 py-2 text-sm font-medium">
           View Cart (3 items)
         </DrawerTrigger>
         <DrawerContent>
@@ -49,14 +51,25 @@ export function CartSummaryDemo() {
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
               />
-              <Button variant="secondary" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={!promoCode.trim()}
+                onClick={() => {
+                  toast({
+                    title: "Promo code applied",
+                    description: `"${promoCode}" has been applied to your order.`,
+                  });
+                  setPromoCode("");
+                }}
+              >
                 Apply
               </Button>
             </div>
             <Separator />
             <div className="flex items-center justify-between text-sm font-bold">
               <span>Order Total</span>
-              <span>$189.97</span>
+              <span>$189.96</span>
             </div>
           </div>
           <DrawerFooter>

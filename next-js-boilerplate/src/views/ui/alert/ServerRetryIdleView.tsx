@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { handleSimulate } from "@/views/ui/alert/ServerRetryTimer";
-import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 import type { ServerRetryIdleViewProps } from "@/types/views/ui/AlertDemo-types";
 
 export function ServerRetryIdleView({
@@ -44,8 +43,8 @@ export function ServerRetryIdleView({
         </div>
       </div>
       <p className="text-muted text-sm">
-        Simulate a server outage to see the auto-retry behavior with countdown
-        and exponential backoff.
+        Simulate a server outage to see the auto-retry behavior with a countdown
+        and manual retry.
       </p>
       <Button
         onClick={() =>

@@ -18,7 +18,12 @@ import {
   AlertDialogAction,
 } from "@/components/ui/AlertDialog";
 import { useToast } from "@/components/ui/Toast";
-import { SAMPLE_TEXT, handleCopy, handleShare } from "./context-menu-data";
+import {
+  SAMPLE_TEXT,
+  handleCopy,
+  handleShare,
+  handleDeleteText,
+} from "./context-menu-data";
 
 export function TextSelectionScenario() {
   const { toast } = useToast();
@@ -58,7 +63,12 @@ export function TextSelectionScenario() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive">Delete</AlertDialogAction>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => handleDeleteText(toast)}
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

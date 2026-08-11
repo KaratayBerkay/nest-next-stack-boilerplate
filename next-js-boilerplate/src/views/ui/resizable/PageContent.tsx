@@ -13,7 +13,7 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Split Editor",
-    description: "Two resizable panes with autoSaveId persistence.",
+    description: "Two resizable panes with a draggable handle.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

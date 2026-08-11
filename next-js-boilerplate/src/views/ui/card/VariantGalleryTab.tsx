@@ -9,10 +9,9 @@ export function VariantGalleryTab() {
       <div>
         <h3 className="mb-1 text-lg font-semibold">Card Variants</h3>
         <p className="text-muted mb-4 text-sm">
-          Six visual styles for different contexts: default for general use,
+          Five visual styles for different contexts: default for general use,
           elevated for emphasis, interactive for clickable cards, outline for
-          lightweight separation, surface for content areas, and soft for subtle
-          tinting.
+          lightweight separation, and surface for content areas.
         </p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {variants.map((variant) => (

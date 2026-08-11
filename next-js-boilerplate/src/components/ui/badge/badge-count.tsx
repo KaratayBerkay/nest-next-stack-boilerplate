@@ -12,7 +12,7 @@ const directionStyles = {
 
 function formatCount(count: number | string, max: number): string {
   if (typeof count === "string") return count;
-  if (count > max) return `${max}`;
+  if (count > max) return `${max}+`;
   return String(count);
 }
 

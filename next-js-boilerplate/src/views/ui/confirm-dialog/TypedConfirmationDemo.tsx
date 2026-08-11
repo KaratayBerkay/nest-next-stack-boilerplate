@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, type Dispatch, type SetStateAction } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogBody, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogBody,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 
@@ -34,7 +42,13 @@ export function TypedConfirmationDemo() {
   const isExactMatch = inputValue === "DELETE";
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        if (!val) setInputValue("");
+        setOpen(val);
+      }}
+    >
       <Button variant="destructive" onClick={() => setOpen(true)}>
         Delete Account
       </Button>

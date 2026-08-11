@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, ButtonGroup, ButtonGroupItem } from "@/components/ui/Button";
+import { Button } from "@/components/ui/Button";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { FormActionsTab } from "@/views/ui/button/FormActionsTab";

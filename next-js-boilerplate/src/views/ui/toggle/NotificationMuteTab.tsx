@@ -3,15 +3,14 @@ import { useState } from "react";
 import { Toggle } from "@/components/ui/Toggle";
 
 export function NotificationMuteTab() {
-  const [underline, setUnderline] = useState(false);
-  const [strikethrough, setStrikethrough] = useState(false);
+  const [muted, setMuted] = useState(false);
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Text Formatting</h3>
+        <h3 className="text-lg font-semibold">Notification Mute</h3>
         <div className="flex gap-2">
-          <Toggle pressed={underline} onPressedChange={setUnderline}>
+          <Toggle pressed={muted} onPressedChange={setMuted}>
             <svg
               width="16"
               height="16"
@@ -20,42 +19,23 @@ export function NotificationMuteTab() {
               stroke="currentColor"
               strokeWidth="2"
             >
-              <path d="M6 4v6a6 6 0 0 0 12 0V4" />
-              <line x1="4" x2="20" y1="20" y2="20" />
+              <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+              <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+              {muted && <line x1="3" x2="21" y1="3" y2="21" />}
             </svg>
-            Underline
-          </Toggle>
-          <Toggle pressed={strikethrough} onPressedChange={setStrikethrough}>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M16 4H9a3 3 0 0 0-2.83 4" />
-              <path d="M14 12a4 4 0 0 1 0 8H6" />
-              <line x1="4" x2="20" y1="12" y2="12" />
-            </svg>
-            Strikethrough
+            {muted ? "Muted" : "Mute"}
           </Toggle>
         </div>
         <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
-            Active:{" "}
+            Status:{" "}
             <strong>
-              {[underline && "Underline", strikethrough && "Strikethrough"]
-                .filter(Boolean)
-                .join(", ") || "None"}
+              {muted ? "Notifications muted" : "Notifications on"}
             </strong>
           </span>
           <button
             type="button"
-            onClick={() => {
-              setUnderline(false);
-              setStrikethrough(false);
-            }}
+            onClick={() => setMuted(false)}
             className="text-muted hover:text-fg p-0.5"
           >
             <svg

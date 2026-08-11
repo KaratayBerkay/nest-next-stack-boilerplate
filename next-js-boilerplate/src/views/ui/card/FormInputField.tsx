@@ -27,7 +27,7 @@ export function FormInputField({
           error={error}
         />
       </div>
-      <FieldInfo field={field} />
+      {!error && <FieldInfo field={field} />}
     </div>
   );
 }

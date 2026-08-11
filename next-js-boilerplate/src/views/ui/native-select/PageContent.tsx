@@ -105,13 +105,13 @@ const examples: UIExample[] = [
     title: "Country Picker",
     description:
       "Native select with a long list, chevron indicator, and RTL check.",
-    render: () => <ComponentsTab />,
+    render: () => <ExamplesTab />,
   },
   {
     id: "variants",
     title: "Inline Sort Order",
     description: "Compact native select paired with a label.",
-    render: () => <ExamplesTab />,
+    render: () => <ComponentsTab />,
   },
 ];
 

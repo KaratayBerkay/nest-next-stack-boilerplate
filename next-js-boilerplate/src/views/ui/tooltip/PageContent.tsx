@@ -11,13 +11,14 @@ const examples: UIExample[] = [
     id: "usage",
     title: "Toolbar Labels",
     description: "Icon buttons with tooltip labels via describedby.",
-    render: () => <ToolbarLabelsDemo />,
+    render: () => <DisabledReasonDemo />,
   },
   {
     id: "variants",
-    title: "Disabled Reason",
-    description: "Tooltip on a disabled control explaining why it's disabled.",
-    render: () => <DisabledReasonDemo />,
+    title: "Side Placement",
+    description:
+      "Buttons demonstrating each tooltip side: top, bottom, left, and right.",
+    render: () => <ToolbarLabelsDemo />,
   },
 ];
 

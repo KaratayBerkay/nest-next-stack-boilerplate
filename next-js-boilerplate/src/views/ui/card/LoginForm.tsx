@@ -4,7 +4,6 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { FieldMessages } from "@/components/ui/field-messages";
-import type { z } from "zod";
 import { FormInputField } from "./FormInputField";
 import { SocialButtons } from "./SocialButtons";
 import type { LoginFormProps } from "@/types/views/ui/CardDemo-types";
@@ -79,6 +78,7 @@ export function LoginForm({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Checkbox
+                id="remember-me"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />

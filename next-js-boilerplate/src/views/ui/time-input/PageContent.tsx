@@ -12,14 +12,14 @@ import type { TimeInputVariant } from "@/types/ui/TimeInput-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Meeting Time",
-    description: "24-hour time input with locale-aware formatting.",
+    title: "Time Formats",
+    description: "24-hour, seconds-enabled, and 12-hour AM/PM time inputs.",
     render: () => <ComponentsTab />,
   },
   {
     id: "variants",
-    title: "Alarm",
-    description: "12-hour AM/PM time input.",
+    title: "Scheduling Examples",
+    description: "Meeting, event, and timer scheduling examples.",
     render: () => <ExamplesTab />,
   },
   {

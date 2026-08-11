@@ -1,13 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { FormErrorBanner } from "@/components/ui/FormErrorBanner";
 import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 
 function WithDismiss() {
+  const [message, setMessage] = useState<string | null>(
+    "This is an error message",
+  );
   return (
-    <FormErrorBanner message="This is an error message" onDismiss={() => {}} />
+    <FormErrorBanner message={message} onDismiss={() => setMessage(null)} />
   );
 }
 

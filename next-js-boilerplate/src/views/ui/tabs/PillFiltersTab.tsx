@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/Tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/Tabs";
 import { ActiveTabDisplay } from "@/views/ui/tabs/ActiveTabDisplay";
 
 export function PillFiltersTab() {
@@ -69,6 +64,7 @@ export function PillFiltersTab() {
             </p>
           </div>
         </TabsContent>
+        <ActiveTabDisplay />
       </Tabs>
     </div>
   );

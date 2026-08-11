@@ -19,7 +19,12 @@ import {
   AlertDialogAction,
 } from "@/components/ui/AlertDialog";
 import { useToast } from "@/components/ui/Toast";
-import { files, handleRename, handleDuplicate } from "./context-menu-data";
+import {
+  files,
+  handleRename,
+  handleDuplicate,
+  handleDeleteFile,
+} from "./context-menu-data";
 
 export function FileTableScenario() {
   const { toast } = useToast();
@@ -78,7 +83,12 @@ export function FileTableScenario() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction variant="destructive">Delete</AlertDialogAction>
+            <AlertDialogAction
+              variant="destructive"
+              onClick={() => deleteFile && handleDeleteFile(deleteFile, toast)}
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

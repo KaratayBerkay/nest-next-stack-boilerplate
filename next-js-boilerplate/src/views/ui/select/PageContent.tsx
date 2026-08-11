@@ -5,7 +5,7 @@ import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
-import type { SelectVariant } from "@/types/ui/Select-types";
+import type { SelectSize, SelectVariant } from "@/types/ui/Select-types";
 import {
   Select,
   SelectTrigger,
@@ -61,7 +61,7 @@ function CountryPickerTab() {
       <p className="text-muted text-xs">
         Select your country from the dropdown.
       </p>
-      <Select value={country} onValueChange={setCountry}>
+      <Select value={country} onValueChange={setCountry} name="country">
         <SelectTrigger>{country || "Select a country"}</SelectTrigger>
         <SelectContent>
           {countries.map((c) => (
@@ -82,8 +82,8 @@ function LongListTab() {
   return (
     <div className="flex max-w-sm flex-col gap-3">
       <p className="text-muted text-xs">
-        37 options with typeahead. Start typing to filter, use ArrowUp/Down,
-        Home/End.
+        37 options with typeahead. Start typing to jump to a match, use
+        ArrowUp/Down, Home/End.
       </p>
       <Select value={value} onValueChange={setValue}>
         <SelectTrigger>{value || "Choose a country"}</SelectTrigger>
@@ -119,11 +119,14 @@ const examples: UIExample[] = [
     description: "All variants and sizes.",
     render: () => (
       <VariantGallery
-        variants={["default", "shiny", "glass", "neon", "gradient"]}
-        sizes={[]}
-        render={(variant) => (
+        variants={["default", "outline", "shiny", "glass", "neon", "gradient"]}
+        sizes={["sm", "md"]}
+        render={(variant, size) => (
           <Select onValueChange={() => {}}>
-            <SelectTrigger variant={variant as SelectVariant}>
+            <SelectTrigger
+              variant={variant as SelectVariant}
+              size={size as SelectSize}
+            >
               Option
             </SelectTrigger>
             <SelectContent>

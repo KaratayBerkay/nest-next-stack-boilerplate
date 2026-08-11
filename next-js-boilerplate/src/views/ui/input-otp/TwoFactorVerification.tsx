@@ -55,6 +55,8 @@ export function TwoFactorVerification() {
     [setCode, setStatus],
   );
 
+  const isComplete = code.length === MOCK_CODE.length;
+
   if (status === "success") {
     return (
       <div className="flex flex-col items-center gap-3 py-8 text-center">
@@ -103,13 +105,11 @@ export function TwoFactorVerification() {
           /* eslint-disable-next-line jsx-a11y/no-autofocus */
           autoFocus
           description={
-            code.length > 0 && code !== MOCK_CODE
+            isComplete && code !== MOCK_CODE
               ? "Incorrect code — try 123456"
               : undefined
           }
-          error={
-            code.length > 0 && code !== MOCK_CODE ? "Invalid code" : undefined
-          }
+          error={isComplete && code !== MOCK_CODE ? "Invalid code" : undefined}
         />
       </div>
       <div className="flex items-center gap-2 text-xs">

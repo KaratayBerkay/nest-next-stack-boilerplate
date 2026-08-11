@@ -25,7 +25,12 @@ export function MessageNotificationsSection() {
           <span className="text-muted text-xs">Groups</span>
         </div>
         <div className="surface flex flex-col items-center gap-3 rounded-xl border p-4 shadow-sm">
-          <BadgeCount direction="middle-top" count={99} max={99} rule="negative">
+          <BadgeCount
+            direction="middle-top"
+            count={150}
+            max={99}
+            rule="negative"
+          >
             {bellIcon}
           </BadgeCount>
           <span className="text-muted text-xs">Overflow 99+</span>

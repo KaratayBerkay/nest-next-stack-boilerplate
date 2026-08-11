@@ -15,8 +15,9 @@ import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Deep Path",
-    description: "Breadcrumb with collapsed middle items in an ellipsis menu.",
+    title: "Default",
+    description:
+      "Simple breadcrumb trail with linked ancestors and the current page.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

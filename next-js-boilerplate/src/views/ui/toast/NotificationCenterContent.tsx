@@ -85,7 +85,7 @@ function handleMarkAllRead(
 
 export function NotificationCenterContent() {
   const { toast } = useToast();
-  const [items] = useState(NOTIFICATIONS);
+  const [items, setItems] = useState(NOTIFICATIONS);
 
   return (
     <div className="mx-auto max-w-md space-y-2">
@@ -95,7 +95,12 @@ export function NotificationCenterContent() {
         </h3>
         <button
           className="text-brand text-sm hover:underline"
-          onClick={() => handleMarkAllRead(toast)}
+          onClick={() => {
+            handleMarkAllRead(toast);
+            setItems((prev) =>
+              prev.map((item) => ({ ...item, unread: false })),
+            );
+          }}
         >
           Mark all read
         </button>
@@ -106,7 +111,14 @@ export function NotificationCenterContent() {
           <button
             key={item.id}
             className="hover:bg-surface/50 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors"
-            onClick={() => handleNotificationClick(item, toast)}
+            onClick={() => {
+              handleNotificationClick(item, toast);
+              setItems((prev) =>
+                prev.map((i) =>
+                  i.id === item.id ? { ...i, unread: false } : i,
+                ),
+              );
+            }}
           >
             <Avatar
               size="sm"

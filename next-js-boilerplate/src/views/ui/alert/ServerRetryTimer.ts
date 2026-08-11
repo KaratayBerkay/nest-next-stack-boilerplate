@@ -79,13 +79,18 @@ export function handleMouseLeave(
   setCountdown: SetCountdown,
   setStatus: SetStatus,
 ) {
-  if (timerRef.current === null && remainingRef.current > 0) {
-    startTimeRef.current = Date.now();
-    timerRef.current = setInterval(
-      () => tick(timerRef, remainingRef, startTimeRef, setCountdown, setStatus),
-      100,
-    );
+  if (timerRef.current !== null) {
+    return;
   }
+  if (remainingRef.current <= 0) {
+    setStatus((prev) => (prev === "active" ? "dismissing" : prev));
+    return;
+  }
+  startTimeRef.current = Date.now();
+  timerRef.current = setInterval(
+    () => tick(timerRef, remainingRef, startTimeRef, setCountdown, setStatus),
+    100,
+  );
 }
 
 export function handleRetry(

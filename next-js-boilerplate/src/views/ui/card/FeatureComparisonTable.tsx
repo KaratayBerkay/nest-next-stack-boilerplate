@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { cn } from "@/lib/cn";
 import { tiers, sections } from "./PricingTiers-data";
 import type { FeatureComparisonTableProps } from "@/types/views/ui/CardDemo-types";
@@ -65,8 +66,8 @@ export function FeatureComparisonTable({
           </thead>
           <tbody>
             {sections.map((section) => (
-              <>
-                <tr key={section.name}>
+              <Fragment key={section.name}>
+                <tr>
                   <td
                     colSpan={4}
                     className="text-muted pt-8 pb-2 text-xs font-semibold tracking-wider uppercase"
@@ -100,7 +101,7 @@ export function FeatureComparisonTable({
                     ))}
                   </tr>
                 ))}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

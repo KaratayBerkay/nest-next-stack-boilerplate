@@ -13,10 +13,12 @@ const examples: UIExample[] = [
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
-          <h3 className="text-lg font-semibold">Default</h3>
+          <h3 className="text-lg font-semibold">URL Prefix</h3>
           <InputGroup>
-            <Input placeholder="Search..." />
-            <Button>Go</Button>
+            <span className="border-border bg-surface text-muted flex items-center border px-3 text-sm">
+              https://
+            </span>
+            <Input placeholder="example.com" />
           </InputGroup>
         </section>
       </div>

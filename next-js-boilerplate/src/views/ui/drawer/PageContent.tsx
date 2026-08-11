@@ -22,7 +22,7 @@ const examples: UIExample[] = [
   {
     id: "gallery",
     title: "Variant Gallery",
-    description: "Drawer component across all theme variants and sizes.",
+    description: "Drawer component across all theme variants.",
     render: () => <DrawerVariantGallery />,
   },
 ];

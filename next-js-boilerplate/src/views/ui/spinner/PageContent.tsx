@@ -7,8 +7,8 @@ import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Button Composition",
-    description: "Spinner inside loading buttons, size-matched.",
+    title: "Sizes",
+    description: "Spinner rendered at a few common sizes.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
@@ -25,7 +25,7 @@ const examples: UIExample[] = [
   {
     id: "variants",
     title: "Size Scale",
-    description: "Spinner at different sizes: sm, md, lg.",
+    description: "Spinner at different sizes: sm, md, lg, and xl.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

@@ -1,27 +1,40 @@
 "use client";
-import { useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useRef,
+  useState,
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import { LogoSpinner } from "@/components/ui/LogoSpinner";
 import { Button } from "@/components/ui/Button";
 
 function handleShowSplash(
   setSplashState: Dispatch<SetStateAction<"idle" | "showing" | "fading">>,
+  timers: MutableRefObject<ReturnType<typeof setTimeout>[]>,
 ) {
+  timers.current.forEach(clearTimeout);
   setSplashState("showing");
-  setTimeout(() => setSplashState("fading"), 2000);
-  setTimeout(() => setSplashState("idle"), 2500);
+  timers.current = [
+    setTimeout(() => setSplashState("fading"), 2000),
+    setTimeout(() => setSplashState("idle"), 2500),
+  ];
 }
 
 function handleDismissSplash(
   setSplashState: Dispatch<SetStateAction<"idle" | "showing" | "fading">>,
+  timers: MutableRefObject<ReturnType<typeof setTimeout>[]>,
 ) {
+  timers.current.forEach(clearTimeout);
   setSplashState("fading");
-  setTimeout(() => setSplashState("idle"), 500);
+  timers.current = [setTimeout(() => setSplashState("idle"), 500)];
 }
 
 export function SplashTab() {
   const [splashState, setSplashState] = useState<"idle" | "showing" | "fading">(
     "idle",
   );
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   return (
     <div className="border-border bg-surface relative h-72 overflow-hidden rounded-lg border">
@@ -29,7 +42,7 @@ export function SplashTab() {
         <div className="flex h-full items-center justify-center">
           <Button
             variant="primary"
-            onClick={() => handleShowSplash(setSplashState)}
+            onClick={() => handleShowSplash(setSplashState, timers)}
           >
             Show Splash
           </Button>
@@ -45,7 +58,7 @@ export function SplashTab() {
           <LogoSpinner className="!min-h-0" />
           <Button
             variant="ghost"
-            onClick={() => handleDismissSplash(setSplashState)}
+            onClick={() => handleDismissSplash(setSplashState, timers)}
           >
             Dismiss
           </Button>

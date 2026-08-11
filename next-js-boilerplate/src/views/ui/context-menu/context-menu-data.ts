@@ -9,7 +9,10 @@ export const files = [
   { name: "notes.txt", size: "12 KB", date: "2026-07-08" },
 ];
 
-export function handleCopy(text: string, toast: ReturnType<typeof useToast>["toast"]) {
+export function handleCopy(
+  text: string,
+  toast: ReturnType<typeof useToast>["toast"],
+) {
   navigator.clipboard.writeText(text);
   toast({ title: "Copied", description: "Text copied to clipboard." });
 }
@@ -24,4 +27,15 @@ export function handleRename(toast: ReturnType<typeof useToast>["toast"]) {
 
 export function handleDuplicate(toast: ReturnType<typeof useToast>["toast"]) {
   toast({ title: "Duplicated", description: "File duplicated successfully." });
+}
+
+export function handleDeleteFile(
+  name: string,
+  toast: ReturnType<typeof useToast>["toast"],
+) {
+  toast({ title: "Deleted", description: `${name} deleted successfully.` });
+}
+
+export function handleDeleteText(toast: ReturnType<typeof useToast>["toast"]) {
+  toast({ title: "Deleted", description: "Text deleted." });
 }

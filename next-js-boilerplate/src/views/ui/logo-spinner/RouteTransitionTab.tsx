@@ -33,7 +33,7 @@ export function RouteTransitionTab() {
         </div>
       </div>
       {isNavigating && (
-        <div className="bg-bg/80 fixed inset-0 z-50 flex items-center justify-center">
+        <div className="bg-bg/80 absolute inset-0 z-50 flex items-center justify-center">
           <LogoSpinner />
         </div>
       )}

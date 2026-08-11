@@ -14,14 +14,16 @@ import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Form Error Summary",
-    description: "Error variant alert listing invalid fields.",
+    title: "Components",
+    description:
+      "All alert variants: default, info, success, warning, and error.",
     render: () => <ComponentsTab />,
   },
   {
     id: "variants",
-    title: "Success Notice",
-    description: "Success variant alert with auto icon.",
+    title: "Examples",
+    description:
+      "Dismissible alert with a variant switcher, plus real-world status alert examples.",
     render: () => <ExamplesTab />,
   },
   {

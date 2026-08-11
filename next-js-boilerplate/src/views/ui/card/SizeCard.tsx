@@ -1,6 +1,5 @@
 import { Card, CardContent } from "@/components/ui/Card";
 import { cn } from "@/lib/cn";
-import type { sizes } from "./variant-gallery-data";
 import type { SizeCardProps } from "@/types/views/ui/CardDemo-types";
 
 export function SizeCard({ size }: SizeCardProps) {
@@ -16,7 +15,7 @@ export function SizeCard({ size }: SizeCardProps) {
           {size}
         </span>
         <span className="text-muted/60 mt-1 text-[10px]">
-          {size === "sm" ? "p-3" : size === "lg" ? "p-6-8" : "p-4-5"}
+          {size === "sm" ? "p-3" : size === "lg" ? "p-8" : "p-5"}
         </span>
       </CardContent>
     </Card>

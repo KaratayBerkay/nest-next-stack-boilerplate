@@ -12,7 +12,12 @@ export function CoverPhotoTab() {
       <p className="text-muted text-xs">
         Single image upload with a video-aspect ratio (16:9) for cover photos.
       </p>
-      <ImageUpload aspect="video" value={files} onChange={setFiles} />
+      <ImageUpload
+        aspect="video"
+        maxFiles={1}
+        value={files}
+        onChange={setFiles}
+      />
     </div>
   );
 }

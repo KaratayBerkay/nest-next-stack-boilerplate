@@ -14,10 +14,15 @@ function FormLevelErrorDemo() {
 
   const form = useForm({
     defaultValues: { email: "" },
-    onSubmit: async ({ value }) => {
-      if (!value.email.includes("@")) {
-        throw new Error("Please enter a valid email address.");
-      }
+    validators: {
+      onSubmitAsync: async ({ value }) => {
+        if (!value.email.includes("@")) {
+          return "Please enter a valid email address.";
+        }
+        return undefined;
+      },
+    },
+    onSubmit: async () => {
       setSubmitted(true);
     },
   });

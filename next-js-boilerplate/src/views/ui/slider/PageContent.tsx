@@ -124,14 +124,14 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Price Range",
-    description: "Two-thumb range slider with value readout.",
-    render: () => <ComponentsTab />,
+    description: "Single-thumb sliders with a live value readout.",
+    render: () => <ExamplesTab />,
   },
   {
     id: "variants",
     title: "Volume",
-    description: "Single thumb slider with icon and live percentage.",
-    render: () => <ExamplesTab />,
+    description: "Single thumb slider with icon and live value readout.",
+    render: () => <ComponentsTab />,
   },
 ];
 

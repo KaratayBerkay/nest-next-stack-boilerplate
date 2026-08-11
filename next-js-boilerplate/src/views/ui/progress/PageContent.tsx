@@ -120,11 +120,7 @@ const examples: UIExample[] = [
         variants={["default"]}
         sizes={["sm", "md", "lg"]}
         render={(_variant, size) => (
-          <Progress
-            value={65}
-            className={size === "sm" ? "h-1" : size === "lg" ? "h-3" : "h-2"}
-            data-size={size}
-          />
+          <Progress value={65} size={size as "sm" | "md" | "lg"} />
         )}
       />
     ),

@@ -59,11 +59,9 @@ export function DataPaneTab() {
               </div>
               <div className="flex flex-1 flex-col">
                 <span className="text-sm font-medium">{item.name}</span>
-                <span className="text-text-secondary text-xs">
-                  {item.email}
-                </span>
+                <span className="text-muted text-xs">{item.email}</span>
               </div>
-              <span className="text-text-secondary text-xs">{item.role}</span>
+              <span className="text-muted text-xs">{item.role}</span>
             </div>
           ))}
         </div>

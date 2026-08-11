@@ -1,8 +1,9 @@
-import { Avatar, AvatarGroup } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
 import { ComponentsTab } from "@/views/ui/avatar/ComponentsTab";
 import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { AvatarVariant } from "@/types/ui/Avatar-types";
 
 const teamMembers = [
   {
@@ -97,15 +98,14 @@ export const avatarExamples: UIExample[] = [
     description: "Avatar component across all theme variants and sizes.",
     render: () => (
       <VariantGallery
-        variants={["default", "secondary", "outline"]}
+        variants={["default", "brand", "success", "warning", "error", "info"]}
         sizes={["sm", "md", "lg", "xl"]}
         render={(variant, size) => (
           <Avatar
-            src="https://i.pravatar.cc/80?img=8"
             alt="User"
             fallback="XX"
             size={size as "sm" | "md" | "lg" | "xl"}
-            data-variant={variant}
+            variant={variant as AvatarVariant}
           />
         )}
       />

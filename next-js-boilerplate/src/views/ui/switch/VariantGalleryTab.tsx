@@ -5,7 +5,7 @@ import type { SwitchVariant, SwitchSize } from "@/types/ui/Switch-types";
 export function VariantGalleryTab() {
   return (
     <VariantGallery
-      variants={["default", "shiny", "glass", "neon", "gradient"]}
+      variants={["default", "outline", "shiny", "glass", "neon", "gradient"]}
       sizes={["sm", "md", "lg"]}
       render={(variant, size) => (
         <Switch

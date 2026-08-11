@@ -8,7 +8,6 @@ import {
   handleMouseLeave,
   handleRetry,
 } from "@/views/ui/alert/ServerRetryTimer";
-import type { ServerRetryStatus } from "@/types/views/ui/ServerRetryTab-types";
 import type { ServerRetryActiveAlertProps } from "@/types/views/ui/AlertDemo-types";
 
 export function ServerRetryActiveAlert({
@@ -81,7 +80,7 @@ export function ServerRetryActiveAlert({
                   ERR_CONNECTION_REFUSED
                 </span>
                 <span>·</span>
-                <span>Attempt {retryCount + 1} of 5</span>
+                <span>Attempt {retryCount + 1}</span>
               </div>
               <p>
                 Unable to reach the API server at{" "}

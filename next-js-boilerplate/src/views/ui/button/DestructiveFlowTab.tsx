@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/toast/use-toast";
 
 export function DestructiveFlowTab() {
   const [deleting, setDeleting] = useState(false);
+  const [deleted, setDeleted] = useState(false);
   const { toast } = useToast();
 
   return (
@@ -27,12 +28,22 @@ export function DestructiveFlowTab() {
               setDeleting(true);
               setTimeout(() => {
                 setDeleting(false);
+                setDeleted(true);
                 toast({
                   title: "Account deleted",
                   description:
                     "Your account has been deleted. This action can be undone for 30 seconds.",
                   variant: "destructive",
-                  duration: 10000,
+                  duration: 30000,
+                  action: (
+                    <Button
+                      variant="link"
+                      className="h-auto p-0 text-xs font-medium"
+                      onClick={() => setDeleted(false)}
+                    >
+                      Undo
+                    </Button>
+                  ),
                 });
               }, 1500);
             }}
@@ -44,6 +55,11 @@ export function DestructiveFlowTab() {
             )}
           </ConfirmDialog>
         </div>
+        {deleted && (
+          <p className="text-error text-xs">
+            Account marked as deleted. Click Undo on the toast to restore.
+          </p>
+        )}
       </section>
     </div>
   );

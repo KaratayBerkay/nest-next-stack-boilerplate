@@ -3,45 +3,57 @@
 import { useState } from "react";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/RadioGroup";
 
+const PLAN_TIERS = [
+  {
+    value: "free",
+    label: "Free",
+    price: "$0/mo",
+    desc: "For hobby projects",
+  },
+  {
+    value: "pro",
+    label: "Pro",
+    price: "$19/mo",
+    desc: "For growing teams",
+  },
+  {
+    value: "enterprise",
+    label: "Enterprise",
+    price: "Custom",
+    desc: "For large organizations",
+  },
+];
+
 export function PlanTiersTab() {
-  const [theme, setTheme] = useState("dark");
+  const [plan, setPlan] = useState("pro");
 
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Theme Selection</h3>
+        <h3 className="text-lg font-semibold">Plan Tiers</h3>
         <div className="surface max-w-sm space-y-4 p-4">
           <RadioGroup
-            value={theme}
-            onValueChange={setTheme}
+            value={plan}
+            onValueChange={setPlan}
             className="space-y-3"
           >
-            {[
-              {
-                value: "light",
-                label: "Light",
-                desc: "Bright, clean interface",
-              },
-              { value: "dark", label: "Dark", desc: "Easy on the eyes" },
-              {
-                value: "system",
-                label: "System",
-                desc: "Follow OS preference",
-              },
-            ].map((t) => (
+            {PLAN_TIERS.map((p) => (
               <label
-                key={t.value}
-                htmlFor={`theme-${t.value}`}
+                key={p.value}
+                htmlFor={`plan-${p.value}`}
                 className="has-[:checked]:border-brand has-[:checked]:bg-brand/5 flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors"
               >
                 <RadioGroupItem
-                  value={t.value}
-                  id={`theme-${t.value}`}
+                  value={p.value}
+                  id={`plan-${p.value}`}
                   className="mt-0.5"
                 />
-                <div>
-                  <div className="text-sm font-medium">{t.label}</div>
-                  <div className="text-muted text-xs">{t.desc}</div>
+                <div className="flex flex-1 items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium">{p.label}</div>
+                    <div className="text-muted text-xs">{p.desc}</div>
+                  </div>
+                  <div className="text-sm font-medium">{p.price}</div>
                 </div>
               </label>
             ))}
@@ -49,11 +61,12 @@ export function PlanTiersTab() {
         </div>
         <div className="bg-surface border-border flex max-w-sm items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
-            Selected theme: <strong>{theme}</strong>
+            Selected plan:{" "}
+            <strong>{PLAN_TIERS.find((p) => p.value === plan)?.label}</strong>
           </span>
           <button
             type="button"
-            onClick={() => setTheme("dark")}
+            onClick={() => setPlan("pro")}
             className="text-muted hover:text-fg p-0.5"
           >
             <svg

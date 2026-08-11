@@ -8,20 +8,20 @@ import type { ToggleSize } from "@/types/ui/Toggle-types";
 import type { GlobalVariant } from "@/components/ui/global-style-variants";
 
 function ComponentsTab() {
-  const [alignment, setAlignment] = useState("a");
+  const [alignment, setAlignment] = useState("left");
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Single Selection</h3>
+        <h3 className="text-lg font-semibold">Text Alignment</h3>
         <ToggleGroup
           type="single"
           value={alignment}
           onValueChange={(v) => v && setAlignment(v)}
         >
-          <ToggleGroupItem value="a">A</ToggleGroupItem>
-          <ToggleGroupItem value="b">B</ToggleGroupItem>
-          <ToggleGroupItem value="c">C</ToggleGroupItem>
+          <ToggleGroupItem value="left">Left</ToggleGroupItem>
+          <ToggleGroupItem value="center">Center</ToggleGroupItem>
+          <ToggleGroupItem value="right">Right</ToggleGroupItem>
         </ToggleGroup>
         <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
@@ -29,7 +29,7 @@ function ComponentsTab() {
           </span>
           <button
             type="button"
-            onClick={() => setAlignment("a")}
+            onClick={() => setAlignment("left")}
             className="text-muted hover:text-fg p-0.5"
           >
             <svg
@@ -51,25 +51,25 @@ function ComponentsTab() {
 }
 
 function ExamplesTab() {
-  const [format, setFormat] = useState<string[]>([]);
+  const [filters, setFilters] = useState<string[]>([]);
 
   return (
     <div className="flex flex-col gap-4">
       <section className="flex flex-col gap-3">
-        <h3 className="text-lg font-semibold">Text Formatting</h3>
-        <ToggleGroup type="multiple" value={format} onValueChange={setFormat}>
-          <ToggleGroupItem value="bold">B</ToggleGroupItem>
-          <ToggleGroupItem value="italic">I</ToggleGroupItem>
-          <ToggleGroupItem value="underline">U</ToggleGroupItem>
+        <h3 className="text-lg font-semibold">Board Filters</h3>
+        <ToggleGroup type="multiple" value={filters} onValueChange={setFilters}>
+          <ToggleGroupItem value="bug">Bug</ToggleGroupItem>
+          <ToggleGroupItem value="feature">Feature</ToggleGroupItem>
+          <ToggleGroupItem value="urgent">Urgent</ToggleGroupItem>
         </ToggleGroup>
         <div className="bg-surface border-border flex items-center justify-between rounded border px-3 py-2">
           <span className="text-sm">
             Active:{" "}
-            <strong>{format.length > 0 ? format.join(", ") : "none"}</strong>
+            <strong>{filters.length > 0 ? filters.join(", ") : "none"}</strong>
           </span>
           <button
             type="button"
-            onClick={() => setFormat([])}
+            onClick={() => setFilters([])}
             className="text-muted hover:text-fg p-0.5"
           >
             <svg

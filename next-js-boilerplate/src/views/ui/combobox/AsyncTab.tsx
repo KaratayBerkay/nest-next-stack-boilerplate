@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { getLabel } from "./helpers";
 import { asyncData } from "./data";
 import { useDebounce } from "@/hooks/ui/useDebounce";
@@ -12,10 +12,10 @@ export function AsyncTab() {
   const [results, setResults] = useState<{ value: string; label: string }[]>(
     [],
   );
+  const [resolvedQuery, setResolvedQuery] = useState("");
   const [value, setValue] = useState("");
   const debouncedQuery = useDebounce(query, 300);
-
-  const loading = debouncedQuery.length > 0 && results.length === 0;
+  const loading = debouncedQuery !== resolvedQuery;
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -26,6 +26,7 @@ export function AsyncTab() {
             )
           : [],
       );
+      setResolvedQuery(debouncedQuery);
     }, 400);
     return () => clearTimeout(timer);
   }, [debouncedQuery]);

@@ -26,7 +26,11 @@ export function CompactFormatTab() {
       {compactDate && (
         <p className="text-fg text-sm">
           <span className="text-muted">DD/MM/YY: </span>
-          {compactDate.toLocaleDateString("en-GB")}
+          {compactDate.toLocaleDateString("en-GB", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "2-digit",
+          })}
           <span className="text-muted ml-3">Time: </span>
           {formatTime(compactDate)}
         </p>
