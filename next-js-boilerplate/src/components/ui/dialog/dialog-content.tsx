@@ -138,7 +138,7 @@ export function DialogContent({
             <path d="m6 6 12 12" />
           </svg>
         </button>
-        <div className="pointer-events-auto flex min-h-0 flex-1 flex-col">
+        <div className="pointer-events-auto flex min-h-0 min-w-0 flex-1 flex-col">
           {children}
         </div>
       </dialog>
