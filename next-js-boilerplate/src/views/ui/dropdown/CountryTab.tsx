@@ -19,6 +19,7 @@ export function CountryTab() {
     <div className="flex flex-col gap-2">
       <Label htmlFor="country-dropdown">Country</Label>
       <Dropdown
+        id="country-dropdown"
         aria-label="Country"
         options={COUNTRIES}
         value={country}

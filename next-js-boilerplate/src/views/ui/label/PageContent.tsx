@@ -9,9 +9,8 @@ import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Paired Controls",
-    description:
-      "Label with htmlFor connecting to input, switch, and checkbox.",
+    title: "Default",
+    description: "A default label and one with a required indicator.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
@@ -30,8 +29,8 @@ const examples: UIExample[] = [
   },
   {
     id: "variants",
-    title: "Required Marker",
-    description: "Label with required indicator and disabled dimming.",
+    title: "Paired Controls",
+    description: "Labels connected to inputs via htmlFor in a signup form.",
     render: () => (
       <section className="flex flex-col gap-3">
         <h3 className="text-lg font-semibold">Signup Form</h3>

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -11,10 +14,23 @@ import {
 } from "@/components/ui/Dialog";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 export function NestedConfirmTab() {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
+  function handleDelete() {
+    setOpen(false);
+    toast({
+      title: "Account deleted",
+      description: "Your account has been permanently removed.",
+      variant: "destructive",
+    });
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger variant="destructive">Delete Account</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -34,7 +50,7 @@ export function NestedConfirmTab() {
           <ConfirmDialog
             title="Confirm Deletion"
             description="Are you absolutely sure? This cannot be undone."
-            onConfirm={() => {}}
+            onConfirm={handleDelete}
           >
             {(openDialog) => (
               <Button variant="destructive" onClick={openDialog}>

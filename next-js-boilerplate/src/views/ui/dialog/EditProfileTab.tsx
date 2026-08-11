@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -12,10 +15,23 @@ import {
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
+import { useToast } from "@/components/ui/Toast";
 
 export function EditProfileTab() {
+  const [open, setOpen] = useState(false);
+  const { toast } = useToast();
+
+  function handleSave() {
+    setOpen(false);
+    toast({
+      title: "Profile saved",
+      description: "Your changes have been saved.",
+      variant: "success",
+    });
+  }
+
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger variant="primary">Edit Profile</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -38,7 +54,9 @@ export function EditProfileTab() {
         </DialogBody>
         <DialogFooter>
           <DialogClose variant="outline">Cancel</DialogClose>
-          <Button variant="primary">Save Changes</Button>
+          <Button variant="primary" onClick={handleSave}>
+            Save Changes
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

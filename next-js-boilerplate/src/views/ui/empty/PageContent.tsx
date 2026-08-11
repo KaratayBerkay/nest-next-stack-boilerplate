@@ -8,8 +8,8 @@ import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "No Search Results",
-    description: "Empty state with icon and reset action.",
+    title: "Default",
+    description: "Simple empty state with title and description.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

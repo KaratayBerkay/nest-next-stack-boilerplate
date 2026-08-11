@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Carousel,
   CarouselContent,
@@ -8,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { useToast } from "@/components/ui/Toast";
 import { Stars, Dots } from "@/views/ui/carousel/CarouselHelpers";
 
 const products = [
@@ -74,6 +77,16 @@ const products = [
 ];
 
 export function ProductGallery() {
+  const { toast } = useToast();
+
+  function handleAddToCart(productName: string) {
+    toast({
+      title: "Added to cart",
+      description: `${productName} added to your cart.`,
+      variant: "success",
+    });
+  }
+
   return (
     <Carousel opts={{ loop: true }}>
       <div className="relative">
@@ -118,7 +131,11 @@ export function ProductGallery() {
                       </span>
                     )}
                   </div>
-                  <Button className="mt-3 w-full" size="sm">
+                  <Button
+                    className="mt-3 w-full"
+                    size="sm"
+                    onClick={() => handleAddToCart(product.name)}
+                  >
                     Add to Cart
                   </Button>
                 </div>

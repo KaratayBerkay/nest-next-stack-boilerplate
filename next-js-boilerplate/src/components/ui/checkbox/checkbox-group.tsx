@@ -5,7 +5,10 @@ import { cn } from "@/lib/cn";
 import { fontClasses } from "@/lib/font-classes";
 import { Checkbox } from "./checkbox";
 import { IndeterminateCheckbox } from "./indeterminate-checkbox";
-import type { CheckboxGroupProps } from "@/types/ui/Checkbox-types";
+import type {
+  CheckboxGroupItem,
+  CheckboxGroupProps,
+} from "@/types/ui/Checkbox-types";
 
 function handleToggle(
   itemValue: string,
@@ -21,13 +24,15 @@ function handleToggle(
 
 function handleSelectAll(
   allSelected: boolean,
-  items: { value: string }[],
+  items: CheckboxGroupItem[],
   onValueChange: (values: string[]) => void,
 ) {
   if (allSelected) {
     onValueChange([]);
   } else {
-    onValueChange(items.map((item) => item.value));
+    onValueChange(
+      items.filter((item) => !item.disabled).map((item) => item.value),
+    );
   }
 }
 
@@ -46,8 +51,13 @@ export function CheckboxGroup({
   const autoId = useId();
   const fonts = fontClasses({ fontSize, fontWeight, fontFamily });
 
-  const allSelected = items.every((item) => values.includes(item.value));
-  const someSelected = items.some((item) => values.includes(item.value));
+  const enabledItems = items.filter((item) => !item.disabled);
+  const hasEnabledItems = enabledItems.length > 0;
+  const allSelected =
+    hasEnabledItems &&
+    enabledItems.every((item) => values.includes(item.value));
+  const someSelected =
+    hasEnabledItems && enabledItems.some((item) => values.includes(item.value));
 
   return (
     <div className={cn("flex flex-col gap-2", className)}>

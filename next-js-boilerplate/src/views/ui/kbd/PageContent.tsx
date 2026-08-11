@@ -11,7 +11,7 @@ const examples: UIExample[] = [
   {
     id: "usage",
     title: "Shortcut Reference",
-    description: "Two-column keyboard shortcut cheat sheet.",
+    description: "Individual shortcut keys displayed in a row.",
     render: () => (
       <div className="flex flex-col gap-6">
         <section className="flex flex-col gap-3">

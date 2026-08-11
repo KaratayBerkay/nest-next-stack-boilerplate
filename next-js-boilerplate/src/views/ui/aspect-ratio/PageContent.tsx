@@ -52,8 +52,8 @@ const GRID_IMAGES = [
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Video 16:9",
-    description: "Embed placeholder with 16:9 aspect ratio.",
+    title: "Image 16:9",
+    description: "Photo with skeleton loader in a 16:9 aspect ratio.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

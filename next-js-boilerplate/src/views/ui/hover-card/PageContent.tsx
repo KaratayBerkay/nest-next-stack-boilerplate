@@ -12,8 +12,8 @@ import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "User Preview",
-    description: "GitHub-style profile preview on hover.",
+    title: "Default",
+    description: "Basic trigger that reveals content on hover.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">

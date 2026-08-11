@@ -14,8 +14,8 @@ import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
 const examples: UIExample[] = [
   {
     id: "usage",
-    title: "Product Mega Menu",
-    description: "Navigation menu with viewport panels.",
+    title: "Default",
+    description: "Trigger that opens a viewport panel with links.",
     render: () => (
       <div className="flex flex-col gap-4">
         <section className="flex flex-col gap-3">
