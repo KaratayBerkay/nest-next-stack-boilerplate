@@ -24,4 +24,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "applicationShellTitle",
     descKey: "applicationShellDescription",
   },
+  {
+    name: "Background Pattern",
+    slug: "background-pattern",
+    titleKey: "backgroundPatternTitle",
+    descKey: "backgroundPatternDescription",
+  },
 ];
