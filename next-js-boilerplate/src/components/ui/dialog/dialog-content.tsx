@@ -103,7 +103,7 @@ export function DialogContent({
       <dialog
         ref={dialogRef}
         className={cn(
-          "backdrop:bg-overlay/50 pointer-events-auto m-auto flex h-dvh w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
+          "backdrop:bg-overlay/50 pointer-events-auto m-auto flex h-dvh !w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
           resolveVariant(dialogVariants, effectiveVariant),
           sizeStyles[size],
           !open && !closing && "hidden",
@@ -138,7 +138,7 @@ export function DialogContent({
             <path d="m6 6 12 12" />
           </svg>
         </button>
-        <div className="pointer-events-auto flex min-h-0 min-w-0 flex-auto flex-col">
+        <div className="pointer-events-auto flex min-h-0 min-w-0 flex-1 flex-col">
           {children}
         </div>
       </dialog>
