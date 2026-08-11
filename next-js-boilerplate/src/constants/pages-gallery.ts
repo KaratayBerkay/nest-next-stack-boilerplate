@@ -30,4 +30,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "backgroundPatternTitle",
     descKey: "backgroundPatternDescription",
   },
+  {
+    name: "Banner",
+    slug: "banner",
+    titleKey: "bannerTitle",
+    descKey: "bannerDescription",
+  },
 ];

@@ -1247,6 +1247,8 @@ export type I18nMessages = {
         "applicationShellDescription": string;
         "backgroundPatternTitle": string;
         "backgroundPatternDescription": string;
+        "bannerTitle": string;
+        "bannerDescription": string;
       };
       "about": {
         "heading": string;
@@ -2131,6 +2133,41 @@ export type I18nMessages = {
         "bgp116TabDescription": string;
         "bgp117TabTitle": string;
         "bgp117TabDescription": string;
+      };
+      "banner": {
+        "b1TabTitle": string;
+        "b1TabDescription": string;
+        "b1Title": string;
+        "b1Description": string;
+        "b1Link": string;
+        "b2TabTitle": string;
+        "b2TabDescription": string;
+        "b2Title": string;
+        "b2Description": string;
+        "b2Link": string;
+        "b3TabTitle": string;
+        "b3TabDescription": string;
+        "b3Title": string;
+        "b3Description": string;
+        "b3Button": string;
+        "b4TabTitle": string;
+        "b4TabDescription": string;
+        "b4Title": string;
+        "b4Description": string;
+        "b5TabTitle": string;
+        "b5TabDescription": string;
+        "b5Title": string;
+        "b5Description": string;
+        "b5Button": string;
+        "b6TabTitle": string;
+        "b6TabDescription": string;
+        "b6Text": string;
+        "b7TabTitle": string;
+        "b7TabDescription": string;
+        "b7Title": string;
+        "b7Message": string;
+        "b7Link": string;
+        "bannerCloseAria": string;
       };
     }
 

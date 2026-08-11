@@ -19,7 +19,9 @@
     "applicationShellTitle": "Uygulama Kabuğu",
     "applicationShellDescription": "Uygulama kabukları: kenar çubukları, üst navigasyonlar ve özel arayüzler",
     "backgroundPatternTitle": "Arka Plan Deseni",
-    "backgroundPatternDescription": "Saf CSS arka plan desenleri: ızgaralar, noktalar, parlamalar ve devre kartları"
+    "backgroundPatternDescription": "Saf CSS arka plan desenleri: ızgaralar, noktalar, parlamalar ve devre kartları",
+    "bannerTitle": "Banner",
+    "bannerDescription": "Duyuru ve promosyon bantları"
   },
   "about": {
     "heading": "Hakkımızda",
@@ -904,5 +906,40 @@
     "bgp116TabDescription": "Üst bant nokta ızgara arka planı",
     "bgp117TabTitle": "Alt Bant Nokta Izgarası",
     "bgp117TabDescription": "Alt bant nokta ızgara arka planı"
+  },
+  "banner": {
+    "b1TabTitle": "Duyuru Çubuğu",
+    "b1TabDescription": "Tam genişlikte kapatılabilir duyuru çubuğu",
+    "b1Title": "Yeni kontrol panelimiz yayında",
+    "b1Description": "Yeni analiz görünümünün verilerinizi nasıl hayata geçirdiğini keşfedin.",
+    "b1Link": "Duyuruyu okuyun",
+    "b2TabTitle": "Kapsayıcı Duyuru",
+    "b2TabDescription": "Kapatılabilir kapsayıcı duyuru çubuğu",
+    "b2Title": "İşe alım yapıyoruz",
+    "b2Description": "Uzaktan çalışan ekibimize katılın ve geleceği birlikte şekillendirin.",
+    "b2Link": "Açık pozisyonları inceleyin",
+    "b3TabTitle": "Birincil Promosyon",
+    "b3TabDescription": "Alışveriş butonlu birincil promosyon bandı",
+    "b3Title": "Yaz İndirimi",
+    "b3Description": "Tüm yeni ürünlerde %40'a varan indirim.",
+    "b3Button": "Hemen alışveriş",
+    "b4TabTitle": "Birincil Bant",
+    "b4TabDescription": "Kapatılabilir birincil bant",
+    "b4Title": "Yeni fiyatlandırmamız yayında",
+    "b4Description": "Daha sade planlar, aynı harika özellikler — bugün keşfedin.",
+    "b5TabTitle": "Yüzen Kart",
+    "b5TabDescription": "Bağlantılı yüzen kart bandı",
+    "b5Title": "10× daha hızlı derlemeler",
+    "b5Description": "Ekibinizin zaten sevdiği araçlarla iş akışınızı hızlandırın.",
+    "b5Button": "Başlayın",
+    "b6TabTitle": "Sosyal Kanıt Hapı",
+    "b6TabDescription": "Örtüşen avatarlı hap banner",
+    "b6Text": "shadcnblocks ile üretim yapan 10.000+ geliştiriciye katılın",
+    "b7TabTitle": "Bilgi Şeridi",
+    "b7TabDescription": "Ayraç bağlantılı tam genişlik banner",
+    "b7Title": "Yeni",
+    "b7Message": "Fiyatlandırma güncellememiz yayında —",
+    "b7Link": "Daha fazla bilgi",
+    "bannerCloseAria": "Bannerı kapat"
   }
 }

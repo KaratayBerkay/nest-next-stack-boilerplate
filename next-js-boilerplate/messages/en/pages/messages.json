@@ -19,7 +19,9 @@
     "applicationShellTitle": "Application Shell",
     "applicationShellDescription": "App layout shells: sidebars, top navs, and specialized interfaces",
     "backgroundPatternTitle": "Background Pattern",
-    "backgroundPatternDescription": "Pure CSS background patterns: grids, dots, glows, and circuit boards"
+    "backgroundPatternDescription": "Pure CSS background patterns: grids, dots, glows, and circuit boards",
+    "bannerTitle": "Banner",
+    "bannerDescription": "Announcement and promo banner strips"
   },
   "about": {
     "heading": "About Us",
@@ -904,5 +906,40 @@
     "bgp116TabDescription": "Top band dot grid background",
     "bgp117TabTitle": "Dot Grid Bottom Band",
     "bgp117TabDescription": "Bottom band dot grid background"
+  },
+  "banner": {
+    "b1TabTitle": "Announcement Bar",
+    "b1TabDescription": "Full-width dismissible announcement bar",
+    "b1Title": "Introducing our new dashboard",
+    "b1Description": "See how the new analytics view brings your data to life.",
+    "b1Link": "Read the announcement",
+    "b2TabTitle": "Container Announcement",
+    "b2TabDescription": "Container announcement bar with dismiss",
+    "b2Title": "We're hiring",
+    "b2Description": "Join our remote-first team and shape what's next.",
+    "b2Link": "View open roles",
+    "b3TabTitle": "Primary Promo",
+    "b3TabDescription": "Primary promo banner with shop button",
+    "b3Title": "Summer Sale",
+    "b3Description": "Get up to 40% off on all new arrivals.",
+    "b3Button": "Shop now",
+    "b4TabTitle": "Primary Bar",
+    "b4TabDescription": "Primary bar banner with dismiss",
+    "b4Title": "Our new pricing is live",
+    "b4Description": "Simpler plans, same great features — check them out today.",
+    "b5TabTitle": "Floating Card",
+    "b5TabDescription": "Floating card banner with link",
+    "b5Title": "Unlock 10× faster builds",
+    "b5Description": "Streamline your workflow with the tools your team already loves.",
+    "b5Button": "Get started",
+    "b6TabTitle": "Social Proof Pill",
+    "b6TabDescription": "Pill banner with overlapping avatars",
+    "b6Text": "Join 10,000+ developers building with shadcnblocks",
+    "b7TabTitle": "Utility Strip",
+    "b7TabDescription": "Full-width banner with separator link",
+    "b7Title": "New",
+    "b7Message": "Our pricing update is here —",
+    "b7Link": "Learn more",
+    "bannerCloseAria": "Close banner"
   }
 }
