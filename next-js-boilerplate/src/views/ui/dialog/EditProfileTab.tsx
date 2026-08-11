@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -16,19 +16,23 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { useToast } from "@/components/ui/Toast";
+import type { ToastOptions } from "@/types/ui/Toast-types";
+
+function handleSave(
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  toast: (options: ToastOptions) => void,
+) {
+  setOpen(false);
+  toast({
+    title: "Profile saved",
+    description: "Your changes have been saved.",
+    variant: "success",
+  });
+}
 
 export function EditProfileTab() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
-
-  function handleSave() {
-    setOpen(false);
-    toast({
-      title: "Profile saved",
-      description: "Your changes have been saved.",
-      variant: "success",
-    });
-  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -54,7 +58,7 @@ export function EditProfileTab() {
         </DialogBody>
         <DialogFooter>
           <DialogClose variant="outline">Cancel</DialogClose>
-          <Button variant="primary" onClick={handleSave}>
+          <Button variant="primary" onClick={() => handleSave(setOpen, toast)}>
             Save Changes
           </Button>
         </DialogFooter>

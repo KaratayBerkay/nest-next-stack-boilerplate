@@ -12,6 +12,18 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { useToast } from "@/components/ui/Toast";
 import { Stars, Dots } from "@/views/ui/carousel/CarouselHelpers";
+import type { ToastOptions } from "@/types/ui/Toast-types";
+
+function handleAddToCart(
+  productName: string,
+  toast: (options: ToastOptions) => void,
+) {
+  toast({
+    title: "Added to cart",
+    description: `${productName} added to your cart.`,
+    variant: "success",
+  });
+}
 
 const products = [
   {
@@ -79,14 +91,6 @@ const products = [
 export function ProductGallery() {
   const { toast } = useToast();
 
-  function handleAddToCart(productName: string) {
-    toast({
-      title: "Added to cart",
-      description: `${productName} added to your cart.`,
-      variant: "success",
-    });
-  }
-
   return (
     <Carousel opts={{ loop: true }}>
       <div className="relative">
@@ -134,7 +138,7 @@ export function ProductGallery() {
                   <Button
                     className="mt-3 w-full"
                     size="sm"
-                    onClick={() => handleAddToCart(product.name)}
+                    onClick={() => handleAddToCart(product.name, toast)}
                   >
                     Add to Cart
                   </Button>
