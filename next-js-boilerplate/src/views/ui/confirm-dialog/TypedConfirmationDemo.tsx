@@ -52,7 +52,7 @@ export function TypedConfirmationDemo() {
       <Button variant="destructive" onClick={() => setOpen(true)}>
         Delete Account
       </Button>
-      <DialogContent>
+      <DialogContent className="sm:h-[400px]">
         <DialogHeader>
           <DialogTitle>Delete Account</DialogTitle>
           <DialogDescription>
