@@ -16,6 +16,22 @@
     "intro": "We are a team of makers, engineers, and storytellers who believe great products come from curiosity, care, and close collaboration.",
     "workplaceHeading": "Workplace",
     "workplaceParagraph1": "Our studio is a quiet corner of the internet — a place where small, focused teams ship work that feels personal. Every project starts with a conversation and ends with something we are proud to put our name on.",
-    "workplaceParagraph2": "We keep the team small on purpose. That way every person owns their work end to end, every idea gets heard, and quality never becomes a negotiation."
+    "workplaceParagraph2": "We keep the team small on purpose. That way every person owns their work end to end, every idea gets heard, and quality never becomes a negotiation.",
+    "tabWithSixImagesTitle": "With 6 image",
+    "tabWithSixImagesDescription": "Story and workplace photo grid",
+    "tabWithTeamTitle": "With Team",
+    "tabWithTeamDescription": "Sticky sidebar company profile",
+    "teamCompanyName": "Acme Inc.",
+    "teamCompanySubtitle": "Software company",
+    "teamContactEmail": "hello@acme.com",
+    "teamHeading": "About Us",
+    "teamBio": "Acme Inc. builds tools for teams that move fast. For a decade we have helped product teams turn rough ideas into software people actually enjoy using — from first prototype to worldwide launch.",
+    "teamPhilosophyHeading": "Philosophy",
+    "teamPhilosophyParagraph": "We believe the best software is opinionated. It makes a few decisions well instead of deferring everything to the user. Every feature we ship has to earn its place by solving a real problem simply.",
+    "teamValuesHeading": "What we value",
+    "teamValuesParagraph": "Clarity over cleverness, feedback over approval, and small autonomous teams over large committees. We hire for judgment and trust people to own their work end to end.",
+    "teamWorkspaceAlt": "Acme Inc. office",
+    "teamListHeading": "Team",
+    "teamClosing": "We are always looking for curious people to join the team. If our philosophy resonates with you, we would love to hear from you."
   }
 }

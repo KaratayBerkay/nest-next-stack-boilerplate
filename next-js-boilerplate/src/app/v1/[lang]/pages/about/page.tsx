@@ -4,6 +4,7 @@ import PageContent from "@/views/pages/about/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -15,6 +16,7 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-export default function AboutPage() {
-  return <PageContent />;
+export default async function AboutPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <PageContent initialTab={tab} />;
 }

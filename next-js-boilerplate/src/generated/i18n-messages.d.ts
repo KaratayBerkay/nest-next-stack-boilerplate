@@ -1244,6 +1244,22 @@ export type I18nMessages = {
         "workplaceHeading": string;
         "workplaceParagraph1": string;
         "workplaceParagraph2": string;
+        "tabWithSixImagesTitle": string;
+        "tabWithSixImagesDescription": string;
+        "tabWithTeamTitle": string;
+        "tabWithTeamDescription": string;
+        "teamCompanyName": string;
+        "teamCompanySubtitle": string;
+        "teamContactEmail": string;
+        "teamHeading": string;
+        "teamBio": string;
+        "teamPhilosophyHeading": string;
+        "teamPhilosophyParagraph": string;
+        "teamValuesHeading": string;
+        "teamValuesParagraph": string;
+        "teamWorkspaceAlt": string;
+        "teamListHeading": string;
+        "teamClosing": string;
       };
     }
 
