@@ -69,6 +69,7 @@ export function DialogContent({
     } else if (!open && dialog.open) {
       setClosing(true);
       const timer = setTimeout(() => {
+        dialog.classList.add("hidden");
         dialog.classList.remove("dialog-closing");
         dialog.close();
         setClosing(false);
