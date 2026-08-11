@@ -102,6 +102,7 @@ export function DialogContent({
       {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
       <dialog
         ref={dialogRef}
+        style={{ width: "100%" }}
         className={cn(
           "backdrop:bg-overlay/50 pointer-events-auto m-auto flex h-dvh w-full flex-col overflow-hidden border-0 sm:h-fit sm:max-h-[85vh] sm:p-0",
           resolveVariant(dialogVariants, effectiveVariant),
