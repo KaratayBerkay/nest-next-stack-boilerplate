@@ -5,11 +5,15 @@
     "back": "Back",
     "breadcrumbLabel": "Pages",
     "title": "Pages",
-    "description": "Landing page sections built with the custom UI components"
+    "description": "Landing page sections built with the custom UI components",
+    "acceptInviteTitle": "Accept Invite",
+    "acceptInviteDescription": "Invitation acceptance screens"
   },
   "examples": {
     "aboutTitle": "About",
-    "aboutDescription": "Story and workplace photo grid — about6"
+    "aboutDescription": "Story and workplace photo grid — about6",
+    "acceptInviteTitle": "Accept Invite",
+    "acceptInviteDescription": "Invitation acceptance screens"
   },
   "about": {
     "heading": "About Us",
@@ -347,5 +351,31 @@
     "a28Bullet2Body": "Every Friday afternoon is dedicated to experiments, talks, and side quests.",
     "a28Bullet3Title": "Leave the camp clean",
     "a28Bullet3Body": "Docs updated, tests green, branch merged — no loose ends for the next person."
+  },
+  "acceptInvite": {
+    "ai1TabTitle": "With Email Form",
+    "ai1TabDescription": "Two-column invite with Google and email sign-in",
+    "ai1LogoName": "Acme Inc.",
+    "ai1GoogleButton": "Continue with Google",
+    "ai1Or": "or",
+    "ai1EmailLabel": "Email",
+    "ai1EmailPlaceholder": "you@example.com",
+    "ai1ContinueButton": "Continue with email",
+    "ai1Disclaimer": "By continuing, you agree to our Privacy Policy and Terms of Service.",
+    "ai1WelcomeHeading": "Welcome to Acme Inc.",
+    "ai1WelcomeParagraph1": "You have been invited to join the Acme Inc. workspace. Sign in with your Google account or your email address to get started.",
+    "ai1WelcomeParagraph2": "Once you are in, you will be able to collaborate on projects, share files, and keep your team in sync — all from one place.",
+    "ai1WelcomeParagraph3": "If you have any questions, our support team is one message away.",
+    "ai1FooterHelp": "Help",
+    "ai1FooterPrivacy": "Privacy",
+    "ai1FooterTerms": "Terms",
+    "ai2TabTitle": "With Avatar",
+    "ai2TabDescription": "Centered invite card",
+    "ai2InviteHeading": "Alex invited you to join",
+    "ai2CompanyName": "Acme Inc.",
+    "ai2Description": "Join the workspace to collaborate on projects, share files, and stay in sync with your team.",
+    "ai2Accept": "Accept",
+    "ai2Decline": "Decline",
+    "ai2Expires": "This invitation expires in 7 days."
   }
 }

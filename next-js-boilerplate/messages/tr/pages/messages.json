@@ -5,11 +5,15 @@
     "back": "Geri",
     "breadcrumbLabel": "Sayfalar",
     "title": "Sayfalar",
-    "description": "Özel UI bileşenleriyle oluşturulan açılış sayfası bölümleri"
+    "description": "Özel UI bileşenleriyle oluşturulan açılış sayfası bölümleri",
+    "acceptInviteTitle": "Davet Kabul Et",
+    "acceptInviteDescription": "Davet kabul ekranları"
   },
   "examples": {
     "aboutTitle": "Hakkımızda",
-    "aboutDescription": "Hikaye ve çalışma ortamı fotoğraf ızgarası — about6"
+    "aboutDescription": "Hikaye ve çalışma ortamı fotoğraf ızgarası — about6",
+    "acceptInviteTitle": "Davet Kabul Et",
+    "acceptInviteDescription": "Davet kabul ekranları"
   },
   "about": {
     "heading": "Hakkımızda",
@@ -347,5 +351,31 @@
     "a28Bullet2Body": "Her cuma öğleden sonrası deneylere, konuşmalara ve yan maceralara ayrılmıştır.",
     "a28Bullet3Title": "Kampı temiz bırak",
     "a28Bullet3Body": "Dokümanlar güncel, testler yeşil, dal birleşmiş — sıradaki kişi için boşta iş yok."
+  },
+  "acceptInvite": {
+    "ai1TabTitle": "E-posta Formlu",
+    "ai1TabDescription": "Google ve e-posta girişli iki sütunlu davet",
+    "ai1LogoName": "Acme Inc.",
+    "ai1GoogleButton": "Google ile devam et",
+    "ai1Or": "veya",
+    "ai1EmailLabel": "E-posta",
+    "ai1EmailPlaceholder": "ornek@example.com",
+    "ai1ContinueButton": "E-posta ile devam et",
+    "ai1Disclaimer": "Devam ederek Gizlilik Politikamızı ve Hizmet Şartlarımızı kabul etmiş olursunuz.",
+    "ai1WelcomeHeading": "Acme Inc.'e hoş geldiniz",
+    "ai1WelcomeParagraph1": "Acme Inc. çalışma alanına katılmaya davet edildiniz. Başlamak için Google hesabınızla ya da e-posta adresinizle giriş yapın.",
+    "ai1WelcomeParagraph2": "İçeri girdiğinizde projelerde iş birliği yapabilir, dosya paylaşabilir ve ekibinizi senkron tutabilirsiniz — hepsi tek yerden.",
+    "ai1WelcomeParagraph3": "Sorularınız olursa destek ekibimiz bir mesaj uzağınızda.",
+    "ai1FooterHelp": "Yardım",
+    "ai1FooterPrivacy": "Gizlilik",
+    "ai1FooterTerms": "Şartlar",
+    "ai2TabTitle": "Avatar ile",
+    "ai2TabDescription": "Ortalanmış davet kartı",
+    "ai2InviteHeading": "Alex sizi şuraya katılmaya davet etti:",
+    "ai2CompanyName": "Acme Inc.",
+    "ai2Description": "Projelerde iş birliği yapmak, dosya paylaşmak ve ekibinizle senkron kalmak için çalışma alanına katılın.",
+    "ai2Accept": "Kabul Et",
+    "ai2Decline": "Reddet",
+    "ai2Expires": "Bu davetin süresi 7 gün içinde doluyor."
   }
 }

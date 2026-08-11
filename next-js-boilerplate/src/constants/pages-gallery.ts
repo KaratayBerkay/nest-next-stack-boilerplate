@@ -12,4 +12,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "aboutTitle",
     descKey: "aboutDescription",
   },
+  {
+    name: "Accept Invite",
+    slug: "accept-invite",
+    titleKey: "acceptInviteTitle",
+    descKey: "acceptInviteDescription",
+  },
 ];

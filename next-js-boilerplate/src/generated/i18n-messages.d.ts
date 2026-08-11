@@ -1233,10 +1233,14 @@ export type I18nMessages = {
         "breadcrumbLabel": string;
         "title": string;
         "description": string;
+        "acceptInviteTitle": string;
+        "acceptInviteDescription": string;
       };
       "examples": {
         "aboutTitle": string;
         "aboutDescription": string;
+        "acceptInviteTitle": string;
+        "acceptInviteDescription": string;
       };
       "about": {
         "heading": string;
@@ -1574,6 +1578,32 @@ export type I18nMessages = {
         "a28Bullet2Body": string;
         "a28Bullet3Title": string;
         "a28Bullet3Body": string;
+      };
+      "acceptInvite": {
+        "ai1TabTitle": string;
+        "ai1TabDescription": string;
+        "ai1LogoName": string;
+        "ai1GoogleButton": string;
+        "ai1Or": string;
+        "ai1EmailLabel": string;
+        "ai1EmailPlaceholder": string;
+        "ai1ContinueButton": string;
+        "ai1Disclaimer": string;
+        "ai1WelcomeHeading": string;
+        "ai1WelcomeParagraph1": string;
+        "ai1WelcomeParagraph2": string;
+        "ai1WelcomeParagraph3": string;
+        "ai1FooterHelp": string;
+        "ai1FooterPrivacy": string;
+        "ai1FooterTerms": string;
+        "ai2TabTitle": string;
+        "ai2TabDescription": string;
+        "ai2InviteHeading": string;
+        "ai2CompanyName": string;
+        "ai2Description": string;
+        "ai2Accept": string;
+        "ai2Decline": string;
+        "ai2Expires": string;
       };
     }
 
