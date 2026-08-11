@@ -61,11 +61,13 @@ export function TypedConfirmationDemo() {
           </DialogDescription>
         </DialogHeader>
         <DialogBody>
-          <Input
-            value={inputValue}
-            onChange={(e) => handleTypedInputChange(e, setInputValue)}
-            placeholder='Type "DELETE" to confirm'
-          />
+          <div className="mb-4">
+            <Input
+              value={inputValue}
+              onChange={(e) => handleTypedInputChange(e, setInputValue)}
+              placeholder='Type "DELETE" to confirm'
+            />
+          </div>
         </DialogBody>
         <DialogFooter>
           <Button
