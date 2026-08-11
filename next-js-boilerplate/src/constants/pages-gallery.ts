@@ -18,4 +18,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "acceptInviteTitle",
     descKey: "acceptInviteDescription",
   },
+  {
+    name: "Application Shell",
+    slug: "application-shell",
+    titleKey: "applicationShellTitle",
+    descKey: "applicationShellDescription",
+  },
 ];
