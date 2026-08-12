@@ -60,4 +60,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "careersTitle",
     descKey: "careersDescription",
   },
+  {
+    name: "Case Studies",
+    slug: "case-studies",
+    titleKey: "caseStudiesTitle",
+    descKey: "caseStudiesDescription",
+  },
 ];
