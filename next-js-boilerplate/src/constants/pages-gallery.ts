@@ -66,4 +66,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "caseStudiesTitle",
     descKey: "caseStudiesDescription",
   },
+  {
+    name: "Chart Group",
+    slug: "chart-group",
+    titleKey: "chartGroupTitle",
+    descKey: "chartGroupDescription",
+  },
 ];
