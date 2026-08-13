@@ -72,4 +72,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "chartGroupTitle",
     descKey: "chartGroupDescription",
   },
+  {
+    name: "Checkout",
+    slug: "checkout",
+    titleKey: "checkoutTitle",
+    descKey: "checkoutDescription",
+  },
 ];
