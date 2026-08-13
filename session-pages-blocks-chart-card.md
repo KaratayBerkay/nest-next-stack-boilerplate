@@ -5985,3 +5985,15 @@ continue
 - Dynamic-access token-diff gotcha: template strings `dashboard15Source${i}Share`, `dashboard10Page${...}Title`, `dashboard11Cohort${i}` etc. — grep-based diffs miss them; all verified manually
 - tsc/eslint/prettier clean; pushed af5a030e
 - Next candidates: bento (53), chart-card (27), compliance/legal (5)
+
+## Data Table (pending push) — 32 blocks: 1-32 (all)
+- 4 agents: A blocks 1-8 (owns src/types/pages/data-table/DataTableMessages-types.ts), B 9-16, C 17-24, D 25-32
+- Blocks auth-gated (401 pro) → reconstructed from titles
+- 1232 EN + 1232 TR keys (447+322+285+178); examples.dataTableTitle="Data Table"/"Veri Tablosu"
+- ALL 8+ blocks on @tanstack/react-table v8 (repo canonical wiring in src/components/ui/data-table/data-table.tsx): globalFilter (9), column visibility dropdown (10), row selection + bulk delete (11), faceted DropdownMenu+Command multi-filter (12), Tabs-driven filter (13), multi-filter AND + clear (14), columnPinning sticky left/right (15), getExpandedRowModel (16), HTML5 draggable rows (17) & columns via setColumnOrder (18), per-header ColumnMenu dropdown (19), column sizing resizers (20), column management dropdown (21), nested sub-table (22), getGroupedRowModel (23), manual date-group headers (24)
+- 25-32 hand-rolled: invoice with computed qty×price + totals, scroll controls via scrollBy + ref, virtualized windowing (ROW_H=56, scrollTop slice + padding spacers, 500 rows), cell selection Set, inline editable cells (Enter/blur/Escape), search highlight <mark bg-warning/30> via split (no innerHTML), CRUD with ConfirmDialog, multi-sort badges (isMultiEvent plain-click)
+- eslint: 19 `react-hooks/incompatible-library` warnings on useReactTable — SAME as canonical repo data-table.tsx (house-accepted)
+- PageContent.tsx created by agent C against instructions but was convention-perfect (32 tabs) — kept after verification
+- Accessor false-positives in token diff: `accessorKey: "name"` etc. are tanstack ids, not i18n keys
+- tsc/eslint/prettier clean; pushed f5a8a5c7
+- Next candidates: bento (53), chart-card (27), crud-companies (9)
