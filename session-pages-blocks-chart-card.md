@@ -5974,3 +5974,14 @@ continue
 - cta22 store badges: hand-rolled (bg-bg text-fg inverted idiom); cta28/38 dark designs → bg-brand text-brand-fg; cta17/32/41 dotted/radial patterns via radial-gradient bg with --color-fg + [background-size:16px_16px]
 - tsc/eslint/prettier clean; pushed a04332a0
 - Next candidates: bento (53), chart-card (27), compliance/legal (5)
+
+## Dashboard (pending push) — 18 blocks: 1-18 (all)
+- 3 agents: A blocks 1-6 (owns src/types/pages/dashboard/DashboardMessages-types.ts), B 7-12, C 13-18
+- Blocks auth-gated (401 pro) → reconstructed from catalog descriptions
+- 907 EN + 907 TR keys (incl. 36 Tab*); examples.dashboardTitle="Dashboard"/"Panel"
+- CHARTS: recharts + repo wrapper @/components/ui/Chart (Chart line|bar|area|pie + XAxis/YAxis/CartesianGrid/Tooltip/Legend/Line/Bar/Area/Pie re-exports; Cell direct from recharts); colors hsl(var(--brand|muted|info|success|warning)); module-level key-referenced data arrays + resolver helpers (DonutBarPair pattern); sparklines = Chart type="line" height=64 axis-less
+- Dict-loss lesson applied: briefs mandated dicts SAVED TO DISK /tmp/opencode/dashboard/en_{a,b,c}.py + tr_*.py — recovered reliably. Verified en↔tr set equality per agent + no cross-agent overlap
+- block 10: internal sidebar navigation useState<PageId> (overview/orders/customers) w/ template-key page titles `dashboard10Page${X}Title`; block 11: pure CSS grid heatmap bg-brand/XX buckets; block 12: decorative dotted world map (radial-gradient var(--color-fg) pattern opacity-30 + IconMapPin2 pins); blocks 16/17: hand-rolled month grids using @/lib/date-time helpers (getFirstWeekdayOfMonth, getDaysInMonth, isToday) + Weekday/Month key arrays; 17 has day-detail side panel + empty state
+- Dynamic-access token-diff gotcha: template strings `dashboard15Source${i}Share`, `dashboard10Page${...}Title`, `dashboard11Cohort${i}` etc. — grep-based diffs miss them; all verified manually
+- tsc/eslint/prettier clean; pushed af5a030e
+- Next candidates: bento (53), chart-card (27), compliance/legal (5)
