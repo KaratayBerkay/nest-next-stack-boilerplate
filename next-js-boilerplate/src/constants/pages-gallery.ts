@@ -96,4 +96,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "compareTitle",
     descKey: "compareDescription",
   },
+  {
+    name: "Compare Products",
+    slug: "compare-products",
+    titleKey: "compareProductsTitle",
+    descKey: "compareProductsDescription",
+  },
 ];
