@@ -109,6 +109,12 @@ export const PAGES_EXAMPLES: PageExample[] = [
     descKey: "complianceDescription",
   },
   {
+    name: "Deals",
+    slug: "deals",
+    titleKey: "dealsTitle",
+    descKey: "dealsDescription",
+  },
+  {
     name: "Data Table",
     slug: "data-table",
     titleKey: "dataTableTitle",
@@ -119,6 +125,12 @@ export const PAGES_EXAMPLES: PageExample[] = [
     slug: "dashboard",
     titleKey: "dashboardTitle",
     descKey: "dashboardDescription",
+  },
+  {
+    name: "Deals",
+    slug: "deals",
+    titleKey: "dealsTitle",
+    descKey: "dealsDescription",
   },
   {
     name: "Data Table",

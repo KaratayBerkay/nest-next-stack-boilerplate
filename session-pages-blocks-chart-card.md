@@ -5997,3 +5997,12 @@ continue
 - Accessor false-positives in token diff: `accessorKey: "name"` etc. are tanstack ids, not i18n keys
 - tsc/eslint/prettier clean; pushed f5a8a5c7
 - Next candidates: bento (53), chart-card (27), crud-companies (9)
+
+## Deals (pending push) — 5 blocks: 1,2,3,6,7
+- 2 agents: A blocks 1-3 (owns src/types/pages/deals/DealsMessages-types.ts), B 6-7
+- Blocks auth-gated (401 pro) → reconstructed from titles
+- 121 EN + 121 TR keys (58+63); examples.dealsTitle="Deals"/"Fırsatlar"
+- deals1: Sheet (side=right, repo demo pattern) w/ deal rows + copy-code SUMMER25 row (Copy→Copied); deals2: bundle builder w/ plus/minus steppers + tier thresholds [1,2,4]→0/10/20% + progress + computed totals; deals3: fixed bottom collapsible newsletter band w/ success state
+- deals6: vertical tab rail + right panel + HoverCard expert avatars (picsum); deals7: fixed bottom-left bell (animate-ping dot + count) opening anchored Popover w/ per-row dismiss + empty state
+- tsc/eslint/prettier clean; pushed 4a791015
+- Next candidates: bento (53), chart-card (27), crud-companies (9), ecommerce-footer (6)
