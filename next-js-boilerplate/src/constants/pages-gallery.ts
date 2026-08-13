@@ -90,4 +90,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "communityTitle",
     descKey: "communityDescription",
   },
+  {
+    name: "Compare",
+    slug: "compare",
+    titleKey: "compareTitle",
+    descKey: "compareDescription",
+  },
 ];
