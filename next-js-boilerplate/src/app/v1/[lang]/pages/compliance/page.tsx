@@ -1,0 +1,22 @@
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
+import CompliancePageContent from "@/views/pages/compliance/PageContent";
+
+interface PageProps {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "pages");
+  return {
+    title: t.examples.complianceTitle,
+    description: t.examples.complianceDescription,
+  };
+}
+
+export default async function CompliancePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <CompliancePageContent initialTab={tab} />;
+}
