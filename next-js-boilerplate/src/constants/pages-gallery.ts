@@ -78,4 +78,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "checkoutTitle",
     descKey: "checkoutDescription",
   },
+  {
+    name: "Code Example",
+    slug: "code-example",
+    titleKey: "codeExampleTitle",
+    descKey: "codeExampleDescription",
+  },
 ];

@@ -1,0 +1,22 @@
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
+import CodeExamplePageContent from "@/views/pages/code-example/PageContent";
+
+interface PageProps {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "pages");
+  return {
+    title: t.examples.codeExampleTitle,
+    description: t.examples.codeExampleDescription,
+  };
+}
+
+export default async function CodeExamplePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <CodeExamplePageContent initialTab={tab} />;
+}
