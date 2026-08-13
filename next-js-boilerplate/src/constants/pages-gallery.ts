@@ -84,4 +84,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "codeExampleTitle",
     descKey: "codeExampleDescription",
   },
+  {
+    name: "Community",
+    slug: "community",
+    titleKey: "communityTitle",
+    descKey: "communityDescription",
+  },
 ];
