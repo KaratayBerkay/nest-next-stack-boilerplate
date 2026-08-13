@@ -5908,3 +5908,69 @@ continue
 
 ---
 
+
+## Checkout (33c5297e) — 8 blocks: 1,2,3,4,5,8,10,12
+- Agents: A owns src/types/pages/checkout/CheckoutMessages-types.ts + blocks 1-4; B blocks 5,8,10,12
+- Components: AccordionCheckout, TwoColumnCheckout, CollapsibleCartCheckout, CartReviewPayment, OrderSummaryPromo, AccordionFullCheckout, SavedPaymentMethods, MultiStepCheckout
+- 263 EN + 263 TR keys under pages.checkout; examples.checkoutTitle="Checkout"/"Ödeme"; token diff: 0 missing, 0 unreferenced
+- PageContent.tsx tabs checkout-1..5, checkout-8, checkout-10, checkout-12; gallery entry added
+- tsc/eslint/prettier clean; pushed 33c5297e
+- Next candidates: bento (53 blocks), chart-card (27), code-example (9)
+
+## Code Example (d323aa5a) — 9 blocks: 1,2,3,4,5,6,11,14,16
+- Agents: A blocks 1-5 (TabbedQueryExamples, HttpRequestTabs, ThemeHookDemo, FileTreePreview, ApiIntegrationSnippets) + owns src/types/pages/code-example/CodeExampleMessages-types.ts; B blocks 6,11,14,16 (SelectableHookSnippets, DatabaseExamplesStack, FileOpsAccordion, AnalyticsSnippetModes)
+- NOTE: B's blocks were reconstructed from design descriptions — registry 401/auth-gated (Feb 2026 pro drops)
+- 105 EN + 105 TR keys; examples.codeExampleTitle="Code Example"/"Kod Örneği"; token diff: 0 missing, only unreferenced = 18 TabTitle/TabDescription (used by PageContent)
+- Tabs: code-example-1..6, -11, -14, -16; reused CodeBlock from @/views/ui/_shared; Tabs from @/components/ui/tabs
+- tsc/eslint/prettier clean; pushed d323aa5a
+- Next candidates: bento (53), chart-card (27), code-example/editor (9)
+
+## Community (2b3a6ce3) — 7 blocks: 1-7
+- Agents: A blocks 1-4 (CenteredInvite, CommunityLinkGrid, PlatformCards, GradientSocialTiles) + owns src/types/pages/community/CommunityMessages-types.ts; B blocks 5-7 (GitHubSpotlight, CommunityIconGrid, SocialChannels)
+- 75 EN + 75 TR keys; examples.communityTitle="Community"/"Topluluk"; token diff: 0 missing, only TabTitle/TabDescription unreferenced (PageContent uses them)
+- Status dots: bg-brand online / bg-border offline (no raw colors); platform names literal (proper nouns); follower counts literal data
+- tsc/eslint/prettier clean; pushed 2b3a6ce3
+- Next candidates: bento (53), chart-card (27), code-example/editor (9)
+
+## Compare (068775c4) — 10 blocks: 1-10
+- Agents: A blocks 1-5 (TintedFeatureComparison, DualChecklists, ThreeColumnComparison, CloudVsOnSite, SideBySideImages) + owns src/types/pages/compare/CompareMessages-types.ts; B blocks 6-10 (TabbedFeatureTable, CompactComparisonTable, FrameworkChecklist, MetricTableAnalysis, LegacyVsModern)
+- 244 EN + 244 TR keys; compare7Tooltip N Title/Text referenced dynamically (co[`compare7Tooltip${n}Title`]) — token check flagged prefix only
+- Used Tooltip (@/components/ui/tooltip) for compare7, Table (@/components/ui/table) for compare6/7/9, Tabs for compare6 narrow screens
+- Check/x: IconCheck text-brand / IconX text-muted; tinted via bg-surface-hover/50
+- tsc/eslint/prettier clean; pushed 068775c4
+- Next candidates: bento (53), chart-card (27), compare/other (7), compare/table (3)
+
+## Compare Products (85c44691) — 5 blocks: 1,2,3,4,6
+- Agents: A blocks 1-3 (SideBySideSpecs, ProductTablePricing, CartActionsComparison) + owns src/types/pages/compare-products/CompareProductsMessages-types.ts; B blocks 4,6 (ResizableBeforeAfter, BeforeAfterCaptions)
+- 67 EN + 67 TR keys; resizable before/after uses Slider (@/components/ui/slider, Radix) for divider position
+- CartActionsComparison: ADD toggles "In Cart" state, REMOVE removes cards, live cart count badge
+- Fix: href="#" → const LINK_URL = "#" as const (jsx-a11y/anchor-is-valid)
+- tsc/eslint/prettier clean; pushed 85c44691
+- Next candidates: bento (53), chart-card (27), compare/other (7), compare/table (3)
+
+## Compliance (bd7d5bf7) — 9 blocks: 1-9
+- Agents: A blocks 1-5 (NarrativeDetailCards, FeatureGridExpertLink, SecurityPracticesBadges, SplitSecurityOverview, CenteredBadgeGrid) + owns src/types/pages/compliance/ComplianceMessages-types.ts; B blocks 6-9 (HeroCertificationLattice, CloudFeaturesBadges, CertificationLogosDocs, TrustMetricsStatusCards)
+- 118 EN + 118 TR keys; cert names (SOC 2, ISO 27001, GDPR, HIPAA, PCI DSS, FedRAMP, CIS) literal proper nouns
+- Cert badges: bordered font-mono pills; status pills: Uyumlu/Sürüyor (Compliant/In progress)
+- tsc/eslint/prettier clean; pushed bd7d5bf7
+- Next candidates: bento (53), chart-card (27), compliance/legal (5)
+
+## Contact (491062e1) — 30 blocks: 1-11, 14, 16-25, 28-35
+- 4 agents: A blocks 1-8 (owns src/types/pages/contact/ContactMessages-types.ts), B 9,10,11,14,16,17,18,19, C 20,21,22,23,24,25,28, D 29,30,31,32,33,34,35
+- ALL 30 blocks auth-gated (401 pro) — all reconstructed from design descriptions
+- 560 EN + 560 TR keys; examples.contactTitle="Contact"/"İletişim"
+- ICON DEVIATION FIXED: 3 agents used lucide-react (added dep) instead of repo convention @tabler/icons-react → I rewrote 21 files (imports + JSX usages; mapped CheckCircle2→IconCircleCheck etc.), removed lucide-react dep. Agent D used tabler correctly (letter-chip socials)
+- contact16/20/21: underline inputs hand-rolled (repo Input is fixed rounded-md, cn() non-merging); pill buttons via !rounded-full idiom
+- contact22/23 maps: decorative bg-surface-hover/50 panels with MapPin pins (no map libs); contact28 3-step wizard w/ StepIndicator; contact4 hand-rolled auto-fade carousel
+- tsc/eslint/prettier clean; pushed 491062e1
+- Next candidates: cta (38), bento (53), chart-card (27)
+
+## CTA (pending push) — 38 blocks: 1,3,4,5,6,7,10,11,12,13,14,15,16,17,18,19,20,21,22,23,26,28,30,31,32,34,35,36,37,38,39,40,41,42,43,44,45,46
+- 4 agents: A blocks 1,3,4,5,6,7,10,11,12 (owns src/types/pages/cta/CtaMessages-types.ts), B 13-22, C 23,26,28,30,31,32,34,35,36, D 37-46
+- Blocks auth-gated (401 pro) → reconstructed from design descriptions
+- 275 EN + 275 TR keys (199 content + 76 Tab*); examples.ctaTitle="CTA"/"CTA"
+- ICON NOTE: agents used @tabler/icons-react correctly (brief mandated d.ts verification, learned from contact lucide incident); brand icons: IconBrandX/Linkedin/Github/Youtube/Instagram/Facebook/Discord/Tiktok/Slack/Telegram/Twitch/Apple/GooglePlay all exist
+- Dict-recovery lesson: agent EN/TR dicts existed only in task reports; after summarization the values were lost (reports only said "64/73/65 keys"). Regenerated deterministically from 38 components + CtaMessages-types.ts (1 agent, 201 keys → +76 Tab keys in merge script). Dynamic key access via `co[stringKey]` arrays (LINK_CARDS/benefits/checklist/feature key arrays) — grep-based token diffs must also collect `\w+"Key": "..."`.
+- cta22 store badges: hand-rolled (bg-bg text-fg inverted idiom); cta28/38 dark designs → bg-brand text-brand-fg; cta17/32/41 dotted/radial patterns via radial-gradient bg with --color-fg + [background-size:16px_16px]
+- tsc/eslint/prettier clean; pushed a04332a0
+- Next candidates: bento (53), chart-card (27), compliance/legal (5)
