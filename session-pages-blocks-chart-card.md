@@ -6006,3 +6006,15 @@ continue
 - deals6: vertical tab rail + right panel + HoverCard expert avatars (picsum); deals7: fixed bottom-left bell (animate-ping dot + count) opening anchored Popover w/ per-row dismiss + empty state
 - tsc/eslint/prettier clean; pushed 4a791015
 - Next candidates: bento (53), chart-card (27), crud-companies (9), ecommerce-footer (6)
+
+## Download (pending push) — 20 blocks: 1-11,13,14,15,17-22 (12,16 don't exist)
+- 4 agents: A 1-5 (owns src/types/pages/download/DownloadMessages-types.ts), B 6-10, C 11,13,14,15,17, D 18-22
+- Blocks auth-gated (401 pro) → reconstructed from titles
+- 336 EN + 336 TR keys (56+99+89+92); examples.downloadTitle="Download"/"İndirme"
+- Phone mockups (7,20,21): hand-rolled frame rounded-[2.5rem] border-8 border-fg + picsum screen + island notch; QR (20): hand-rolled 21x21 decorative SVG/CSS grid w/ sine-hash seed + 3 finder squares, NO lib
+- Code blocks (5,13,17): mono bordered bg-surface-hover/50 + Copy→Copied (module-level handleCopy w/ state); winget command (13); window chrome (11) traffic-dot top bar + address bar
+- 14: Tabs per-OS format lists; 17: Accordion (type=single collapsible) version packages; 18: searchable integrations (Input filter + empty state); 19: 3-col requirements lists; 21: phone + callout chips; 22: iOS/Android twin columns
+- IconBrandLinux MISSING from tabler → IconBrandUbuntu everywhere (matches existing download2 pattern)
+- FIX: WindowsPreviewFrameDownload used bare <img> (eslint no-img-element) → swapped to next/image (repo convention; picsum remotePatterns already configured)
+- tsc/eslint/prettier clean; pushed 7abbfddc
+- Next candidates: bento (53), chart-card (27), ecommerce-footer (6), ecommerce-hero (6)
