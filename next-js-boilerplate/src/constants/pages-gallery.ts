@@ -108,4 +108,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "complianceTitle",
     descKey: "complianceDescription",
   },
+  {
+    name: "Contact",
+    slug: "contact",
+    titleKey: "contactTitle",
+    descKey: "contactDescription",
+  },
 ];

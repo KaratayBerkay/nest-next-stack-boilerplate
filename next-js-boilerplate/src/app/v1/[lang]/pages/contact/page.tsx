@@ -1,0 +1,22 @@
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
+import ContactPageContent from "@/views/pages/contact/PageContent";
+
+interface PageProps {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "pages");
+  return {
+    title: t.examples.contactTitle,
+    description: t.examples.contactDescription,
+  };
+}
+
+export default async function ContactPage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <ContactPageContent initialTab={tab} />;
+}
