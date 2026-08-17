@@ -4,6 +4,7 @@ import { backendFormFetch } from "@/lib/backend";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from "@/constants/upload";
+import { logger } from "@/lib/logger";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
@@ -69,7 +70,16 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json(backend.data, { status: 201 });
-  } catch {
+  } catch (err) {
+    logger.error(
+      {
+        route: "upload/multiple",
+        category: "network",
+        event: "upload.failed",
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "upload: unexpected failure",
+    );
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

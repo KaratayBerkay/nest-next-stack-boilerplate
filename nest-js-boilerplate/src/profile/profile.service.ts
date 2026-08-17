@@ -56,7 +56,8 @@ export class ProfileService {
 
     const user = await this.prisma.user.update({ where: { id: userId }, data });
 
-    this.cache.invalidate(`cache:profile:${userId}`).catch(() => {});
+    // CacheAsideService catches and logs its own failures internally.
+    void this.cache.invalidate(`cache:profile:${userId}`);
 
     const redisFields: Record<string, string> = {};
     if (input.name !== undefined) redisFields.name = input.name;

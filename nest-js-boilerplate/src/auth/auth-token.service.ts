@@ -71,7 +71,7 @@ export class AuthTokenService {
     this.logger.log({
       category: 'session',
       event: 'session.start',
-      token: sessionId,
+      sessionIdHash: this.crypto.sha256(sessionId),
       userId: user.id,
       ip: device?.ip,
       deviceId: device?.deviceId,

@@ -9,6 +9,7 @@ import {
   clearUserTokenCookieOptions,
 } from "@/lib/cookie";
 import { clearCsrfCache, csrfEchoHeaders, graphqlFetch } from "@/lib/backend";
+import { withLogging } from "@/lib/request-logger";
 
 const LOGOUT_QUERY = `
   mutation Logout {
@@ -16,7 +17,7 @@ const LOGOUT_QUERY = `
   }
 `;
 
-export async function POST() {
+export const POST = withLogging(async (_request, log) => {
   // The backend logout is CSRF-guarded and revokes the Redis compound key from
   // the presented tokens, so echo a CSRF token and pass the access token as
   // Bearer (the CSRF echo replaces the Cookie header — see csrfEchoHeaders).
@@ -35,7 +36,10 @@ export async function POST() {
   }
   clearCsrfCache();
   if (!revoked) {
-    console.error("[logout] backend session revocation failed");
+    log.error(
+      { category: "session", event: "session.revoke_failed" },
+      "logout: backend session revocation failed",
+    );
   }
 
   // Clear the BFF cookies regardless — never strand the user logged in locally.
@@ -54,4 +58,4 @@ export async function POST() {
   response.cookies.set(clearSessionUserCookieOptions());
   response.cookies.set(clearRefreshTokenCookieOptions());
   return response;
-}
+});

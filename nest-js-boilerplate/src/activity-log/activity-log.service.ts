@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import type { Request } from 'express';
+import { hashSessionId } from '../common/crypto/crypto.service';
 import type { FrontendEventDto } from './dto/log-activity.dto';
 
 function resolveDeviceType(platform: string | undefined): string {
@@ -39,7 +40,7 @@ export class ActivityLogService {
         clientSessionId: event.clientSessionId,
         timestamp: event.timestamp,
         userId: user?.userId ?? event.userId ?? null,
-        token: user?.sessionId ?? null,
+        sessionIdHash: user?.sessionId ? hashSessionId(user.sessionId) : null,
         ip,
         deviceType: resolveDeviceType(event.platform),
         url: event.url ?? null,

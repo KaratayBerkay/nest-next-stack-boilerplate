@@ -6,19 +6,22 @@ export async function register(): Promise<void> {
   const runtime = process.env.NEXT_RUNTIME ?? "nodejs";
   markStartup(runtime);
 
-  // Load secrets from Vault before the app initializes so process.env is
-  // populated for all server-side code.
   if (runtime === "nodejs") {
-    const { loadVaultIntoEnv } = await import("@/lib/vault");
-    await loadVaultIntoEnv();
-  }
-
-  if (runtime === "nodejs") {
+    // Installed first — before anything else in this function logs — so
+    // vault loading below (and any stray console call from a dependency)
+    // comes out as structured JSON like the rest of the app, not plain text.
     const { logger } = await import("@/lib/logger");
     console.error = (...args) => logger.error(...args);
     console.warn = (...args) => logger.warn(...args);
     console.log = (...args) => logger.info(...args);
     console.debug = (...args) => logger.debug(...args);
+  }
+
+  // Load secrets from Vault before the app initializes so process.env is
+  // populated for all server-side code.
+  if (runtime === "nodejs") {
+    const { loadVaultIntoEnv } = await import("@/lib/vault");
+    await loadVaultIntoEnv();
   }
 
   const inMemoryProcessor: SpanProcessor = {

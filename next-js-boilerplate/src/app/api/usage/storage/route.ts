@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { sessionTokenHeaders } from "@/lib/backend";
+import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
 import {
   JSON_CONTENT_TYPE_HEADER,
   bearerAuthHeader,
@@ -19,13 +19,5 @@ export async function GET(_request: NextRequest) {
   const res = await fetch(`${serverEnv().APP_URL}/api/usage/storage`, {
     headers,
   });
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, { route: "usage/storage", method: "GET" });
 }

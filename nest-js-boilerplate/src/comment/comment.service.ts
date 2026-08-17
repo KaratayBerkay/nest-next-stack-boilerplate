@@ -67,8 +67,10 @@ export class CommentService {
       });
     }
 
-    this.cache.invalidate(`cache:post:${data.postId}`).catch(() => {});
-    this.cache.invalidate('cache:feed:*').catch(() => {});
+    // CacheAsideService catches and logs its own failures internally — it
+    // never rejects, so there's nothing to swallow here.
+    void this.cache.invalidate(`cache:post:${data.postId}`);
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -104,8 +106,8 @@ export class CommentService {
       include: { author: true },
     });
 
-    this.cache.invalidate(`cache:post:${comment.postId}`).catch(() => {});
-    this.cache.invalidate('cache:feed:*').catch(() => {});
+    void this.cache.invalidate(`cache:post:${comment.postId}`);
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
@@ -137,8 +139,8 @@ export class CommentService {
       data: { deletedAt: new Date() },
     });
 
-    this.cache.invalidate(`cache:post:${comment.postId}`).catch(() => {});
-    this.cache.invalidate('cache:feed:*').catch(() => {});
+    void this.cache.invalidate(`cache:post:${comment.postId}`);
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',

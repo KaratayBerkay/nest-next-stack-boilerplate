@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { sessionTokenHeaders } from "@/lib/backend";
+import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import {
   JSON_CONTENT_TYPE_HEADER,
@@ -28,15 +28,11 @@ export async function GET(
   const url = `${serverEnv().APP_URL}/api/${path.join("/")}${qs ? "?" + qs : ""}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, { headers });
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, {
+    route: "messages/[...path]",
+    method: "GET",
+    path,
+  });
 }
 
 export async function POST(
@@ -52,15 +48,11 @@ export async function POST(
     headers,
     body,
   });
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, {
+    route: "messages/[...path]",
+    method: "POST",
+    path,
+  });
 }
 
 export async function OPTIONS() {

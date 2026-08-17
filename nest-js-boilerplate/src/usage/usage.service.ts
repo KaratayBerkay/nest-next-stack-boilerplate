@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -28,6 +28,8 @@ export interface UploadStorageUsageResult {
 
 @Injectable()
 export class UsageService {
+  private readonly logger = new Logger(UsageService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private static currentMonthRange(): { from: Date; to: Date } {
@@ -46,13 +48,23 @@ export class UsageService {
       where: { id: userId },
       select: { subscriptionTier: true },
     });
-    const tier = (user?.subscriptionTier ?? SubscriptionTier.FREE) as SubscriptionTier;
+    const tier = (user?.subscriptionTier ??
+      SubscriptionTier.FREE) as SubscriptionTier;
     const { from, to } = UsageService.currentMonthRange();
     const usage = await this.getMessageUsage(userId, tier, from, to);
     const projectedBytes = Math.round(
       (usage.letters + additionalLetters) * BYTES_PER_LETTER,
     );
     if (projectedBytes > usage.limitBytes) {
+      this.logger.warn({
+        category: 'usage',
+        event: 'usage.limit_reached',
+        limitType: 'message',
+        userId,
+        tier,
+        projectedBytes,
+        limitBytes: usage.limitBytes,
+      });
       throw new ForbiddenException({
         exc: 'EX_USAGE_LIMIT_REACHED',
         msg: 'Message storage limit reached',
@@ -68,6 +80,15 @@ export class UsageService {
   ): Promise<void> {
     const usage = await this.getUploadStorageUsage(userId, tier);
     if (usage.bytes + additionalBytes > usage.limitBytes) {
+      this.logger.warn({
+        category: 'usage',
+        event: 'usage.limit_reached',
+        limitType: 'upload',
+        userId,
+        tier,
+        projectedBytes: usage.bytes + additionalBytes,
+        limitBytes: usage.limitBytes,
+      });
       throw new ForbiddenException({
         exc: 'EX_UPLOAD_STORAGE_LIMIT_REACHED',
         msg: 'Upload storage limit reached',

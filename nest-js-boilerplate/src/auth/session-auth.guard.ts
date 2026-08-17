@@ -13,6 +13,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import type { Request } from 'express';
 import { accessCookieName } from './access-cookie';
 import { JwtUser, SessionUser } from './auth.types';
+import { hashSessionId } from '../common/crypto/crypto.service';
 import { rbacCookieName } from './rbac-cookie';
 import { userCookieName } from './user-cookie';
 import {
@@ -102,7 +103,7 @@ export class SessionAuthGuard implements CanActivate {
       this.logger.log({
         category: 'session',
         event: 'session.ip_change',
-        token: sessionUser.sessionId,
+        sessionIdHash: hashSessionId(sessionUser.sessionId),
         userId: sessionUser.userId,
         oldIp: sessionUser.ip,
         newIp: reqIp,
@@ -119,7 +120,7 @@ export class SessionAuthGuard implements CanActivate {
       this.logger.log({
         category: 'session',
         event: 'session.ua_change',
-        token: sessionUser.sessionId,
+        sessionIdHash: hashSessionId(sessionUser.sessionId),
         userId: sessionUser.userId,
         userAgent: reqUa,
         deviceType: parseDeviceType(reqUa),

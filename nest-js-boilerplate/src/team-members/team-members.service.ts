@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from '../auth/token-store.service';
 import { CreateTeamMemberInput } from './dto/create-team-member.input';
 
 @Injectable()
 export class TeamMembersService {
+  private readonly logger = new Logger(TeamMembersService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
@@ -32,7 +34,17 @@ export class TeamMembersService {
     ).map((t) => t.teamId);
     await this.tokenStore
       .rewriteFieldsForUser(userId, { teamIds: JSON.stringify(teamIds) })
-      .catch(() => {});
+      .catch((err) => {
+        // Best-effort — the membership row is already committed; a stale
+        // session just means the user sees the new team after next login
+        // instead of immediately, so this must never fail the request.
+        this.logger.warn({
+          category: 'team-members',
+          event: 'session.team_sync_failed',
+          userId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
     return member;
   }
 }

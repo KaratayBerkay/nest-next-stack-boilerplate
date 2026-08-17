@@ -273,6 +273,65 @@ describe('TokenStoreService', () => {
     expect(await service.read(k2)).toBeNull();
   });
 
+  describe('revokeSessionBySessionId', () => {
+    it('revokes the matching session by sessionIdHash, leaving others intact', async () => {
+      const k1 = service.buildKey('a5', 'b5', 'c5');
+      const k2 = service.buildKey('a6', 'b6', 'c6');
+      await service.write(k1, {
+        userId: 'u5',
+        email: 'u5@t.com',
+        role: 'USER',
+        sessionId: 's5',
+        chatNickname: '',
+        useNickname: false,
+        hideAvatar: false,
+      });
+      await service.write(k2, {
+        userId: 'u5',
+        email: 'u5@t.com',
+        role: 'USER',
+        sessionId: 's6',
+        chatNickname: '',
+        useNickname: false,
+        hideAvatar: false,
+      });
+
+      const revoked = await service.revokeSessionBySessionId(
+        'u5',
+        crypto.sha256('s5'),
+      );
+
+      expect(revoked).toBe(true);
+      expect(await service.read(k1)).toBeNull();
+      expect(await service.read(k2)).not.toBeNull();
+    });
+
+    // The GraphQL layer never exposes the raw sessionId to the client (see
+    // SessionsResolver's mapSessionInfo) — this pins that revocation only
+    // works against the hash, so that boundary can't quietly regress.
+    it('does not match on the raw sessionId', async () => {
+      const key = service.buildKey('a7', 'b7', 'c7');
+      await service.write(key, {
+        userId: 'u6',
+        email: 'u6@t.com',
+        role: 'USER',
+        sessionId: 's7',
+        chatNickname: '',
+        useNickname: false,
+        hideAvatar: false,
+      });
+
+      expect(await service.revokeSessionBySessionId('u6', 's7')).toBe(false);
+      expect(await service.read(key)).not.toBeNull();
+    });
+
+    it('returns false when no session matches', async () => {
+      expect(
+        await service.revokeSessionBySessionId('nobody', crypto.sha256('x')),
+      ).toBe(false);
+    });
+  });
+
   it('rewrites fields for all live sessions of a user', async () => {
     const key = service.buildKey('a', 'b', 'c');
     await service.write(key, {

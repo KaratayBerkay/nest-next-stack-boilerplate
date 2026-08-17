@@ -2,6 +2,7 @@ import { SessionsResolver } from './sessions.resolver';
 import { TokenStoreService } from '../auth/token-store.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { JwtUser } from '../auth/auth.types';
+import { hashSessionId } from '../common/crypto/crypto.service';
 
 describe('SessionsResolver', () => {
   let resolver: SessionsResolver;
@@ -86,7 +87,7 @@ describe('SessionsResolver', () => {
       });
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({
-        sessionId: 'sess-1',
+        sessionId: hashSessionId('sess-1'),
         deviceId: 'dev-1',
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',
@@ -95,7 +96,7 @@ describe('SessionsResolver', () => {
         trusted: true,
       });
       expect(result[1]).toEqual({
-        sessionId: 'sess-2',
+        sessionId: hashSessionId('sess-2'),
         deviceId: '',
         ip: undefined,
         userAgent: undefined,
@@ -127,7 +128,7 @@ describe('SessionsResolver', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        sessionId: 'sess-1',
+        sessionId: hashSessionId('sess-1'),
         deviceId: 'dev-1',
         ip: '127.0.0.1',
         userAgent: 'Mozilla/5.0',

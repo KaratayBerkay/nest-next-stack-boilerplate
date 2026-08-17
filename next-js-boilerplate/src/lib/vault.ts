@@ -1,5 +1,6 @@
 import { VAULT_TOKEN_HEADER } from "@/constants/api/headers";
 import { VAULT_SECRET_PATH } from "@/constants/api/urls";
+import { logger } from "@/lib/logger";
 
 export type VaultSecrets = Record<string, string>;
 
@@ -37,7 +38,7 @@ export async function readVaultSecrets(
 export async function loadVaultIntoEnv(): Promise<void> {
   const cfg = vaultConfig();
   if (!cfg) {
-    console.warn("[Vault] VAULT_ADDR or VAULT_TOKEN not set — skipping");
+    logger.warn("VAULT_ADDR or VAULT_TOKEN not set — skipping vault");
     return;
   }
 
@@ -48,8 +49,11 @@ export async function loadVaultIntoEnv(): Promise<void> {
       process.env[key] = value;
       count++;
     }
-    console.log(`[Vault] loaded ${count} secrets from ${VAULT_SECRET_PATH}`);
+    logger.info(
+      { count, path: VAULT_SECRET_PATH },
+      "loaded secrets from vault",
+    );
   } catch (err) {
-    console.warn(`[Vault] failed to load secrets: ${(err as Error).message}`);
+    logger.warn({ err }, "failed to load secrets from vault");
   }
 }

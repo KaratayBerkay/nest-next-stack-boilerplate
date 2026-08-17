@@ -1,3 +1,16 @@
+import pino from 'pino';
+
+// Runs before NestFactory.create(), so the app's DI-managed Pino logger (see
+// logging/logging.config.ts) doesn't exist yet — a standalone instance is the
+// only way to keep this bootstrap step's output structured JSON like the rest
+// of the app, instead of falling back to plain console text.
+const logger = pino({
+  name: 'VaultLoader',
+  level:
+    process.env.LOG_LEVEL ??
+    (process.env.NODE_ENV === 'production' ? 'info' : 'debug'),
+});
+
 const VAULT_SECRET_PATH = 'secret/data/secret/production/backend';
 
 export async function loadVaultSecrets(): Promise<void> {
@@ -5,9 +18,7 @@ export async function loadVaultSecrets(): Promise<void> {
   const token = process.env.VAULT_TOKEN ?? '';
 
   if (!addr || !token) {
-    console.warn(
-      '[VaultLoader] VAULT_ADDR or VAULT_TOKEN not set — skipping vault',
-    );
+    logger.warn('VAULT_ADDR or VAULT_TOKEN not set — skipping vault');
     return;
   }
 
@@ -20,8 +31,9 @@ export async function loadVaultSecrets(): Promise<void> {
     });
 
     if (!res.ok) {
-      console.warn(
-        `[VaultLoader] vault returned ${res.status} for ${VAULT_SECRET_PATH} — skipping`,
+      logger.warn(
+        { status: res.status, path: VAULT_SECRET_PATH },
+        'vault returned a non-OK status — skipping',
       );
       return;
     }
@@ -44,12 +56,11 @@ export async function loadVaultSecrets(): Promise<void> {
         count++;
       }
     }
-    console.log(
-      `[VaultLoader] loaded ${count} secrets from ${VAULT_SECRET_PATH}`,
+    logger.info(
+      { count, path: VAULT_SECRET_PATH },
+      'loaded secrets from vault',
     );
   } catch (err) {
-    console.warn(
-      `[VaultLoader] failed to load secrets: ${(err as Error).message}`,
-    );
+    logger.warn({ err }, 'failed to load secrets from vault');
   }
 }

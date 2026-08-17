@@ -1,7 +1,12 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
+import { Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { MAIL_QUEUE } from './mail.constants';
+import {
+  MAIL_QUEUE,
+  MAIL_SEND_LIMIT_PER_HOUR,
+  MAIL_SEND_LIMIT_WINDOW_MS,
+} from './mail.constants';
 import { MailTransport } from './mail.transport';
 import { renderTemplate } from './templates/render';
 
@@ -9,8 +14,17 @@ interface MailJob {
   emailId: string;
 }
 
-@Processor(MAIL_QUEUE)
+// The rate limiter is a Worker concern in BullMQ 5 (throttles processing/consumption),
+// not a Queue concern — registerQueue's options don't have a `limiter` field.
+@Processor(MAIL_QUEUE, {
+  limiter: {
+    max: MAIL_SEND_LIMIT_PER_HOUR,
+    duration: MAIL_SEND_LIMIT_WINDOW_MS,
+  },
+})
 export class MailProcessor extends WorkerHost {
+  private readonly logger = new Logger(MailProcessor.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly transport: MailTransport,
@@ -53,6 +67,16 @@ export class MailProcessor extends WorkerHost {
         },
       });
     } catch (err) {
+      this.logger.error(
+        {
+          category: 'mail',
+          event: 'mail.send_failed',
+          emailId: email.id,
+          attempts: email.attempts + 1,
+          err: err instanceof Error ? err.message : String(err),
+        },
+        'Email send failed',
+      );
       await this.prisma.emailMessage.update({
         where: { id: email.id },
         data: {

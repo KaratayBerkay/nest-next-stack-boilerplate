@@ -54,15 +54,21 @@ export class PostService {
     // fall back to FriendsService only when absent/undefined.
     const ids = friendIds ?? (await this.friends.getFriendIds(authorId));
 
-    this.cache.invalidate('cache:feed:*').catch(() => {});
+    // CacheAsideService/NotificationQueueService already catch and log their
+    // own failures internally — they never reject, so there's nothing to
+    // swallow here.
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
       id: post.id,
     });
-    this.notificationQueue
-      .enqueueFriendPostNotification(authorId, ids, data.title, post.id)
-      .catch(() => {});
+    void this.notificationQueue.enqueueFriendPostNotification(
+      authorId,
+      ids,
+      data.title,
+      post.id,
+    );
 
     return post;
   }
@@ -94,8 +100,8 @@ export class PostService {
       data: updateData,
       include: { author: true },
     });
-    this.cache.invalidate(`cache:post:${id}`).catch(() => {});
-    this.cache.invalidate('cache:feed:*').catch(() => {});
+    void this.cache.invalidate(`cache:post:${id}`);
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',

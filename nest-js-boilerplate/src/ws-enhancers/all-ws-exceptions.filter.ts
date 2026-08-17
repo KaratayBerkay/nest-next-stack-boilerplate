@@ -20,7 +20,9 @@ export class AllWsExceptionsFilter extends BaseWsExceptionFilter {
     const client = host.switchToWs().getClient<Socket>();
     const userAgent = client.handshake?.headers?.['user-agent'];
 
-    this.logger.log({
+    // Catch-all for unknown/unexpected WS errors (see class doc) — always a
+    // real failure, so always error level (matches GlobalHttpExceptionFilter).
+    this.logger.error({
       category: 'websocket-exception',
       event: 'exception.websocket',
       socketId: client.id,

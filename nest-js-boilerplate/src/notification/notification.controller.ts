@@ -1,5 +1,4 @@
 import { Controller, Get, Post, Body, Query, UseGuards } from '@nestjs/common';
-import { Logger } from 'nestjs-pino';
 import { NotificationService } from './notification.service';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -8,10 +7,7 @@ import type { JwtUser } from '../auth/auth.types';
 @Controller('api')
 @UseGuards(SessionAuthGuard)
 export class NotificationController {
-  constructor(
-    private readonly notifications: NotificationService,
-    private readonly logger: Logger,
-  ) {}
+  constructor(private readonly notifications: NotificationService) {}
 
   @Get('notifications')
   async list(

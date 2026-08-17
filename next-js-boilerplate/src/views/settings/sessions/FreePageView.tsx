@@ -12,6 +12,7 @@ import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useSessionActions } from "@/api/client/sessions/actions";
 import { cn } from "@/lib/cn";
+import { eventLogger } from "@/lib/event-logger";
 import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 import { SessionCard } from "./SessionCard";
 import { SessionSkeleton } from "./SessionSkeleton";
@@ -29,6 +30,14 @@ async function loadSessions(
     setError(false);
   } catch (err) {
     console.error("Failed to load sessions", err);
+    eventLogger.emit({
+      eventType: "exception",
+      url: window.location.pathname,
+      category: "application-exception",
+      event: "sessions.load_failed",
+      exceptionType: "CLIENT_ERROR",
+      metadata: { message: err instanceof Error ? err.message : String(err) },
+    });
     setSessions([]);
     setError(true);
   } finally {

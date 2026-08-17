@@ -12,6 +12,7 @@ import type { JwtUser, SessionUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
+import { hashSessionId } from '../common/crypto/crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 
@@ -51,7 +52,10 @@ function mapSessionInfo(
 ) {
   const device = session.deviceId ? deviceMap.get(session.deviceId) : undefined;
   return {
-    sessionId: session.sessionId,
+    // Non-reversible fingerprint, not the raw sessionId — see hashSessionId's doc comment.
+    // revokeSession()/TokenStoreService.revokeSessionBySessionId() match sessions by this
+    // same hash, so the client never needs (or receives) the underlying bearer credential.
+    sessionId: hashSessionId(session.sessionId),
     deviceId: session.deviceId ?? '',
     ip: session.ip ?? undefined,
     userAgent: session.userAgent ?? undefined,

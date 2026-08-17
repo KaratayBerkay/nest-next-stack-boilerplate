@@ -91,3 +91,15 @@ export class CryptoService implements OnModuleInit {
     ]).toString('utf8');
   }
 }
+
+/**
+ * One-way fingerprint of a session id, safe to log or return over the API where the raw
+ * value must never appear — `sessionId` IS the refresh-token bearer credential (it's set
+ * directly as the refresh cookie and used as a plain Redis lookup key), not an opaque
+ * correlation id. Exported as a pure function so call sites that don't already inject
+ * `CryptoService` can use it too; same algorithm as {@link CryptoService.sha256}, so a hash
+ * computed either way matches for cross-referencing (e.g. logs against the Settings UI).
+ */
+export function hashSessionId(sessionId: string): string {
+  return createHash('sha256').update(sessionId).digest('hex');
+}

@@ -1,6 +1,8 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { cookies, headers as nextHeaders } from "next/headers";
+import { NextResponse } from "next/server";
+import { logger } from "./logger";
 import {
   CSRF_TOKEN_HEADER,
   DEVICE_TOKEN_HEADER,
@@ -84,6 +86,39 @@ export async function backendFetch<T = unknown>(
   }
 
   return { ok: res.ok, status: res.status, data, headers: res.headers };
+}
+
+/**
+ * Thin proxy routes (messages/rest/usage/*) forward a raw backend `Response`
+ * to the client as-is. When the body isn't valid JSON — a truncated response,
+ * a gateway error page, a timeout — that's a real upstream failure, so it's
+ * logged (with a body preview to see what actually came back) rather than
+ * just handed to the client as a bare, unexplained 502.
+ */
+export async function parseProxiedResponse(
+  res: Response,
+  context: Record<string, unknown>,
+): Promise<NextResponse> {
+  const text = await res.text();
+  try {
+    return NextResponse.json(JSON.parse(text), { status: res.status });
+  } catch (err) {
+    logger.error(
+      {
+        ...context,
+        category: "network",
+        event: "proxy.invalid_backend_response",
+        backendStatus: res.status,
+        bodyPreview: text.slice(0, 200),
+        err: err instanceof Error ? err.message : String(err),
+      },
+      "proxy: backend returned a non-JSON response",
+    );
+    return NextResponse.json(
+      { error: "Invalid response from backend" },
+      { status: 502 },
+    );
+  }
 }
 
 /**

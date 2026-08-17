@@ -139,9 +139,7 @@ export class NotificationService {
 
     if (result.count > 0) {
       const unread = await this.unreadCount(userId);
-      this.tokenStore
-        .rewriteFieldsForUser(userId, { unread: String(unread) })
-        .catch(() => {});
+      this.syncUnreadToSession(userId, unread);
       this.realtime.emitToService(userId, 'NOTIFICATION', {
         renew: 'Notifications',
         type: 'Count',
@@ -159,9 +157,7 @@ export class NotificationService {
     });
 
     const unread = await this.unreadCount(userId);
-    this.tokenStore
-      .rewriteFieldsForUser(userId, { unread: String(unread) })
-      .catch(() => {});
+    this.syncUnreadToSession(userId, unread);
     this.realtime.emitToService(userId, 'NOTIFICATION', {
       renew: 'Notifications',
       type: 'Count',
@@ -171,5 +167,23 @@ export class NotificationService {
       renew: 'Notifications',
       type: 'Read',
     });
+  }
+
+  /**
+   * Best-effort — the read/unread state is already committed to Postgres; a
+   * stale session snapshot just means the unread badge lags until next
+   * login, so a sync failure here must never fail the request.
+   */
+  private syncUnreadToSession(userId: string, unread: number): void {
+    this.tokenStore
+      .rewriteFieldsForUser(userId, { unread: String(unread) })
+      .catch((err) => {
+        this.logger.warn({
+          category: 'notification',
+          event: 'session.unread_sync_failed',
+          userId,
+          err: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 }

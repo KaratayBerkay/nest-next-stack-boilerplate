@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { sessionTokenHeaders } from "@/lib/backend";
+import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import {
   JSON_CONTENT_TYPE_HEADER,
@@ -18,7 +18,9 @@ export async function GET(
   }
 
   const { userId } = await params;
-  const url = new URL(`${serverEnv().APP_URL}/api/conversations/${userId}/messages`);
+  const url = new URL(
+    `${serverEnv().APP_URL}/api/conversations/${userId}/messages`,
+  );
   url.search = _request.nextUrl.search;
 
   const res = await fetch(url.toString(), {
@@ -28,15 +30,11 @@ export async function GET(
     },
   });
 
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, {
+    route: "messages/conversations/[userId]/messages",
+    method: "GET",
+    userId,
+  });
 }
 
 export async function POST(
@@ -51,23 +49,22 @@ export async function POST(
   const { userId } = await params;
   const body = await request.text();
 
-  const res = await fetch(`${serverEnv().APP_URL}/api/conversations/${userId}/messages`, {
-    method: POST_METHOD,
-    headers: {
-      ...JSON_CONTENT_TYPE_HEADER,
-      ...bearerAuthHeader(token),
-      ...(await sessionTokenHeaders()),
+  const res = await fetch(
+    `${serverEnv().APP_URL}/api/conversations/${userId}/messages`,
+    {
+      method: POST_METHOD,
+      headers: {
+        ...JSON_CONTENT_TYPE_HEADER,
+        ...bearerAuthHeader(token),
+        ...(await sessionTokenHeaders()),
+      },
+      body,
     },
-    body,
-  });
+  );
 
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, {
+    route: "messages/conversations/[userId]/messages",
+    method: "POST",
+    userId,
+  });
 }

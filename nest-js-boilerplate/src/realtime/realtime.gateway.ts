@@ -272,7 +272,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       this.logger.log({
         category: 'session',
         event: 'ws.auth_success',
-        token: session.sessionId,
+        sessionIdHash: this.crypto.sha256(session.sessionId),
         userId: session.userId,
         socketId: authWs.socketId,
       });
@@ -325,7 +325,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           this.logger.log({
             category: 'websocket-exception',
             event: 'connection-loss',
-            token: authWs.sessionId,
+            sessionIdHash: authWs.sessionId
+              ? this.crypto.sha256(authWs.sessionId)
+              : undefined,
             userId: uid,
             code,
             reason: reason?.toString() ?? '',
@@ -334,7 +336,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         this.logger.log({
           category: 'session',
           event: 'ws.disconnect',
-          token: authWs.sessionId,
+          sessionIdHash: authWs.sessionId
+            ? this.crypto.sha256(authWs.sessionId)
+            : undefined,
           userId: uid,
           socketId: authWs.socketId,
         });
@@ -357,7 +361,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           this.logger.log({
             category: 'session',
             event: 'ws.heartbeat_timeout',
-            token: client.sessionId,
+            sessionIdHash: client.sessionId
+              ? this.crypto.sha256(client.sessionId)
+              : undefined,
             userId: client.userId,
             socketId: client.socketId,
           });
@@ -604,7 +610,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         category: 'websocket-exception',
         event: 'ws.rate_limited',
         userId: authWs.userId,
-        sessionId: authWs.sessionId,
+        sessionIdHash: authWs.sessionId
+          ? this.crypto.sha256(authWs.sessionId)
+          : undefined,
         socketId: authWs.socketId,
         scope: limit,
         frameBytes: raw.length,
@@ -652,7 +660,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           category: 'websocket-exception',
           event: 'wire.decrypt_fail',
           userId: authWs.userId,
-          sessionId: authWs.sessionId,
+          sessionIdHash: authWs.sessionId
+            ? this.crypto.sha256(authWs.sessionId)
+            : undefined,
           deviceHash: authWs.deviceTokenHash,
           reason: (err as Error)?.message,
         });
@@ -798,7 +808,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       event: 'ws.device_replaced',
       userId: ws.userId,
       socketId: ws.socketId,
-      previousSessionId: existing.sessionId,
+      previousSessionIdHash: existing.sessionId
+        ? this.crypto.sha256(existing.sessionId)
+        : undefined,
     });
     existing.detached = true;
     this.cleanupSocket(existing, { silent: true });

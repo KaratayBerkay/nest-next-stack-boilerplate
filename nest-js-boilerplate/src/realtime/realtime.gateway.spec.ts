@@ -1,5 +1,12 @@
+import { createHash } from 'node:crypto';
 import { RealtimeGateway } from './realtime.gateway';
 import { RealtimePresenceService } from './realtime-presence.service';
+
+function mockCryptoService() {
+  return {
+    sha256: (value: string) => createHash('sha256').update(value).digest('hex'),
+  };
+}
 
 interface MockWs {
   readyState: number;
@@ -62,7 +69,7 @@ describe('RealtimeGateway — public methods', () => {
   beforeEach(() => {
     gateway = new RealtimeGateway(
       {} as never, // HttpAdapterHost
-      {} as never, // CryptoService
+      mockCryptoService() as never, // CryptoService
       mockPresenceService(),
       { get: jest.fn().mockReturnValue(5) } as never, // ConfigService
       mockRedisClient() as never, // REDIS_CLIENT

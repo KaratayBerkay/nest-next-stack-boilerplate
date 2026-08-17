@@ -69,6 +69,7 @@ export class WireCryptoController {
       }
       this.logger.debug(
         `device handshake deviceHash=${deviceHash} reKey=${alreadyHasKeys}`,
+        WireCryptoController.name,
       );
       const { c2sSeq, s2cSeq } = await this.wire.getCounters(
         deviceHash,
@@ -112,7 +113,10 @@ export class WireCryptoController {
     }
     const deviceHash = hashDeviceToken(deviceTokenHeader);
     await this.wire.deleteDeviceKeys(deviceHash);
-    this.logger.log(`re-key deviceHash=${deviceHash}`);
+    this.logger.log(
+      `re-key deviceHash=${deviceHash}`,
+      WireCryptoController.name,
+    );
     return { ok: true };
   }
 

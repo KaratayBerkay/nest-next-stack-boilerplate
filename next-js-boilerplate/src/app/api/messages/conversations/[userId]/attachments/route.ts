@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { sessionTokenHeaders } from "@/lib/backend";
+import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
 import { bearerAuthHeader } from "@/constants/api/headers";
 
 export async function GET(
@@ -26,13 +26,9 @@ export async function GET(
     },
   });
 
-  const text = await res.text();
-  try {
-    return NextResponse.json(JSON.parse(text), { status: res.status });
-  } catch {
-    return NextResponse.json(
-      { error: "Invalid response from backend" },
-      { status: 502 },
-    );
-  }
+  return parseProxiedResponse(res, {
+    route: "messages/conversations/[userId]/attachments",
+    method: "GET",
+    userId,
+  });
 }

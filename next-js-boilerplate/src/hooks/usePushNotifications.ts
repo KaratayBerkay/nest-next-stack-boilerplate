@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { clientEnv } from "@/lib/env";
 import { usePushNotificationActions } from "@/api/client/push-notifications/actions";
+import { eventLogger } from "@/lib/event-logger";
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const padding = "=".repeat((4 - (base64.length % 4)) % 4);
@@ -40,9 +41,19 @@ export function usePushNotifications() {
       .then((sub) => {
         if (sub) setSubscription(sub);
       })
-      .catch((err) =>
-        console.error("Service worker registration failed:", err),
-      );
+      .catch((err) => {
+        console.error("Service worker registration failed:", err);
+        eventLogger.emit({
+          eventType: "exception",
+          url: window.location.pathname,
+          category: "application-exception",
+          event: "push.sw_register_failed",
+          exceptionType: "CLIENT_ERROR",
+          metadata: {
+            message: err instanceof Error ? err.message : String(err),
+          },
+        });
+      });
   }, [supported]);
 
   const requestPermission = useCallback(async () => {
@@ -67,6 +78,14 @@ export function usePushNotifications() {
       }
     } catch (err) {
       console.error("Push subscription failed:", err);
+      eventLogger.emit({
+        eventType: "exception",
+        url: window.location.pathname,
+        category: "application-exception",
+        event: "push.subscribe_failed",
+        exceptionType: "CLIENT_ERROR",
+        metadata: { message: err instanceof Error ? err.message : String(err) },
+      });
     }
   }, [supported, subscribePush]);
 

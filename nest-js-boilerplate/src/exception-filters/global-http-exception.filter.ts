@@ -41,7 +41,12 @@ export class GlobalHttpExceptionFilter implements ExceptionFilter {
     const statusCode = response.statusCode;
     const isServerError = statusCode >= 500;
 
-    this.logger.log({
+    // 5xx is a real crash — log at error level so it surfaces to anything
+    // that filters/alerts on log level; 4xx is an expected client error.
+    const log = isServerError
+      ? this.logger.error.bind(this.logger)
+      : this.logger.log.bind(this.logger);
+    log({
       category: 'http-exception',
       event: isServerError ? 'exception.unhandled' : 'exception.handled',
       httpStatus: statusCode,

@@ -56,22 +56,21 @@ const ME_QUERY = `
   query Me {
     me {
       id
-      sessionId
     }
   }
 `;
 
 interface MeResult {
-  me: { id: string; sessionId?: string | null } | null;
+  me: { id: string } | null;
 }
 
-async function resolveMe(): Promise<{ userId?: string; sessionId?: string }> {
+async function resolveMe(): Promise<{ userId?: string }> {
   try {
     const token = await getAccessToken();
     if (!token) return {};
     const { data } = await graphqlFetch<MeResult>(ME_QUERY, undefined, token);
     if (!data?.me) return {};
-    return { userId: data.me.id, sessionId: data.me.sessionId ?? undefined };
+    return { userId: data.me.id };
   } catch {
     return {};
   }
@@ -118,11 +117,10 @@ export const POST = withLogging(async (request, log) => {
   const { events } = parsed.data;
   const userAgent = request.headers.get("user-agent") ?? undefined;
 
-  const { userId, sessionId } = await resolveMe();
+  const { userId } = await resolveMe();
   const enriched = events.map((e) => ({
     ...e,
     userId: userId ?? e.userId,
-    token: sessionId,
     ip: ip === "unknown" ? undefined : ip,
     deviceType: parseDeviceType(e.userAgent ?? userAgent),
   }));
@@ -150,7 +148,7 @@ export const POST = withLogging(async (request, log) => {
   }
 
   log.info(
-    { count: events.length, userId: userId ?? "anonymous", sessionId },
+    { count: events.length, userId: userId ?? "anonymous" },
     "events accepted",
   );
   return NextResponse.json({ accepted: events.length }, { status: 202 });

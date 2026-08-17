@@ -11,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
 import { AuthPayload, SessionUserPayload } from './auth.types';
 import type { JwtUser } from './auth.types';
+import { hashSessionId } from '../common/crypto/crypto.service';
 import { CurrentUser } from './current-user.decorator';
 import { SessionAuthGuard } from './session-auth.guard';
 import { LoginInput } from './dto/login.input';
@@ -158,7 +159,9 @@ export class AuthResolver {
       timezone: user.timezone ?? 'UTC',
       chatNickname: user.chatNickname ?? undefined,
       useNickname: user.useNickname ?? false,
-      sessionId: user.sessionId,
+      // Non-reversible fingerprint, not the raw sessionId — that value IS the refresh-token
+      // bearer credential (see hashSessionId's doc comment). Safe to compare/display/log.
+      sessionId: user.sessionId ? hashSessionId(user.sessionId) : undefined,
       mfaEnabled: dbUser?.mfaEnabled ?? false,
       hideAvatar: dbUser?.hideAvatar ?? false,
     };

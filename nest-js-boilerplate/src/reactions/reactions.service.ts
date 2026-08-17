@@ -57,8 +57,9 @@ export class ReactionsService {
       if (existing.type === data.type) {
         await this.prisma.reaction.delete({ where: { id: existing.id } });
         if (targetPostId) {
-          this.cache.invalidate(`cache:post:${targetPostId}`).catch(() => {});
-          this.cache.invalidate('cache:feed:*').catch(() => {});
+          // CacheAsideService catches and logs its own failures internally.
+          void this.cache.invalidate(`cache:post:${targetPostId}`);
+          void this.cache.invalidate('cache:feed:*');
           this.realtime.emitToTopic('feed', {
             renew: 'Feed',
             type: 'Post',
@@ -81,8 +82,8 @@ export class ReactionsService {
         },
       });
       if (targetPostId) {
-        this.cache.invalidate(`cache:post:${targetPostId}`).catch(() => {});
-        this.cache.invalidate('cache:feed:*').catch(() => {});
+        void this.cache.invalidate(`cache:post:${targetPostId}`);
+        void this.cache.invalidate('cache:feed:*');
         this.realtime.emitToTopic('feed', {
           renew: 'Feed',
           type: 'Post',
@@ -124,8 +125,8 @@ export class ReactionsService {
     }
 
     if (data.postId) {
-      this.cache.invalidate(`cache:post:${data.postId}`).catch(() => {});
-      this.cache.invalidate('cache:feed:*').catch(() => {});
+      void this.cache.invalidate(`cache:post:${data.postId}`);
+      void this.cache.invalidate('cache:feed:*');
       this.realtime.emitToTopic('feed', {
         renew: 'Feed',
         type: 'Post',

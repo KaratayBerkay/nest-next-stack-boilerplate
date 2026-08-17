@@ -1,4 +1,5 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
+import { hashSessionId } from '../common/crypto/crypto.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { TokenStoreService } from './token-store.service';
 import { AuthTokenService } from './auth-token.service';
@@ -118,7 +119,7 @@ export class AuthSessionService {
         this.logger.log({
           category: 'session',
           event: 'session.end',
-          token: session.sessionId,
+          sessionIdHash: hashSessionId(session.sessionId),
           userId: session.userId,
           sessionDurationMs: durationMs,
           reason: 'logout',

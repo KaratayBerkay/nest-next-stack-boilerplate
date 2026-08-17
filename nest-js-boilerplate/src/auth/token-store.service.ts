@@ -232,15 +232,24 @@ export class TokenStoreService {
     );
   }
 
+  /**
+   * `sessionIdHash` is `CryptoService.sha256` of the real sessionId, not the raw value — the
+   * GraphQL layer (SessionsResolver) never hands the client the actual bearer credential, so
+   * matching has to happen by hash here instead of a direct (and O(1)) equality/index lookup.
+   * The per-user session count is small, so the linear scan this already did is unaffected.
+   */
   async revokeSessionBySessionId(
     userId: string,
-    sessionId: string,
+    sessionIdHash: string,
   ): Promise<boolean> {
     const reverseKey = this.reverseIndexKey(userId);
     const keys = await this.redis.smembers(reverseKey);
     for (const key of keys) {
       const session = await this.read(key);
-      if (session?.sessionId === sessionId) {
+      if (
+        session?.sessionId &&
+        this.crypto.sha256(session.sessionId) === sessionIdHash
+      ) {
         await this.revoke(key);
         // Wire-crypto cleanup happens inside revoke() (sessionId-scoped).
         return true;

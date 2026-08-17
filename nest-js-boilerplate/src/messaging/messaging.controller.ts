@@ -75,7 +75,10 @@ export class MessagingController {
   > {
     const result = await this.ms.getFriends(user.userId, q);
     const onlineUserIds = new Set(this.realtime.getOnlineUserIds());
-    this.logger.log(`Fetched ${result.length} friends`, 'MessagingController');
+    this.logger.log(
+      `Fetched ${result.length} friends`,
+      MessagingController.name,
+    );
     return result.map((f) => ({ ...f, online: onlineUserIds.has(f.id) }));
   }
 
@@ -296,7 +299,7 @@ export class MessagingController {
     const result = await this.ms.markConversationRead(user.userId, body.userId);
     this.logger.log(
       `Messages from ${body.userId} marked as read`,
-      'MessagingController',
+      MessagingController.name,
     );
     return { ok: true, readAt: result.readAt };
   }
