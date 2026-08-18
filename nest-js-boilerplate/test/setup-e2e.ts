@@ -7,4 +7,13 @@
 // deterministic and free of live network calls:
 //   - RESEND_API_KEY="" -> MailTransport uses its dev logger transport (provider 'dev'),
 //     instead of calling the real Resend API (which rejects unverified test recipients).
+//   - MXROUTE_API_KEY/SERVER/USERNAME="" -> MxrouteAccountsService.configured is false, so
+//     MailProcessor never calls claimAvailableAccount()/createAccount() against the real
+//     MXRoute API. Without this, every e2e run would provision a brand new real mailbox on
+//     the live account (the local `MailAccount` table starts empty every run, so
+//     claimAvailableAccount() always misses and falls through to createAccount()) — the same
+//     runaway-account-creation pattern that triggered a real send-IP block once already.
 process.env.RESEND_API_KEY = '';
+process.env.MXROUTE_API_KEY = '';
+process.env.MXROUTE_SERVER = '';
+process.env.MXROUTE_USERNAME = '';

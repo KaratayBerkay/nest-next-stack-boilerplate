@@ -40,6 +40,7 @@
     "db:studio": "prisma studio",
     "db:seed": "pnpm exec tsx prisma/seed.ts",
     "backfill:r2-attachments": "ts-node -r tsconfig-paths/register scripts/backfill-r2-attachments.ts",
+    "check:mxroute-status": "ts-node -r tsconfig-paths/register scripts/check-mxroute-send-status.ts",
     "load:setup": "node test/load-test/setup.mjs",
     "load:run": "k6 run test/load-test/ws-chat-load.js",
     "load:test": "pnpm load:setup && pnpm load:run"

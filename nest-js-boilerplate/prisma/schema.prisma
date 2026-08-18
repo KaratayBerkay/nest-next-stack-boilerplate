@@ -110,6 +110,12 @@ enum EmailStatus {
   COMPLAINED
 }
 
+enum MailAccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
 enum OrgRole {
   OWNER
   ADMIN
@@ -369,17 +375,19 @@ model User {
   reactions Reaction[]
 
   // social graph (multiple FKs back to User)
-  following          Follow[]           @relation("Follower")
-  followers          Follow[]           @relation("Following")
-  sentFriendReqs     Friendship[]       @relation("FriendshipRequester")
-  recvFriendReqs     Friendship[]       @relation("FriendshipAddressee")
-  sentMessages       Message[]          @relation("MessageSender")
-  recvMessages       Message[]          @relation("MessageRecipient")
+  following          Follow[]               @relation("Follower")
+  followers          Follow[]               @relation("Following")
+  sentFriendReqs     Friendship[]           @relation("FriendshipRequester")
+  recvFriendReqs     Friendship[]           @relation("FriendshipAddressee")
+  sentMessages       Message[]              @relation("MessageSender")
+  recvMessages       Message[]              @relation("MessageRecipient")
   messageDeletions   MessageDeletion[]
-  roomMessages       RoomMessage[]      @relation("RoomMessageSender")
+  favoritesGiven     FavoriteConversation[] @relation("FavoriteConversationOwner")
+  favoritedBy        FavoriteConversation[] @relation("FavoriteConversationPeer")
+  roomMessages       RoomMessage[]          @relation("RoomMessageSender")
   roomParticipations RoomParticipant[]
-  notifications      Notification[]     @relation("NotificationRecipient")
-  triggered          Notification[]     @relation("NotificationActor")
+  notifications      Notification[]         @relation("NotificationRecipient")
+  triggered          Notification[]         @relation("NotificationActor")
   pushSubscriptions  PushSubscription[]
 
   // money
@@ -526,6 +534,30 @@ model EmailMessage {
 
   @@index([status, scheduledAt])
   @@index([userId])
+}
+
+/// Sending mailboxes created on demand (e.g. via the MXRoute API) so bulk sends
+/// can be spread across isolated per-account quotas instead of the shared inbox.
+model MailAccount {
+  id String @id @default(uuid(7)) @db.Uuid
+
+  /// @Validator.IsEmail()
+  email             String            @unique
+  encryptedPassword Bytes // AES-256-GCM via CryptoService, keyed by ENCRYPTION_KEY
+  usage             Int               @default(0)
+  /// Start of the current locally-tracked rolling-hour send window (null until this
+  /// account's first tracked send). Lets MxrouteAccountsService estimate remaining
+  /// headroom without calling MXRoute's own send-count API, which never reflects
+  /// real sends. Reset alongside `usage` once a send lands more than an hour after
+  /// this timestamp — see MxrouteAccountsService.recordSend/getLocalEstimatedRemaining.
+  firstSentAt       DateTime?         @db.Timestamptz(6)
+  /// Most recent tracked send. Informational only — not read by the rate-limit estimate.
+  lastSentAt        DateTime?         @db.Timestamptz(6)
+  status            MailAccountStatus @default(ACTIVE)
+  createdAt         DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(6)
+
+  @@index([status])
 }
 
 // ---------------------------------------------------------------------------
@@ -801,14 +833,14 @@ model Friendship {
 // Rooms  (durable membership; replaces in-memory Map for E2EE key rotation)
 // ---------------------------------------------------------------------------
 model Room {
-  id                     String                      @id @default(uuid(7)) @db.Uuid
-  slug                   String                      @unique
-  type                   RoomType                    @default(PUBLIC)
-  membershipVersion      Int                         @default(0)
-  participants           RoomParticipant[]
-  createdAt              DateTime                    @default(now()) @db.Timestamptz(6)
-  updatedAt              DateTime                    @updatedAt @db.Timestamptz(6)
-  roomMessages           RoomMessage[]
+  id                String            @id @default(uuid(7)) @db.Uuid
+  slug              String            @unique
+  type              RoomType          @default(PUBLIC)
+  membershipVersion Int               @default(0)
+  participants      RoomParticipant[]
+  createdAt         DateTime          @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime          @updatedAt @db.Timestamptz(6)
+  roomMessages      RoomMessage[]
 }
 
 model RoomParticipant {
@@ -827,24 +859,24 @@ model RoomParticipant {
 }
 
 model Message {
-  id          String    @id @default(uuid(7)) @db.Uuid
-  senderId    String    @db.Uuid
-  sender      User      @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
-  recipientId String    @db.Uuid
-  recipient   User      @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  id          String              @id @default(uuid(7)) @db.Uuid
+  senderId    String              @db.Uuid
+  sender      User                @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  recipientId String              @db.Uuid
+  recipient   User                @relation("MessageRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
   v           String
-  ct          String    @db.Text
+  ct          String              @db.Text
   nonce       String
-  letterCount Int       @default(0)
+  letterCount Int                 @default(0)
   attachments MessageAttachment[]
-  deliveredAt DateTime? @db.Timestamptz(6)
-  readAt      DateTime? @db.Timestamptz(6)
+  deliveredAt DateTime?           @db.Timestamptz(6)
+  readAt      DateTime?           @db.Timestamptz(6)
   // "Delete for everyone" tombstone — set once, ciphertext/attachments left
   // untouched at rest, just excluded from API responses from this point on.
-  deletedAt   DateTime? @db.Timestamptz(6)
+  deletedAt   DateTime?           @db.Timestamptz(6)
   // Per-viewer "delete for me" rows — see MessageDeletion below.
   deletions   MessageDeletion[]
-  createdAt   DateTime  @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime            @default(now()) @db.Timestamptz(6)
 
   // Quoted-reply pointer. SetNull (not Cascade, unlike Comment.parent below)
   // — a reply must survive its parent being removed; messages are never
@@ -879,6 +911,20 @@ model MessageDeletion {
   @@index([userId])
 }
 
+// One row per (user, peer) the user has starred. One-directional — my
+// favoriting a conversation never affects the peer's own view of it.
+model FavoriteConversation {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation("FavoriteConversationOwner", fields: [userId], references: [id], onDelete: Cascade)
+  peerId    String   @db.Uuid
+  peer      User     @relation("FavoriteConversationPeer", fields: [peerId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([userId, peerId])
+  @@index([userId])
+}
+
 model MessageAttachment {
   id           String   @id @default(uuid(7)) @db.Uuid
   messageId    String   @db.Uuid
@@ -898,17 +944,17 @@ model MessageAttachment {
 }
 
 model RoomMessage {
-  id          String                @id @default(uuid(7)) @db.Uuid
+  id          String                  @id @default(uuid(7)) @db.Uuid
   roomId      String
-  room        Room?                 @relation(fields: [roomId], references: [slug], onDelete: Restrict)
-  senderId    String                @db.Uuid
-  sender      User                  @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  room        Room?                   @relation(fields: [roomId], references: [slug], onDelete: Restrict)
+  senderId    String                  @db.Uuid
+  sender      User                    @relation("RoomMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
   v           String
-  ct          String                @db.Text
+  ct          String                  @db.Text
   nonce       String
-  letterCount Int                   @default(0)
+  letterCount Int                     @default(0)
   attachments RoomMessageAttachment[]
-  createdAt   DateTime              @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime                @default(now()) @db.Timestamptz(6)
 
   @@index([roomId, createdAt])
 }
@@ -935,34 +981,34 @@ model RoomMessageAttachment {
 // written; it's only ever populated on rows that predate the R2-backfill
 // migration, kept around as a one-time recovery source, not a live column).
 model PendingUpload {
-  objectName String   @id
-  url        String
-  v          String
-  ct         String?   @db.Text
-  nonce      String
-  uploadedBy String    @db.Uuid
+  objectName    String     @id
+  url           String
+  v             String
+  ct            String?    @db.Text
+  nonce         String
+  uploadedBy    String     @db.Uuid
   // Decompressed (client-visible) byte size of the uploaded file. Written at
   // upload time so per-user upload-storage usage can be summed without
   // stat() calls against MinIO.
-  size       Int       @default(0)
+  size          Int        @default(0)
   // Upload trace — where the object landed in R2 (`uploads/messages/<userId>/…`
   // or `uploads/chat-room/<roomId>/…`) and which message it was finally
   // attached to. `messageId`/`roomMessageId` are backfilled by the messaging
   // services at message-save time; `kind`/`scopeId`/`filename`/`mimetype` are
   // written at upload time so uploads are traceable from the DB even when the
   // message itself was never persisted.
-  kind       UploadKind @default(MESSAGES)
-  scopeId    String?
-  filename   String?
-  mimetype   String?
-  messageId  String?    @db.Uuid
-  roomMessageId String? @db.Uuid
+  kind          UploadKind @default(MESSAGES)
+  scopeId       String?
+  filename      String?
+  mimetype      String?
+  messageId     String?    @db.Uuid
+  roomMessageId String?    @db.Uuid
   // Set at upload time once thumbnail generation succeeds — the URL of a
   // *second* PendingUpload-backed object (its own row, own objectName) holding
   // the small encrypted preview. Null when the file type isn't thumbnailed or
   // generation failed.
-  thumbnailUrl String?
-  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
+  thumbnailUrl  String?
+  createdAt     DateTime   @default(now()) @db.Timestamptz(6)
 
   @@index([uploadedBy, createdAt])
   @@index([kind, scopeId, createdAt])

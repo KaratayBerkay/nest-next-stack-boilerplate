@@ -37,6 +37,14 @@ export const validationSchema = Joi.object({
   STRIPE_SECRET_KEY: Joi.string().optional(),
   STRIPE_WEBHOOK_SECRET: Joi.string().optional(),
 
+  // ── MXRoute API (api.mxroute.com — send-limit/usage checks, not mail transport) ──
+  // .allow('') alongside .optional(): MxrouteAccountsService.configured treats an empty
+  // string the same as unset (feature disabled) — setup-e2e.ts relies on being able to force
+  // that state even when the real .env has these set, same as RESEND_API_KEY.
+  MXROUTE_SERVER: Joi.string().allow('').optional(),
+  MXROUTE_USERNAME: Joi.string().allow('').optional(),
+  MXROUTE_API_KEY: Joi.string().allow('').optional(),
+
   // ── VAPID (Web Push) ─────────────────────────────────────────────────────
   VAPID_PUBLIC_KEY: Joi.string().optional(),
   VAPID_PRIVATE_KEY: Joi.string().optional(),
