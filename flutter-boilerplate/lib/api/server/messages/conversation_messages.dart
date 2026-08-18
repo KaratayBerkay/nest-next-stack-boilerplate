@@ -24,7 +24,6 @@ const _query = '''
         name
         size
         thumbnailUrl
-        storageEnvelope { v nonce }
       }
       createdAt
       readAt

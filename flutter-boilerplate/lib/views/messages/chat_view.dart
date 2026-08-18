@@ -5,6 +5,7 @@ import 'package:flutter_boilerplate/components/ui/scroll_to_bottom_button/scroll
 import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../hooks/use_auth.dart';
 import 'chat_input_bar.dart';
 import 'chat_message_list.dart';
 import 'chat_view_header.dart';
@@ -109,6 +110,23 @@ class _ChatViewState extends ConsumerState<ChatView> {
       // bottom instead of wherever ListView happens to initialize.
       if (newLastId != _lastMessageLastId && _isAtBottom) {
         _scrollToBottom();
+      }
+      // Live delivery (realtime_provider.dart's 'direct-message' handler)
+      // already tries to mark-read inline off the raw WS frame the instant
+      // it lands — but that only catches a message that arrives at exactly
+      // the moment its own frame is processed. Doing it here too, driven by
+      // the same refetch that's already proven to reach this screen (it's
+      // what renders the bubble), catches everything else: several
+      // messages landing in a burst, one that arrived a moment before this
+      // conversation became the active one, etc. `markMessagesRead` is a
+      // bulk "everything from this peer" call, so triggering off just the
+      // last message is enough.
+      if (newLastId != _lastMessageLastId) {
+        final last = currentMessages.last;
+        final myId = ref.read(currentUserProvider)?.id;
+        if (!last.isRead && last.senderId != myId) {
+          _markRead();
+        }
       }
       _lastMessageLastId = newLastId;
     }

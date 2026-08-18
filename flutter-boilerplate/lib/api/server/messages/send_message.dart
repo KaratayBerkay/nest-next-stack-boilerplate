@@ -23,7 +23,6 @@ const _mutation = '''
         name
         size
         thumbnailUrl
-        storageEnvelope { v nonce }
       }
       createdAt
       readAt

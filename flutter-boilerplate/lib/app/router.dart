@@ -295,6 +295,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'v1Messages',
             builder: (_, state) => MessagesPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
+              initialUser: state.uri.queryParameters['user'],
             ),
           ),
           GoRoute(

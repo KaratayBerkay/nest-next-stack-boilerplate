@@ -59,7 +59,11 @@ class RoomMessage {
       senderId: json['senderId'] as String,
       senderName: json['senderName'] as String,
       avatar: json['avatar'] as String,
-      body: json['body'] as String,
+      // Mirrors the same guard on the DM side (ConversationMessagesServer.
+      // _mapMessage): message-body.util.ts's resolveBody() falls through to
+      // the raw, bodyless row on a full decrypt failure, so this can be
+      // absent even though RoomMessage itself has no delete/tombstone path.
+      body: json['body'] as String? ?? '',
       attachments: (json['attachments'] as List<dynamic>? ?? const [])
           .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
           .toList(),

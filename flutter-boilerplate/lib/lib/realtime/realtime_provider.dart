@@ -5,12 +5,16 @@ import '../../api/client/messages/mark_read.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
+import '../../api/server/crypto/handshake.dart';
+import '../../api/server/crypto/re_key.dart';
+import '../../app/router.dart';
 import '../../app_config.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_messages_page.dart';
 import '../riverpod_compat.dart';
 import 'realtime_client.dart';
+import 'route_claim.dart';
 
 final realtimeStatusProvider =
     StateProvider<RealtimeStatus>((ref) => RealtimeStatus.idle);
@@ -44,6 +48,10 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
     },
     onBustTokenCache: () =>
         ref.read(authProvider.notifier).refreshAccessToken(),
+    handshake: (publicKeyHex) =>
+        ref.read(cryptoHandshakeServerProvider).call(publicKeyHex),
+    requestReKey: () => ref.read(cryptoReKeyServerProvider).call(),
+    onAuthenticated: () => resyncAfterConnect(ref),
     onFrame: (frame) {
       final renew = frame['renew'] as String?;
       if (renew != null) {
@@ -58,6 +66,41 @@ final realtimeProvider = Provider<RealtimeClient>((ref) {
 
   return client;
 });
+
+/// Catches up on data that could have gone stale during a connection gap —
+/// a WS push missed while disconnected has no other retry path, so nothing
+/// else refetches on its own once the socket comes back. Runs on every
+/// `authenticated` frame (the first connect AND every reconnect). Mirrors
+/// web's `resyncAfterConnect` (lib/realtime/resync.ts), wired the same way
+/// to `RealtimeClient.onAuthenticated`.
+@visibleForTesting
+void resyncAfterConnect(Ref ref) {
+  ref.invalidate(conversationsProvider);
+  ref.invalidate(friendsListProvider);
+  ref.invalidate(notificationsProvider);
+  ref.invalidate(notificationsUnreadCountProvider);
+  ref.invalidate(dmUnreadNotificationsProvider);
+
+  final uri = ref.read(routerProvider).routerDelegate.currentConfiguration.uri;
+  final claim = routeToPageClaim(uri);
+  switch (claim.page) {
+    case 'feed':
+      ref.invalidate(feedProvider);
+    case 'post':
+      final id = claim.params?['id'];
+      if (id != null) ref.invalidate(postProvider(id));
+    case 'messages':
+      // Flutter's messages claim carries no peer param (routeToPageClaim's
+      // web-mirrored `?user=` deep-link only seeds initial state) — the
+      // open conversation lives in this provider regardless of how it got
+      // selected (deep link vs. sidebar tap), so read it directly instead.
+      final peer = ref.read(selectedConversationUserIdProvider);
+      if (peer != null) ref.invalidate(conversationMessagesProvider(peer));
+    case 'chat-room':
+      final room = claim.params?['room'];
+      if (room != null) ref.invalidate(roomMessagesProvider(room));
+  }
+}
 
 /// Cache-invalidation signals — every real notification/message/feed/friend
 /// push is wrapped this way server-side (`{renew, type, ...}`); see

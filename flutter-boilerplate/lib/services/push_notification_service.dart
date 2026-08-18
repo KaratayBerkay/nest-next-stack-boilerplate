@@ -136,20 +136,25 @@ class PushNotificationService {
     navigateFromData(message.data);
   }
 
+  // Mirrors the web service worker's notificationclick dispatch (public/
+  // sw.js) — the actual shape of the `data` payload backend push
+  // notifications carry (PushNotificationService.sendToUser callers: `kind`
+  // + `senderId`/`postId`, never a `type`/`conversationId` pair, which this
+  // used to check for and so never matched anything real).
   void navigateFromData(Map<String, dynamic> data) {
-    final type = data['type'] as String?;
-    final conversationId = data['conversationId'] as String?;
+    final kind = data['kind'] as String?;
+    final senderId = data['senderId'] as String?;
+    final postId = data['postId'] as String?;
     final lang = data['lang'] as String? ?? 'en';
 
-    if (type == 'chat' && conversationId != null) {
-      navigateTo?.call('/v1/$lang/chat/$conversationId');
-    } else if (type == 'post') {
-      final postId = data['postId'] as String?;
-      if (postId != null) navigateTo?.call('/v1/$lang/posts/$postId');
-    } else if (type == 'notification') {
+    if (kind == 'direct-message' && senderId != null) {
+      navigateTo?.call('/v1/$lang/messages?user=$senderId');
+    } else if (kind == 'friend-request' || kind == 'friend-accepted') {
+      navigateTo?.call('/v1/$lang/find-friends');
+    } else if (postId != null) {
+      navigateTo?.call('/v1/$lang/posts/$postId');
+    } else {
       navigateTo?.call('/v1/$lang/notification');
-    } else if (type == 'feed_update') {
-      navigateTo?.call('/v1/$lang/feed');
     }
   }
 

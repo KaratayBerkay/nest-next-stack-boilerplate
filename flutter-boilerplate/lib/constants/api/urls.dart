@@ -9,6 +9,10 @@ class Urls {
   static const token = '/api/auth/token';
   static const devActivate = '/api/auth/dev-activate';
   static const deviceHandshake = '/api/auth/device-handshake';
+
+  // Wire crypto (realtime frame encryption)
+  static const cryptoHandshake = '/api/crypto/handshake';
+  static const cryptoReKey = '/api/crypto/re-key';
   static const mfa = '/api/auth/login/mfa';
   static const requestPasswordReset = '/api/auth/request-password-reset';
   static const resetPassword = '/api/auth/reset-password';
