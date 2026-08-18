@@ -79,6 +79,22 @@ export async function dispatchRenew(
             },
           );
         }
+        // Friend accept/request also fires its own "Friends"/PendingList renew
+        // over the MESSAGE service, but that one is fire-and-forget and gets
+        // silently dropped if this client had no live MESSAGE socket at that
+        // instant. The notification above rides a reliable channel (push
+        // fallback when offline) — piggyback the friends-list refresh on it
+        // so a missed PendingList frame doesn't leave a stale friends list.
+        {
+          const item = frame.item as { payload?: { kind?: string } };
+          if (
+            item?.payload?.kind === "friend-accepted" ||
+            item?.payload?.kind === "friend-request"
+          ) {
+            qc.invalidateQueries({ queryKey: ["friends", "requests"] });
+            qc.invalidateQueries({ queryKey: ["friends", "list"] });
+          }
+        }
       } else if (frame.type === "Read") {
         qc.invalidateQueries({ queryKey: ["notifications"] });
       }

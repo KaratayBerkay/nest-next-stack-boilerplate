@@ -99,6 +99,8 @@ export const MESSAGES_FRIENDS_DECLINE_PREFIX =
 export const MESSAGES_CONVERSATIONS_PREFIX =
   "/api/messages/conversations/" as const;
 export const MESSAGES_READ_URL = "/api/messages/read" as const;
+export const MESSAGES_FAVORITE_URL = "/api/messages/favorite" as const;
+export const MESSAGES_UNFAVORITE_URL = "/api/messages/unfavorite" as const;
 export const MESSAGES_MESSAGES_PREFIX = "/api/messages/messages/" as const;
 
 export const USERS_SEARCH_PREFIX = "/api/users/search" as const;

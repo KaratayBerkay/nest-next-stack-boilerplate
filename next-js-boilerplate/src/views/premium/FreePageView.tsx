@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { PRICING_PATH } from "@/constants/routes";
 import { cn } from "@/lib/cn";

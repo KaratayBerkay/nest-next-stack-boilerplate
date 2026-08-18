@@ -15,10 +15,7 @@ vi.mock("@/hooks/useAuth", () => ({
   }),
 }));
 vi.mock("@/api/client/messages/actions", () => ({
-  useMessageActions: () => ({ markRead: vi.fn() }),
-}));
-vi.mock("@/hooks/useSwipeGesture", () => ({
-  useSwipeGesture: () => ({ progress: 0, direction: null, isSwiping: false }),
+  useMessageActions: () => ({ markRead: vi.fn(), toggleFavorite: vi.fn() }),
 }));
 vi.mock("@/hooks/useConnectionState", () => ({
   useConnectionState: () => "online",
@@ -34,18 +31,6 @@ vi.mock("@/lib/realtime/event-dispatch", async (importOriginal) => {
     setActivePeerId: vi.fn(actual.setActivePeerId),
   };
 });
-vi.mock("@/hooks/messages/useMessagesSearch", () => ({
-  useMessagesSearch: () => ({
-    search: "",
-    setSearch: vi.fn(),
-    findInput: "",
-    setFindInput: vi.fn(),
-    findResults: [],
-    sentRequestIds: new Set<string>(),
-    setSentRequestIds: vi.fn(),
-    debouncedSearch: vi.fn(),
-  }),
-}));
 vi.mock("@/hooks/messages/useMessagesData", () => ({
   useMessagesData: (...args: unknown[]) => mockUseMessagesData(...args),
 }));
@@ -64,6 +49,7 @@ function conversation(avatarUrl: string | null) {
       lastMessage: "hi",
       lastTime: "2026-08-02T00:00:00.000Z",
       unread: 0,
+      favorite: false,
     },
   ];
 }

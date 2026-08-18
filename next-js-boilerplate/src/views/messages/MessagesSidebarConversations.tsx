@@ -7,6 +7,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { formatDateByPreference } from "@/lib/date-time";
 import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
+import { IconStar, IconStarFilled } from "@tabler/icons-react";
 import type { MessagesSidebarConversationsProps } from "@/types/messages/MessagesSidebarConversations-types";
 
 export function MessagesSidebarConversations({
@@ -16,6 +17,8 @@ export function MessagesSidebarConversations({
   onlineUsers,
   convsError,
   convsLoading,
+  onToggleFavorite,
+  emptyMessage,
 }: MessagesSidebarConversationsProps) {
   const t = useMessages("messages");
   const dateDisplay = useDateDisplayCookie();
@@ -35,17 +38,25 @@ export function MessagesSidebarConversations({
       )}
       {!convsError && conversations.length === 0 && (
         <p className="text-muted py-16 text-center text-sm">
-          {t.noConversations}
+          {emptyMessage ?? t.noConversations}
         </p>
       )}
       {conversations.length > 0 && (
         <div className="flex flex-col">
           {[...conversations].map((c, i) => (
-            <button
+            <div
               key={c.user.id}
+              role="button"
+              tabIndex={0}
               onClick={() => openConversation(c.user)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openConversation(c.user);
+                }
+              }}
               className={cn(
-                "animate-fade-in-up hover:bg-surface/50 flex w-full items-center gap-3 px-5 py-3 text-left transition-colors",
+                "animate-fade-in-up hover:bg-surface/50 flex w-full cursor-pointer items-center gap-3 px-5 py-3 text-left transition-colors",
                 selectedUser?.id === c.user.id
                   ? "bg-brand/10"
                   : "border-border border-b",
@@ -68,22 +79,47 @@ export function MessagesSidebarConversations({
                   <span className="truncate text-sm font-semibold">
                     {c.user.name || c.user.email}
                   </span>
-                  <span className="text-muted shrink-0 text-[11px]">
-                    {formatDateByPreference(c.lastTime, dateDisplay)}
-                  </span>
+                  {!c.noHistory && (
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <span className="text-muted text-[11px]">
+                        {formatDateByPreference(c.lastTime, dateDisplay)}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label={
+                          c.favorite
+                            ? t.unfavoriteConversation
+                            : t.favoriteConversation
+                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleFavorite(c.user.id, !c.favorite);
+                        }}
+                        className="text-muted hover:text-brand"
+                      >
+                        {c.favorite ? (
+                          <IconStarFilled size={16} className="text-brand" />
+                        ) : (
+                          <IconStar size={16} />
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-0.5 flex items-center justify-between gap-2">
                   <p className="text-muted min-w-0 truncate text-sm">
-                    {typeof c.lastMessage === "string"
-                      ? c.lastMessage === "[Deleted]"
-                        ? t.deletedMessage
-                        : c.lastMessage !== "" &&
-                            c.lastMessage !== "[Encrypted]"
-                          ? c.lastMessage
-                          : c.hasAttachments
-                            ? "\uD83D\uDCCE " + t.attachmentPreview
-                            : "\uD83D\uDD12 " + t.decryptionFailed
-                      : "\uD83D\uDD12 " + t.decryptionFailed}
+                    {c.noHistory
+                      ? t.startChatting
+                      : typeof c.lastMessage === "string"
+                        ? c.lastMessage === "[Deleted]"
+                          ? t.deletedMessage
+                          : c.lastMessage !== "" &&
+                              c.lastMessage !== "[Encrypted]"
+                            ? c.lastMessage
+                            : c.hasAttachments
+                              ? "\uD83D\uDCCE " + t.attachmentPreview
+                              : "\uD83D\uDD12 " + t.decryptionFailed
+                        : "\uD83D\uDD12 " + t.decryptionFailed}
                   </p>
                   {c.unread > 0 && (
                     <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
@@ -92,7 +128,7 @@ export function MessagesSidebarConversations({
                   )}
                 </div>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       )}

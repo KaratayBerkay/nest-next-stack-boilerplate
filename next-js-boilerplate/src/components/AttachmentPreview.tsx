@@ -131,9 +131,9 @@ export function AttachmentPreview({
                 className="max-h-[70vh] rounded-lg object-contain"
               />
             ) : isPdf ? (
-              <embed
+              <iframe
                 src={href}
-                type="application/pdf"
+                title={label}
                 className="h-[70vh] w-full rounded-lg"
               />
             ) : (

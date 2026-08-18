@@ -1,43 +1,78 @@
 "use client";
 
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useParams } from "next/navigation";
 import { IconX } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
-import { MessagesSidebarTabBar } from "./MessagesSidebarTabBar";
+import { roomsQueryOptions } from "@/api/client/messages/rooms";
+import { MessagesSidebarFilterBar } from "./MessagesSidebarFilterBar";
 import { MessagesSidebarSearch } from "./MessagesSidebarSearch";
 import { MessagesSidebarConversations } from "./MessagesSidebarConversations";
-import { MessagesSidebarFriends } from "./MessagesSidebarFriends";
+import { MessagesSidebarRooms } from "./MessagesSidebarRooms";
 import type { MessagesSidebarProps } from "@/types/messages/MessagesSidebar-types";
 
 export function MessagesSidebar({
-  user,
   conversations,
-  friends,
   selectedUser,
-  tab,
-  setTab,
+  friends,
+  filter,
+  setFilter,
   search,
   setSearch,
-  findInput,
-  setFindInput,
-  findResults,
-  sentRequestIds,
-  setSentRequestIds,
   openConversation,
+  onToggleFavorite,
   sidebarOpen,
   setSidebarOpen,
-  debouncedSearch,
   onlineUsers,
   convsError,
   convsLoading,
-  progress,
-  direction,
-  isSwiping,
 }: MessagesSidebarProps) {
   const t = useMessages("messages");
   const params = useParams<{ lang: string }>();
+  const lang = params?.lang ?? "";
+
+  const { data: rooms, isPending: roomsLoading } = useQuery({
+    ...roomsQueryOptions(),
+    enabled: filter === "groups",
+  });
+
+  // Friends with no message history have no row in `conversations` at all
+  // (that list only has threads with at least one real message) — synthesize
+  // a placeholder row per such friend so "All" reads as "everyone you can
+  // message", not just "active threads". Real conversations first (existing
+  // recency order untouched), unstarted friends appended after, alphabetical.
+  const friendsWithoutConvo = useMemo(() => {
+    const convoIds = new Set(conversations.map((c) => c.user.id));
+    return friends
+      .filter((f) => !convoIds.has(f.id))
+      .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email))
+      .map((f) => ({
+        user: f,
+        lastMessage: "",
+        lastTime: "",
+        unread: 0,
+        favorite: false,
+        noHistory: true,
+      }));
+  }, [friends, conversations]);
+
+  const filteredConversations = useMemo(() => {
+    let list: Array<(typeof conversations)[number] & { noHistory?: boolean }> =
+      conversations;
+    if (filter === "all") list = [...list, ...friendsWithoutConvo];
+    if (filter === "unread") list = list.filter((c) => c.unread > 0);
+    if (filter === "favorites") list = list.filter((c) => c.favorite);
+    if (search) {
+      const q = search.toLowerCase();
+      list = list.filter((c) =>
+        (c.user.name || c.user.email).toLowerCase().includes(q),
+      );
+    }
+    return list;
+  }, [conversations, friendsWithoutConvo, filter, search]);
 
   return (
     <div
@@ -60,54 +95,32 @@ export function MessagesSidebar({
         />
       </div>
 
-      <MessagesSidebarTabBar
-        tab={tab}
-        setTab={setTab}
-        lang={params?.lang ?? ""}
-      />
-
-      <MessagesSidebarSearch
-        tab={tab}
-        search={search}
-        setSearch={setSearch}
-        findInput={findInput}
-        setFindInput={setFindInput}
-        findResults={findResults}
-        user={user}
+      <MessagesSidebarFilterBar
+        filter={filter}
+        setFilter={setFilter}
+        lang={lang}
         friends={friends}
-        sentRequestIds={sentRequestIds}
-        setSentRequestIds={setSentRequestIds}
-        debouncedSearch={debouncedSearch}
+        openConversation={openConversation}
       />
 
-      {isSwiping && (
-        <div className="bg-surface-hover mx-5 h-1 shrink-0 overflow-hidden rounded-full">
-          <div
-            className="bg-brand h-full rounded-full transition-none"
-            style={{
-              width: `${progress * 100}%`,
-              marginLeft:
-                direction === "right" ? "0" : `${(1 - progress) * 100}%`,
-            }}
-          />
-        </div>
-      )}
+      <MessagesSidebarSearch search={search} setSearch={setSearch} />
 
-      {tab === "conversations" ? (
+      {filter === "groups" ? (
+        <MessagesSidebarRooms
+          rooms={rooms ?? []}
+          roomsLoading={roomsLoading}
+          lang={lang}
+        />
+      ) : (
         <MessagesSidebarConversations
-          conversations={conversations}
+          conversations={filteredConversations}
           selectedUser={selectedUser}
           openConversation={openConversation}
           onlineUsers={onlineUsers}
           convsError={convsError}
           convsLoading={convsLoading}
-        />
-      ) : (
-        <MessagesSidebarFriends
-          search={search}
-          friends={friends}
-          openConversation={openConversation}
-          onlineUsers={onlineUsers}
+          onToggleFavorite={onToggleFavorite}
+          emptyMessage={filter === "unread" ? t.noUnread : undefined}
         />
       )}
     </div>

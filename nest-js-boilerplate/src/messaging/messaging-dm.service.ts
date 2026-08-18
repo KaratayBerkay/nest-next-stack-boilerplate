@@ -104,6 +104,7 @@ export class MessagingDmService {
         lastTime: Date;
         hasAttachments: boolean;
         unread: number;
+        favorite: boolean;
       }[]
     >(cacheKey);
     if (cached) return cached;
@@ -206,6 +207,12 @@ export class MessagingDmService {
     });
     const userMap = new Map(peerUsers.map((u) => [u.id, u]));
 
+    const favorites = await this.prisma.favoriteConversation.findMany({
+      where: { userId, peerId: { in: peerIds } },
+      select: { peerId: true },
+    });
+    const favoriteSet = new Set(favorites.map((f) => f.peerId));
+
     const result = peerIds
       .map((peerId) => {
         const latest = latestPerPeer.get(peerId)!;
@@ -226,6 +233,7 @@ export class MessagingDmService {
           lastTime: latest.lastTime,
           hasAttachments: latest.hasAttachments,
           unread: unreadMap.get(peerId) ?? 0,
+          favorite: favoriteSet.has(peerId),
         };
       })
       .sort((a, b) => b.lastTime.getTime() - a.lastTime.getTime());
@@ -757,6 +765,27 @@ export class MessagingDmService {
       this.cache.del(`conversations:${otherUserId}`),
     ]);
     return { readAt: now.toISOString() };
+  }
+
+  /**
+   * Favoriting is one-directional and private — it only ever changes what
+   * `userId` sees, so only their own cached conversation list needs
+   * invalidating (unlike markRead, which is visible to both sides).
+   */
+  async setFavorite(userId: string, peerId: string, favorite: boolean) {
+    if (favorite) {
+      await this.prisma.favoriteConversation.upsert({
+        where: { userId_peerId: { userId, peerId } },
+        create: { userId, peerId },
+        update: {},
+      });
+    } else {
+      await this.prisma.favoriteConversation.deleteMany({
+        where: { userId, peerId },
+      });
+    }
+    await this.cache.del(`conversations:${userId}`);
+    return { favorite };
   }
 
   /**

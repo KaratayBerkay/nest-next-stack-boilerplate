@@ -186,7 +186,31 @@ export function useMessageActions() {
     await queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
-  return { sendMessage, markRead, deleteMessage };
+  const toggleFavorite = async (peerId: string, next: boolean) => {
+    const queryKey = ["conversations"];
+    const previous = queryClient.getQueryData(queryKey);
+
+    queryClient.setQueryData(queryKey, (old: unknown) => {
+      const conversations = old as
+        | Array<{ user: { id: string }; favorite: boolean }>
+        | undefined;
+      if (!conversations) return old;
+      return conversations.map((c) =>
+        c.user.id === peerId ? { ...c, favorite: next } : c,
+      );
+    });
+
+    try {
+      const { setFavoriteServer } =
+        await import("@/api/server/messages/favorite");
+      await setFavoriteServer(peerId, next);
+    } catch (err) {
+      queryClient.setQueryData(queryKey, previous);
+      throw err;
+    }
+  };
+
+  return { sendMessage, markRead, deleteMessage, toggleFavorite };
 }
 
 export interface UploadAttachmentOptions {

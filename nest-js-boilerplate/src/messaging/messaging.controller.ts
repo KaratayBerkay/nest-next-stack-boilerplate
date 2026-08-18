@@ -21,6 +21,7 @@ import { MessagingService } from './messaging.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PushNotificationService } from '../push-notification/push-notification.service';
 import { MarkReadInput } from './dto/mark-read.input';
+import { FavoriteConversationInput } from './dto/favorite-conversation.input';
 import { SendMessageRestDto } from './dto/send-message-rest.dto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -302,6 +303,30 @@ export class MessagingController {
       MessagingController.name,
     );
     return { ok: true, readAt: result.readAt };
+  }
+
+  @Post('messages/favorite')
+  @ApiOperation({
+    summary: 'Favorite a conversation (one-directional, own account only)',
+  })
+  async favoriteConversation(
+    @CurrentUser() user: JwtUser,
+    @Body(new ValidationPipe({ transform: true, whitelist: true }))
+    body: FavoriteConversationInput,
+  ) {
+    const result = await this.ms.setFavorite(user.userId, body.peerId, true);
+    return { ok: true, favorite: result.favorite };
+  }
+
+  @Post('messages/unfavorite')
+  @ApiOperation({ summary: 'Unfavorite a conversation' })
+  async unfavoriteConversation(
+    @CurrentUser() user: JwtUser,
+    @Body(new ValidationPipe({ transform: true, whitelist: true }))
+    body: FavoriteConversationInput,
+  ) {
+    const result = await this.ms.setFavorite(user.userId, body.peerId, false);
+    return { ok: true, favorite: result.favorite };
   }
 
   @Get('rooms')

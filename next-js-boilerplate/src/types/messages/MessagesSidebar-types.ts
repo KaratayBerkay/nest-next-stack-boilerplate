@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import type { SidebarFilter } from "./MessagesSidebarFilterBar-types";
 
 type UserInfo = {
   id: string;
@@ -8,33 +9,25 @@ type UserInfo = {
 };
 
 export interface MessagesSidebarProps {
-  user: UserInfo;
   conversations: Array<{
     user: UserInfo;
     lastMessage: string | Record<string, unknown>;
     lastTime: string;
     unread: number;
+    favorite: boolean;
   }>;
-  friends: UserInfo[];
   selectedUser: UserInfo | null;
-  tab: "conversations" | "friends";
-  setTab: Dispatch<SetStateAction<"conversations" | "friends">>;
+  friends: UserInfo[];
+  filter: SidebarFilter;
+  setFilter: Dispatch<SetStateAction<SidebarFilter>>;
   search: string;
   setSearch: Dispatch<SetStateAction<string>>;
-  findInput: string;
-  setFindInput: Dispatch<SetStateAction<string>>;
-  findResults: UserInfo[];
-  sentRequestIds: Set<string>;
-  setSentRequestIds: Dispatch<SetStateAction<Set<string>>>;
 
   openConversation: (u: UserInfo) => void;
+  onToggleFavorite: (peerId: string, next: boolean) => void;
   sidebarOpen: boolean;
   setSidebarOpen: Dispatch<SetStateAction<boolean>>;
-  debouncedSearch: (val: string) => void;
   onlineUsers: Set<string>;
   convsError: boolean;
   convsLoading: boolean;
-  progress: number;
-  direction: "left" | "right";
-  isSwiping: boolean;
 }

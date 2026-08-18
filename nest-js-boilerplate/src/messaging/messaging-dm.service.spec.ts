@@ -21,6 +21,11 @@ describe('MessagingDmService', () => {
       groupBy: jest.Mock;
     };
     messageDeletion: { upsert: jest.Mock };
+    favoriteConversation: {
+      upsert: jest.Mock;
+      deleteMany: jest.Mock;
+      findMany: jest.Mock;
+    };
     pendingUpload: { findMany: jest.Mock; updateMany: jest.Mock };
     messageAttachment: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
@@ -49,6 +54,11 @@ describe('MessagingDmService', () => {
         groupBy: jest.fn().mockResolvedValue([]),
       },
       messageDeletion: { upsert: jest.fn().mockResolvedValue(undefined) },
+      favoriteConversation: {
+        upsert: jest.fn().mockResolvedValue(undefined),
+        deleteMany: jest.fn().mockResolvedValue({ count: 0 }),
+        findMany: jest.fn().mockResolvedValue([]),
+      },
       user: { findMany: jest.fn() },
       pendingUpload: {
         findMany: jest.fn(),
@@ -501,6 +511,50 @@ describe('MessagingDmService', () => {
       expect(receivedSql).toContain('NOT EXISTS');
       expect(receivedSql).toContain('"MessageDeletion"');
     });
+
+    it('marks a peer as favorite only when a FavoriteConversation row exists for this viewer', async () => {
+      mockPrisma.message.groupBy.mockResolvedValue([]);
+      mockPrisma.$queryRawUnsafe
+        .mockResolvedValueOnce([]) // sentMessages
+        .mockResolvedValueOnce([
+          {
+            id: 'm1',
+            senderId: 'u2',
+            createdAt: new Date('2026-08-07T10:00:00Z'),
+            v: 'v1',
+            ct: 'ct1',
+            nonce: 'n1',
+            hasAttachments: false,
+          },
+          {
+            id: 'm2',
+            senderId: 'u3',
+            createdAt: new Date('2026-08-07T09:00:00Z'),
+            v: 'v1',
+            ct: 'ct1',
+            nonce: 'n1',
+            hasAttachments: false,
+          },
+        ]); // receivedMessages
+      mockPrisma.user.findMany.mockResolvedValue([
+        { id: 'u2', email: 'u2@x.com', name: 'U2', avatarUrl: null, hideAvatar: false },
+        { id: 'u3', email: 'u3@x.com', name: 'U3', avatarUrl: null, hideAvatar: false },
+      ]);
+      mockPrisma.favoriteConversation.findMany.mockResolvedValue([
+        { peerId: 'u2' },
+      ]);
+
+      const result = await service.getConversations('u1', () =>
+        Promise.resolve(['u2', 'u3']),
+      );
+
+      expect(mockPrisma.favoriteConversation.findMany).toHaveBeenCalledWith({
+        where: { userId: 'u1', peerId: { in: ['u2', 'u3'] } },
+        select: { peerId: true },
+      });
+      expect(result.find((c) => c.user.id === 'u2')?.favorite).toBe(true);
+      expect(result.find((c) => c.user.id === 'u3')?.favorite).toBe(false);
+    });
   });
 
   describe('getMessages', () => {
@@ -772,6 +826,33 @@ describe('MessagingDmService', () => {
           value: 0,
         },
       );
+    });
+  });
+
+  describe('setFavorite', () => {
+    it('upserts a FavoriteConversation row and busts only the actor\'s cache when favoriting', async () => {
+      const result = await service.setFavorite('u1', 'u2', true);
+
+      expect(mockPrisma.favoriteConversation.upsert).toHaveBeenCalledWith({
+        where: { userId_peerId: { userId: 'u1', peerId: 'u2' } },
+        create: { userId: 'u1', peerId: 'u2' },
+        update: {},
+      });
+      expect(mockPrisma.favoriteConversation.deleteMany).not.toHaveBeenCalled();
+      expect(mockCache.del).toHaveBeenCalledWith('conversations:u1');
+      expect(mockCache.del).not.toHaveBeenCalledWith('conversations:u2');
+      expect(result).toEqual({ favorite: true });
+    });
+
+    it('deletes the FavoriteConversation row when unfavoriting', async () => {
+      const result = await service.setFavorite('u1', 'u2', false);
+
+      expect(mockPrisma.favoriteConversation.deleteMany).toHaveBeenCalledWith({
+        where: { userId: 'u1', peerId: 'u2' },
+      });
+      expect(mockPrisma.favoriteConversation.upsert).not.toHaveBeenCalled();
+      expect(mockCache.del).toHaveBeenCalledWith('conversations:u1');
+      expect(result).toEqual({ favorite: false });
     });
   });
 

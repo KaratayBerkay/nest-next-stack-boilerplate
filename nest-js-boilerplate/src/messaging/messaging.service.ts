@@ -181,6 +181,10 @@ export class MessagingService {
     return this.dm.markRead(userId, otherUserId);
   }
 
+  setFavorite(userId: string, peerId: string, favorite: boolean) {
+    return this.dm.setFavorite(userId, peerId, favorite);
+  }
+
   deleteMessageForMe(userId: string, messageId: string) {
     return this.dm.deleteMessageForMe(userId, messageId);
   }

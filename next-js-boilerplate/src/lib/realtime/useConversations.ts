@@ -13,6 +13,7 @@ export interface Conversation {
   lastTime: string;
   hasAttachments?: boolean;
   unread: number;
+  favorite: boolean;
 }
 
 export function useConversations() {

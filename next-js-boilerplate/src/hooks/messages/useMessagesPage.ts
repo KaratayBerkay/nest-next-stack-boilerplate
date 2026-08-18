@@ -11,13 +11,12 @@ import {
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { useMessageActions } from "@/api/client/messages/actions";
-import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { usePresence } from "@/hooks/usePresence";
 import { setActivePeerId } from "@/lib/realtime/event-dispatch";
 import type { UserInfo } from "@/types/messages/FreePageView-types";
+import type { SidebarFilter } from "@/types/messages/MessagesSidebarFilterBar-types";
 import { openConversationAction } from "@/views/messages/FreePageView-utils";
-import { useMessagesSearch } from "@/hooks/messages/useMessagesSearch";
 import { useMessagesData } from "@/hooks/messages/useMessagesData";
 
 type UseMessagesPageInput = {
@@ -44,43 +43,42 @@ export function useMessagesPage({
     !!user,
   );
 
-  const {
-    search,
-    setSearch,
-    findInput,
-    setFindInput,
-    findResults,
-    sentRequestIds,
-    setSentRequestIds,
-    debouncedSearch,
-  } = useMessagesSearch(user?.id);
+  const [search, setSearch] = useState("");
 
-  const [tab, setTab] = useState<"conversations" | "friends">(
+  const [filter, setFilter] = useState<SidebarFilter>(
     () =>
       (typeof window !== "undefined"
-        ? (sessionStorage.getItem("msg_tab") as "conversations" | "friends")
-        : null) || "conversations",
+        ? (sessionStorage.getItem("msg_filter") as SidebarFilter)
+        : null) || "all",
   );
   useEffect(() => {
-    sessionStorage.setItem("msg_tab", tab);
-  }, [tab]);
+    sessionStorage.setItem("msg_filter", filter);
+  }, [filter]);
 
-  const { markRead: markMessagesRead } = useMessageActions();
+  const { markRead: markMessagesRead, toggleFavorite } = useMessageActions();
 
   const lastParamRef = useRef<string | null>(null);
   useEffect(() => {
     const userId = initialUser;
-    if (!userId || conversations.length === 0) return;
+    if (!userId) return;
     if (lastParamRef.current === userId) return;
-    lastParamRef.current = userId;
-    const match = conversations.find((c) => c.user.id === userId);
+    // A friend with no message history yet has no entry in `conversations`
+    // (that list only has threads with at least one message) — fall back to
+    // `friends` so "Message" from the Friends page can open a brand-new,
+    // empty conversation instead of silently landing on nothing. Don't mark
+    // this userId as handled until a match is actually found: `friends` can
+    // still be loading on the first render this effect sees.
+    const match =
+      conversations.find((c) => c.user.id === userId)?.user ??
+      friends.find((f) => f.id === userId);
     if (match) {
+      lastParamRef.current = userId;
       startTransition(() => {
-        setSelectedUser(match.user);
+        setSelectedUser(match);
       });
-      markMessagesRead(match.user.id);
+      markMessagesRead(match.id);
     }
-  }, [initialUser, conversations, markMessagesRead]);
+  }, [initialUser, conversations, friends, markMessagesRead]);
 
   // selectedUserState is a point-in-time snapshot taken on click/URL-match,
   // not a live view — it never updates on its own when the underlying user's
@@ -119,17 +117,19 @@ export function useMessagesPage({
         u,
         markMessagesRead,
         setSelectedUser,
-        setTab,
         setSidebarOpen,
       ),
     [markMessagesRead],
   );
 
-  const { progress, direction, isSwiping } = useSwipeGesture({
-    threshold: 60,
-    onSwipeLeft: useCallback(() => setTab("friends"), []),
-    onSwipeRight: useCallback(() => setTab("conversations"), []),
-  });
+  const onToggleFavorite = useCallback(
+    (peerId: string, next: boolean) => {
+      toggleFavorite(peerId, next).catch(() => {
+        // Optimistic update already rolled back inside toggleFavorite.
+      });
+    },
+    [toggleFavorite],
+  );
 
   const connectionState = useConnectionState();
   const onlineUsers = usePresence();
@@ -147,29 +147,21 @@ export function useMessagesPage({
     t,
     user,
     loading,
-    friends,
     conversations,
+    friends,
     selectedUser,
     setSelectedUser,
-    tab,
-    setTab,
+    filter,
+    setFilter,
     sidebarOpen,
     setSidebarOpen,
     search,
     setSearch,
-    findInput,
-    setFindInput,
-    findResults,
-    sentRequestIds,
-    setSentRequestIds,
     openConversation,
-    debouncedSearch,
+    onToggleFavorite,
     onlineUsers,
     convsError,
     convsLoading,
-    progress,
-    direction,
-    isSwiping,
     connectionState,
     messagesUser,
   };

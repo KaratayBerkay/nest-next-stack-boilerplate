@@ -1170,14 +1170,19 @@ export type I18nMessages = {
       "connected": string;
       "disconnected": string;
       "typing": string;
-      "chats": string;
-      "friends": string;
       "searchUsers": string;
-      "searchFriends": string;
       "add": string;
       "noConversations": string;
-      "noFriends": string;
       "selectConversation": string;
+      "filterAll": string;
+      "filterUnread": string;
+      "filterFavorites": string;
+      "filterGroups": string;
+      "noGroups": string;
+      "noUnread": string;
+      "favoriteConversation": string;
+      "unfavoriteConversation": string;
+      "searchChats": string;
       "noMessages": string;
       "inputPlaceholder": string;
       "connecting": string;
@@ -1214,6 +1219,9 @@ export type I18nMessages = {
       "replyingTo": string;
       "you": string;
       "cancelReply": string;
+      "newMessage": string;
+      "noFriendsToChat": string;
+      "startChatting": string;
     }
 
   "notification": {

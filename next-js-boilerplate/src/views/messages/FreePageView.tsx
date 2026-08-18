@@ -39,29 +39,21 @@ function MessagesPageContent({
     t,
     user,
     loading,
-    friends,
     conversations,
+    friends,
     selectedUser,
     setSelectedUser,
-    tab,
-    setTab,
+    filter,
+    setFilter,
     sidebarOpen,
     setSidebarOpen,
     search,
     setSearch,
-    findInput,
-    setFindInput,
-    findResults,
-    sentRequestIds,
-    setSentRequestIds,
     openConversation,
-    debouncedSearch,
+    onToggleFavorite,
     onlineUsers,
     convsError,
     convsLoading,
-    progress,
-    direction,
-    isSwiping,
     connectionState,
     messagesUser,
   } = useMessagesPage({ initialUser, initialFriends });
@@ -82,29 +74,20 @@ function MessagesPageContent({
       )}
 
       <MessagesSidebar
-        user={messagesUser}
         conversations={conversations}
-        friends={friends}
         selectedUser={selectedUser}
-        tab={tab}
-        setTab={setTab}
+        friends={friends}
+        filter={filter}
+        setFilter={setFilter}
         search={search}
         setSearch={setSearch}
-        findInput={findInput}
-        setFindInput={setFindInput}
-        findResults={findResults}
-        sentRequestIds={sentRequestIds}
-        setSentRequestIds={setSentRequestIds}
         openConversation={openConversation}
+        onToggleFavorite={onToggleFavorite}
         sidebarOpen={sidebarOpen}
         setSidebarOpen={setSidebarOpen}
-        debouncedSearch={debouncedSearch}
         onlineUsers={onlineUsers}
         convsError={convsError}
         convsLoading={convsLoading}
-        progress={progress}
-        direction={direction ?? "right"}
-        isSwiping={isSwiping}
       />
 
       <div className="hidden min-h-0 flex-1 md:flex">

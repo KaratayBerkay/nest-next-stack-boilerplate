@@ -40,11 +40,24 @@ const nextConfig: NextConfig = {
             "img-src 'self' blob: data: https:; " +
             "font-src 'self' data:; " +
             "connect-src 'self' ws: wss: https: https://*.stripe.com; " +
-            "frame-src https://*.stripe.com; " +
+            "frame-src 'self' https://*.stripe.com; " +
             "object-src 'none'; " +
             "base-uri 'self'; " +
             "frame-ancestors 'none'; " +
             "upgrade-insecure-requests",
+        },
+      ],
+    },
+    {
+      // Served files are embedded in a same-origin <iframe> for PDF preview
+      // (AttachmentPreview); the blanket DENY/'none' above would block the
+      // resource from framing itself.
+      source: "/api/upload/serve",
+      headers: [
+        { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        {
+          key: "Content-Security-Policy",
+          value: "default-src 'none'; frame-ancestors 'self';",
         },
       ],
     },
