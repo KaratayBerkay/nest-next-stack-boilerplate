@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/api/client/billing/query.dart';
 import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_boilerplate/hooks/use_auth.dart';
 import 'package:flutter_boilerplate/hooks/use_billing.dart';
@@ -25,7 +26,12 @@ class _FakeBillingState extends BillingState {
   }
 
   @override
-  Future<Map<String, dynamic>> subscribe(String priceId) async {
+  Future<Map<String, dynamic>> subscribe(
+    String priceId, {
+    String? paymentMethodId,
+    String? idempotencyKey,
+    String? currency,
+  }) async {
     subscribeCalls.add(priceId);
     if (priceId == 'FREE') {
       return {'success': true, 'reason': 'canceled'};
@@ -66,6 +72,7 @@ void main() {
       ProviderScope(
         overrides: [
           userTierProvider.overrideWithValue(userTier),
+          planPricesProvider.overrideWith((ref) async => const []),
           billingStateProvider.overrideWith((ref) {
             fake = _FakeBillingState(ref);
             return fake;

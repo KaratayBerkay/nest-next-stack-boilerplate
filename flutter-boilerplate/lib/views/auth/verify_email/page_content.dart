@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -39,13 +41,25 @@ class _VerifyEmailPageContentState
   bool get _codeMode => !_hasToken && widget.userId.isNotEmpty;
 
   @override
-  void dispose() {
-    super.dispose();
+  void initState() {
+    super.initState();
+    // Fire once on mount (mirrors the web's `useEffect(() => {...}, [token,
+    // t])`) — this used to run inline in build(), which reissued the
+    // single-use verify-email token on every rebuild and, since it called
+    // setState() on this element's own build target, tripped "setState() or
+    // markNeedsBuild() called during build" (stripped in release builds,
+    // where it instead risks a same-frame rebuild loop).
+    if (_hasToken) {
+      // Deferred a microtask so the *entire* body of _verifyWithToken() —
+      // including the AppLocalizations.of(context) lookup in its catch
+      // block — runs strictly after initState() has returned, regardless of
+      // whether the awaited call resolves via a real async gap or (e.g. a
+      // mocked call stubbed with a synchronous throw) completes immediately.
+      unawaited(Future.microtask(_verifyWithToken));
+    }
   }
 
   Future<void> _verifyWithToken() async {
-    final t = AppLocalizations.of(context);
-
     setState(() {
       _verifying = true;
       _error = null;
@@ -60,6 +74,12 @@ class _VerifyEmailPageContentState
       final msg =
           (data is Map && data['msg'] is String) ? data['msg'] as String : null;
       if (mounted) {
+        // AppLocalizations.of(context) can't run any earlier than this —
+        // called synchronously from initState() (i.e. before the first
+        // `await` above, when this is invoked on mount) it throws
+        // "dependOnInheritedWidgetOfExactType<AppLocalizations>() ... was
+        // called before initState() completed."
+        final t = AppLocalizations.of(context);
         setState(() => _error = msg ?? t.authErrorsVerifyEmailFailed);
       }
     } finally {
@@ -128,7 +148,6 @@ class _VerifyEmailPageContentState
     Widget body;
 
     if (_hasToken && !_success && _error == null) {
-      _verifyWithToken();
       body = const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
         child: Center(child: CircularProgressIndicator()),

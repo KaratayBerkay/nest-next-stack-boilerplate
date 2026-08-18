@@ -23,11 +23,14 @@ class PostActions {
   }) async {
     final server = _ref.read(postCreateServerProvider);
     await server.call(title: title, content: content, imageUrl: imageUrl);
+    _invalidateFeed();
   }
 
   Future<void> delete(String postId) async {
     final server = _ref.read(postDeleteServerProvider);
     await server.call(postId);
+    _invalidateFeed();
+    _ref.invalidate(postProvider(postId));
   }
 
   Future<void> update(
@@ -43,11 +46,15 @@ class PostActions {
       content: content,
       imageUrl: imageUrl,
     );
+    _invalidateFeed();
+    _ref.invalidate(postProvider(postId));
   }
 
   Future<void> toggleReaction(String postId, {String type = 'LIKE'}) async {
     final server = _ref.read(postReactionsServerProvider);
     await server.toggle(postId, type: type);
+    _invalidateFeed();
+    _ref.invalidate(postProvider(postId));
   }
 
   Future<Comment> addComment(
@@ -58,6 +65,8 @@ class PostActions {
     final server = _ref.read(postCommentsServerProvider);
     final comment = await server.create(postId, bodyText, parentId: parentId);
     _ref.invalidate(postCommentsProvider(comment.postId));
+    _invalidateFeed();
+    _ref.invalidate(postProvider(comment.postId));
     return comment;
   }
 
@@ -68,6 +77,8 @@ class PostActions {
     final server = _ref.read(postCommentsServerProvider);
     final comment = await server.update(commentId, bodyText: bodyText);
     _ref.invalidate(postCommentsProvider(comment.postId));
+    _invalidateFeed();
+    _ref.invalidate(postProvider(comment.postId));
     return comment;
   }
 
@@ -75,19 +86,34 @@ class PostActions {
     final server = _ref.read(postCommentsServerProvider);
     final comment = await server.delete(commentId);
     _ref.invalidate(postCommentsProvider(comment.postId));
+    _invalidateFeed();
+    _ref.invalidate(postProvider(comment.postId));
     return comment;
   }
 
   Future<void> toggleCommentReaction(
     String commentId, {
+    required String postId,
     String type = 'LIKE',
   }) async {
     final server = _ref.read(postReactionsServerProvider);
     await server.toggleForComment(commentId, type: type);
+    _ref.invalidate(postCommentsProvider(postId));
+    _invalidateFeed();
+    _ref.invalidate(postProvider(postId));
   }
 
   Future<String> uploadImage(String filePath) async {
     final server = _ref.read(postUploadServerProvider);
     return server.call(filePath);
+  }
+
+  // Mirrors the web's usePostActions(), which invalidates every `["feed",
+  // ...]`-keyed query after all 8 of these mutations, not just the comment
+  // ones — every feed-list-shaped provider that could change as a result of
+  // any of them, not just the one the calling screen happens to render.
+  void _invalidateFeed() {
+    _ref.invalidate(paginatedFeedProvider);
+    _ref.invalidate(feedProvider);
   }
 }

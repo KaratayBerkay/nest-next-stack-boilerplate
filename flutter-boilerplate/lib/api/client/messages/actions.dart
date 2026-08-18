@@ -1,11 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/messages/message_attachment.dart';
-import '../../server/messages/accept_friend_request.dart';
-import '../../server/messages/decline_friend_request.dart';
 import '../../server/messages/delete_message.dart';
-import '../../server/messages/mark_read.dart';
-import '../../server/messages/send_friend_request.dart';
 import '../../server/messages/send_message.dart';
 import '../../server/messages/upload_attachment.dart';
 
@@ -37,11 +33,6 @@ class MessageActions {
     return server.call(filePath, fileName);
   }
 
-  Future<void> markRead(String conversationId) async {
-    final server = _ref.read(markReadServerProvider);
-    await server.call(conversationId);
-  }
-
   Future<void> deleteMessageForMe(String messageId) async {
     final server = _ref.read(deleteMessageServerProvider);
     await server.forMe(messageId);
@@ -50,20 +41,5 @@ class MessageActions {
   Future<void> deleteMessageForEveryone(String messageId) async {
     final server = _ref.read(deleteMessageServerProvider);
     await server.forEveryone(messageId);
-  }
-
-  Future<void> acceptFriendRequest(String requestId) async {
-    final server = _ref.read(acceptFriendRequestServerProvider);
-    await server.call(requestId);
-  }
-
-  Future<void> declineFriendRequest(String requestId) async {
-    final server = _ref.read(declineFriendRequestServerProvider);
-    await server.call(requestId);
-  }
-
-  Future<void> sendFriendRequest(String userId) async {
-    final server = _ref.read(sendFriendRequestServerProvider);
-    await server.call(userId);
   }
 }

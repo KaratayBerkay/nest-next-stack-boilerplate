@@ -57,9 +57,11 @@ class PostCard extends ConsumerWidget {
             onToggleReaction:
                 (String type, String? postId, String? commentId) =>
                     commentId != null
-                        ? ref
-                            .read(postActionsProvider)
-                            .toggleCommentReaction(commentId, type: type)
+                        ? ref.read(postActionsProvider).toggleCommentReaction(
+                              commentId,
+                              postId: post.id,
+                              type: type,
+                            )
                         : ref
                             .read(postActionsProvider)
                             .toggleReaction(postId!, type: type),

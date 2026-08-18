@@ -28,9 +28,19 @@ class BillingActions {
     return server.createSetupIntent();
   }
 
-  Future<Map<String, dynamic>> subscribe(String priceId) async {
+  Future<Map<String, dynamic>> subscribe(
+    String priceId, {
+    String? paymentMethodId,
+    String? idempotencyKey,
+    String? currency,
+  }) async {
     final server = _ref.read(stripeServerProvider);
-    return server.subscribe(priceId);
+    return server.subscribe(
+      priceId,
+      paymentMethodId: paymentMethodId,
+      idempotencyKey: idempotencyKey,
+      currency: currency,
+    );
   }
 
   Future<void> removePaymentMethod(String paymentMethodId) async {

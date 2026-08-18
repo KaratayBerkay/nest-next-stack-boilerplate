@@ -1,14 +1,20 @@
+import 'dart:math';
+
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/currency.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' hide Card;
 import 'package:go_router/go_router.dart';
 
+import '../../api/client/billing/query.dart';
 import '../../app_config.dart';
 import '../../components/ui/stripe_card_form.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_billing.dart';
+import '../../hooks/use_currency.dart';
 import '../../l10n/app_localizations.dart';
 import 'checkout_success_view.dart';
 import 'downgrade_section.dart';
@@ -44,6 +50,12 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
   bool _success = false;
   String? _scheduledEffectiveAt;
 
+  // One idempotency key per subscribe attempt: kept across a retry after
+  // failure (so the server's dedup can recognize a charge that may have
+  // already committed) and only regenerated once an attempt actually
+  // succeeds — mirrors the web's retryKeyRef in StripeCardForm.tsx.
+  String? _retryKey;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -52,7 +64,15 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
 
   String get _tier => Tier.graphQlEnum(widget.plan);
 
-  String get _price {
+  String _generateIdempotencyKey() {
+    final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
+    return bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+  }
+
+  /// Same-shape fallback for the render before [planPricesProvider]
+  /// resolves — mirrors the web's `TIER_PRICES_CENTS` placeholder in
+  /// views/plans/PageContent.tsx.
+  String get _placeholderPrice {
     final t = AppLocalizations.of(context);
     switch (widget.plan) {
       case 'basic':
@@ -77,18 +97,25 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     try {
       final billing = ref.read(billingStateProvider);
 
-      final setupIntent = await billing.createSetupIntent();
-      final clientSecret = setupIntent['clientSecret'] as String?;
+      final intentData = await billing.createSetupIntent();
+      final clientSecret = intentData['clientSecret'] as String?;
       if (clientSecret == null) throw Exception('Failed to get client secret');
 
-      await Stripe.instance.confirmSetupIntent(
+      final confirmedIntent = await Stripe.instance.confirmSetupIntent(
         paymentIntentClientSecret: clientSecret,
         params: const PaymentMethodParams.card(
           paymentMethodData: PaymentMethodData(),
         ),
       );
 
-      await billing.subscribe(_tier);
+      final retryKey = _retryKey ??= _generateIdempotencyKey();
+      await billing.subscribe(
+        _tier,
+        paymentMethodId: confirmedIntent.paymentMethodId,
+        idempotencyKey: retryKey,
+        currency: ref.read(currencyProvider),
+      );
+      _retryKey = null;
       billing.invalidate();
 
       if (mounted) {
@@ -143,6 +170,21 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     final changeType = _resolveChangeType(currentTier, targetTier);
     final tierLabel = Tier.displayName(targetTier);
 
+    // Real per-currency amount once loaded, so what's charged at submit
+    // matches what's shown here — same live source the Plans page reads
+    // (views/plans/page_content.dart's priceFor), not the stale ARB
+    // placeholder used only before the query resolves.
+    final livePrices = ref.watch(planPricesProvider).asData?.value;
+    final priceMatch = livePrices
+        ?.where((p) => p.tier.toLowerCase() == targetTier)
+        .firstOrNull;
+    final price = priceMatch == null
+        ? _placeholderPrice
+        : formatPrice(
+            priceMatch.priceCents,
+            toCurrencyCode(priceMatch.currency),
+          );
+
     if (_success) {
       final message = _scheduledEffectiveAt != null
           ? t.checkoutChangeScheduled(
@@ -195,7 +237,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
         ],
         PlanSummaryCard(
           tierLabel: tierLabel,
-          price: _price,
+          price: price,
           alreadySubscribed: isCurrent,
         ),
         if (!isCurrent) ...[
@@ -234,7 +276,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
                         color: Colors.white,
                       ),
                     )
-                  : Text('${t.checkoutUpgrade} — $_price'),
+                  : Text('${t.checkoutUpgrade} — $price'),
             ),
           ] else ...[
             DowngradeSection(

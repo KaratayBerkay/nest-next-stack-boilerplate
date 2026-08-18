@@ -18,8 +18,18 @@ class BillingState {
     return _ref.read(billingActionsProvider).createSetupIntent();
   }
 
-  Future<Map<String, dynamic>> subscribe(String priceId) {
-    return _ref.read(billingActionsProvider).subscribe(priceId);
+  Future<Map<String, dynamic>> subscribe(
+    String priceId, {
+    String? paymentMethodId,
+    String? idempotencyKey,
+    String? currency,
+  }) {
+    return _ref.read(billingActionsProvider).subscribe(
+          priceId,
+          paymentMethodId: paymentMethodId,
+          idempotencyKey: idempotencyKey,
+          currency: currency,
+        );
   }
 
   Future<void> cancelSubscription() {

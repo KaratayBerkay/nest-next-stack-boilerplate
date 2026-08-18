@@ -9,8 +9,18 @@ const _setupIntentMutation =
     'mutation CreateBillingSetupIntent { createBillingSetupIntent { clientSecret } }';
 
 const _subscribeMutation = '''
-  mutation SubscribeToPlan(\$tier: SubscriptionTier!, \$paymentMethodId: String) {
-    subscribeToPlan(tier: \$tier, paymentMethodId: \$paymentMethodId) {
+  mutation SubscribeToPlan(
+    \$tier: SubscriptionTier!
+    \$paymentMethodId: String
+    \$idempotencyKey: String
+    \$currency: String
+  ) {
+    subscribeToPlan(
+      tier: \$tier
+      paymentMethodId: \$paymentMethodId
+      idempotencyKey: \$idempotencyKey
+      currency: \$currency
+    ) {
       success
       reason
       periodEnd
@@ -41,12 +51,22 @@ class StripeServer {
         as Map<String, dynamic>;
   }
 
-  Future<Map<String, dynamic>> subscribe(String priceId) async {
+  Future<Map<String, dynamic>> subscribe(
+    String priceId, {
+    String? paymentMethodId,
+    String? idempotencyKey,
+    String? currency,
+  }) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
         'query': _subscribeMutation,
-        'variables': {'tier': priceId},
+        'variables': {
+          'tier': priceId,
+          'paymentMethodId': paymentMethodId,
+          'idempotencyKey': idempotencyKey,
+          'currency': currency,
+        },
       },
     );
     final body = response.data as Map<String, dynamic>;
