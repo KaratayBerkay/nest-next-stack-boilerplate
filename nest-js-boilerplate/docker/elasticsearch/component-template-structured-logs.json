@@ -17,6 +17,7 @@
       ],
       "properties": {
         "@timestamp": { "type": "date" },
+        "time": { "type": "date" },
         "level": { "type": "integer" },
         "level_name": { "type": "keyword" },
         "category": { "type": "keyword" },

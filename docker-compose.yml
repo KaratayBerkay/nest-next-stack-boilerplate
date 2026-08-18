@@ -287,12 +287,32 @@ services:
     ports:
       - "5601:5601"
 
+  # Pins the logs index template (time/@timestamp as date, plus the other
+  # known fields — see apply-index-template.sh for why) before fluent-bit is
+  # allowed to ship a single line. Composable index templates only affect
+  # indices created after they exist, so this must land first every time,
+  # not just once — e.g. `docker compose down -v` recreates the
+  # elasticsearch volume and wipes this same as any other index. One-shot,
+  # same pattern as `migrate` above; idempotent, so reapplying on a normal
+  # restart (no reset) is a harmless no-op.
+  es-init:
+    image: curlimages/curl:8.10.1
+    restart: "no"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    volumes:
+      - ./nest-js-boilerplate/docker/elasticsearch:/templates:ro
+    entrypoint: ["sh", "/templates/apply-index-template.sh"]
+
   fluent-bit:
     image: fluent/fluent-bit:3.1-debug
     restart: unless-stopped
     depends_on:
       elasticsearch:
         condition: service_healthy
+      es-init:
+        condition: service_completed_successfully
     healthcheck:
       # Not `pidof fluent-bit` — the process exists well before the forward
       # input plugin finishes binding 24224 (parsers/lua/ES-output-worker
