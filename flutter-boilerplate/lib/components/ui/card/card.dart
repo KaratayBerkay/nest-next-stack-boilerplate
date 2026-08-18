@@ -24,14 +24,17 @@ class CardWidget extends StatelessWidget {
 
     switch (variant) {
       case CardVariant.elevated:
+        final elevatedContent = Padding(
+          padding: padding ?? const EdgeInsets.all(16),
+          child: child,
+        );
         return Card(
           elevation: 4,
           margin: EdgeInsets.zero,
           clipBehavior: onTap != null ? Clip.antiAlias : Clip.none,
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
-          ),
+          child: onTap != null
+              ? InkWell(onTap: onTap, child: elevatedContent)
+              : elevatedContent,
         );
       case CardVariant.outline:
         final container = Container(
@@ -69,14 +72,17 @@ class CardWidget extends StatelessWidget {
           child: child,
         );
       case CardVariant.defaultCard:
+        final defaultContent = Padding(
+          padding: padding ?? const EdgeInsets.all(16),
+          child: child,
+        );
         return Card(
           elevation: 0,
           margin: EdgeInsets.zero,
           clipBehavior: onTap != null ? Clip.antiAlias : Clip.none,
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(16),
-            child: child,
-          ),
+          child: onTap != null
+              ? InkWell(onTap: onTap, child: defaultContent)
+              : defaultContent,
         );
     }
   }
