@@ -168,4 +168,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "experienceTitle",
     descKey: "experienceDescription",
   },
+  {
+    name: "FAQ",
+    slug: "faq",
+    titleKey: "faqTitle",
+    descKey: "faqDescription",
+  },
 ];
