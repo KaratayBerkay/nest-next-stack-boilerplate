@@ -84,6 +84,46 @@ import { FrostedTilesFeature } from "./FrostedTilesFeature";
 import { SquareImageDualLinksFeature } from "./SquareImageDualLinksFeature";
 import { FeaturedMediaLinksFeature } from "./FeaturedMediaLinksFeature";
 import { ThreeColumnFooterCtaFeature } from "./ThreeColumnFooterCtaFeature";
+import { VideoCardsCarouselFeature } from "./VideoCardsCarouselFeature";
+import { StepBadgesGridFeature } from "./StepBadgesGridFeature";
+import { GradientHoverBentoFeature } from "./GradientHoverBentoFeature";
+import { IntegrationCarouselFeature } from "./IntegrationCarouselFeature";
+import { MetricsImageLinksFeature } from "./MetricsImageLinksFeature";
+import { LayeredBrowserCardsFeature } from "./LayeredBrowserCardsFeature";
+import { LinkedImageCardsFeature } from "./LinkedImageCardsFeature";
+import { SolutionTilesBentoFeature } from "./SolutionTilesBentoFeature";
+import { CollaborationQuoteFeature } from "./CollaborationQuoteFeature";
+import { ThreeUpImageCardsFeature } from "./ThreeUpImageCardsFeature";
+import { LayeredSplitListFeature } from "./LayeredSplitListFeature";
+import { SlideDetailChecklistFeature } from "./SlideDetailChecklistFeature";
+import { TabbedDemoFeature } from "./TabbedDemoFeature";
+import { ImageStatCardsFeature } from "./ImageStatCardsFeature";
+import { NumberedSplitHeadlineFeature } from "./NumberedSplitHeadlineFeature";
+import { VideoStatsFeature } from "./VideoStatsFeature";
+import { StickyStackedCardsFeature } from "./StickyStackedCardsFeature";
+import { LinkedTitleColumnsFeature } from "./LinkedTitleColumnsFeature";
+import { HeadlineOutlineBtnFeature } from "./HeadlineOutlineBtnFeature";
+import { ContributorsHeaderFeature } from "./ContributorsHeaderFeature";
+import { NumberedLogoMatrixFeature } from "./NumberedLogoMatrixFeature";
+import { TiltedVisualBentoFeature } from "./TiltedVisualBentoFeature";
+import { CapabilityBentoFeature } from "./CapabilityBentoFeature";
+import { GradientIconListFeature } from "./GradientIconListFeature";
+import { DenseMetricsCardsFeature } from "./DenseMetricsCardsFeature";
+import { FlickerTilesFeature } from "./FlickerTilesFeature";
+import { TwoLargePanelsFeature } from "./TwoLargePanelsFeature";
+import { TabbedStatsPanelFeature } from "./TabbedStatsPanelFeature";
+import { CenterImageListFeature } from "./CenterImageListFeature";
+import { LeadSidebarBentoFeature } from "./LeadSidebarBentoFeature";
+import { AvatarIconFeaturesFeature } from "./AvatarIconFeaturesFeature";
+import { HeroSplitIconsFeature } from "./HeroSplitIconsFeature";
+import { ArrowBeamsStepsFeature } from "./ArrowBeamsStepsFeature";
+import { DraggablePhotoOrbitFeature } from "./DraggablePhotoOrbitFeature";
+import { VideoCopyRowsFeature } from "./VideoCopyRowsFeature";
+import { SimpleImageCardsFeature } from "./SimpleImageCardsFeature";
+import { SystemPillarsFeature } from "./SystemPillarsFeature";
+import { CenterImageIconHighlightsFeature } from "./CenterImageIconHighlightsFeature";
+import { ProofStatStripFeature } from "./ProofStatStripFeature";
+import { ResponsiveVideoGridFeature } from "./ResponsiveVideoGridFeature";
 
 export default function FeaturePageContent({ initialTab }: InitialTabProps) {
   const m = useMessages("pages");
@@ -569,6 +609,246 @@ export default function FeaturePageContent({ initialTab }: InitialTabProps) {
       title: t.feature158TabTitle,
       description: t.feature158TabDescription,
       render: () => <ThreeColumnFooterCtaFeature />,
+    },
+    {
+      id: "feature-215",
+      title: t.feature215TabTitle,
+      description: t.feature215TabDescription,
+      render: () => <VideoCardsCarouselFeature />,
+    },
+    {
+      id: "feature-191",
+      title: t.feature191TabTitle,
+      description: t.feature191TabDescription,
+      render: () => <StepBadgesGridFeature />,
+    },
+    {
+      id: "feature-116",
+      title: t.feature116TabTitle,
+      description: t.feature116TabDescription,
+      render: () => <GradientHoverBentoFeature />,
+    },
+    {
+      id: "feature-153",
+      title: t.feature153TabTitle,
+      description: t.feature153TabDescription,
+      render: () => <IntegrationCarouselFeature />,
+    },
+    {
+      id: "feature-71",
+      title: t.feature71TabTitle,
+      description: t.feature71TabDescription,
+      render: () => <MetricsImageLinksFeature />,
+    },
+    {
+      id: "feature-238",
+      title: t.feature238TabTitle,
+      description: t.feature238TabDescription,
+      render: () => <LayeredBrowserCardsFeature />,
+    },
+    {
+      id: "feature-132",
+      title: t.feature132TabTitle,
+      description: t.feature132TabDescription,
+      render: () => <LinkedImageCardsFeature />,
+    },
+    {
+      id: "feature-202",
+      title: t.feature202TabTitle,
+      description: t.feature202TabDescription,
+      render: () => <SolutionTilesBentoFeature />,
+    },
+    {
+      id: "feature-4",
+      title: t.feature4TabTitle,
+      description: t.feature4TabDescription,
+      render: () => <CollaborationQuoteFeature />,
+    },
+    {
+      id: "feature-112",
+      title: t.feature112TabTitle,
+      description: t.feature112TabDescription,
+      render: () => <ThreeUpImageCardsFeature />,
+    },
+    {
+      id: "feature-189",
+      title: t.feature189TabTitle,
+      description: t.feature189TabDescription,
+      render: () => <LayeredSplitListFeature />,
+    },
+    {
+      id: "feature-19",
+      title: t.feature19TabTitle,
+      description: t.feature19TabDescription,
+      render: () => <SlideDetailChecklistFeature />,
+    },
+    {
+      id: "feature-78",
+      title: t.feature78TabTitle,
+      description: t.feature78TabDescription,
+      render: () => <TabbedDemoFeature />,
+    },
+    {
+      id: "feature-222",
+      title: t.feature222TabTitle,
+      description: t.feature222TabDescription,
+      render: () => <ImageStatCardsFeature />,
+    },
+    {
+      id: "feature-231",
+      title: t.feature231TabTitle,
+      description: t.feature231TabDescription,
+      render: () => <NumberedSplitHeadlineFeature />,
+    },
+    {
+      id: "feature-220a",
+      title: t.feature220aTabTitle,
+      description: t.feature220aTabDescription,
+      render: () => <VideoStatsFeature />,
+    },
+    {
+      id: "feature-135",
+      title: t.feature135TabTitle,
+      description: t.feature135TabDescription,
+      render: () => <StickyStackedCardsFeature />,
+    },
+    {
+      id: "feature-13",
+      title: t.feature13TabTitle,
+      description: t.feature13TabDescription,
+      render: () => <LinkedTitleColumnsFeature />,
+    },
+    {
+      id: "feature-55",
+      title: t.feature55TabTitle,
+      description: t.feature55TabDescription,
+      render: () => <HeadlineOutlineBtnFeature />,
+    },
+    {
+      id: "feature-255",
+      title: t.feature255TabTitle,
+      description: t.feature255TabDescription,
+      render: () => <ContributorsHeaderFeature />,
+    },
+    {
+      id: "feature-53",
+      title: t.feature53TabTitle,
+      description: t.feature53TabDescription,
+      render: () => <NumberedLogoMatrixFeature />,
+    },
+    {
+      id: "feature-269",
+      title: t.feature269TabTitle,
+      description: t.feature269TabDescription,
+      render: () => <TiltedVisualBentoFeature />,
+    },
+    {
+      id: "feature-101",
+      title: t.feature101TabTitle,
+      description: t.feature101TabDescription,
+      render: () => <CapabilityBentoFeature />,
+    },
+    {
+      id: "feature-200",
+      title: t.feature200TabTitle,
+      description: t.feature200TabDescription,
+      render: () => <GradientIconListFeature />,
+    },
+    {
+      id: "feature-237",
+      title: t.feature237TabTitle,
+      description: t.feature237TabDescription,
+      render: () => <DenseMetricsCardsFeature />,
+    },
+    {
+      id: "feature-235",
+      title: t.feature235TabTitle,
+      description: t.feature235TabDescription,
+      render: () => <FlickerTilesFeature />,
+    },
+    {
+      id: "feature-74",
+      title: t.feature74TabTitle,
+      description: t.feature74TabDescription,
+      render: () => <TwoLargePanelsFeature />,
+    },
+    {
+      id: "feature-205",
+      title: t.feature205TabTitle,
+      description: t.feature205TabDescription,
+      render: () => <TabbedStatsPanelFeature />,
+    },
+    {
+      id: "feature-245",
+      title: t.feature245TabTitle,
+      description: t.feature245TabDescription,
+      render: () => <CenterImageListFeature />,
+    },
+    {
+      id: "feature-59",
+      title: t.feature59TabTitle,
+      description: t.feature59TabDescription,
+      render: () => <LeadSidebarBentoFeature />,
+    },
+    {
+      id: "feature-93",
+      title: t.feature93TabTitle,
+      description: t.feature93TabDescription,
+      render: () => <AvatarIconFeaturesFeature />,
+    },
+    {
+      id: "feature-230",
+      title: t.feature230TabTitle,
+      description: t.feature230TabDescription,
+      render: () => <HeroSplitIconsFeature />,
+    },
+    {
+      id: "feature-272",
+      title: t.feature272TabTitle,
+      description: t.feature272TabDescription,
+      render: () => <ArrowBeamsStepsFeature />,
+    },
+    {
+      id: "feature-283",
+      title: t.feature283TabTitle,
+      description: t.feature283TabDescription,
+      render: () => <DraggablePhotoOrbitFeature />,
+    },
+    {
+      id: "feature-215b",
+      title: t.feature215bTabTitle,
+      description: t.feature215bTabDescription,
+      render: () => <VideoCopyRowsFeature />,
+    },
+    {
+      id: "feature-39",
+      title: t.feature39TabTitle,
+      description: t.feature39TabDescription,
+      render: () => <SimpleImageCardsFeature />,
+    },
+    {
+      id: "feature-299",
+      title: t.feature299TabTitle,
+      description: t.feature299TabDescription,
+      render: () => <SystemPillarsFeature />,
+    },
+    {
+      id: "feature-104",
+      title: t.feature104TabTitle,
+      description: t.feature104TabDescription,
+      render: () => <CenterImageIconHighlightsFeature />,
+    },
+    {
+      id: "feature-120",
+      title: t.feature120TabTitle,
+      description: t.feature120TabDescription,
+      render: () => <ProofStatStripFeature />,
+    },
+    {
+      id: "feature-215a",
+      title: t.feature215aTabTitle,
+      description: t.feature215aTabDescription,
+      render: () => <ResponsiveVideoGridFeature />,
     },
   ];
 
