@@ -294,7 +294,7 @@ export class WireCryptoService {
     const seqKey = deviceHash
       ? this.deviceSeqKey(deviceHash, 's2c')
       : this.seqKey(sessionId, 's2c');
-    const seq = await this.nextSeqWithKey(seqKey);
+    const seq = await this.nextSeqWithKey(seqKey, deviceHash);
     const aad = this.buildAad(aadContext, 's2c', seq);
     const nonce = randomBytes(24);
     const cipher = xchacha20poly1305(
@@ -334,7 +334,7 @@ export class WireCryptoService {
     const seqKey = deviceHash
       ? this.deviceSeqKey(deviceHash, 'c2s')
       : this.seqKey(sessionId, 'c2s');
-    const seq = await this.nextSeqWithKey(seqKey);
+    const seq = await this.nextSeqWithKey(seqKey, deviceHash);
 
     // The AAD is bound to an exact seq, so the counter must be incremented
     // BEFORE decryption (the frame's own seq is unknowable until it
@@ -472,23 +472,13 @@ export class WireCryptoService {
     };
   }
 
-  private async nextSeqWithKey(key: string): Promise<number> {
-    const pipe = this.redis.multi();
-    pipe.incr(key);
-    pipe.expire(key, this.deviceTtl);
-    const res = await pipe.exec();
-    const first = res?.[0];
-    return Number(first?.[1] ?? 1);
-  }
-
-  private async nextSeq(
-    sessionId: string,
-    direction: WireDirection,
+  private async nextSeqWithKey(
+    key: string,
+    deviceHash: string | undefined,
   ): Promise<number> {
-    const key = this.seqKey(sessionId, direction);
     const pipe = this.redis.multi();
     pipe.incr(key);
-    pipe.expire(key, this.ttl);
+    pipe.expire(key, this.seqTtl(deviceHash));
     const res = await pipe.exec();
     const first = res?.[0];
     return Number(first?.[1] ?? 1);

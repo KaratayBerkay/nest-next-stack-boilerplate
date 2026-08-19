@@ -129,6 +129,8 @@ export class PostService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+    void this.cache.invalidate(`cache:post:${id}`);
+    void this.cache.invalidate('cache:feed:*');
     this.realtime.emitToTopic('feed', {
       renew: 'Feed',
       type: 'Post',
