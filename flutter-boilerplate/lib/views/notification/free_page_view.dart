@@ -21,79 +21,95 @@ class FreeNotificationPage extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final notifAsync = ref.watch(notificationsProvider);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.notificationHeading),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              try {
-                await ref.read(notificationActionsProvider).markAllRead();
-                ref.invalidate(notificationsProvider);
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('All marked as read')),
-                  );
-                }
-              } catch (_) {}
-            },
-            child: const Text('Mark all read'),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                t.notificationHeading,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              TextButton(
+                onPressed: () async {
+                  try {
+                    await ref.read(notificationActionsProvider).markAllRead();
+                    ref.invalidate(notificationsProvider);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('All marked as read')),
+                      );
+                    }
+                  } catch (_) {}
+                },
+                child: const Text('Mark all read'),
+              ),
+            ],
           ),
-        ],
-      ),
-      body: notifAsync.when(
-        loading: () => const Spinner(),
-        error: (_, __) => EmptyWidget(
-          title: t.notificationLoadFailed,
-          icon: Icons.error_outline,
         ),
-        data: (items) {
-          if (items.isEmpty) {
-            return EmptyWidget(
-              title: t.notificationNoNotifications,
-              description: t.notificationAllCaughtUp,
-              icon: Icons.notifications_off_outlined,
-            );
-          }
-          return RefreshIndicator(
-            onRefresh: () => ref.refresh(notificationsProvider.future),
-            child: ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, __) =>
-                  Divider(height: 1, color: colors.border, indent: 72),
-              itemBuilder: (_, i) {
-                final item = items[i];
-                final payload = item.payload;
-                final kind = payload?['kind'] as String?;
-                final postId = payload?['postId'] as String?;
-                return NotificationItemWidget(
-                  item: item,
-                  lang: lang,
-                  onTap: () {
-                    if (!item.isRead) {
-                      ref.read(notificationActionsProvider).markRead(item.id);
-                      ref.invalidate(notificationsProvider);
-                    }
-                    final target = () {
-                      if (kind == 'friend-request' ||
-                          kind == 'friend-accepted') {
-                        return '/v1/$lang/find-friends/requests';
-                      }
-                      if (postId != null) {
-                        return '/v1/$lang/posts/$postId';
-                      }
-                      return null;
-                    }();
-                    if (target != null) {
-                      context.push(target);
-                    }
-                  },
-                );
-              },
+        Expanded(
+          child: notifAsync.when(
+            loading: () => const Spinner(),
+            error: (_, __) => EmptyWidget(
+              title: t.notificationLoadFailed,
+              icon: Icons.error_outline,
             ),
-          );
-        },
-      ),
+            data: (items) {
+              if (items.isEmpty) {
+                return EmptyWidget(
+                  title: t.notificationNoNotifications,
+                  description: t.notificationAllCaughtUp,
+                  icon: Icons.notifications_off_outlined,
+                );
+              }
+              return RefreshIndicator(
+                onRefresh: () => ref.refresh(notificationsProvider.future),
+                child: ListView.separated(
+                  itemCount: items.length,
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, color: colors.border, indent: 72),
+                  itemBuilder: (_, i) {
+                    final item = items[i];
+                    final payload = item.payload;
+                    final kind = payload?['kind'] as String?;
+                    final postId = payload?['postId'] as String?;
+                    return NotificationItemWidget(
+                      item: item,
+                      lang: lang,
+                      onTap: () {
+                        if (!item.isRead) {
+                          ref
+                              .read(notificationActionsProvider)
+                              .markRead(item.id);
+                          ref.invalidate(notificationsProvider);
+                        }
+                        final target = () {
+                          if (kind == 'friend-request' ||
+                              kind == 'friend-accepted') {
+                            return '/v1/$lang/find-friends/requests';
+                          }
+                          if (postId != null) {
+                            return '/v1/$lang/posts/$postId';
+                          }
+                          return null;
+                        }();
+                        if (target != null) {
+                          context.push(target);
+                        }
+                      },
+                    );
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

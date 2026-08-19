@@ -157,6 +157,17 @@ final _routeObserver = ActivityRouteObserver();
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
 
+  // Backend RBAC already protects the underlying admin/user-management data;
+  // this is a client-side defense-in-depth gate so a non-admin who
+  // navigates/deep-links here sees a redirect instead of a live admin UI
+  // shell whose calls just 403. Mirrors web's
+  // `user?.role === "ADMIN" || user?.role === "SUPERADMIN"` check.
+  String? requireAdmin(String lang) {
+    final role = authState.asData?.value?.role;
+    if (role == 'ADMIN' || role == 'SUPERADMIN') return null;
+    return '/v1/$lang/feed';
+  }
+
   return GoRouter(
     initialLocation: '/',
     debugLogDiagnostics: true,
@@ -473,6 +484,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/admin',
             name: 'v1Admin',
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => AdminPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
@@ -480,6 +493,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/admin/audit-logs',
             name: 'v1AdminAuditLogs',
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => AdminAuditLogsPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
@@ -488,6 +503,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/users',
             name: 'v1Users',
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => UsersPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
@@ -495,6 +512,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/users/list',
             name: 'v1UsersList',
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => UsersListPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
@@ -502,6 +521,8 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/users/detail/:uuid',
             name: 'v1UserDetail',
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => UserDetailPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
               userId: state.pathParameters['uuid'] ?? '',

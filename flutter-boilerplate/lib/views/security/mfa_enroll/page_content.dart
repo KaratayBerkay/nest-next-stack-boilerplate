@@ -80,27 +80,55 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
   }
 
   Future<void> _exportBackupCodes() async {
-    final codes = _verifyData!.backupCodes;
-    final dir = await getTemporaryDirectory();
-    final file = File('${dir.path}/backup-codes.txt');
-    await file.writeAsString(codes.join('\n'));
+    try {
+      final codes = _verifyData!.backupCodes;
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/backup-codes.txt');
+      await file.writeAsString(codes.join('\n'));
 
-    await SharePlus.instance.share(
-      ShareParams(
-        files: [XFile(file.path)],
-        subject: 'Two-factor backup codes',
-      ),
-    );
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          subject: 'Two-factor backup codes',
+        ),
+      );
+    } catch (e) {
+      // Not a DioException path (local file write + platform share sheet),
+      // so this can't reuse _error/_startEnrollment's retry flow — and
+      // setting the shared _error field would trip build()'s top-level
+      // `_error != null` branch, blanking out the still-visible backup
+      // codes on this final step. A SnackBar surfaces the failure without
+      // losing them.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to export backup codes'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _confirmComplete() async {
-    final user = ref.read(currentUserProvider);
-    if (user != null) {
-      await ref.read(authProvider.notifier).updateUser(
-            user.copyWith(mfaEnabled: true),
-          );
+    try {
+      final user = ref.read(currentUserProvider);
+      if (user != null) {
+        await ref.read(authProvider.notifier).updateUser(
+              user.copyWith(mfaEnabled: true),
+            );
+      }
+      if (mounted) context.pop(true);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to complete setup'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
-    if (mounted) context.pop(true);
   }
 
   @override

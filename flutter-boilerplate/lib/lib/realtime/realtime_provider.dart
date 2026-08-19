@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 
 import '../../api/client/friends/query.dart';
 import '../../api/client/messages/mark_read.dart';
@@ -153,6 +153,15 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
 @visibleForTesting
 void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
   switch (frame['type'] as String?) {
+    case 'error':
+      // Two backend shapes reach here (auth-failure error frames are
+      // intercepted earlier in RealtimeClient.handleMessage and never make
+      // it to onFrame): sendWsError's {msg, exc, key} for watch/page-claim
+      // validation, and the messaging gateway's {message} for chat-level
+      // rejections (e.g. VIP-tier room access) — without this case both
+      // vanished with zero user feedback.
+      final text = (frame['message'] ?? frame['msg']) as String?;
+      _showRealtimeError(ref, text);
     case 'direct-message':
       ref.invalidate(conversationsProvider);
       final message = frame['message'] as Map<String, dynamic>?;
@@ -268,6 +277,18 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
         ref.read(typingUsersProvider.notifier).state = current;
       }
   }
+}
+
+void _showRealtimeError(Ref ref, String? text) {
+  final context =
+      ref.read(routerProvider).routerDelegate.navigatorKey.currentContext;
+  if (context == null || !context.mounted) return;
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(text ?? 'Something went wrong'),
+      backgroundColor: Colors.red,
+    ),
+  );
 }
 
 /// Direct-message frames carry `senderId`/`recipientId`, not a

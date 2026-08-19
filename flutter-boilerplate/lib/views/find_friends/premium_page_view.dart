@@ -31,46 +31,46 @@ class PremiumFindFriendsPage extends ConsumerWidget {
     final searchActions = ref.read(friendSearchProvider.notifier);
     final resultsAsync = ref.watch(searchUsersProvider(searchState.query));
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.findFriendsTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterSheet(context),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: TextField(
-              controller: searchState.controller,
-              decoration: InputDecoration(
-                hintText: t.findFriendsSearchUsersHint,
-                prefixIcon: const Icon(Icons.search),
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                isDense: true,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: searchState.controller,
+                  decoration: InputDecoration(
+                    hintText: t.findFriendsSearchUsersHint,
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    isDense: true,
+                  ),
+                  onChanged: (v) => searchActions.onQueryChanged(v),
+                ),
               ),
-              onChanged: (v) => searchActions.onQueryChanged(v),
-            ),
+              IconButton(
+                icon: const Icon(Icons.filter_list),
+                onPressed: () => _showFilterSheet(context),
+              ),
+            ],
           ),
-          Expanded(
-            child: _buildContent(
-              context: context,
-              colors: colors,
-              lang: lang,
-              ref: ref,
-              searchState: searchState,
-              resultsAsync: resultsAsync,
-              suggestedAsync: suggestedAsync,
-              requestsAsync: requestsAsync,
-            ),
+        ),
+        Expanded(
+          child: _buildContent(
+            context: context,
+            colors: colors,
+            lang: lang,
+            ref: ref,
+            searchState: searchState,
+            resultsAsync: resultsAsync,
+            suggestedAsync: suggestedAsync,
+            requestsAsync: requestsAsync,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

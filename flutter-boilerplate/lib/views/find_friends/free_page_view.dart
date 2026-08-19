@@ -17,24 +17,21 @@ class FreeFindFriendsPage extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final suggestedAsync = ref.watch(suggestedFriendsProvider);
 
-    return Scaffold(
-      appBar: AppBar(title: Text(t.findFriendsTitle)),
-      body: suggestedAsync.when(
-        loading: () => const Column(
-          children: [
-            SizedBox(height: 16),
-            Spinner(),
-          ],
-        ),
-        error: (err, _) => EmptyWidget(
-          title: t.findFriendsFailedToLoadSuggestions,
-          description: err.toString(),
-          icon: Icons.error_outline,
-        ),
-        data: (suggested) => FreeFindFriendsContent(
-          lang: lang,
-          suggestedAsync: AsyncData(suggested),
-        ),
+    return suggestedAsync.when(
+      loading: () => const Column(
+        children: [
+          SizedBox(height: 16),
+          Spinner(),
+        ],
+      ),
+      error: (err, _) => EmptyWidget(
+        title: t.findFriendsFailedToLoadSuggestions,
+        description: err.toString(),
+        icon: Icons.error_outline,
+      ),
+      data: (suggested) => FreeFindFriendsContent(
+        lang: lang,
+        suggestedAsync: AsyncData(suggested),
       ),
     );
   }
