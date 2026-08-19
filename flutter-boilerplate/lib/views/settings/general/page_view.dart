@@ -136,6 +136,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
               timezone: _stagedTimezone,
             );
         ref.read(localeProvider.notifier).setLocale(_stagedLocale);
+        ref.invalidate(userProfileProvider);
       }
       await ref.read(currencyProvider.notifier).setCurrency(_stagedCurrency);
       await ref

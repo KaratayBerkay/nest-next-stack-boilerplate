@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../api/client/profile/actions.dart';
+import '../../../api/client/profile/query.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/toast/toast.dart';
 import '../../../hooks/use_auth.dart';
@@ -42,6 +43,7 @@ class _PrivacySettings extends ConsumerStatefulWidget {
 class _PrivacySettingsState extends ConsumerState<_PrivacySettings> {
   bool _hideProfilePicture = false;
   bool _useNickname = false;
+  bool _loadedPrivacyDefaults = false;
   late TextEditingController _nicknameCtrl;
 
   @override
@@ -60,10 +62,14 @@ class _PrivacySettingsState extends ConsumerState<_PrivacySettings> {
 
   Future<void> _save() async {
     final t = AppLocalizations.of(context);
-    final trimmed = _nicknameCtrl.text.trim();
-    final chatNickname = _useNickname && trimmed.isNotEmpty ? trimmed : '';
+    final chatNickname = _nicknameCtrl.text.trim();
     try {
-      await ref.read(profileActionsProvider).update(chatNickname: chatNickname);
+      await ref.read(profileActionsProvider).update(
+            chatNickname: chatNickname,
+            useNickname: _useNickname,
+            hideAvatar: _hideProfilePicture,
+          );
+      ref.invalidate(userProfileProvider);
       if (!mounted) return;
       showToast(context, t.settingsSaveSuccess, type: ToastType.success);
     } catch (_) {
@@ -75,6 +81,20 @@ class _PrivacySettingsState extends ConsumerState<_PrivacySettings> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+
+    // useNickname/hideAvatar aren't on the lighter session-wide
+    // currentUserProvider (only chatNickname's text is, used above as a
+    // same-shape placeholder before this resolves) — one-shot sync once
+    // userProfileProvider loads, guarded so a later refetch (e.g. from
+    // another settings tab saving) can't clobber an in-progress edit here.
+    if (!_loadedPrivacyDefaults) {
+      final profile = ref.watch(userProfileProvider).asData?.value;
+      if (profile != null) {
+        _loadedPrivacyDefaults = true;
+        _useNickname = profile.useNickname;
+        _hideProfilePicture = profile.hideAvatar;
+      }
+    }
 
     return ListView(
       padding: const EdgeInsets.all(16),

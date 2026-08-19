@@ -204,6 +204,7 @@ class _AccountFormState extends State<_AccountForm> {
               bio: updates['bio'] as String?,
               username: updates['username'] as String?,
             );
+        widget.ref.invalidate(_profileProvider);
       }
       if (mounted) showToast(context, t.settingsSaveSuccess);
     } catch (e) {

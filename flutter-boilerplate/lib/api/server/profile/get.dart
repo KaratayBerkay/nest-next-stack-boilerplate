@@ -12,6 +12,9 @@ class UserProfile {
   final String? locale;
   final String? timezone;
   final String tier;
+  final String? chatNickname;
+  final bool useNickname;
+  final bool hideAvatar;
 
   const UserProfile({
     required this.id,
@@ -23,6 +26,9 @@ class UserProfile {
     this.locale,
     this.timezone,
     required this.tier,
+    this.chatNickname,
+    this.useNickname = false,
+    this.hideAvatar = false,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -36,6 +42,9 @@ class UserProfile {
       locale: json['locale'] as String?,
       timezone: json['timezone'] as String?,
       tier: json['tier'] as String? ?? 'free',
+      chatNickname: json['chatNickname'] as String?,
+      useNickname: json['useNickname'] as bool? ?? false,
+      hideAvatar: json['hideAvatar'] as bool? ?? false,
     );
   }
 }
@@ -55,6 +64,9 @@ const _query = '''
       locale
       timezone
       tier: subscriptionTier
+      chatNickname
+      useNickname
+      hideAvatar
     }
   }
 ''';

@@ -42,6 +42,13 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
   Future<void> _setTier(String userId, String tier) async {
     try {
       await ref.read(adminActionsProvider).setTier(userId, tier);
+      // adminSearchUsersProvider is a .family<String> keyed on the current
+      // search query — without this, each row's widget.user.tier stays the
+      // pre-change value, so the dropdown/button never reflect a change
+      // that actually succeeded (button re-enables as if still pending).
+      ref.invalidate(
+        adminSearchUsersProvider(ref.read(_adminSearchQueryProvider)),
+      );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -185,7 +192,7 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
 
 class _UserTierRow extends StatefulWidget {
   final AdminUser user;
-  final ValueChanged<String> onSetTier;
+  final Future<void> Function(String tier) onSetTier;
 
   const _UserTierRow({required this.user, required this.onSetTier});
 
@@ -260,7 +267,7 @@ class _UserTierRowState extends State<_UserTierRow> {
                       ? null
                       : () async {
                           setState(() => _loading = true);
-                          widget.onSetTier(_selectedTier);
+                          await widget.onSetTier(_selectedTier);
                           if (mounted) setState(() => _loading = false);
                         },
                   style: ElevatedButton.styleFrom(

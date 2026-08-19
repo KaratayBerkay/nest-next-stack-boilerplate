@@ -19,6 +19,8 @@ class ProfileActions {
     String? locale,
     String? timezone,
     String? chatNickname,
+    bool? useNickname,
+    bool? hideAvatar,
   }) async {
     final server = _ref.read(profileUpdateServerProvider);
     await server.call(
@@ -29,6 +31,8 @@ class ProfileActions {
       locale: locale,
       timezone: timezone,
       chatNickname: chatNickname,
+      useNickname: useNickname,
+      hideAvatar: hideAvatar,
     );
   }
 

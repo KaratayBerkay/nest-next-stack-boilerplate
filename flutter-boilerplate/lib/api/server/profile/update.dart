@@ -33,6 +33,8 @@ class ProfileUpdateServer {
     String? locale,
     String? timezone,
     String? chatNickname,
+    bool? useNickname,
+    bool? hideAvatar,
   }) async {
     final data = <String, dynamic>{};
     if (name != null) data['name'] = name;
@@ -46,6 +48,11 @@ class ProfileUpdateServer {
     if (chatNickname != null) {
       data['chatNickname'] = chatNickname.isEmpty ? null : chatNickname;
     }
+    // Independent of chatNickname's text on purpose — the backend keeps the
+    // saved nickname when this is turned off, so it doesn't need retyping if
+    // re-enabled (see UpdateProfileInput.useNickname's doc comment).
+    if (useNickname != null) data['useNickname'] = useNickname;
+    if (hideAvatar != null) data['hideAvatar'] = hideAvatar;
 
     final response = await _dio.post<dynamic>(
       '/graphql',
