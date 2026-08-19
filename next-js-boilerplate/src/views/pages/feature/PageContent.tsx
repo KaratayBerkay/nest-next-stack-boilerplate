@@ -25,6 +25,25 @@ import { ThreeStepConnectorFeature } from "./ThreeStepConnectorFeature";
 import { LearnMoreCardsFeature } from "./LearnMoreCardsFeature";
 import { ChecklistCardsFeature } from "./ChecklistCardsFeature";
 import { HoverHighlightGridFeature } from "./HoverHighlightGridFeature";
+import { SplitLeftImageFeature } from "./SplitLeftImageFeature";
+import { MaskedSplitFeature } from "./MaskedSplitFeature";
+import { NumberedStepsTimelineFeature } from "./NumberedStepsTimelineFeature";
+import { GlowingStarCardsFeature } from "./GlowingStarCardsFeature";
+import { WorkflowStackStatsFeature } from "./WorkflowStackStatsFeature";
+import { VerticalTabsPreviewFeature } from "./VerticalTabsPreviewFeature";
+import { MarketingBentoFeature } from "./MarketingBentoFeature";
+import { RoundedTabStripFeature } from "./RoundedTabStripFeature";
+import { UtilityGridActionFeature } from "./UtilityGridActionFeature";
+import { SubscribeSparklesFeature } from "./SubscribeSparklesFeature";
+import { AuroraFeatureListFeature } from "./AuroraFeatureListFeature";
+import { IntegrationNarrativeFeature } from "./IntegrationNarrativeFeature";
+import { StaggeredBadgesFeature } from "./StaggeredBadgesFeature";
+import { FeaturePanelBleedFeature } from "./FeaturePanelBleedFeature";
+import { CapabilityTilesFeature } from "./CapabilityTilesFeature";
+import { DashedRailsFeature } from "./DashedRailsFeature";
+import { CrmHoverPanelsFeature } from "./CrmHoverPanelsFeature";
+import { TestimonialStackFeature } from "./TestimonialStackFeature";
+import { UtilityGridLinksFeature } from "./UtilityGridLinksFeature";
 
 export default function FeaturePageContent({ initialTab }: InitialTabProps) {
   const m = useMessages("pages");
@@ -156,6 +175,120 @@ export default function FeaturePageContent({ initialTab }: InitialTabProps) {
       title: t.feature276TabTitle,
       description: t.feature276TabDescription,
       render: () => <HoverHighlightGridFeature />,
+    },
+    {
+      id: "feature-344",
+      title: t.feature344TabTitle,
+      description: t.feature344TabDescription,
+      render: () => <SplitLeftImageFeature />,
+    },
+    {
+      id: "feature-38",
+      title: t.feature38TabTitle,
+      description: t.feature38TabDescription,
+      render: () => <MaskedSplitFeature />,
+    },
+    {
+      id: "feature-102",
+      title: t.feature102TabTitle,
+      description: t.feature102TabDescription,
+      render: () => <NumberedStepsTimelineFeature />,
+    },
+    {
+      id: "feature-287",
+      title: t.feature287TabTitle,
+      description: t.feature287TabDescription,
+      render: () => <GlowingStarCardsFeature />,
+    },
+    {
+      id: "feature-118",
+      title: t.feature118TabTitle,
+      description: t.feature118TabDescription,
+      render: () => <WorkflowStackStatsFeature />,
+    },
+    {
+      id: "feature-175",
+      title: t.feature175TabTitle,
+      description: t.feature175TabDescription,
+      render: () => <VerticalTabsPreviewFeature />,
+    },
+    {
+      id: "feature-261",
+      title: t.feature261TabTitle,
+      description: t.feature261TabDescription,
+      render: () => <MarketingBentoFeature />,
+    },
+    {
+      id: "feature-211",
+      title: t.feature211TabTitle,
+      description: t.feature211TabDescription,
+      render: () => <RoundedTabStripFeature />,
+    },
+    {
+      id: "feature-148",
+      title: t.feature148TabTitle,
+      description: t.feature148TabDescription,
+      render: () => <UtilityGridActionFeature />,
+    },
+    {
+      id: "feature-293",
+      title: t.feature293TabTitle,
+      description: t.feature293TabDescription,
+      render: () => <SubscribeSparklesFeature />,
+    },
+    {
+      id: "feature-271",
+      title: t.feature271TabTitle,
+      description: t.feature271TabDescription,
+      render: () => <AuroraFeatureListFeature />,
+    },
+    {
+      id: "feature-130",
+      title: t.feature130TabTitle,
+      description: t.feature130TabDescription,
+      render: () => <IntegrationNarrativeFeature />,
+    },
+    {
+      id: "feature-152",
+      title: t.feature152TabTitle,
+      description: t.feature152TabDescription,
+      render: () => <StaggeredBadgesFeature />,
+    },
+    {
+      id: "feature-87",
+      title: t.feature87TabTitle,
+      description: t.feature87TabDescription,
+      render: () => <FeaturePanelBleedFeature />,
+    },
+    {
+      id: "feature-225",
+      title: t.feature225TabTitle,
+      description: t.feature225TabDescription,
+      render: () => <CapabilityTilesFeature />,
+    },
+    {
+      id: "feature-171",
+      title: t.feature171TabTitle,
+      description: t.feature171TabDescription,
+      render: () => <DashedRailsFeature />,
+    },
+    {
+      id: "feature-150",
+      title: t.feature150TabTitle,
+      description: t.feature150TabDescription,
+      render: () => <CrmHoverPanelsFeature />,
+    },
+    {
+      id: "feature-281",
+      title: t.feature281TabTitle,
+      description: t.feature281TabDescription,
+      render: () => <TestimonialStackFeature />,
+    },
+    {
+      id: "feature-20",
+      title: t.feature20TabTitle,
+      description: t.feature20TabDescription,
+      render: () => <UtilityGridLinksFeature />,
     },
   ];
 
