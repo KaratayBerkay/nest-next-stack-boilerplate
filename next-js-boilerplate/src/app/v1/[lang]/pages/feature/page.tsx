@@ -1,0 +1,22 @@
+import { getMessages } from "@/lib/i18n/get-messages";
+import type { Lang } from "@/constants/i18n";
+import FeaturePageContent from "@/views/pages/feature/PageContent";
+
+interface PageProps {
+  params: Promise<{ lang: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}
+
+export async function generateMetadata({ params }: PageProps) {
+  const { lang } = await params;
+  const t = getMessages(lang as Lang, "pages");
+  return {
+    title: t.examples.featureTitle,
+    description: t.examples.featureDescription,
+  };
+}
+
+export default async function FeaturePage({ searchParams }: PageProps) {
+  const tab = (await searchParams).tab;
+  return <FeaturePageContent initialTab={tab} />;
+}
