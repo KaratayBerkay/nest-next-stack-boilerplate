@@ -2,16 +2,9 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { handleCreateApiKey } from "./api-key-handlers";
 import type { CreateApiKeyFormProps } from "@/types/views/settings/CreateApiKeyForm-types";
-
-const EXPIRY_OPTIONS = [
-  { value: "", label: "No expiry" },
-  { value: "7", label: "7 days" },
-  { value: "30", label: "30 days" },
-  { value: "90", label: "90 days" },
-  { value: "365", label: "1 year" },
-];
 
 export function CreateApiKeyForm({
   creating,
@@ -26,11 +19,22 @@ export function CreateApiKeyForm({
   createApiKey,
   onCancel,
 }: CreateApiKeyFormProps) {
+  const t = useMessages("settings");
+
+  const EXPIRY_OPTIONS = [
+    { value: "", label: t.apiKeysNoExpiry },
+    { value: "7", label: t.apiKeysExpiry7Days },
+    { value: "30", label: t.apiKeysExpiry30Days },
+    { value: "90", label: t.apiKeysExpiry90Days },
+    { value: "365", label: t.apiKeysExpiry1Year },
+  ];
+
   return (
     <div className="surface flex flex-col gap-3 rounded-lg p-4">
-      <h3 className="font-semibold">Create new API key</h3>
+      <h3 className="font-semibold">{t.apiKeysCreateHeading}</h3>
       <Input
-        placeholder="Key name (e.g. 'CI/CD', 'Development')"
+        placeholder={t.apiKeysNamePlaceholder}
+        aria-label={t.apiKeysNameLabel}
         value={newName}
         onChange={(e) => setNewName(e.target.value)}
         disabled={creating}
@@ -64,15 +68,17 @@ export function CreateApiKeyForm({
               loadKeys,
               newExpiry,
               createApiKey,
+              t.apiKeysCreated,
+              t.apiKeysCreateFailed,
             )
           }
           disabled={creating || !newName.trim()}
           size="sm"
         >
-          {creating ? "Creating..." : "Create"}
+          {creating ? t.apiKeysCreating : t.apiKeysCreateSubmit}
         </Button>
         <Button variant="outline" size="sm" onClick={onCancel}>
-          Cancel
+          {t.apiKeysCancel}
         </Button>
       </div>
     </div>

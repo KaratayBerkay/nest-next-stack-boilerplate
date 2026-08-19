@@ -18,6 +18,8 @@ export async function handleCreateApiKey(
   loadKeys: () => Promise<void>,
   newExpiry: string,
   createApiKey: CreateApiKey,
+  createdMessage: string,
+  createFailedMessage: string,
 ) {
   if (!newName.trim()) return;
   setCreating(true);
@@ -28,7 +30,7 @@ export async function handleCreateApiKey(
       newExpiry ? parseInt(newExpiry, 10) : null,
     );
     setNewKeyResult(result.fullKey);
-    toast({ title: "API key created" });
+    toast({ title: createdMessage });
     setNewName("");
     setNewExpiry("");
     await loadKeys();
@@ -36,7 +38,7 @@ export async function handleCreateApiKey(
     const exception = (err as Error & { exception?: { msg?: string } })
       .exception;
     toast({
-      title: exception?.msg ?? "Failed to create API key",
+      title: exception?.msg ?? createFailedMessage,
       variant: "destructive",
     });
   } finally {
@@ -48,13 +50,14 @@ export async function loadApiKeys(
   setKeys: Dispatch<SetStateAction<ApiKey[]>>,
   toast: ToastFn,
   setLoadingKeys: Dispatch<SetStateAction<boolean>>,
+  loadFailedMessage: string,
 ) {
   try {
     const { listApiKeysServer } = await import("@/api/server/api-keys/list");
     const data = await listApiKeysServer();
     setKeys(data);
   } catch {
-    toast({ title: "Failed to load API keys", variant: "destructive" });
+    toast({ title: loadFailedMessage, variant: "destructive" });
   } finally {
     setLoadingKeys(false);
   }
@@ -66,17 +69,20 @@ export async function handleRevokeApiKey(
   toast: ToastFn,
   loadKeys: () => Promise<void>,
   revokeApiKey: RevokeApiKey,
+  revokeConfirmMessage: string,
+  revokedMessage: string,
+  revokeFailedMessage: string,
 ) {
-  if (!confirm(`Revoke API key "${name}"? This cannot be undone.`)) return;
+  if (!confirm(revokeConfirmMessage)) return;
   try {
     await revokeApiKey(id);
-    toast({ title: `API key "${name}" revoked` });
+    toast({ title: revokedMessage });
     await loadKeys();
   } catch (err) {
     const exception = (err as Error & { exception?: { msg?: string } })
       .exception;
     toast({
-      title: exception?.msg ?? "Failed to revoke API key",
+      title: exception?.msg ?? revokeFailedMessage,
       variant: "destructive",
     });
   }

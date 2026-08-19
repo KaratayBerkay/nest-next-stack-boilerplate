@@ -20,7 +20,7 @@ type ApiKey = ApiKeyInfo;
 
 export default function PageContent({ className }: ClassNameProps) {
   const { user } = useAuth();
-  const _t = useMessages("settings");
+  const t = useMessages("settings");
   const { toast } = useToast();
   const { createApiKey, revokeApiKey } = useApiKeyActions();
 
@@ -33,8 +33,8 @@ export default function PageContent({ className }: ClassNameProps) {
   const [newKeyResult, setNewKeyResult] = useState<string | null>(null);
 
   const loadKeys = useCallback(
-    () => loadApiKeys(setKeys, toast, setLoadingKeys),
-    [toast],
+    () => loadApiKeys(setKeys, toast, setLoadingKeys, t.apiKeysLoadFailed),
+    [toast, t.apiKeysLoadFailed],
   );
 
   useEffect(() => {
@@ -45,15 +45,15 @@ export default function PageContent({ className }: ClassNameProps) {
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>
       <PageHeader
-        title="API Keys"
-        description="API keys allow programmatic access to your account. Treat them like passwords."
+        title={t.apiKeysHeading}
+        description={t.apiKeysDescription}
         actions={<PageInfoButton content={settingsApiKeysPageInfo} />}
       />
 
       {newKeyResult && (
         <div className="surface border-brand/30 rounded-lg border p-4">
           <p className="mb-1 text-sm font-semibold text-green-600">
-            Key created — copy it now. You won&apos;t see it again.
+            {t.apiKeysCreated}
           </p>
           <code className="bg-surface-hover block w-full rounded px-3 py-2 font-mono text-sm break-all">
             {newKeyResult}
@@ -63,10 +63,10 @@ export default function PageContent({ className }: ClassNameProps) {
             size="sm"
             onClick={() => {
               navigator.clipboard.writeText(newKeyResult);
-              toast({ title: "Copied to clipboard" });
+              toast({ title: t.apiKeysCopied });
             }}
           >
-            Copy
+            {t.apiKeysCopy}
           </Button>
           <Button
             className="mt-2 ml-2"
@@ -74,7 +74,7 @@ export default function PageContent({ className }: ClassNameProps) {
             variant="outline"
             onClick={() => setNewKeyResult(null)}
           >
-            Dismiss
+            {t.apiKeysDismiss}
           </Button>
         </div>
       )}
@@ -96,7 +96,7 @@ export default function PageContent({ className }: ClassNameProps) {
       ) : (
         <div>
           <Button size="sm" onClick={() => setShowCreate(true)}>
-            + New API key
+            + {t.apiKeysCreate}
           </Button>
         </div>
       )}
