@@ -162,4 +162,10 @@ export const PAGES_EXAMPLES: PageExample[] = [
     titleKey: "contactTitle",
     descKey: "contactDescription",
   },
+  {
+    name: "Experience",
+    slug: "experience",
+    titleKey: "experienceTitle",
+    descKey: "experienceDescription",
+  },
 ];
