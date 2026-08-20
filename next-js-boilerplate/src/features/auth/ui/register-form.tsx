@@ -11,6 +11,7 @@ import { registerFormSchema } from "@/validators/auth/schema";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { PasswordRequirements } from "@/features/auth/ui/PasswordRequirements";
 
 const VERIFY_EMAIL_PATH = "/auth/verify-email";
 
@@ -154,6 +155,7 @@ export function RegisterForm() {
               {fieldErrors.password}
             </p>
           )}
+          <PasswordRequirements password={password} />
         </div>
 
         {fieldErrors.form && (

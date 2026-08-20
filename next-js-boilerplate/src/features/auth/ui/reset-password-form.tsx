@@ -10,6 +10,7 @@ import { LOGIN_PATH } from "@/constants/routes";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { PasswordRequirements } from "@/features/auth/ui/PasswordRequirements";
 import { resetPasswordServer } from "@/api/server/auth/reset-password";
 import type { ResetPasswordFormProps } from "@/types/auth/ResetPasswordForm-types";
 
@@ -68,6 +69,9 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
     passwordMin: t.errors.passwordMin,
     passwordMax: t.errors.passwordMax,
     passwordsMustMatch: t.errors.passwordsMustMatch,
+    passwordLowercase: t.errors.passwordLowercase,
+    passwordUppercase: t.errors.passwordUppercase,
+    passwordNumber: t.errors.passwordNumber,
   });
 
   if (!token) {
@@ -139,6 +143,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
               {fieldErrors.password}
             </p>
           )}
+          <PasswordRequirements password={password} />
         </div>
 
         <div className="flex flex-col gap-1 text-left">

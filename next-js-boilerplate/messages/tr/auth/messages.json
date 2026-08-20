@@ -97,6 +97,9 @@
     "passwordMin": "Şifre en az 8 karakter olmalıdır",
     "passwordMax": "Şifre en fazla 128 karakter olmalıdır",
     "passwordMin6": "Şifre en az 6 karakter olmalıdır",
+    "passwordLowercase": "Şifre en az bir küçük harf içermelidir",
+    "passwordUppercase": "Şifre en az bir büyük harf içermelidir",
+    "passwordNumber": "Şifre en az bir rakam içermelidir",
     "firstNameRequired": "Ad gerekli",
     "lastNameRequired": "Soyad gerekli",
     "confirmPasswordRequired": "Lütfen şifrenizi onaylayın",
@@ -111,5 +114,12 @@
     "currentPasswordRequired": "Mevcut şifre gerekli",
     "undoPasswordChangeTokenMissing": "Bu bağlantıda token eksik",
     "undoPasswordChangeFailed": "Şifre değişikliği geri alınamadı — bağlantının süresi dolmuş veya zaten kullanılmış olabilir"
+  },
+  "passwordRules": {
+    "heading": "Şifre şunları içermelidir:",
+    "length": "8-128 karakter",
+    "lowercase": "Bir küçük harf",
+    "uppercase": "Bir büyük harf",
+    "number": "Bir rakam"
   }
 }

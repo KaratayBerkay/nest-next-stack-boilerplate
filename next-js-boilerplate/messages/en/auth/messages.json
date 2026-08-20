@@ -97,6 +97,9 @@
     "passwordMin": "Password must be at least 8 characters",
     "passwordMax": "Password must be at most 128 characters",
     "passwordMin6": "Password must be at least 6 characters",
+    "passwordLowercase": "Password must contain at least one lowercase letter",
+    "passwordUppercase": "Password must contain at least one uppercase letter",
+    "passwordNumber": "Password must contain at least one number",
     "firstNameRequired": "First name is required",
     "lastNameRequired": "Last name is required",
     "confirmPasswordRequired": "Please confirm your password",
@@ -111,5 +114,12 @@
     "currentPasswordRequired": "Current password is required",
     "undoPasswordChangeTokenMissing": "This link is missing its token",
     "undoPasswordChangeFailed": "Could not undo the password change — the link may have expired or already been used"
+  },
+  "passwordRules": {
+    "heading": "Password must contain:",
+    "length": "8-128 characters",
+    "lowercase": "One lowercase letter",
+    "uppercase": "One uppercase letter",
+    "number": "One number"
   }
 }

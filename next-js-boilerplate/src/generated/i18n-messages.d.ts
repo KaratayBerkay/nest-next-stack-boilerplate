@@ -187,6 +187,9 @@ export type I18nMessages = {
         "passwordMin": string;
         "passwordMax": string;
         "passwordMin6": string;
+        "passwordLowercase": string;
+        "passwordUppercase": string;
+        "passwordNumber": string;
         "firstNameRequired": string;
         "lastNameRequired": string;
         "confirmPasswordRequired": string;
@@ -201,6 +204,13 @@ export type I18nMessages = {
         "currentPasswordRequired": string;
         "undoPasswordChangeTokenMissing": string;
         "undoPasswordChangeFailed": string;
+      };
+      "passwordRules": {
+        "heading": string;
+        "length": string;
+        "lowercase": string;
+        "uppercase": string;
+        "number": string;
       };
     }
 

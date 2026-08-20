@@ -8,6 +8,7 @@ import { useAuthActions } from "@/api/client/auth/actions";
 import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
+import { PasswordRequirements } from "@/features/auth/ui/PasswordRequirements";
 import type { SecurityChangePasswordProps } from "@/types/views/settings/SecurityPageContent-types";
 
 export function SecurityChangePassword({ t }: SecurityChangePasswordProps) {
@@ -27,6 +28,9 @@ export function SecurityChangePassword({ t }: SecurityChangePasswordProps) {
     passwordMin: tAuth.errors.passwordMin,
     passwordMax: tAuth.errors.passwordMax,
     passwordsMustMatch: tAuth.errors.passwordsMustMatch,
+    passwordLowercase: tAuth.errors.passwordLowercase,
+    passwordUppercase: tAuth.errors.passwordUppercase,
+    passwordNumber: tAuth.errors.passwordNumber,
   });
 
   const handleSubmit = async (e: FormEvent) => {
@@ -110,6 +114,7 @@ export function SecurityChangePassword({ t }: SecurityChangePasswordProps) {
               {fieldErrors.newPassword}
             </p>
           )}
+          <PasswordRequirements password={newPassword} />
         </div>
 
         <div className="flex flex-col gap-1">

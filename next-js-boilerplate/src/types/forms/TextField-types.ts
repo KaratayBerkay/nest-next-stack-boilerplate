@@ -4,5 +4,4 @@ export interface TextFieldProps {
   placeholder?: string;
   hint?: string;
   type?: string;
-  showPasswordToggle?: boolean;
 }

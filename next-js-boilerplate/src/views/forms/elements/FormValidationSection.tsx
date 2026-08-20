@@ -35,7 +35,6 @@ export function FormValidationSection() {
                   label={t.elements.validationPassword_label}
                   type="password"
                   placeholder={t.elements.validationPassword_placeholder}
-                  showPasswordToggle
                 />
               )}
             </form.AppField>

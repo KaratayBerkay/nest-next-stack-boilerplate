@@ -1,4 +1,21 @@
 import { z } from "zod";
+import { passwordRuleChecks } from "@/validators/auth/password-policy";
+
+interface PasswordComplexityErrors {
+  passwordLowercase: string;
+  passwordUppercase: string;
+  passwordNumber: string;
+}
+
+function passwordComplexity(
+  schema: z.ZodString,
+  errors: PasswordComplexityErrors,
+) {
+  return schema
+    .refine(passwordRuleChecks.lowercase, errors.passwordLowercase)
+    .refine(passwordRuleChecks.uppercase, errors.passwordUppercase)
+    .refine(passwordRuleChecks.number, errors.passwordNumber);
+}
 
 function generateAuthLoginSchema(errors: {
   emailRequired: string;
@@ -17,37 +34,47 @@ function generateAuthLoginSchema(errors: {
   });
 }
 
-function generateAuthRegisterSchema(errors: {
-  emailRequired: string;
-  emailInvalid: string;
-  passwordRequired: string;
-  passwordMin: string;
-  passwordMax: string;
-}) {
+function generateAuthRegisterSchema(
+  errors: {
+    emailRequired: string;
+    emailInvalid: string;
+    passwordRequired: string;
+    passwordMin: string;
+    passwordMax: string;
+  } & PasswordComplexityErrors,
+) {
   return z.object({
     name: z.string().optional(),
     email: z.string().min(1, errors.emailRequired).email(errors.emailInvalid),
-    password: z
-      .string()
-      .min(1, errors.passwordRequired)
-      .min(8, errors.passwordMin)
-      .max(128, errors.passwordMax),
-  });
-}
-
-function generateResetPasswordFormSchema(errors: {
-  passwordRequired: string;
-  passwordMin: string;
-  passwordMax: string;
-  passwordsMustMatch: string;
-}) {
-  return z
-    .object({
-      password: z
+    password: passwordComplexity(
+      z
         .string()
         .min(1, errors.passwordRequired)
         .min(8, errors.passwordMin)
         .max(128, errors.passwordMax),
+      errors,
+    ),
+  });
+}
+
+function generateResetPasswordFormSchema(
+  errors: {
+    passwordRequired: string;
+    passwordMin: string;
+    passwordMax: string;
+    passwordsMustMatch: string;
+  } & PasswordComplexityErrors,
+) {
+  return z
+    .object({
+      password: passwordComplexity(
+        z
+          .string()
+          .min(1, errors.passwordRequired)
+          .min(8, errors.passwordMin)
+          .max(128, errors.passwordMax),
+        errors,
+      ),
       confirmPassword: z.string().min(1, errors.passwordRequired),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -56,21 +83,26 @@ function generateResetPasswordFormSchema(errors: {
     });
 }
 
-function generateChangePasswordFormSchema(errors: {
-  currentPasswordRequired: string;
-  passwordRequired: string;
-  passwordMin: string;
-  passwordMax: string;
-  passwordsMustMatch: string;
-}) {
+function generateChangePasswordFormSchema(
+  errors: {
+    currentPasswordRequired: string;
+    passwordRequired: string;
+    passwordMin: string;
+    passwordMax: string;
+    passwordsMustMatch: string;
+  } & PasswordComplexityErrors,
+) {
   return z
     .object({
       currentPassword: z.string().min(1, errors.currentPasswordRequired),
-      newPassword: z
-        .string()
-        .min(1, errors.passwordRequired)
-        .min(8, errors.passwordMin)
-        .max(128, errors.passwordMax),
+      newPassword: passwordComplexity(
+        z
+          .string()
+          .min(1, errors.passwordRequired)
+          .min(8, errors.passwordMin)
+          .max(128, errors.passwordMax),
+        errors,
+      ),
       confirmNewPassword: z.string().min(1, errors.passwordRequired),
     })
     .refine((data) => data.newPassword === data.confirmNewPassword, {
