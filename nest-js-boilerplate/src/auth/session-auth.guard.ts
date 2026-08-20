@@ -14,6 +14,7 @@ import type { Request } from 'express';
 import { accessCookieName } from './access-cookie';
 import { JwtUser, SessionUser } from './auth.types';
 import { hashSessionId } from '../common/crypto/crypto.service';
+import { decryptTokenOrNull } from '../common/token-codec/token-codec';
 import { rbacCookieName } from './rbac-cookie';
 import { userCookieName } from './user-cookie';
 import {
@@ -194,9 +195,11 @@ export class SessionAuthGuard implements CanActivate {
     const cookies = (req as unknown as { cookies?: Record<string, string> })
       .cookies;
     const fromCookie = cookies?.[cookieName] ?? null;
-    if (fromCookie) return fromCookie;
+    if (fromCookie) return decryptTokenOrNull(fromCookie);
     const header = req.headers['x-rbac-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
+    return decryptTokenOrNull(
+      (Array.isArray(header) ? header[0] : header) ?? null,
+    );
   }
 
   private extractDeviceToken(req: AuthedRequest): string | null {
@@ -214,8 +217,10 @@ export class SessionAuthGuard implements CanActivate {
     const cookies = (req as unknown as { cookies?: Record<string, string> })
       .cookies;
     const fromCookie = cookies?.[cookieName] ?? null;
-    if (fromCookie) return fromCookie;
+    if (fromCookie) return decryptTokenOrNull(fromCookie);
     const header = req.headers['x-user-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
+    return decryptTokenOrNull(
+      (Array.isArray(header) ? header[0] : header) ?? null,
+    );
   }
 }

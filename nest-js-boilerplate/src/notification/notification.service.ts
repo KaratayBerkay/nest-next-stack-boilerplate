@@ -139,7 +139,7 @@ export class NotificationService {
 
     if (result.count > 0) {
       const unread = await this.unreadCount(userId);
-      this.syncUnreadToSession(userId, unread);
+      await this.syncUnreadToSession(userId, unread);
       this.realtime.emitToService(userId, 'NOTIFICATION', {
         renew: 'Notifications',
         type: 'Count',
@@ -157,7 +157,7 @@ export class NotificationService {
     });
 
     const unread = await this.unreadCount(userId);
-    this.syncUnreadToSession(userId, unread);
+    await this.syncUnreadToSession(userId, unread);
     this.realtime.emitToService(userId, 'NOTIFICATION', {
       renew: 'Notifications',
       type: 'Count',
@@ -170,12 +170,21 @@ export class NotificationService {
   }
 
   /**
-   * Best-effort — the read/unread state is already committed to Postgres; a
-   * stale session snapshot just means the unread badge lags until next
-   * login, so a sync failure here must never fail the request.
+   * The caller awaits this before responding — the client immediately
+   * refetches /notifications/unread-count after a mark-read call resolves
+   * (invalidateQueries), and that endpoint trusts this cached Redis value
+   * over a live DB count (see NotificationController.unreadCount). Awaiting
+   * here closes that read-your-own-writes race: without it, the REST
+   * response (and thus the client's refetch) could return before this
+   * Redis write landed, so the refetch would read the pre-mark-read count.
+   * A Redis write failure is still swallowed rather than failing the
+   * request — worst case the badge lags until next login.
    */
-  private syncUnreadToSession(userId: string, unread: number): void {
-    this.tokenStore
+  private async syncUnreadToSession(
+    userId: string,
+    unread: number,
+  ): Promise<void> {
+    await this.tokenStore
       .rewriteFieldsForUser(userId, { unread: String(unread) })
       .catch((err) => {
         this.logger.warn({

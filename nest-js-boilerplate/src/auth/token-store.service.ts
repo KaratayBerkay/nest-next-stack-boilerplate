@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
 import { parseDurationToSeconds } from '../common/utils/parse-duration';
+import { hashForRedisKey } from '../common/token-codec/token-codec';
 import { REDIS_CLIENT } from '../redis/redis.module';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { SessionUser, SessionUserInput } from './auth.types';
@@ -50,12 +51,22 @@ export class TokenStoreService {
     const tokens = userToken
       ? [accessToken, rbacToken, deviceToken, userToken]
       : [accessToken, rbacToken, deviceToken];
-    const parts = tokens.map((t) => this.crypto.sha256(t));
+    // Keyed HMAC, not plain SHA-256: unkeyed SHA-256 is a public,
+    // reproducible computation — anyone holding these 4 raw values could
+    // compute our exact Redis key themselves with no server secret needed.
+    const parts = tokens.map((t) => hashForRedisKey(t));
     return `${SESS_PREFIX}${parts.join(':')}`;
   }
 
   private reverseIndexKey(userId: string): string {
     return `${USER_SESS_PREFIX}${userId}:sessions`;
+  }
+
+  /** Same keyed-HMAC hardening as buildKey() — see its comment. Raw
+   *  sessionId was previously used as a literal, unhashed Redis key
+   *  suffix here. */
+  private refreshIndexKey(sessionId: string): string {
+    return `${REFRESH_INDEX_PREFIX}${hashForRedisKey(sessionId)}`;
   }
 
   async write(key: string, data: SessionUserInput): Promise<void> {
@@ -92,7 +103,7 @@ export class TokenStoreService {
     // time, but the set never shrinks).
     pipe.expire(this.reverseIndexKey(userId), this.ttl);
     if (data.sessionId) {
-      const refreshKey = `${REFRESH_INDEX_PREFIX}${data.sessionId}`;
+      const refreshKey = this.refreshIndexKey(data.sessionId);
       pipe.set(refreshKey, key, 'EX', this.ttl);
     }
     await pipe.exec();
@@ -176,7 +187,7 @@ export class TokenStoreService {
       // Slide the refresh reverse-index TTL together with the session hash —
       // otherwise a continuously active session's refresh capability silently
       // dies SESSION_TTL after login even though the session itself stays alive.
-      pipe.expire(`${REFRESH_INDEX_PREFIX}${sessionId}`, this.ttl);
+      pipe.expire(this.refreshIndexKey(sessionId), this.ttl);
     }
     await pipe.exec();
 
@@ -194,7 +205,7 @@ export class TokenStoreService {
     pipe.del(key);
     pipe.srem(this.reverseIndexKey(userId), key);
     if (data.sessionId) {
-      pipe.del(`${REFRESH_INDEX_PREFIX}${data.sessionId}`);
+      pipe.del(this.refreshIndexKey(data.sessionId));
     }
     await pipe.exec();
     // Drop the per-session wire-crypto keypair with the session itself.
@@ -204,7 +215,7 @@ export class TokenStoreService {
   }
 
   async findByRefreshSessionId(sessionId: string): Promise<SessionUser | null> {
-    const refreshKey = `${REFRESH_INDEX_PREFIX}${sessionId}`;
+    const refreshKey = this.refreshIndexKey(sessionId);
     const key = await this.redis.get(refreshKey);
     if (!key) return null;
     return this.read(key);
@@ -265,7 +276,7 @@ export class TokenStoreService {
     for (const { key, session } of sessions) {
       pipe.del(key);
       if (session.sessionId) {
-        pipe.del(`${REFRESH_INDEX_PREFIX}${session.sessionId}`);
+        pipe.del(this.refreshIndexKey(session.sessionId));
       }
     }
     pipe.del(reverseKey);

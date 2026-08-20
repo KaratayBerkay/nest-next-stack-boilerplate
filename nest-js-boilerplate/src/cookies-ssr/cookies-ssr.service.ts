@@ -47,7 +47,6 @@ export class CookiesSsrService {
     const device = await this.devices.resolveForLogin(user.id, ctx);
     const accessToken = await this.jwt.signAsync({
       sub: user.id,
-      email: user.email,
       role: user.role,
     } satisfies JwtPayload);
 
@@ -97,7 +96,9 @@ export class CookiesSsrService {
     if (access) {
       try {
         const payload = this.jwt.verify<JwtPayload>(access);
-        user = { id: payload.sub, email: payload.email };
+        // email no longer travels in this JWT (see auth.types.ts) — this
+        // demo has no Redis session store to fall back to for it.
+        user = { id: payload.sub, email: '' };
       } catch {
         // access token expired
       }

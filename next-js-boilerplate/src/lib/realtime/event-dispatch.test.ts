@@ -617,7 +617,9 @@ describe("dispatchEvent", () => {
 
   describe("room-message", () => {
     it("appends message to cached room messages", async () => {
-      qc.setQueryData(["room", "general"], [{ id: "m1", body: "hello" }]);
+      qc.setQueryData(["room", "general"], {
+        pages: [{ messages: [{ id: "m1", body: "hello" }] }],
+      });
 
       await dispatchEvent(qc, {
         type: "room-message",
@@ -625,13 +627,17 @@ describe("dispatchEvent", () => {
         message: { id: "m2", body: "world" },
       });
 
-      const data = qc.getQueryData(["room", "general"]) as { id: string }[];
-      expect(data).toHaveLength(2);
-      expect(data[1].id).toBe("m2");
+      const data = qc.getQueryData(["room", "general"]) as {
+        pages: { messages: { id: string }[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(2);
+      expect(data.pages[0].messages[1].id).toBe("m2");
     });
 
     it("deduplicates by message id", async () => {
-      qc.setQueryData(["room", "general"], [{ id: "m1", body: "hello" }]);
+      qc.setQueryData(["room", "general"], {
+        pages: [{ messages: [{ id: "m1", body: "hello" }] }],
+      });
 
       await dispatchEvent(qc, {
         type: "room-message",
@@ -639,8 +645,10 @@ describe("dispatchEvent", () => {
         message: { id: "m1", body: "hello" },
       });
 
-      const data = qc.getQueryData(["room", "general"]) as { id: string }[];
-      expect(data).toHaveLength(1);
+      const data = qc.getQueryData(["room", "general"]) as {
+        pages: { messages: { id: string }[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(1);
     });
 
     it("invalidates when room is not cached", async () => {
@@ -659,10 +667,11 @@ describe("dispatchEvent", () => {
 
     it("reconciles tempId by replacing pending entry", async () => {
       trackTempId("temp-123");
-      qc.setQueryData(
-        ["room", "general"],
-        [{ id: "temp-123", body: "hello", pending: true }],
-      );
+      qc.setQueryData(["room", "general"], {
+        pages: [
+          { messages: [{ id: "temp-123", body: "hello", pending: true }] },
+        ],
+      });
 
       await dispatchEvent(qc, {
         type: "room-message",
@@ -671,13 +680,12 @@ describe("dispatchEvent", () => {
         message: { id: "real-uuid", body: "hello", pending: false },
       });
 
-      const data = qc.getQueryData(["room", "general"]) as Record<
-        string,
-        unknown
-      >[];
-      expect(data).toHaveLength(1);
-      expect(data[0].id).toBe("real-uuid");
-      expect(data[0].pending).toBe(false);
+      const data = qc.getQueryData(["room", "general"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      };
+      expect(data.pages[0].messages).toHaveLength(1);
+      expect(data.pages[0].messages[0].id).toBe("real-uuid");
+      expect(data.pages[0].messages[0].pending).toBe(false);
     });
 
     it("does nothing when room or message is missing", async () => {

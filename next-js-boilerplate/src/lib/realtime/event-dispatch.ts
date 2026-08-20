@@ -205,19 +205,27 @@ export async function dispatchEvent(
       qc.invalidateQueries({ queryKey: ["room", room] });
       return;
     }
-    qc.setQueryData(
-      ["room", room],
-      (old: Record<string, unknown>[] | undefined) => {
-        const msgs = old ?? [];
-        if (msgs.some((m) => m.id === msg.id)) return old;
-        if (tempId && sentTempIds.has(tempId)) {
-          sentTempIds.delete(tempId);
-          return msgs.map((m) =>
-            m.id === tempId ? { ...msg, pending: false } : m,
-          );
-        }
-        return [...msgs, msg];
-      },
-    );
+    // Cache is now an infinite-query page list (see roomMessagesQueryOptions)
+    // — mirrors the ["messages", peerId] patch above: only page[0] (the most
+    // recently fetched, newest-messages page) ever needs a live append.
+    qc.setQueryData(["room", room], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = [...data.pages];
+      const first = { ...pages[0] };
+      if (first.messages.some((m) => m.id === msg.id)) return old;
+      if (tempId && sentTempIds.has(tempId)) {
+        sentTempIds.delete(tempId);
+        first.messages = first.messages.map((m) =>
+          m.id === tempId ? { ...msg, pending: false } : m,
+        );
+      } else {
+        first.messages = [...first.messages, msg];
+      }
+      pages[0] = first;
+      return { ...data, pages };
+    });
   }
 }

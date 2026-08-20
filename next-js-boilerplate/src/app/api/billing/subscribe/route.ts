@@ -9,6 +9,10 @@ import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { publishEvent } from "@/lib/kafka";
 import { tierLabel } from "@/lib/tier";
 import { ME_QUERY } from "@/lib/graphql/queries";
+import {
+  decodeSessionUserCookie,
+  encodeSessionUserCookie,
+} from "@/lib/session-user-cookie";
 
 const SUBSCRIBE_MUTATION = `
   mutation SubscribeToPlan(
@@ -170,21 +174,13 @@ export async function POST(request: NextRequest) {
   // above it, just for tier instead of chatNickname/name/etc).
   if (user) {
     const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
-    try {
-      const current = encoded
-        ? (JSON.parse(
-            Buffer.from(encoded, "base64url").toString("utf-8"),
-          ) as Record<string, unknown>)
-        : {};
-      const merged = { ...current, ...user };
-      response.cookies.set(
-        sessionUserCookieOptions(
-          Buffer.from(JSON.stringify(merged)).toString("base64url"),
-        ),
-      );
-    } catch {
-      // Malformed cookie — leave it be; ME_QUERY's GraphQL fallback covers it.
-    }
+    const current =
+      (encoded && decodeSessionUserCookie<Record<string, unknown>>(encoded)) ||
+      {};
+    const merged = { ...current, ...user };
+    response.cookies.set(
+      sessionUserCookieOptions(encodeSessionUserCookie(merged)),
+    );
   }
 
   return response;

@@ -1,10 +1,12 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, infiniteQueryOptions } from "@tanstack/react-query";
 import type { NotificationsResult } from "@/api/server/notifications/list";
 
-async function fetchNotifications(): Promise<NotificationsResult> {
+async function fetchNotifications(
+  cursor?: string,
+): Promise<NotificationsResult> {
   const { fetchNotificationsServer } =
     await import("@/api/server/notifications/list");
-  return fetchNotificationsServer();
+  return fetchNotificationsServer(cursor);
 }
 
 async function fetchUnreadCount(): Promise<number> {
@@ -20,9 +22,18 @@ async function fetchDmUnreadCount(): Promise<number> {
 }
 
 export function notificationsQueryOptions() {
-  return queryOptions({
+  return infiniteQueryOptions<NotificationsResult>({
     queryKey: ["notifications", "list"],
-    queryFn: fetchNotifications,
+    queryFn: async ({ pageParam }) =>
+      fetchNotifications(pageParam as string | undefined),
+    initialPageParam: undefined as string | undefined,
+    // Items arrive newest-first per page (no reversal, unlike the
+    // chat-message pagination) — the cursor is the id of the oldest item
+    // fetched so far.
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore
+        ? lastPage.items[lastPage.items.length - 1]?.id
+        : undefined,
     staleTime: 30_000,
     refetchInterval: 60_000,
   });

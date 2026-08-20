@@ -13,6 +13,11 @@ import { SessionHydrationService } from './session-hydration.service';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { encryptId } from '../common/id-codec/id-codec';
+import {
+  encryptToken,
+  decryptTokenOrNull,
+} from '../common/token-codec/token-codec';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { AuthPayload, SessionUserInput } from './auth.types';
 
@@ -35,8 +40,13 @@ export class AuthTokenService {
     device?: DeviceContext,
   ): Promise<AuthPayload> {
     const accessToken = await this.jwt.signAsync({
-      sub: user.id,
-      email: user.email,
+      // Encrypted, not the raw uuid — decrypted back right after signature
+      // verification in every real verifier (SessionValidatorService,
+      // JwtAuthGuard, OptionalAuthGuard), so req.user.userId is the real id
+      // again by the time any resolver/controller sees it. The parallel
+      // cookies-ssr demo mints and verifies its own JWT independently and is
+      // deliberately left alone — never cross-validated against this one.
+      sub: encryptId(user.id),
       role: user.role,
     });
     const rbacToken = this.derivation.deriveRbacToken(
@@ -80,18 +90,28 @@ export class AuthTokenService {
       issuedAt: new Date().toISOString(),
     });
 
-    this.setRbacCookie(ctx, rbacToken);
-    this.setUserCookie(ctx, userToken);
-    this.setRefreshCookie(ctx, sessionId);
+    // Wrap only for external use (cookies + the returned AuthPayload) — every
+    // internal use above (buildKey, tokenStore.write, logging) already ran
+    // against the real rbacToken/userToken/sessionId. Wrapping earlier would
+    // mean buildKey() hashes a value the extraction side (which unwraps
+    // before doing anything else — see extractRbacToken/extractUserToken/
+    // extractRefreshToken below) would never reproduce.
+    const wrappedRbacToken = encryptToken(rbacToken);
+    const wrappedUserToken = encryptToken(userToken);
+    const wrappedSessionId = encryptToken(sessionId);
+
+    this.setRbacCookie(ctx, wrappedRbacToken);
+    this.setUserCookie(ctx, wrappedUserToken);
+    this.setRefreshCookie(ctx, wrappedSessionId);
 
     return {
       accessToken,
-      rbacToken,
-      userToken,
+      rbacToken: wrappedRbacToken,
+      userToken: wrappedUserToken,
       deviceId: device?.deviceId,
       deviceToken: device?.deviceToken,
       user,
-      refreshToken: sessionId,
+      refreshToken: wrappedSessionId,
       serverPublicKey,
     };
   }
@@ -105,13 +125,18 @@ export class AuthTokenService {
   }
 
   extractRbacToken(ctx: RequestContext): string | null {
-    return this.extractCookieOrHeader(
-      ctx,
-      rbacCookieName(this.config),
-      'x-rbac-token',
+    return decryptTokenOrNull(
+      this.extractCookieOrHeader(
+        ctx,
+        rbacCookieName(this.config),
+        'x-rbac-token',
+      ),
     );
   }
 
+  // Deliberately NOT wrapped/unwrapped — device_token's literal value is
+  // SHA-256'd client-side (both web and Flutter) to derive wire-crypto keys,
+  // and the server must arrive at the identical hash. See token-codec.ts.
   extractDeviceToken(ctx: RequestContext): string | null {
     return this.extractCookieOrHeader(
       ctx,
@@ -121,18 +146,22 @@ export class AuthTokenService {
   }
 
   extractUserToken(ctx: RequestContext): string | null {
-    return this.extractCookieOrHeader(
-      ctx,
-      userCookieName(this.config),
-      'x-user-token',
+    return decryptTokenOrNull(
+      this.extractCookieOrHeader(
+        ctx,
+        userCookieName(this.config),
+        'x-user-token',
+      ),
     );
   }
 
   extractRefreshToken(ctx: RequestContext): string | null {
-    return this.extractCookieOrHeader(
-      ctx,
-      refreshCookieName(this.config),
-      'x-refresh-token',
+    return decryptTokenOrNull(
+      this.extractCookieOrHeader(
+        ctx,
+        refreshCookieName(this.config),
+        'x-refresh-token',
+      ),
     );
   }
 

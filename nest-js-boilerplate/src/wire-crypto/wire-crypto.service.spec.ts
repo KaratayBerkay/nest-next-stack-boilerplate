@@ -6,6 +6,7 @@ import { hkdf } from '@noble/hashes/hkdf.js';
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { TextEncoder } from 'node:util';
+import { hashForRedisKey } from '../common/token-codec/token-codec';
 import { WireCryptoService } from './wire-crypto.service';
 import { WIRE_CRYPTO_CONTEXT } from './wire-crypto.types';
 
@@ -147,10 +148,12 @@ describe('WireCryptoService', () => {
     const { service, redis } = buildService();
     const pub = await service.createSessionKeys(SID);
     expect(pub).toMatch(/^[0-9a-f]{64}$/);
-    expect(redis._store.get(`crypto:session:${SID}`)?.pub).toBe(pub);
-    expect(redis._store.get(`crypto:session:${SID}`)?.priv).toMatch(
-      /^[0-9a-f]{64}$/,
-    );
+    expect(
+      redis._store.get(`crypto:session:${hashForRedisKey(SID)}`)?.pub,
+    ).toBe(pub);
+    expect(
+      redis._store.get(`crypto:session:${hashForRedisKey(SID)}`)?.priv,
+    ).toMatch(/^[0-9a-f]{64}$/);
   });
 
   it('agrees on a shared secret with a real client keypair', async () => {
@@ -240,10 +243,15 @@ describe('WireCryptoService', () => {
     const { service, redis } = buildService();
     await service.createSessionKeys(SID);
     await service.touchTTL(SID);
-    expect(redis.expire).toHaveBeenCalledWith(`crypto:session:${SID}`, 900);
+    expect(redis.expire).toHaveBeenCalledWith(
+      `crypto:session:${hashForRedisKey(SID)}`,
+      900,
+    );
 
     await service.deleteForSession(SID);
-    expect(redis._store.get(`crypto:session:${SID}`)).toBeUndefined();
+    expect(
+      redis._store.get(`crypto:session:${hashForRedisKey(SID)}`),
+    ).toBeUndefined();
     expect(await service.hasKeys(SID)).toBe(false);
   });
 

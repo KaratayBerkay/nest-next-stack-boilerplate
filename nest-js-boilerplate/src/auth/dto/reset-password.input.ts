@@ -9,6 +9,6 @@ export class ResetPasswordInput {
 
   @Field()
   @MinLength(8)
-  @MaxLength(100)
+  @MaxLength(128)
   newPassword!: string;
 }

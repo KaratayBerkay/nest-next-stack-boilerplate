@@ -11,6 +11,8 @@ export interface ChatRoomMainContentProps {
   onlineUserIds: Set<string>;
   msgsLoading: boolean;
   msgsError: boolean;
+  hasNextPage: boolean;
+  onFetchNextPage: () => void;
   input: string;
   attaching: boolean;
   uploadItems: UploadItem[];

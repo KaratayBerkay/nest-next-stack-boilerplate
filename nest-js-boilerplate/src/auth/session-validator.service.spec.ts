@@ -1,9 +1,17 @@
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { encryptId } from '../common/id-codec/id-codec';
 import { SessionValidatorService } from './session-validator.service';
 import { TokenDerivationService } from './token-derivation.service';
 import type { TokenStoreService } from './token-store.service';
+
+// Real uuid shapes, not short placeholder strings — the JWT payload's
+// sub is now encrypted (AuthTokenService.issueTokens) and decrypted right
+// back in SessionValidatorService.validate(), so it has to be something
+// encryptId() actually accepts.
+const USER_ID = '01890a5d-ac96-774b-bcce-b302099a8057';
+const OTHER_USER_ID = '01890a5d-ac96-774b-bcce-b302099a8058';
 
 const cryptoConfig = {
   getOrThrow: () =>
@@ -45,7 +53,11 @@ function mockTokenStore(): MockTokenStore {
   };
 }
 
-const validPayload = { sub: 'u1', email: 'test@test.com', role: 'USER' };
+const validPayload = {
+  sub: encryptId(USER_ID),
+  email: 'test@test.com',
+  role: 'USER',
+};
 
 const baseSession = {
   email: 'test@test.com',
@@ -91,8 +103,8 @@ describe('SessionValidatorService', () => {
 
   it('validates a genuine session', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const deviceToken = crypto.randomToken();
     const key = tokenStore.buildKey(
       accessToken,
@@ -102,7 +114,7 @@ describe('SessionValidatorService', () => {
     );
     await tokenStore.write(key, {
       ...baseSession,
-      userId: 'u1',
+      userId: USER_ID,
       tier: 'FREE',
       sessionId: 's1',
       chatNickname: 'ducky',
@@ -117,7 +129,7 @@ describe('SessionValidatorService', () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) throw new Error('expected ok result');
-    expect(result.session.userId).toBe('u1');
+    expect(result.session.userId).toBe(USER_ID);
     expect(result.session.tier).toBe('FREE');
     expect(result.session.chatNickname).toBe('ducky');
     expect(result.compoundKey).toBe(key);
@@ -134,8 +146,8 @@ describe('SessionValidatorService', () => {
   });
 
   it('reports invalid_jwt when the access token is tampered', async () => {
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const result = await validator.validate({
       accessToken: 'tampered-jwt',
       rbacToken,
@@ -158,7 +170,7 @@ describe('SessionValidatorService', () => {
 
   it('reports missing_user_token when user token is absent', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
     const result = await validator.validate({
       accessToken,
       rbacToken,
@@ -170,9 +182,9 @@ describe('SessionValidatorService', () => {
 
   it('reports user_token_expired for a user token from yesterday (midnight cutoff)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
     const yesterday = new Date(Date.now() - 86400000);
-    const oldUserToken = derivation.deriveUserToken('u1', yesterday);
+    const oldUserToken = derivation.deriveUserToken(USER_ID, yesterday);
     const result = await validator.validate({
       accessToken,
       rbacToken,
@@ -184,8 +196,8 @@ describe('SessionValidatorService', () => {
 
   it('reports session_miss when the Redis key is missing (expired/revoked)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const result = await validator.validate({
       accessToken,
       rbacToken,
@@ -197,8 +209,8 @@ describe('SessionValidatorService', () => {
 
   it('reports rbac_mismatch when rbac derivation does not match (tier changed)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const oldRbac = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const oldRbac = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const deviceToken = crypto.randomToken();
     const key = tokenStore.buildKey(
       accessToken,
@@ -209,7 +221,7 @@ describe('SessionValidatorService', () => {
     // Stored tier differs from the tier the presented rbac token was derived with.
     await tokenStore.write(key, {
       ...baseSession,
-      userId: 'u1',
+      userId: USER_ID,
       tier: 'PREMIUM',
       sessionId: 's1',
     });
@@ -224,12 +236,12 @@ describe('SessionValidatorService', () => {
 
   it('reports user_mismatch when the JWT sub does not match the stored userId', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
       ...baseSession,
-      userId: 'u2',
+      userId: OTHER_USER_ID,
       tier: 'FREE',
       sessionId: 's2',
     });
@@ -253,8 +265,8 @@ describe('SessionValidatorService', () => {
       derivation,
     );
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const result = await brokenValidator.validate({
       accessToken,
       rbacToken,
@@ -266,12 +278,12 @@ describe('SessionValidatorService', () => {
 
   it('treats a missing device token as an empty compound-key segment, not a rejection', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
       ...baseSession,
-      userId: 'u1',
+      userId: USER_ID,
       tier: 'FREE',
       sessionId: 's1',
     });

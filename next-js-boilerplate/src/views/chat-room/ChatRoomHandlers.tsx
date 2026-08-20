@@ -25,26 +25,31 @@ export async function chatRoomHandleSend(
 
   if (user?.id) {
     trackTempId(tempId);
-    queryClient.setQueryData(
-      ["room", room],
-      (old: Record<string, unknown>[] | undefined) => {
-        const msgs = old ?? [];
-        if (msgs.some((m) => (m as Record<string, unknown>).id === tempId))
-          return old;
-        return [
-          ...msgs,
-          {
-            id: tempId,
-            senderId: user.id,
-            senderName: user.name ?? "Unknown",
-            body: text,
-            attachments,
-            createdAt: new Date().toISOString(),
-            pending: true,
-          },
-        ];
-      },
-    );
+    // Cache is an infinite-query page list (see roomMessagesQueryOptions) —
+    // mirrors useMessageActions.sendMessage's optimistic insert for DMs.
+    queryClient.setQueryData(["room", room], (old: unknown) => {
+      const data = old as
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
+      if (!data?.pages?.length) return old;
+      const pages = [...data.pages];
+      const first = { ...pages[0] };
+      if (first.messages.some((m) => m.id === tempId)) return old;
+      first.messages = [
+        ...first.messages,
+        {
+          id: tempId,
+          senderId: user.id,
+          senderName: user.name ?? "Unknown",
+          body: text,
+          attachments,
+          createdAt: new Date().toISOString(),
+          pending: true,
+        },
+      ];
+      pages[0] = first;
+      return { ...data, pages };
+    });
   }
 
   realtime.send({

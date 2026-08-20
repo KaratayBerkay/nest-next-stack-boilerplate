@@ -12,6 +12,8 @@ import { rbacCookieName } from '../auth/rbac-cookie';
 import { userCookieName } from '../auth/user-cookie';
 import { deviceCookieName } from '../devices/device-cookie';
 import type { JwtPayload, JwtUser } from '../auth/auth.types';
+import { decryptId } from '../common/id-codec/id-codec';
+import { decryptTokenOrNull } from '../common/token-codec/token-codec';
 import { TokenDerivationService } from '../auth/token-derivation.service';
 import { TokenStoreService } from '../auth/token-store.service';
 
@@ -35,6 +37,10 @@ export class OptionalAuthGuard implements CanActivate {
     let payload: JwtPayload;
     try {
       payload = await this.jwt.verifyAsync<JwtPayload>(accessToken);
+      // sub is encrypted (see AuthTokenService.issueTokens) — decrypt inside
+      // the same try so a malformed/tampered sub falls through to this
+      // guard's existing best-effort "proceed anonymously" path.
+      payload = { ...payload, sub: decryptId(payload.sub) };
     } catch {
       this.logger.debug('Optional auth: JWT invalid — proceeding anonymously');
       return true;
@@ -99,9 +105,13 @@ export class OptionalAuthGuard implements CanActivate {
       }
     }
 
+    // JWT-only fallback (rbac/user token missing or stale) — email no longer
+    // travels in the JWT (see auth.types.ts), so this degraded path can't
+    // report it. The common case above (valid rbac+user tokens) still gets
+    // the real email from the Redis session snapshot.
     (req as Request & { user?: JwtUser }).user = {
       userId: payload.sub,
-      email: payload.email,
+      email: '',
       role: payload.role,
       tier: 'FREE',
     };
@@ -125,9 +135,11 @@ export class OptionalAuthGuard implements CanActivate {
     const cookies = (req as unknown as { cookies?: Record<string, string> })
       .cookies;
     const fromCookie = cookies?.[cookieName] ?? null;
-    if (fromCookie) return fromCookie;
+    if (fromCookie) return decryptTokenOrNull(fromCookie);
     const header = req.headers['x-rbac-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
+    return decryptTokenOrNull(
+      (Array.isArray(header) ? header[0] : header) ?? null,
+    );
   }
 
   private extractDeviceToken(req: Request): string | null {
@@ -145,8 +157,10 @@ export class OptionalAuthGuard implements CanActivate {
     const cookies = (req as unknown as { cookies?: Record<string, string> })
       .cookies;
     const fromCookie = cookies?.[cookieName] ?? null;
-    if (fromCookie) return fromCookie;
+    if (fromCookie) return decryptTokenOrNull(fromCookie);
     const header = req.headers['x-user-token'];
-    return (Array.isArray(header) ? header[0] : header) ?? null;
+    return decryptTokenOrNull(
+      (Array.isArray(header) ? header[0] : header) ?? null,
+    );
   }
 }

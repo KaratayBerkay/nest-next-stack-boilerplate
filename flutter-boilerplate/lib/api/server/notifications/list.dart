@@ -10,28 +10,38 @@ final notificationsServerProvider =
 const _query = '''
   query MyNotifications(\$cursor: ID, \$take: Int) {
     myNotifications(cursor: \$cursor, take: \$take) {
-      id
-      type
-      title
-      body
-      readAt
-      createdAt
-      payload
-      actor {
+      items {
         id
-        name
-        avatarUrl
+        type
+        title
+        body
+        readAt
+        createdAt
+        payload
+        actor {
+          id
+          name
+          avatarUrl
+        }
       }
+      hasMore
     }
   }
 ''';
+
+class NotificationsPage {
+  final List<NotificationItem> items;
+  final bool hasMore;
+
+  const NotificationsPage({required this.items, required this.hasMore});
+}
 
 class NotificationsServer {
   final Dio _dio;
 
   NotificationsServer(this._dio);
 
-  Future<List<NotificationItem>> call({String? cursor, int? take}) async {
+  Future<NotificationsPage> call({String? cursor, int? take}) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
@@ -49,10 +59,14 @@ class NotificationsServer {
         message: 'Failed to fetch notifications',
       );
     }
-    final list =
-        (body['data'] as Map<String, dynamic>)['myNotifications'] as List;
-    return list
+    final page = (body['data'] as Map<String, dynamic>)['myNotifications']
+        as Map<String, dynamic>;
+    final items = (page['items'] as List)
         .map((e) => NotificationItem.fromJson(e as Map<String, dynamic>))
         .toList();
+    return NotificationsPage(
+      items: items,
+      hasMore: page['hasMore'] as bool? ?? false,
+    );
   }
 }

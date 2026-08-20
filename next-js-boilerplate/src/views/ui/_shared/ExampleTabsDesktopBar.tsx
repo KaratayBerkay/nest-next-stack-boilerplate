@@ -34,7 +34,7 @@ export function ExampleTabsDesktopBar({
       role="tablist"
       aria-label="Demo sections"
       tabIndex={-1}
-      className="bg-surface hidden w-full gap-0.5 rounded-lg p-0.5 md:flex"
+      className="bg-surface hidden w-full gap-0.5 rounded-lg p-0.5 md:grid md:grid-cols-[repeat(auto-fit,minmax(140px,1fr))]"
       onKeyDown={handleKeyDown}
     >
       {examples.map((example) => {
@@ -52,7 +52,7 @@ export function ExampleTabsDesktopBar({
             tabIndex={isActive ? 0 : -1}
             onClick={() => onChange(example.id)}
             className={cn(
-              "flex-1 rounded-md px-3 py-2 text-center text-sm font-medium transition-all",
+              "w-full rounded-md px-3 py-2 text-center text-sm font-medium transition-all",
               isActive
                 ? "bg-surface-hover text-fg ring-border shadow-sm ring-1"
                 : "text-muted hover:bg-surface-hover/50 hover:text-fg",

@@ -11,6 +11,8 @@ import {
 } from "@/api/server/auth/verify-email";
 import { requestPasswordResetServer } from "@/api/server/auth/request-password-reset";
 import { resetPasswordServer } from "@/api/server/auth/reset-password";
+import { changePasswordServer } from "@/api/server/auth/change-password";
+import { undoPasswordChangeServer } from "@/api/server/auth/undo-password-change";
 import {
   enrollMfaServer,
   verifyMfaEnrollmentServer,
@@ -52,6 +54,12 @@ export function useAuthActions() {
   const resetPassword = async (token: string, newPassword: string) =>
     resetPasswordServer(token, newPassword);
 
+  const changePassword = async (currentPassword: string, newPassword: string) =>
+    changePasswordServer(currentPassword, newPassword);
+
+  const undoPasswordChange = async (token: string) =>
+    undoPasswordChangeServer(token);
+
   const enrollMfa = async (): Promise<EnrollMfaResult> => enrollMfaServer();
 
   const verifyMfaEnrollment = async (code: string): Promise<VerifyMfaResult> =>
@@ -73,6 +81,8 @@ export function useAuthActions() {
     resendEmailCode,
     requestPasswordReset,
     resetPassword,
+    changePassword,
+    undoPasswordChange,
     enrollMfa,
     verifyMfaEnrollment,
     disableMfa,

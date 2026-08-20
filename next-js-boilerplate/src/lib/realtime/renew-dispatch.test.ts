@@ -34,7 +34,7 @@ describe("dispatchRenew", () => {
 
     it("Item: prepends item to notifications list when cached", async () => {
       qc.setQueryData(["notifications", "list"], {
-        items: [{ id: "n1", text: "old" }],
+        pages: [{ items: [{ id: "n1", text: "old" }] }],
       });
 
       await dispatchRenew(qc, {
@@ -44,10 +44,10 @@ describe("dispatchRenew", () => {
       });
 
       const data = qc.getQueryData(["notifications", "list"]) as {
-        items: { id: string }[];
+        pages: { items: { id: string }[] }[];
       };
-      expect(data.items).toHaveLength(2);
-      expect(data.items[0].id).toBe("n2");
+      expect(data.pages[0].items).toHaveLength(2);
+      expect(data.pages[0].items[0].id).toBe("n2");
     });
 
     it("Item: invalidates when notifications list is not cached", async () => {
@@ -66,7 +66,7 @@ describe("dispatchRenew", () => {
 
     it("Item: deduplicates by id", async () => {
       qc.setQueryData(["notifications", "list"], {
-        items: [{ id: "n1", text: "dup" }],
+        pages: [{ items: [{ id: "n1", text: "dup" }] }],
       });
 
       await dispatchRenew(qc, {
@@ -76,9 +76,9 @@ describe("dispatchRenew", () => {
       });
 
       const data = qc.getQueryData(["notifications", "list"]) as {
-        items: { id: string }[];
+        pages: { items: { id: string }[] }[];
       };
-      expect(data.items).toHaveLength(1);
+      expect(data.pages[0].items).toHaveLength(1);
     });
 
     it("Read: invalidates all notification queries", async () => {

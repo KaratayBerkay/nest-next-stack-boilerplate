@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -234,32 +235,45 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
     final connected = ref.watch(realtimeConnectedProvider);
-    final messagesAsync = _isNamedRoom
-        ? ref.watch(roomMessagesProvider(_room)).whenData(
-              (messages) => messages
-                  .map(
-                    (m) => ChatMessage(
-                      id: m.id,
-                      conversationId: _room,
-                      senderId: m.senderId,
-                      senderName: m.senderName,
-                      senderAvatarUrl: m.avatar,
-                      content: m.body,
-                      attachments: m.attachments,
-                      createdAt: DateTime.parse(m.createdAt),
-                      isRead: true,
-                    ),
-                  )
-                  .toList(),
+    final PaginatedListState<ChatMessage> messagesState;
+    final VoidCallback onLoadMore;
+    if (_isNamedRoom) {
+      final roomState = ref.watch(roomMessagesProvider(_room));
+      messagesState = PaginatedListState<ChatMessage>(
+        items: roomState.items
+            .map(
+              (m) => ChatMessage(
+                id: m.id,
+                conversationId: _room,
+                senderId: m.senderId,
+                senderName: m.senderName,
+                senderAvatarUrl: m.avatar,
+                content: m.body,
+                attachments: m.attachments,
+                createdAt: DateTime.parse(m.createdAt),
+                isRead: true,
+              ),
             )
-        : ref.watch(conversationMessagesProvider(_room));
+            .toList(),
+        hasMore: roomState.hasMore,
+        isLoadingMore: roomState.isLoadingMore,
+        isInitialLoading: roomState.isInitialLoading,
+        error: roomState.error,
+      );
+      onLoadMore =
+          () => ref.read(roomMessagesProvider(_room).notifier).loadMore();
+    } else {
+      messagesState = ref.watch(conversationMessagesProvider(_room));
+      onLoadMore = () =>
+          ref.read(conversationMessagesProvider(_room).notifier).loadMore();
+    }
     final roomCounts = ref.watch(roomCountsProvider);
     final roomMembers = ref.watch(roomMembersProvider(_room));
     final width = MediaQuery.of(context).size.width;
     final isMobile = width < 768;
 
-    final currentMessages = messagesAsync.asData?.value;
-    if (currentMessages != null && currentMessages.isNotEmpty) {
+    final currentMessages = messagesState.items;
+    if (currentMessages.isNotEmpty) {
       final newLastId = currentMessages.last.id;
       // `_lastMessageLastId` starts null, so the first successful load also
       // satisfies `newLastId != _lastMessageLastId` — that's intentional
@@ -294,15 +308,23 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       onSelectRoom: _selectRoom,
     );
 
-    final messagesContent = messagesAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('${t.errorSomethingWentWrong}: $e')),
-      data: (messages) => ChatRoomMainContent(
+    final Widget messagesContent;
+    if (messagesState.isInitialLoading) {
+      messagesContent = const Center(child: CircularProgressIndicator());
+    } else if (messagesState.error != null) {
+      messagesContent = Center(
+        child: Text('${t.errorSomethingWentWrong}: ${messagesState.error}'),
+      );
+    } else {
+      messagesContent = ChatRoomMainContent(
         useNativeControls: useNativeControls,
         room: _room,
         roomCounts: roomCounts,
         connectionState: _connectionState,
-        messages: messages,
+        messages: messagesState.items,
+        hasMore: messagesState.hasMore,
+        isLoadingMore: messagesState.isLoadingMore,
+        onLoadMore: onLoadMore,
         userId: user.id,
         messageController: _messageController,
         scrollController: _scrollController,
@@ -315,8 +337,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
         onAttachFile: _pickAttachment,
         onRemoveAttachment: () => setState(() => _pendingAttachment = null),
         onToggleEmoji: () => setState(() => _emojiOpen = !_emojiOpen),
-      ),
-    );
+      );
+    }
 
     return Column(
       children: [

@@ -14,6 +14,7 @@ import { bytesToHex, hexToBytes } from '@noble/hashes/utils.js';
 import { randomBytes } from 'node:crypto';
 import Redis from 'ioredis';
 import { parseDurationToSeconds } from '../common/utils/parse-duration';
+import { hashForRedisKey } from '../common/token-codec/token-codec';
 import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { WIRE_CRYPTO_CONTEXT, type WireEnvelopeV2 } from './wire-crypto.types';
 
@@ -89,12 +90,17 @@ export class WireCryptoService {
     return `${DEVICE_SEQ_PREFIX}${deviceHash}:${direction}`;
   }
 
+  // Keyed HMAC (hashForRedisKey), not the raw sessionId directly: the raw
+  // value was previously used as a literal, unhashed Redis key — anyone
+  // holding the refresh_token cookie (== sessionId) could compute this key
+  // themselves. deviceHash-based keys are untouched — device_token stays
+  // unwrapped everywhere (see token-codec.ts's doc comment for why).
   private sessionKey(sessionId: string): string {
-    return `${SESSION_KEY_PREFIX}${sessionId}`;
+    return `${SESSION_KEY_PREFIX}${hashForRedisKey(sessionId)}`;
   }
 
   private seqKey(sessionId: string, direction: WireDirection): string {
-    return `${SEQ_PREFIX}${sessionId}:${direction}`;
+    return `${SEQ_PREFIX}${hashForRedisKey(sessionId)}:${direction}`;
   }
 
   /** Key holding the highest TRUE c2s seq accepted for a device/session. */
@@ -104,7 +110,7 @@ export class WireCryptoService {
   ): string {
     return deviceHash
       ? `${LAST_C2S_PREFIX}${deviceHash}`
-      : `${LAST_C2S_PREFIX}${sessionId}`;
+      : `${LAST_C2S_PREFIX}${hashForRedisKey(sessionId)}`;
   }
 
   /** TTL for seq counters / replay gates — device keys outlive sessions. */

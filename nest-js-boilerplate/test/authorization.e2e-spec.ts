@@ -23,7 +23,6 @@ describe('Authorization — RBAC RolesGuard (e2e)', () => {
   const tokenFor = (role: UserRole): Promise<string> =>
     jwt.signAsync({
       sub: `user-${role}`,
-      email: `${role.toLowerCase()}@example.com`,
       role,
     } satisfies JwtPayload);
 

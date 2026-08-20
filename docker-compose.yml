@@ -62,6 +62,7 @@ services:
     # env file is fetched from Vault by vault-init (see docker/vault-init/
     # entrypoint.sh — redis-commander is in the SERVICES list). It contains:
     #   REDIS_HOSTS=local:redis:6379
+    #   HTTP_USER / HTTP_PASSWORD (basic auth, defense-in-depth)
     depends_on:
       vault-init:
         condition: service_completed_successfully
@@ -69,7 +70,11 @@ services:
         condition: service_healthy
     env_file: ./.vault-envs/redis-commander.env
     ports:
-      - "8081:8081"
+      # localhost-only — this was previously bound to all interfaces
+      # ("8081:8081") with no authentication configured, giving full
+      # read/write access to every session/token/E2EE key in Redis to
+      # anyone who could reach the port.
+      - "127.0.0.1:8081:8081"
 
   # ──────────────────────────────────────────────────────
   # Message / task brokers (profile: brokers)

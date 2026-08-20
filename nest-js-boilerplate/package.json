@@ -216,6 +216,9 @@
       "/node_modules/",
       "lazy-loading.spec.ts"
     ],
+    "setupFiles": [
+      "<rootDir>/../test/jest.setup.ts"
+    ],
     "transform": {
       "^.+\\.m?[tj]s$": [
         "ts-jest",

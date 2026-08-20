@@ -159,6 +159,33 @@ const templates: Record<
       text: 'Reset your password: ' + url,
     };
   },
+
+  'password-changed': (vars) => {
+    const url = str(vars.url);
+    const name = str(vars.name, '');
+    const greeting = name ? 'Hi ' + escape(name) + ',' : 'Hi,';
+    return {
+      subject: 'Your password was changed',
+      html: layout(
+        '<p>' +
+          greeting +
+          '</p>' +
+          '<p>Your password was just changed. If this was you, no action is needed.</p>' +
+          '<p><strong>If this wasn\'t you</strong>, click the button below to undo the change and restore your previous password:</p>' +
+          '<p style="text-align:center;margin:24px 0">' +
+          '<a href="' +
+          escape(url) +
+          '" style="display:inline-block;padding:12px 24px;background-color:#dc2626;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Undo Password Change</a>' +
+          '</p>' +
+          '<p>Or copy this link into your browser:</p>' +
+          '<p style="word-break:break-all;font-size:12px;color:#666">' +
+          escape(url) +
+          '</p>' +
+          '<p>This link expires in 24 hours and can only be used once.</p>',
+      ),
+      text: "Your password was changed. If this wasn't you, undo it here: " + url,
+    };
+  },
 };
 
 export function renderTemplate(

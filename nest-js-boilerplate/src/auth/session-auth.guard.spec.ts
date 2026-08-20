@@ -3,10 +3,18 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { ExecutionContext } from '@nestjs/common';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { encryptId } from '../common/id-codec/id-codec';
+import { encryptToken } from '../common/token-codec/token-codec';
 import { TokenDerivationService } from './token-derivation.service';
 import { SessionAuthGuard } from './session-auth.guard';
 import { SessionValidatorService } from './session-validator.service';
 import type { TokenStoreService } from './token-store.service';
+
+// Real uuid shapes, not short placeholder strings — the JWT payload's sub is
+// now encrypted (AuthTokenService.issueTokens) and decrypted right back in
+// SessionValidatorService.validate().
+const USER_ID = '01890a5d-ac96-774b-bcce-b302099a8057';
+const OTHER_USER_ID = '01890a5d-ac96-774b-bcce-b302099a8058';
 
 const cryptoConfig = {
   getOrThrow: () =>
@@ -80,9 +88,15 @@ function createRequest(overrides: {
   const { accessToken, rbacToken, deviceToken, userToken, ip } = overrides;
   const cookies: Record<string, string> = {};
   if (accessToken) cookies['access_token'] = accessToken;
-  if (rbacToken) cookies['rbac_token'] = rbacToken;
+  // rbac/user tokens are wrapped for transport (AuthTokenService
+  // .issueTokens) and unwrapped by SessionAuthGuard's extraction —
+  // every caller here passes the raw derivation.deriveRbacToken/
+  // deriveUserToken output, same as a real client would never see, so wrap
+  // it here once rather than at each call site. deviceToken is deliberately
+  // left raw — see token-codec.ts's doc comment for why.
+  if (rbacToken) cookies['rbac_token'] = encryptToken(rbacToken);
   if (deviceToken) cookies['device_token'] = deviceToken;
-  if (userToken) cookies['user_token'] = userToken;
+  if (userToken) cookies['user_token'] = encryptToken(userToken);
   const headers: Record<string, string | undefined> = {};
   if (accessToken) headers['authorization'] = `Bearer ${accessToken}`;
   return { headers, cookies, ip: ip ?? null, user: undefined };
@@ -109,7 +123,11 @@ function gqlCtx(
   };
 }
 
-const validPayload = { sub: 'u1', email: 'test@test.com', role: 'USER' };
+const validPayload = {
+  sub: encryptId(USER_ID),
+  email: 'test@test.com',
+  role: 'USER',
+};
 
 describe('SessionAuthGuard', () => {
   let jwtService: JwtService;
@@ -149,8 +167,8 @@ describe('SessionAuthGuard', () => {
 
   it('authenticates a valid session', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const deviceToken = crypto.randomToken();
     const key = tokenStore.buildKey(
       accessToken,
@@ -159,7 +177,7 @@ describe('SessionAuthGuard', () => {
       userToken,
     );
     await tokenStore.write(key, {
-      userId: 'u1',
+      userId: USER_ID,
       email: 'test@test.com',
       role: 'USER',
       tier: 'FREE',
@@ -190,7 +208,7 @@ describe('SessionAuthGuard', () => {
     );
     expect(result).toBe(true);
     expect(req.user).toBeDefined();
-    expect(req.user!.userId).toBe('u1');
+    expect(req.user!.userId).toBe(USER_ID);
     expect(req.user!.tier).toBe('FREE');
     // Regression: the widened req.user object is built field-by-field from
     // the Redis session hash, not spread — chatNickname was added to
@@ -226,7 +244,7 @@ describe('SessionAuthGuard', () => {
 
   it('throws 401 when user token is missing', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
     await expect(
       guard.canActivate(
         gqlCtx(
@@ -238,9 +256,9 @@ describe('SessionAuthGuard', () => {
 
   it('throws 401 when user token is from yesterday (midnight cutoff)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
     const yesterday = new Date(Date.now() - 86400000);
-    const oldUserToken = derivation.deriveUserToken('u1', yesterday);
+    const oldUserToken = derivation.deriveUserToken(USER_ID, yesterday);
     await expect(
       guard.canActivate(
         gqlCtx(
@@ -252,8 +270,8 @@ describe('SessionAuthGuard', () => {
 
   it('throws 401 when the Redis key is missing (expired/revoked)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     await expect(
       guard.canActivate(
         gqlCtx(
@@ -264,8 +282,8 @@ describe('SessionAuthGuard', () => {
   });
 
   it('throws 401 when access token is tampered', async () => {
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     await expect(
       guard.canActivate(
         gqlCtx(
@@ -277,8 +295,8 @@ describe('SessionAuthGuard', () => {
 
   it('throws 401 when rbac derivation does not match (tier changed)', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const oldRbac = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const oldRbac = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const deviceToken = crypto.randomToken();
     const key = tokenStore.buildKey(
       accessToken,
@@ -288,7 +306,7 @@ describe('SessionAuthGuard', () => {
     );
     // Store with a different tier than the rbac token was derived with
     await tokenStore.write(key, {
-      userId: 'u1',
+      userId: USER_ID,
       email: 'test@test.com',
       role: 'USER',
       tier: 'PREMIUM',
@@ -323,11 +341,11 @@ describe('SessionAuthGuard', () => {
 
   it('throws 401 when JWT sub does not match the stored userId', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
-      userId: 'u2',
+      userId: OTHER_USER_ID,
       email: 'u2@t.com',
       role: 'USER',
       tier: 'FREE',
@@ -356,11 +374,11 @@ describe('SessionAuthGuard', () => {
 
   it('rejects IP mismatch when AUTH_IP_STRICT=true', async () => {
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     const key = tokenStore.buildKey(accessToken, rbacToken, '', userToken);
     await tokenStore.write(key, {
-      userId: 'u1',
+      userId: USER_ID,
       email: 'test@test.com',
       role: 'USER',
       tier: 'FREE',
@@ -422,8 +440,8 @@ describe('SessionAuthGuard', () => {
       brokenValidator,
     );
     const accessToken = await jwtService.signAsync(validPayload);
-    const rbacToken = derivation.deriveRbacToken('u1', 'FREE');
-    const userToken = derivation.deriveUserToken('u1');
+    const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');
+    const userToken = derivation.deriveUserToken(USER_ID);
     try {
       await brokenGuard.canActivate(
         gqlCtx(

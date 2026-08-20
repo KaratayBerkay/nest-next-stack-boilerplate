@@ -1,6 +1,13 @@
 "use client";
 
-import { useRef, useState, type Dispatch, type SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import type { NotificationDropdownProps } from "@/types/feed/NotificationDropdown-types";
 import type { NotificationItem } from "@/lib/realtime/useNotifications";
 import { createPortal } from "react-dom";
@@ -43,7 +50,10 @@ export function NotificationDropdown({
 }: NotificationDropdownProps) {
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
-  const notifications = notifData?.items ?? [];
+  const notifications = useMemo(
+    () => notifData?.pages.flatMap((p) => p.items) ?? [],
+    [notifData],
+  );
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -54,6 +64,15 @@ export function NotificationDropdown({
   });
 
   const { markRead, markAllRead } = useNotificationActions();
+
+  // Seeing them in the open list counts as "read" — clicking one still
+  // additionally navigates, but simply viewing the panel is enough to clear
+  // the badge for whatever's currently showing in it.
+  const hasUnread = notifications.some((n) => !n.readAt);
+  useEffect(() => {
+    if (!open || !hasUnread) return;
+    markAllRead().catch(() => {});
+  }, [open, hasUnread, markAllRead]);
 
   const content = (
     <NotificationList

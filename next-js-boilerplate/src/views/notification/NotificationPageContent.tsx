@@ -7,6 +7,7 @@ import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
+import { Button } from "@/components/ui/Button";
 import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
 import { useNotifications } from "@/lib/realtime/useNotifications";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
@@ -26,11 +27,17 @@ export function NotificationPageContent({ className }: ClassNameProps) {
   const lang = params?.lang ?? "en";
   const router = useRouter();
   const t = useMessages("notification");
-  const { data: notifData, isLoading } = useNotifications();
+  const {
+    data: notifData,
+    isLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useNotifications();
   const dateDisplay = useDateDisplayCookie();
   const notifications = useMemo(
-    () => notifData?.items ?? [],
-    [notifData?.items],
+    () => notifData?.pages.flatMap((p) => p.items) ?? [],
+    [notifData],
   );
 
   const { markAllRead, markRead } = useNotificationActions();
@@ -130,16 +137,30 @@ export function NotificationPageContent({ className }: ClassNameProps) {
             <p className="text-muted text-xs">{t.noNotifications}</p>
           </div>
         ) : (
-          sorted.map((n) => (
-            <NotificationItem
-              key={n.id}
-              notification={n}
-              onRead={markRead}
-              onNavigate={(target) => router.push(target)}
-              lang={lang}
-              dateDisplay={dateDisplay}
-            />
-          ))
+          <>
+            {sorted.map((n) => (
+              <NotificationItem
+                key={n.id}
+                notification={n}
+                onRead={markRead}
+                onNavigate={(target) => router.push(target)}
+                lang={lang}
+                dateDisplay={dateDisplay}
+              />
+            ))}
+            {hasNextPage && (
+              <div className="flex justify-center py-3">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
+                >
+                  {t.loadMore}
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

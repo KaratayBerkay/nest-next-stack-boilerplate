@@ -47,4 +47,29 @@ class ChatMessage {
           : null,
     );
   }
+
+  /// Maps the GraphQL `conversationMessages` shape (nested `sender`/`body`,
+  /// `readAt` instead of `isRead`) — also shared by the live WS
+  /// `direct-message` frame, whose `message` payload is a compatible subset
+  /// (no `readAt`/`deletedAt`, both correctly absent on a just-arrived
+  /// message anyway).
+  factory ChatMessage.fromWireJson(Map<String, dynamic> json) {
+    final sender = json['sender'] as Map<String, dynamic>?;
+    return ChatMessage(
+      id: json['id'] as String,
+      conversationId: json['recipientId'] as String,
+      senderId: json['senderId'] as String,
+      senderName: sender?['name'] as String? ?? '',
+      senderAvatarUrl: sender?['avatarUrl'] as String?,
+      content: json['body'] as String? ?? '',
+      attachments: (json['attachments'] as List<dynamic>? ?? const [])
+          .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      isRead: json['readAt'] != null,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
+    );
+  }
 }

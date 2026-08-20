@@ -44,6 +44,8 @@ export function ChatRoomMainContent({
   onlineUserIds,
   msgsLoading,
   msgsError,
+  hasNextPage,
+  onFetchNextPage,
   input,
   attaching,
   uploadItems,
@@ -118,6 +120,8 @@ export function ChatRoomMainContent({
         onlineUserIds={onlineUserIds}
         msgsLoading={msgsLoading}
         msgsError={msgsError}
+        hasNextPage={hasNextPage}
+        onFetchNextPage={onFetchNextPage}
         bottomRef={bottomRef}
         t={t}
       />

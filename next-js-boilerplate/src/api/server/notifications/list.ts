@@ -22,8 +22,17 @@ export interface NotificationsResult {
   hasMore: boolean;
 }
 
-export async function fetchNotificationsServer(): Promise<NotificationsResult> {
-  const res = await apiFetch(NOTIFICATIONS_URL);
+export async function fetchNotificationsServer(
+  cursor?: string,
+  take?: number,
+): Promise<NotificationsResult> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  if (take) params.set("take", String(take));
+  const qs = params.toString();
+  const res = await apiFetch(
+    qs ? `${NOTIFICATIONS_URL}?${qs}` : NOTIFICATIONS_URL,
+  );
   if (!res.ok) throw new Error("Failed to fetch notifications");
   const data = await res.json();
   const items = Array.isArray(data)

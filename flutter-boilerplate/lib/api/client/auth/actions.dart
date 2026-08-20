@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/auth/auth_request_types.dart';
 import '../../../types/auth/mfa_types.dart';
+import '../../server/auth/change_password.dart';
 import '../../server/auth/login.dart';
 import '../../server/auth/logout.dart';
 import '../../server/auth/mfa.dart';
@@ -48,6 +49,19 @@ class LoginActions {
   Future<void> resetPassword(String token, String password) async {
     final server = _ref.read(resetPasswordServerProvider);
     await server.call(token, password);
+  }
+
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final server = _ref.read(changePasswordServerProvider);
+    await server.call(currentPassword, newPassword);
+  }
+
+  Future<void> undoPasswordChange(String token) async {
+    final server = _ref.read(changePasswordServerProvider);
+    await server.undoPasswordChange(token);
   }
 
   Future<void> verifyEmail(String token) async {

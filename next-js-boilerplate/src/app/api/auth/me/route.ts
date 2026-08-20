@@ -5,11 +5,11 @@ import { graphqlFetch } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
 import { withLogging } from "@/lib/request-logger";
+import {
+  decodeSessionUserCookie,
+  encodeSessionUserCookie,
+} from "@/lib/session-user-cookie";
 import type { User } from "@/features/auth/hooks/useAuth";
-
-function decodeBase64(value: string): string {
-  return Buffer.from(value, "base64url").toString("utf-8");
-}
 
 export const GET = withLogging(async (_request, log) => {
   const accessToken = await getAccessToken();
@@ -21,12 +21,12 @@ export const GET = withLogging(async (_request, log) => {
   // Fast path: read session_user cookie created at login/register time (or
   // re-written by a mutation route since — see /api/profile/update,
   // /api/billing/subscribe).
+  const cookieStore = await cookies();
+  const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
   let cookieUser: User | null = null;
-  try {
-    const cookieStore = await cookies();
-    const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
-    if (encoded) {
-      cookieUser = JSON.parse(decodeBase64(encoded)) as User;
+  if (encoded) {
+    cookieUser = decodeSessionUserCookie<User>(encoded);
+    if (cookieUser) {
       // Cookies minted before login/register/mfa started overlaying the real
       // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
       // sessionId). Self-heal instead of trusting that partial snapshot
@@ -39,13 +39,13 @@ export const GET = withLogging(async (_request, log) => {
         );
       }
     } else {
-      log.warn({}, "me: no session_user cookie, falling through to GraphQL");
+      log.warn(
+        {},
+        "me: session_user cookie malformed or tampered, falling through to GraphQL",
+      );
     }
-  } catch (err) {
-    log.warn(
-      { error: (err as Error).message },
-      "me: session_user cookie malformed, falling through to GraphQL",
-    );
+  } else {
+    log.warn({}, "me: no session_user cookie, falling through to GraphQL");
   }
 
   // Slow path: no session cookie (or one missing hideAvatar), fetch the full
@@ -86,9 +86,7 @@ export const GET = withLogging(async (_request, log) => {
     { status: 200 },
   );
   response.cookies.set(
-    sessionUserCookieOptions(
-      Buffer.from(JSON.stringify(mergedUser)).toString("base64url"),
-    ),
+    sessionUserCookieOptions(encodeSessionUserCookie(mergedUser)),
   );
   return response;
 });

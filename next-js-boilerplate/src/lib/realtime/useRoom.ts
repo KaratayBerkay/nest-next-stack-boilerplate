@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { roomMessagesQueryOptions } from "@/api/client/messages/query";
 import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
 
 export type { ChatRoomMessage };
 
 export function useRoom(room: string | null) {
-  return useQuery(roomMessagesQueryOptions(room));
+  return useInfiniteQuery(roomMessagesQueryOptions(room));
 }

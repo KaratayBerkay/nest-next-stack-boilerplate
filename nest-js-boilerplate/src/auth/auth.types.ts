@@ -23,10 +23,13 @@ export interface JwtUser {
   deviceId?: string | null;
 }
 
-/** JWT payload we sign on login/register. */
+// JWT payload we sign on login/register. Deliberately minimal — email is PII
+// with no job to do here: SessionAuthGuard (the real auth path) never reads
+// it off the token, it hydrates JwtUser.email from the Redis session
+// snapshot instead. role stays because JwtAuthGuard/OptionalAuthGuard's
+// JWT-only fallback path needs it for RBAC with no Redis round-trip.
 export interface JwtPayload {
   sub: string;
-  email: string;
   role: string;
 }
 

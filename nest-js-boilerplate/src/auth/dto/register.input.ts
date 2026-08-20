@@ -17,7 +17,7 @@ export class RegisterInput {
 
   @Field()
   @MinLength(8)
-  @MaxLength(100)
+  @MaxLength(128)
   password!: string;
 
   @Field({ nullable: true })

@@ -14,6 +14,7 @@ import '../../l10n/app_localizations.dart';
 
 import '../../types/auth/user.dart';
 import '../settings/settings_shell.dart';
+import 'change_password/page_content.dart';
 import 'mfa_enroll/page_content.dart';
 
 class SecurityPageContent extends ConsumerWidget {
@@ -49,8 +50,10 @@ class SecurityPageContent extends ConsumerWidget {
                 ListTile(
                   title: Text(t.securityChangePassword),
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(t.securityChangePasswordComingSoon)),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const ChangePasswordPageContent(),
+                    ),
                   ),
                 ),
                 const Divider(height: 1),

@@ -884,6 +884,42 @@ abstract class AppLocalizations {
   /// **'Invalid or missing reset token.'**
   String get authFormResetPasswordInvalidToken;
 
+  /// No description provided for @authFormUndoPasswordChangeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo Password Change'**
+  String get authFormUndoPasswordChangeTitle;
+
+  /// No description provided for @authFormUndoPasswordChangeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone changed the password on this account. If this wasn\'t you, tap below to restore your previous password and sign out of any sessions started since the change.'**
+  String get authFormUndoPasswordChangeDescription;
+
+  /// No description provided for @authFormUndoPasswordChangeSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo Password Change'**
+  String get authFormUndoPasswordChangeSubmit;
+
+  /// No description provided for @authFormUndoPasswordChangeSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring your password...'**
+  String get authFormUndoPasswordChangeSubmitting;
+
+  /// No description provided for @authFormUndoPasswordChangeSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your password has been restored. Please sign in again.'**
+  String get authFormUndoPasswordChangeSuccess;
+
+  /// No description provided for @authFormUndoPasswordChangeLoginLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get authFormUndoPasswordChangeLoginLink;
+
   /// No description provided for @authFormForgotPasswordTitle.
   ///
   /// In en, this message translates to:
@@ -1165,6 +1201,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Password reset failed'**
   String get authErrorsResetPasswordFailed;
+
+  /// No description provided for @authErrorsCurrentPasswordRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password is required'**
+  String get authErrorsCurrentPasswordRequired;
+
+  /// No description provided for @authErrorsUndoPasswordChangeTokenMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'This link is missing its token'**
+  String get authErrorsUndoPasswordChangeTokenMissing;
+
+  /// No description provided for @authErrorsUndoPasswordChangeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not undo the password change — the link may have expired or already been used'**
+  String get authErrorsUndoPasswordChangeFailed;
 
   /// No description provided for @authErrorsVerifyEmailTokenMissing.
   ///
@@ -7298,6 +7352,12 @@ abstract class AppLocalizations {
   /// **'Failed to load'**
   String get notificationLoadFailed;
 
+  /// No description provided for @notificationLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get notificationLoadMore;
+
   /// No description provided for @notificationBasicFeatures.
   ///
   /// In en, this message translates to:
@@ -8768,6 +8828,12 @@ abstract class AppLocalizations {
   /// **'Skip to content'**
   String get v1ShellSkipToContent;
 
+  /// No description provided for @v1ShellAttachmentPreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get v1ShellAttachmentPreview;
+
   /// No description provided for @chatRoomCloseSidebar.
   ///
   /// In en, this message translates to:
@@ -10070,11 +10136,53 @@ abstract class AppLocalizations {
   /// **'Change Password'**
   String get securityChangePassword;
 
-  /// No description provided for @securityChangePasswordComingSoon.
+  /// No description provided for @securityChangePasswordDescription.
   ///
   /// In en, this message translates to:
-  /// **'Change password coming soon'**
-  String get securityChangePasswordComingSoon;
+  /// **'You\'ll be signed out of all other devices, and we\'ll email you in case this wasn\'t you.'**
+  String get securityChangePasswordDescription;
+
+  /// No description provided for @securityCurrentPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Password'**
+  String get securityCurrentPasswordLabel;
+
+  /// No description provided for @securityNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New Password'**
+  String get securityNewPasswordLabel;
+
+  /// No description provided for @securityConfirmNewPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm New Password'**
+  String get securityConfirmNewPasswordLabel;
+
+  /// No description provided for @securityChangePasswordSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get securityChangePasswordSubmit;
+
+  /// No description provided for @securityChangePasswordSubmitting.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing password...'**
+  String get securityChangePasswordSubmitting;
+
+  /// No description provided for @securityChangePasswordSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Password changed. We\'ve emailed you in case this wasn\'t you.'**
+  String get securityChangePasswordSuccess;
+
+  /// No description provided for @securityChangePasswordFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to change password'**
+  String get securityChangePasswordFailed;
 
   /// No description provided for @securityActiveSessions.
   ///

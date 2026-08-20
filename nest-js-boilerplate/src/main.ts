@@ -7,6 +7,7 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
+import { parse as parseQuerystring } from 'node:querystring';
 import zlib from 'zlib';
 import helmet from 'helmet';
 import { Logger } from 'nestjs-pino';
@@ -15,6 +16,8 @@ import { internalGrpcOptions } from './grpc/grpc.module';
 import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
 import { PerformanceInterceptor } from './interceptors/performance.interceptor';
+import { IdCodecInterceptor } from './common/id-codec/id-codec.interceptor';
+import { bestEffortDecryptIds } from './common/id-codec/id-codec.util';
 import { loadVaultSecrets } from './vault/vault-loader';
 import {
   initOpenTelemetry,
@@ -40,6 +43,20 @@ process.on('warning', (warn) => {
 // unconditional start just spams failed OTLP exports every export interval.
 if (process.env.OTEL_ENABLED === 'true') {
   initOpenTelemetry();
+}
+
+// Express 5's req.query is a live getter that re-parses req.url on every
+// access (not cached) — mutating a previously-read req.query object is
+// silently lost by the time anything downstream reads it again. Replacing
+// the query-parser function itself is the only place a query-string id can
+// be decrypted so every later req.query access consistently sees it. Same
+// underlying parser Express defaults to ('simple' = querystring.parse); this
+// only adds the id decryption on top. Best-effort, not strict: a
+// malformed/tampered value is left as-is rather than throwing from inside a
+// getter that can be invoked from unpredictably many call sites per request
+// — it just fails to match anything downstream instead.
+function decryptQueryString(str: string): Record<string, unknown> {
+  return bestEffortDecryptIds(parseQuerystring(str)) as Record<string, unknown>;
 }
 
 function validationExceptionFactory(errors: ValidationError[]) {
@@ -107,6 +124,9 @@ async function bootstrap() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
 
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  app.getHttpAdapter().getInstance().set('query parser', decryptQueryString);
+
   // Device-IP binding: rejects requests where the device_token's stored IP doesn't match
   // the request IP. Runs after cookie-parser (needs cookies) and before validation + guards.
   const deviceIpMw = app.get(DeviceIpMiddleware);
@@ -121,7 +141,10 @@ async function bootstrap() {
     void shutdownOpenTelemetry();
   });
 
-  app.useGlobalInterceptors(new PerformanceInterceptor());
+  app.useGlobalInterceptors(
+    new PerformanceInterceptor(),
+    new IdCodecInterceptor(),
+  );
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

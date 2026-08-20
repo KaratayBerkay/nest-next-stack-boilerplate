@@ -204,6 +204,40 @@ export class AuthService {
     );
   }
 
+  async changePassword(
+    userId: string,
+    sessionId: string | undefined,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<boolean> {
+    await this.authRegistration.changePassword(
+      userId,
+      currentPassword,
+      newPassword,
+    );
+
+    // Mirrors SessionsResolver.revokeAllOtherSessions — the current session
+    // (the one that just authenticated this change) stays alive, every
+    // other one is force-logged-out immediately rather than waiting for its
+    // own token to expire.
+    if (sessionId) {
+      const entries = await this.tokenStore.listSessionsWithKeys(userId);
+      const toRevoke = entries.filter(
+        (e) => e.session.sessionId !== sessionId,
+      );
+      await Promise.all(toRevoke.map((e) => this.tokenStore.revoke(e.key)));
+      for (const { session } of toRevoke) {
+        this.realtime.closeSocketsForSession(userId, session.sessionId);
+      }
+    }
+
+    return true;
+  }
+
+  async undoPasswordChange(rawToken: string): Promise<boolean> {
+    return this.authRegistration.undoPasswordChange(rawToken, this.tokenStore);
+  }
+
   async loginWithOAuth(
     state: string,
     ctx?: RequestContext,

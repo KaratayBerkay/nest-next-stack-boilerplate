@@ -7,11 +7,14 @@ import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
 import '../../api/server/crypto/handshake.dart';
 import '../../api/server/crypto/re_key.dart';
+import '../../api/server/messages/room_messages.dart';
 import '../../app/router.dart';
 import '../../app_config.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_messages_page.dart';
+import '../../types/messages/message.dart';
+import '../../types/notification/notification_item.dart';
 import '../riverpod_compat.dart';
 import 'realtime_client.dart';
 import 'route_claim.dart';
@@ -29,6 +32,35 @@ final roomMembersProvider =
     StateProvider.family<List<Map<String, String?>>, String>(
   (ref, room) => [],
 );
+
+/// Data backing the transient "new message" banner shown just under the
+/// header for ~3s when a DM or room message arrives while the user isn't
+/// already looking at that conversation — mirrors the web's
+/// `useHeaderMessageBanner` hook. `body`/`hasAttachments` are raw (no
+/// decryption-failure copy resolved here) — the widget resolves display text
+/// since it's the one with access to `AppLocalizations`.
+class HeaderMessageBannerData {
+  final String id;
+  final String senderName;
+  final String body;
+  final bool hasAttachments;
+  final String? avatarUrl;
+  final bool isRoom;
+  final String targetId;
+
+  const HeaderMessageBannerData({
+    required this.id,
+    required this.senderName,
+    required this.body,
+    required this.hasAttachments,
+    required this.avatarUrl,
+    required this.isRoom,
+    required this.targetId,
+  });
+}
+
+final headerMessageBannerProvider =
+    StateProvider<HeaderMessageBannerData?>((ref) => null);
 
 final realtimeProvider = Provider<RealtimeClient>((ref) {
   final onStatus = ref.read(realtimeStatusProvider.notifier);
@@ -120,7 +152,12 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
           ref.invalidate(dmUnreadNotificationsProvider);
           ref.invalidate(notificationsUnreadCountProvider);
         case 'Item':
-          ref.invalidate(notificationsProvider);
+          final item = frame['item'] as Map<String, dynamic>?;
+          if (item != null && ref.exists(notificationsProvider)) {
+            ref
+                .read(notificationsProvider.notifier)
+                .prependLive(NotificationItem.fromJson(item));
+          }
         case 'Read':
           ref.invalidate(notificationsProvider);
           ref.invalidate(notificationsUnreadCountProvider);
@@ -167,8 +204,15 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
       final message = frame['message'] as Map<String, dynamic>?;
       final myId = ref.read(currentUserProvider)?.id;
       final peerId = _peerIdFromMessage(message, myId);
-      if (peerId != null) {
-        ref.invalidate(conversationMessagesProvider(peerId));
+      // Only patch an already-instantiated provider — reading `.notifier`
+      // unconditionally would lazily create (and fetch page 1 for) every
+      // peer you've ever messaged, not just the one you're viewing.
+      if (peerId != null &&
+          message != null &&
+          ref.exists(conversationMessagesProvider(peerId))) {
+        ref
+            .read(conversationMessagesProvider(peerId).notifier)
+            .appendLive(ChatMessage.fromWireJson(message));
       }
       // Mirrors the web's event-dispatch.ts activePeerId check: a message
       // that arrives while its sender's thread is the one currently open in
@@ -181,6 +225,34 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
           message['recipientId'] == myId &&
           message['senderId'] == ref.read(selectedConversationUserIdProvider)) {
         ref.read(markReadActionsProvider).call(message['senderId'] as String);
+      }
+      // Header "new message" banner — skip the sender's own echo and skip
+      // when the sender's thread is the one already open (that case is
+      // handled live by the mark-read branch above instead).
+      final senderId = message?['senderId'] as String?;
+      if (senderId != null && senderId != myId) {
+        final claim = _activePageClaim(ref);
+        final alreadyOpen = claim.page == 'messages' &&
+            ref.read(selectedConversationUserIdProvider) == senderId;
+        if (!alreadyOpen) {
+          final sender = message?['sender'] as Map<String, dynamic>?;
+          final body = message?['body'];
+          final attachments = message?['attachments'];
+          _showHeaderMessageBanner(
+            ref,
+            HeaderMessageBannerData(
+              id: message?['id'] as String? ?? senderId,
+              senderName: (sender?['name'] as String?) ??
+                  (sender?['email'] as String?) ??
+                  '',
+              body: body is String ? body : '',
+              hasAttachments: attachments is List && attachments.isNotEmpty,
+              avatarUrl: sender?['avatarUrl'] as String?,
+              isRoom: false,
+              targetId: senderId,
+            ),
+          );
+        }
       }
     case 'message-read':
     case 'message-delivered':
@@ -205,8 +277,40 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
       }
     case 'room-message':
       final room = frame['room'] as String?;
-      if (room != null) {
-        ref.invalidate(roomMessagesProvider(room));
+      final roomMessage = frame['message'] as Map<String, dynamic>?;
+      // Only patch an already-instantiated provider — see the equivalent
+      // guard in the direct-message case above.
+      if (room != null &&
+          roomMessage != null &&
+          ref.exists(roomMessagesProvider(room))) {
+        ref
+            .read(roomMessagesProvider(room).notifier)
+            .appendLive(RoomMessage.fromJson(roomMessage));
+      }
+      final roomSenderId = roomMessage?['senderId'] as String?;
+      final myRoomUserId = ref.read(currentUserProvider)?.id;
+      if (room != null &&
+          roomSenderId != null &&
+          roomSenderId != myRoomUserId) {
+        final claim = _activePageClaim(ref);
+        final alreadyOpen =
+            claim.page == 'chat-room' && claim.params?['room'] == room;
+        if (!alreadyOpen) {
+          final body = roomMessage?['body'];
+          final attachments = roomMessage?['attachments'];
+          _showHeaderMessageBanner(
+            ref,
+            HeaderMessageBannerData(
+              id: roomMessage?['id'] as String? ?? '$room-$roomSenderId',
+              senderName: roomMessage?['senderName'] as String? ?? '',
+              body: body is String ? body : '',
+              hasAttachments: attachments is List && attachments.isNotEmpty,
+              avatarUrl: null,
+              isRoom: true,
+              targetId: room,
+            ),
+          );
+        }
       }
     case 'room-counts':
       final rooms = frame['rooms'];
@@ -277,6 +381,20 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
         ref.read(typingUsersProvider.notifier).state = current;
       }
   }
+}
+
+void _showHeaderMessageBanner(Ref ref, HeaderMessageBannerData data) {
+  ref.read(headerMessageBannerProvider.notifier).state = data;
+  Future.delayed(const Duration(seconds: 3), () {
+    if (ref.read(headerMessageBannerProvider)?.id == data.id) {
+      ref.read(headerMessageBannerProvider.notifier).state = null;
+    }
+  });
+}
+
+PageClaim _activePageClaim(Ref ref) {
+  final uri = ref.read(routerProvider).routerDelegate.currentConfiguration.uri;
+  return routeToPageClaim(uri);
 }
 
 void _showRealtimeError(Ref ref, String? text) {

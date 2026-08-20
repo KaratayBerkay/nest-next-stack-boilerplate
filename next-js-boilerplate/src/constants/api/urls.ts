@@ -26,6 +26,9 @@ export const AUTH_RESET_PASSWORD_URL = "/api/auth/reset-password" as const;
 export const AUTH_MFA_ENROLL_URL = "/api/auth/mfa/enroll" as const;
 export const AUTH_MFA_VERIFY_URL = "/api/auth/mfa/verify" as const;
 export const AUTH_MFA_DISABLE_URL = "/api/auth/mfa/disable" as const;
+export const AUTH_CHANGE_PASSWORD_URL = "/api/auth/change-password" as const;
+export const AUTH_UNDO_PASSWORD_CHANGE_URL =
+  "/api/auth/undo-password-change" as const;
 
 export const POSTS_URL = "/api/posts" as const;
 export const POSTS_PREFIX = "/api/posts/" as const;

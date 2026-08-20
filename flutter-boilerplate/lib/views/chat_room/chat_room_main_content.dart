@@ -15,6 +15,9 @@ class ChatRoomMainContent extends StatelessWidget {
   final Map<String, int> roomCounts;
   final String connectionState;
   final List<ChatMessage> messages;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final VoidCallback? onLoadMore;
   final String userId;
   final Set<String> onlineUserIds;
   final bool msgsLoading;
@@ -38,6 +41,9 @@ class ChatRoomMainContent extends StatelessWidget {
     this.roomCounts = const {},
     this.connectionState = 'online',
     this.messages = const [],
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.onLoadMore,
     required this.userId,
     this.onlineUserIds = const {},
     this.msgsLoading = false,
@@ -142,6 +148,9 @@ class ChatRoomMainContent extends StatelessWidget {
               Expanded(
                 child: ChatRoomMessageList(
                   messages: messages,
+                  hasMore: hasMore,
+                  isLoadingMore: isLoadingMore,
+                  onLoadMore: onLoadMore,
                   userId: userId,
                   onlineUserIds: onlineUserIds,
                   msgsLoading: msgsLoading,

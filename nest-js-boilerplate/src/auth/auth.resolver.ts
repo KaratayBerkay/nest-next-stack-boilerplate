@@ -19,6 +19,7 @@ import { RegisterInput } from './dto/register.input';
 import { OAuthLoginInput } from './dto/oauth-login.input';
 import { RequestPasswordResetInput } from './dto/request-password-reset.input';
 import { ResetPasswordInput } from './dto/reset-password.input';
+import { ChangePasswordInput } from './dto/change-password.input';
 import { VerifyLoginMfaInput } from './dto/verify-login-mfa.input';
 
 @Resolver()
@@ -93,6 +94,27 @@ export class AuthResolver {
   @Mutation(() => Boolean)
   resetPassword(@Args('input') input: ResetPasswordInput): Promise<boolean> {
     return this.auth.resetPassword(input.token, input.newPassword);
+  }
+
+  @UseGuards(SessionAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @Mutation(() => Boolean)
+  changePassword(
+    @CurrentUser() user: JwtUser,
+    @Args('input') input: ChangePasswordInput,
+  ): Promise<boolean> {
+    return this.auth.changePassword(
+      user.userId,
+      user.sessionId,
+      input.currentPassword,
+      input.newPassword,
+    );
+  }
+
+  @Throttle({ default: { limit: 5, ttl: 300000 } })
+  @Mutation(() => Boolean)
+  undoPasswordChange(@Args('token') token: string): Promise<boolean> {
+    return this.auth.undoPasswordChange(token);
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })

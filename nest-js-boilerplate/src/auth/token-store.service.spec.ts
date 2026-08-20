@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { ConfigService } from '@nestjs/config';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { hashForRedisKey } from '../common/token-codec/token-codec';
 import { TokenStoreService } from './token-store.service';
 
 function createRedisMock() {
@@ -224,8 +225,10 @@ describe('TokenStoreService', () => {
     });
     redis._expires.length = 0;
     await service.extendTTL(key);
+    // refresh_sess: is now keyed by hashForRedisKey(sessionId), not the raw
+    // sessionId — see token-codec.ts.
     expect(redis._expires).toEqual(
-      expect.arrayContaining([key, 'refresh_sess:s9']),
+      expect.arrayContaining([key, `refresh_sess:${hashForRedisKey('s9')}`]),
     );
   });
 

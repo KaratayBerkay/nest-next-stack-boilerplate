@@ -164,6 +164,14 @@ export type I18nMessages = {
           "resendCode": string;
           "resending": string;
         };
+        "undoPasswordChange": {
+          "title": string;
+          "description": string;
+          "submit": string;
+          "submitting": string;
+          "success": string;
+          "loginLink": string;
+        };
       };
       "social": {
         "continueWith": string;
@@ -190,6 +198,9 @@ export type I18nMessages = {
         "resetPasswordFailed": string;
         "verifyEmailTokenMissing": string;
         "verifyEmailFailed": string;
+        "currentPasswordRequired": string;
+        "undoPasswordChangeTokenMissing": string;
+        "undoPasswordChangeFailed": string;
       };
     }
 
@@ -1231,6 +1242,7 @@ export type I18nMessages = {
       "enablePush": string;
       "disablePush": string;
       "back": string;
+      "loadMore": string;
     }
 
   "pages": {
@@ -11549,6 +11561,15 @@ export type I18nMessages = {
       "userAgent": string;
       "revoke": string;
       "securityHeading": string;
+      "securityChangePassword": string;
+      "securityChangePasswordDescription": string;
+      "securityCurrentPasswordLabel": string;
+      "securityNewPasswordLabel": string;
+      "securityConfirmNewPasswordLabel": string;
+      "securityChangePasswordSubmit": string;
+      "securityChangePasswordSubmitting": string;
+      "securityChangePasswordSuccess": string;
+      "securityChangePasswordFailed": string;
       "securityTwoFactor": string;
       "securityTwoFactorEnabled": string;
       "securityTwoFactorDisabled": string;

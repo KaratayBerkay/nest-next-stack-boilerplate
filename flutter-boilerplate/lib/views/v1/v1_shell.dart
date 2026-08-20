@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import 'header_message_banner.dart';
 import 'v1_header.dart';
 import 'v1_sidebar.dart';
 
@@ -37,36 +38,46 @@ class _V1ShellState extends ConsumerState<V1Shell> {
           lang: widget.lang,
           onToggleSidebar: _toggleSidebar,
         ),
-        body: isMobile
-            ? Stack(
-                children: [
-                  SafeArea(
+        body: Stack(
+          children: [
+            isMobile
+                ? Stack(
+                    children: [
+                      SafeArea(
+                        top: false,
+                        child: widget.child,
+                      ),
+                      V1Sidebar(
+                        lang: widget.lang,
+                        currentPath: loc,
+                        sidebarOpen: _sidebarOpen,
+                        onClose: _closeSidebar,
+                      ),
+                    ],
+                  )
+                : SafeArea(
                     top: false,
-                    child: widget.child,
-                  ),
-                  V1Sidebar(
-                    lang: widget.lang,
-                    currentPath: loc,
-                    sidebarOpen: _sidebarOpen,
-                    onClose: _closeSidebar,
-                  ),
-                ],
-              )
-            : SafeArea(
-                top: false,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    V1Sidebar(
-                      lang: widget.lang,
-                      currentPath: loc,
-                      sidebarOpen: _sidebarOpen,
-                      onClose: _closeSidebar,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        V1Sidebar(
+                          lang: widget.lang,
+                          currentPath: loc,
+                          sidebarOpen: _sidebarOpen,
+                          onClose: _closeSidebar,
+                        ),
+                        Expanded(child: widget.child),
+                      ],
                     ),
-                    Expanded(child: widget.child),
-                  ],
-                ),
-              ),
+                  ),
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: HeaderMessageBanner(lang: widget.lang),
+            ),
+          ],
+        ),
       ),
     );
   }

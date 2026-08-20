@@ -5,19 +5,30 @@ import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { NotificationService } from './notification.service';
+import { NotificationsPage } from './models/notifications-page.model';
 
 @UseGuards(SessionAuthGuard)
 @Resolver(() => Notification)
 export class NotificationResolver {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Query(() => [Notification])
-  myNotifications(
+  @Query(() => NotificationsPage)
+  async myNotifications(
     @CurrentUser() user: JwtUser,
     @Args('cursor', { type: () => ID, nullable: true }) cursor?: string,
     @Args('take', { type: () => Int, nullable: true }) take?: number,
   ) {
-    return this.notificationService.findByUser(user.userId, cursor, take);
+    // findByUser over-fetches by one (see notification.service.ts) so the
+    // caller can tell "more exist" apart from "that was the last page" —
+    // mirrors NotificationController.list's own slicing exactly.
+    const pageSize = Math.min(Math.max(take ?? 20, 1), 100);
+    const raw = await this.notificationService.findByUser(
+      user.userId,
+      cursor,
+      pageSize,
+    );
+    const hasMore = raw.length > pageSize;
+    return { items: hasMore ? raw.slice(0, pageSize) : raw, hasMore };
   }
 
   @Query(() => Int)

@@ -10,9 +10,10 @@ export function useMarkPostNotificationsRead(postId: string) {
   const { data: notifData } = useNotifications();
 
   useEffect(() => {
-    if (!postId || !notifData?.items?.length) return;
+    const items = notifData?.pages.flatMap((p) => p.items) ?? [];
+    if (!postId || items.length === 0) return;
 
-    const unread = notifData.items.filter(
+    const unread = items.filter(
       (n) =>
         !n.readAt && (n.payload as Record<string, unknown>)?.postId === postId,
     );
@@ -32,5 +33,5 @@ export function useMarkPostNotificationsRead(postId: string) {
     return () => {
       cancelled = true;
     };
-  }, [postId, notifData?.items, queryClient]);
+  }, [postId, notifData, queryClient]);
 }

@@ -7,28 +7,39 @@ import '../../../types/messages/message_attachment.dart';
 final roomMessagesServerProvider =
     Provider((ref) => RoomMessagesServer(ref.read(dioProvider)));
 
+class RoomMessagesPage {
+  final List<RoomMessage> messages;
+  final bool hasMore;
+
+  const RoomMessagesPage({required this.messages, required this.hasMore});
+}
+
 class RoomMessagesServer {
   final Dio _dio;
 
   RoomMessagesServer(this._dio);
 
-  Future<List<RoomMessage>> call(String room) async {
+  Future<RoomMessagesPage> call(
+    String room, {
+    String? before,
+    int take = 30,
+  }) async {
     final response = await _dio.get<dynamic>(
       '/api/rooms/$room/messages',
+      queryParameters: {
+        if (before != null) 'before': before,
+        'take': take,
+      },
     );
     final data = response.data;
-    if (data is List) {
-      return data
+    if (data is Map<String, dynamic>) {
+      final messages = (data['messages'] as List? ?? const [])
           .map((m) => RoomMessage.fromJson(m as Map<String, dynamic>))
           .toList();
-    }
-    if (data is Map<String, dynamic>) {
-      final messages = data['messages'] as List?;
-      if (messages != null) {
-        return messages
-            .map((m) => RoomMessage.fromJson(m as Map<String, dynamic>))
-            .toList();
-      }
+      return RoomMessagesPage(
+        messages: messages,
+        hasMore: data['hasMore'] as bool? ?? false,
+      );
     }
     throw Exception('Failed to fetch room messages');
   }

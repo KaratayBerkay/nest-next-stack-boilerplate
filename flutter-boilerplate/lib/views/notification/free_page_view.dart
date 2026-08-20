@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/notifications/actions.dart';
 import '../../api/client/notifications/query.dart';
+import '../../components/ui/button/button.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
@@ -19,7 +20,7 @@ class FreeNotificationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
-    final notifAsync = ref.watch(notificationsProvider);
+    final notifState = ref.watch(notificationsProvider);
 
     return Column(
       children: [
@@ -53,61 +54,83 @@ class FreeNotificationPage extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: notifAsync.when(
-            loading: () => const Spinner(),
-            error: (_, __) => EmptyWidget(
-              title: t.notificationLoadFailed,
-              icon: Icons.error_outline,
-            ),
-            data: (items) {
-              if (items.isEmpty) {
-                return EmptyWidget(
-                  title: t.notificationNoNotifications,
-                  description: t.notificationAllCaughtUp,
-                  icon: Icons.notifications_off_outlined,
-                );
-              }
-              return RefreshIndicator(
-                onRefresh: () => ref.refresh(notificationsProvider.future),
-                child: ListView.separated(
-                  itemCount: items.length,
-                  separatorBuilder: (_, __) =>
-                      Divider(height: 1, color: colors.border, indent: 72),
-                  itemBuilder: (_, i) {
-                    final item = items[i];
-                    final payload = item.payload;
-                    final kind = payload?['kind'] as String?;
-                    final postId = payload?['postId'] as String?;
-                    return NotificationItemWidget(
-                      item: item,
-                      lang: lang,
-                      onTap: () {
-                        if (!item.isRead) {
-                          ref
-                              .read(notificationActionsProvider)
-                              .markRead(item.id);
-                          ref.invalidate(notificationsProvider);
-                        }
-                        final target = () {
-                          if (kind == 'friend-request' ||
-                              kind == 'friend-accepted') {
-                            return '/v1/$lang/find-friends/requests';
-                          }
-                          if (postId != null) {
-                            return '/v1/$lang/posts/$postId';
-                          }
-                          return null;
-                        }();
-                        if (target != null) {
-                          context.push(target);
-                        }
-                      },
-                    );
-                  },
-                ),
-              );
-            },
-          ),
+          child: notifState.isInitialLoading
+              ? const Spinner()
+              : notifState.error != null
+                  ? EmptyWidget(
+                      title: t.notificationLoadFailed,
+                      icon: Icons.error_outline,
+                    )
+                  : notifState.items.isEmpty
+                      ? EmptyWidget(
+                          title: t.notificationNoNotifications,
+                          description: t.notificationAllCaughtUp,
+                          icon: Icons.notifications_off_outlined,
+                        )
+                      : RefreshIndicator(
+                          onRefresh: () => ref
+                              .read(notificationsProvider.notifier)
+                              .refresh(),
+                          child: ListView.separated(
+                            itemCount: notifState.items.length +
+                                (notifState.hasMore ? 1 : 0),
+                            separatorBuilder: (_, __) => Divider(
+                              height: 1,
+                              color: colors.border,
+                              indent: 72,
+                            ),
+                            itemBuilder: (_, i) {
+                              if (notifState.hasMore &&
+                                  i == notifState.items.length) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  child: Center(
+                                    child: Button(
+                                      variant: ButtonVariant.secondary,
+                                      size: ButtonSize.sm,
+                                      loading: notifState.isLoadingMore,
+                                      onPressed: () => ref
+                                          .read(notificationsProvider.notifier)
+                                          .loadMore(),
+                                      child: Text(t.notificationLoadMore),
+                                    ),
+                                  ),
+                                );
+                              }
+                              final item = notifState.items[i];
+                              final payload = item.payload;
+                              final kind = payload?['kind'] as String?;
+                              final postId = payload?['postId'] as String?;
+                              return NotificationItemWidget(
+                                item: item,
+                                lang: lang,
+                                onTap: () {
+                                  if (!item.isRead) {
+                                    ref
+                                        .read(notificationActionsProvider)
+                                        .markRead(item.id);
+                                    ref.invalidate(notificationsProvider);
+                                  }
+                                  final target = () {
+                                    if (kind == 'friend-request' ||
+                                        kind == 'friend-accepted') {
+                                      return '/v1/$lang/find-friends/requests';
+                                    }
+                                    if (postId != null) {
+                                      return '/v1/$lang/posts/$postId';
+                                    }
+                                    return null;
+                                  }();
+                                  if (target != null) {
+                                    context.push(target);
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                        ),
         ),
       ],
     );

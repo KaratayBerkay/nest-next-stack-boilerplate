@@ -16,6 +16,13 @@ export const serverEnvSchema = z.object({
   COOKIE_DOMAIN: z.string().optional(),
   COOKIE_SAMESITE: z.enum(["lax", "strict", "none"]),
   KAFKA_BROKER: z.string(),
+  // HMAC key for the session_user cookie (see lib/session-user-cookie.ts) —
+  // server-only, never sent to the client.
+  SESSION_COOKIE_SECRET: z
+    .string()
+    .min(32, "SESSION_COOKIE_SECRET must be at least 32 characters"),
 });
 
-export const fieldStateErrorSchema = z.string().min(3, "This field has an error");
+export const fieldStateErrorSchema = z
+  .string()
+  .min(3, "This field has an error");

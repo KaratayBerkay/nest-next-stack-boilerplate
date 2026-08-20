@@ -58,6 +58,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ProjectTasksModule } from './project-tasks/project-tasks.module';
 import { DirectivesModule } from './directives/directives.module';
 import { upperDirectiveTransformer } from './directives/upper-directive.transformer';
+import { idCodecSchemaTransformer } from './common/id-codec/id-codec-schema.transformer';
 import { PostModule } from './post/post.module';
 import { CommentModule } from './comment/comment.module';
 import { NotificationModule } from './notification/notification.module';
@@ -111,7 +112,8 @@ const CORE_MODULES = [
     subscriptions: {
       'graphql-ws': true,
     },
-    transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
+    transformSchema: (schema) =>
+      idCodecSchemaTransformer(upperDirectiveTransformer(schema, 'upper')),
     buildSchemaOptions: {
       directives: [
         new GraphQLDirective({

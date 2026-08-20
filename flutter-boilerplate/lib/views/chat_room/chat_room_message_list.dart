@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 
 import '../../components/ui/attachment_preview/attachment_preview.dart';
 import '../../components/ui/avatar/avatar.dart';
+import '../../components/ui/button/button.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
 
 class ChatRoomMessageList extends StatelessWidget {
   final List<ChatMessage> messages;
+  final bool hasMore;
+  final bool isLoadingMore;
+  final VoidCallback? onLoadMore;
   final String userId;
   final Set<String> onlineUserIds;
   final bool msgsLoading;
@@ -16,6 +21,9 @@ class ChatRoomMessageList extends StatelessWidget {
   const ChatRoomMessageList({
     super.key,
     required this.messages,
+    this.hasMore = false,
+    this.isLoadingMore = false,
+    this.onLoadMore,
     required this.userId,
     this.onlineUserIds = const {},
     this.msgsLoading = false,
@@ -57,9 +65,23 @@ class ChatRoomMessageList extends StatelessWidget {
       // it (see ChatRoomMainContent/ChatView, which no longer add a static
       // sibling gap for the same reason).
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-      itemCount: messages.length,
+      itemCount: messages.length + (hasMore ? 1 : 0),
       itemBuilder: (_, i) {
-        final msg = messages[i];
+        if (hasMore && i == 0) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Center(
+              child: Button(
+                variant: ButtonVariant.secondary,
+                size: ButtonSize.sm,
+                loading: isLoadingMore,
+                onPressed: onLoadMore,
+                child: Text(AppLocalizations.of(context).chatRoomLoadEarlier),
+              ),
+            ),
+          );
+        }
+        final msg = messages[i - (hasMore ? 1 : 0)];
         final isMe = msg.senderId == userId;
 
         return Padding(

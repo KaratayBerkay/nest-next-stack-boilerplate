@@ -200,18 +200,21 @@ export const CREATE_REACTION_MUTATION = `
 export const MY_NOTIFICATIONS_QUERY = `
   query MyNotifications($cursor: ID, $take: Int) {
     myNotifications(cursor: $cursor, take: $take) {
-      id
-      title
-      body
-      type
-      readAt
-      createdAt
-      payload
-      actor {
+      items {
         id
-        name
-        email
+        title
+        body
+        type
+        readAt
+        createdAt
+        payload
+        actor {
+          id
+          name
+          email
+        }
       }
+      hasMore
     }
   }
 `;

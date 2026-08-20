@@ -102,7 +102,13 @@ describe('AuthService', () => {
         { provide: SessionHydrationService, useValue: { hydrate: jest.fn() } },
         {
           provide: TokenDerivationService,
-          useValue: { deriveRbacToken: jest.fn(), deriveUserToken: jest.fn() },
+          // Real TokenDerivationService always returns a string — issueTokens
+          // now wraps this for transport (encryptToken), which requires an
+          // actual string input, not the bare jest.fn()'s default undefined.
+          useValue: {
+            deriveRbacToken: jest.fn().mockReturnValue('mock-rbac-token'),
+            deriveUserToken: jest.fn().mockReturnValue('mock-user-token'),
+          },
         },
         { provide: UsernameService, useValue: { generate: jest.fn() } },
         { provide: RealtimeGateway, useValue: { emitToUser: jest.fn() } },
@@ -274,13 +280,13 @@ describe('AuthService', () => {
       mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
 
       mockTokenStore.peekMfaChallenge.mockResolvedValue({
-        userId: 'u4',
+        userId: '01890a5d-ac96-774b-bcce-b302099a8060',
         email: 'mfa@example.com',
         role: 'USER',
         tier: 'FREE',
       });
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u4',
+        id: '01890a5d-ac96-774b-bcce-b302099a8060',
         mfaEnabled: true,
         email: 'mfa@example.com',
       });
@@ -342,14 +348,14 @@ describe('AuthService', () => {
       mockCrypto.decrypt.mockReturnValue('BASE32SECRET');
 
       mockTokenStore.peekMfaChallenge.mockResolvedValue({
-        userId: 'u5',
+        userId: '01890a5d-ac96-774b-bcce-b302099a8061',
         email: 'totp@example.com',
         role: 'USER',
         tier: 'FREE',
         mfaMethod: 'TOTP',
       });
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u5',
+        id: '01890a5d-ac96-774b-bcce-b302099a8061',
         mfaEnabled: true,
         email: 'totp@example.com',
       });
@@ -476,7 +482,7 @@ describe('AuthService', () => {
       });
 
       mockPrisma.user.findUnique.mockResolvedValue({
-        id: 'u4',
+        id: '01890a5d-ac96-774b-bcce-b302099a8062',
         email: 'mfa@example.com',
         passwordHash: realHash,
         status: 'ACTIVE',

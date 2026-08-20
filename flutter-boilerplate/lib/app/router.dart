@@ -17,6 +17,7 @@ import '../views/auth/forgot_password/page_content.dart';
 import '../views/auth/login/page_content.dart';
 import '../views/auth/register/page_content.dart';
 import '../views/auth/reset_password/page_content.dart';
+import '../views/auth/undo_password_change/page_content.dart';
 import '../views/auth/verify_email/page_content.dart';
 import '../views/boom/page_content.dart';
 import '../views/chat_room/page_view.dart';
@@ -263,6 +264,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/auth/reset-password',
         name: 'resetPassword',
         builder: (_, state) => ResetPasswordPageContent(
+          token: state.uri.queryParameters['token'] ?? '',
+        ),
+      ),
+      GoRoute(
+        path: '/auth/undo-password-change',
+        name: 'undoPasswordChange',
+        builder: (_, state) => UndoPasswordChangePageContent(
           token: state.uri.queryParameters['token'] ?? '',
         ),
       ),

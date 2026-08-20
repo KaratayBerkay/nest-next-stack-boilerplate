@@ -4,6 +4,7 @@ import { forwardRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { initials } from "@/lib/initials";
 import type { ChatRoomMessageListProps } from "@/types/views/chat-room/ChatRoomMessageList-types";
 
@@ -11,7 +12,17 @@ export const ChatRoomMessageList = forwardRef<
   HTMLDivElement,
   ChatRoomMessageListProps
 >(function ChatRoomMessageList(
-  { messages, userId, onlineUserIds, msgsLoading, msgsError, bottomRef, t },
+  {
+    messages,
+    userId,
+    onlineUserIds,
+    msgsLoading,
+    msgsError,
+    hasNextPage,
+    onFetchNextPage,
+    bottomRef,
+    t,
+  },
   ref,
 ) {
   const hasDecryptionFailure = messages.some(
@@ -46,6 +57,7 @@ export const ChatRoomMessageList = forwardRef<
           {t.decryptionFailed}
         </div>
       )}
+      {hasNextPage && <LoadEarlierButton onClick={() => onFetchNextPage()} />}
       {messages.map((msg, i) => {
         const isMe = msg.senderId === userId;
         const decryptionFailed =

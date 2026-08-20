@@ -4,7 +4,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { hash } from '@node-rs/argon2';
+import { hash, verify } from '@node-rs/argon2';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -306,6 +306,142 @@ export class AuthRegistrationService {
     });
 
     await tokenStore.revokeAllForUser(result);
+    return true;
+  }
+
+  /**
+   * Authenticated password change (as opposed to resetPassword's
+   * unauthenticated, email-token flow). The previous hash is parked on a
+   * PASSWORD_CHANGE_UNDO VerificationToken's `metadata` — the same
+   * single-use/expiry primitive resetPassword's own token uses — so an
+   * "undo" email link can revert it within the window without a new table.
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    const valid =
+      !!user?.passwordHash && (await verify(user.passwordHash, currentPassword));
+    if (!valid) {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_INVALID_CREDENTIALS',
+        msg: 'Invalid credentials',
+        key: 'auth.errors.invalidCredentials',
+      });
+    }
+
+    validatePasswordStrength(newPassword);
+    const previousPasswordHash = user.passwordHash!;
+    const newHash = await hash(newPassword);
+    const rawToken = this.crypto.randomToken();
+    const tokenHash = this.crypto.sha256(rawToken);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: userId },
+        data: {
+          passwordHash: newHash,
+          passwordSetAt: new Date(),
+          failedLoginCount: 0,
+          lockedUntil: null,
+        },
+      });
+      await tx.verificationToken.create({
+        data: {
+          userId,
+          type: 'PASSWORD_CHANGE_UNDO',
+          tokenHash,
+          identifier: user.email,
+          expiresAt: new Date(Date.now() + EMAIL_TOKEN_TTL_MS),
+          metadata: { previousPasswordHash },
+        },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: userId,
+          eventType: 'user.password_changed',
+          action: 'PASSWORD_CHANGED',
+          actorId: userId,
+          summary: `Password changed for ${user.email}`,
+        },
+        tx,
+      );
+    });
+
+    const undoUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/undo-password-change?token=${rawToken}`;
+    await this.mail.enqueue({
+      to: user.email,
+      userId: user.id,
+      subject: 'Your password was changed',
+      template: 'password-changed',
+      variables: { url: undoUrl, name: user.name },
+    });
+  }
+
+  async undoPasswordChange(
+    rawToken: string,
+    tokenStore: TokenStoreService,
+  ): Promise<boolean> {
+    const tokenHash = this.crypto.sha256(rawToken);
+
+    const userId = await this.prisma.$transaction(async (tx) => {
+      const token = await tx.verificationToken.findUnique({
+        where: { tokenHash },
+      });
+      const previousPasswordHash = (
+        token?.metadata as { previousPasswordHash?: string } | null
+      )?.previousPasswordHash;
+      if (
+        token?.type !== 'PASSWORD_CHANGE_UNDO' ||
+        token.consumedAt ||
+        token.expiresAt < new Date() ||
+        !token.userId ||
+        !previousPasswordHash
+      ) {
+        throw new UnauthorizedException({
+          exc: 'EX_AUTH_INVALID_TOKEN',
+          msg: 'Invalid or expired token',
+          key: 'auth.errors.invalidToken',
+        });
+      }
+      const uid = token.userId;
+      await tx.verificationToken.update({
+        where: { id: token.id },
+        data: { consumedAt: new Date() },
+      });
+      await tx.user.update({
+        where: { id: uid },
+        data: {
+          passwordHash: previousPasswordHash,
+          passwordSetAt: new Date(),
+          failedLoginCount: 0,
+          lockedUntil: null,
+        },
+      });
+      const user = await tx.user.findUnique({ where: { id: uid } });
+      if (user) {
+        await this.outbox.emit(
+          {
+            aggregateType: 'User',
+            aggregateId: uid,
+            eventType: 'user.password_change_undone',
+            action: 'PASSWORD_CHANGED',
+            actorId: uid,
+            summary: `Password change undone for ${user.email}`,
+          },
+          tx,
+        );
+      }
+      return uid;
+    });
+
+    // Whoever made the change we're undoing may still hold a live session —
+    // force everyone (attacker's session included) back to a fresh login
+    // with the restored password, same as resetPassword's own final step.
+    await tokenStore.revokeAllForUser(userId);
     return true;
   }
 

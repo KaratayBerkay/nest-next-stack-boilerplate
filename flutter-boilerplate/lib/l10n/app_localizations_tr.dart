@@ -431,6 +431,27 @@ class AppLocalizationsTr extends AppLocalizations {
       'Geçersiz veya eksik sıfırlama token\'ı.';
 
   @override
+  String get authFormUndoPasswordChangeTitle => 'Şifre Değişikliğini Geri Al';
+
+  @override
+  String get authFormUndoPasswordChangeDescription =>
+      'Bu hesabın şifresi değiştirildi. Bu işlemi siz yapmadıysanız, önceki şifrenizi geri yüklemek ve değişiklikten sonra başlatılan tüm oturumları kapatmak için aşağıya dokunun.';
+
+  @override
+  String get authFormUndoPasswordChangeSubmit => 'Şifre Değişikliğini Geri Al';
+
+  @override
+  String get authFormUndoPasswordChangeSubmitting =>
+      'Şifreniz geri yükleniyor...';
+
+  @override
+  String get authFormUndoPasswordChangeSuccess =>
+      'Şifreniz geri yüklendi. Lütfen tekrar giriş yapın.';
+
+  @override
+  String get authFormUndoPasswordChangeLoginLink => 'Giriş Yap';
+
+  @override
   String get authFormForgotPasswordTitle => 'Şifremi Unuttum';
 
   @override
@@ -582,6 +603,17 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get authErrorsResetPasswordFailed => 'Şifre sıfırlama başarısız';
+
+  @override
+  String get authErrorsCurrentPasswordRequired => 'Mevcut şifre gerekli';
+
+  @override
+  String get authErrorsUndoPasswordChangeTokenMissing =>
+      'Bu bağlantıda token eksik';
+
+  @override
+  String get authErrorsUndoPasswordChangeFailed =>
+      'Şifre değişikliği geri alınamadı — bağlantının süresi dolmuş veya zaten kullanılmış olabilir';
 
   @override
   String get authErrorsVerifyEmailTokenMissing => 'Doğrulama token\'ı eksik';
@@ -3863,6 +3895,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get notificationLoadFailed => 'Yüklenemedi';
 
   @override
+  String get notificationLoadMore => 'Daha fazla yükle';
+
+  @override
   String get notificationBasicFeatures => 'Temel bildirim özellikleri';
 
   @override
@@ -4629,6 +4664,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get v1ShellSkipToContent => 'İçeriğe atla';
 
   @override
+  String get v1ShellAttachmentPreview => 'Ek';
+
+  @override
   String get chatRoomCloseSidebar => 'Oda listesini kapat';
 
   @override
@@ -5314,8 +5352,30 @@ class AppLocalizationsTr extends AppLocalizations {
   String get securityChangePassword => 'Şifre Değiştir';
 
   @override
-  String get securityChangePasswordComingSoon =>
-      'Şifre değiştirme yakında gelecek';
+  String get securityChangePasswordDescription =>
+      'Diğer tüm cihazlarınızda oturumunuz kapatılacak ve bu işlemi siz yapmadıysanız size e-posta göndereceğiz.';
+
+  @override
+  String get securityCurrentPasswordLabel => 'Mevcut Şifre';
+
+  @override
+  String get securityNewPasswordLabel => 'Yeni Şifre';
+
+  @override
+  String get securityConfirmNewPasswordLabel => 'Yeni Şifreyi Onayla';
+
+  @override
+  String get securityChangePasswordSubmit => 'Şifreyi Değiştir';
+
+  @override
+  String get securityChangePasswordSubmitting => 'Şifre değiştiriliyor...';
+
+  @override
+  String get securityChangePasswordSuccess =>
+      'Şifre değiştirildi. Bu işlemi siz yapmadıysanız diye size e-posta gönderdik.';
+
+  @override
+  String get securityChangePasswordFailed => 'Şifre değiştirilemedi';
 
   @override
   String get securityActiveSessions => 'Aktif Oturumlar';

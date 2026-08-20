@@ -65,19 +65,25 @@ export async function dispatchRenew(
         qc.setQueryData(["notifications", "dm-count"], frame.value);
       } else if (frame.type === "Item") {
         // Notification list kept live here; companion to FreePageView.tsx
-        // which has no realtime subscription of its own.
+        // which has no realtime subscription of its own. Cache is an
+        // infinite-query page list (see notificationsQueryOptions) — a new
+        // notification is always the newest, so it's prepended to page[0]'s
+        // items rather than appended (unlike the message caches, where
+        // page[0] holds ascending-chronological content).
         if (!qc.getQueryData(["notifications", "list"])) {
           qc.invalidateQueries({ queryKey: ["notifications", "list"] });
         } else {
-          qc.setQueryData(
-            ["notifications", "list"],
-            (old: { items: Record<string, unknown>[] } | undefined) => {
-              const list = (old?.items ?? []) as Record<string, unknown>[];
-              const item = frame.item as Record<string, unknown>;
-              if (list.some((n) => n.id === item.id)) return old;
-              return { ...old, items: [item, ...list] };
-            },
-          );
+          qc.setQueryData(["notifications", "list"], (old: unknown) => {
+            const data = old as
+              | { pages: { items: Record<string, unknown>[] }[] }
+              | undefined;
+            if (!data?.pages?.length) return old;
+            const item = frame.item as Record<string, unknown>;
+            if (data.pages[0].items.some((n) => n.id === item.id)) return old;
+            const pages = [...data.pages];
+            pages[0] = { ...pages[0], items: [item, ...pages[0].items] };
+            return { ...data, pages };
+          });
         }
         // Friend accept/request also fires its own "Friends"/PendingList renew
         // over the MESSAGE service, but that one is fire-and-forget and gets

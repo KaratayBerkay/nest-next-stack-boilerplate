@@ -88,6 +88,7 @@ enum TokenType {
   PHONE_VERIFICATION
   ORG_INVITATION
   MFA_CHALLENGE
+  PASSWORD_CHANGE_UNDO
 }
 
 enum DeviceType {

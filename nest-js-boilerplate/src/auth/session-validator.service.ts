@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload, SessionUser } from './auth.types';
+import { decryptId } from '../common/id-codec/id-codec';
 import { TokenDerivationService } from './token-derivation.service';
 import { TokenStoreService } from './token-store.service';
 
@@ -49,6 +50,12 @@ export class SessionValidatorService {
     let payload: JwtPayload;
     try {
       payload = await this.jwt.verifyAsync<JwtPayload>(tokens.accessToken);
+      // sub is encrypted (see AuthTokenService.issueTokens) — decrypt here,
+      // before it's used for anything, so every check below (including the
+      // userToken re-derivation a few lines down, which happens before any
+      // Redis read) works against the real id like it always has. A
+      // malformed/tampered sub is indistinguishable from a bad signature.
+      payload = { ...payload, sub: decryptId(payload.sub) };
     } catch {
       return { ok: false, reason: 'invalid_jwt' };
     }

@@ -23,6 +23,11 @@ import { RealtimePresenceService } from './realtime-presence.service';
 import { RealtimePageManager } from './realtime-page.manager';
 import { RealtimeRateLimiter } from './realtime-rate-limiter';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
+import {
+  deepDecryptIds,
+  deepEncryptIds,
+} from '../common/id-codec/id-codec.util';
+import { decryptTokenOrNull } from '../common/token-codec/token-codec';
 
 import type { ExceptionCode } from '../common/exceptions/exception-code';
 import type { RealtimeRateLimiterConfig } from './realtime-rate-limiter';
@@ -219,6 +224,32 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       });
 
       const authWs = ws as AuthWs;
+
+      // Every plaintext frame ultimately reaches the client through this one
+      // .send() — emitToUser/emitToService/emitToTopic/emitToPage/
+      // broadcastAll/broadcastToRoom all call it on this same socket, and so
+      // does every raw inline `.send(JSON.stringify(...))` scattered through
+      // this file and messaging-ws.gateway.ts. Wrapping it once here, before
+      // this socket is stored anywhere, deep-encrypts every outbound
+      // plaintext frame's ids uniformly without touching each call site.
+      // Wire-crypto-encrypted frames (emitTo*Encrypted) are handled
+      // separately, before wire-crypto wraps them — by the time one of those
+      // reaches .send() here the payload is already opaque ciphertext with
+      // nothing in it for this to match.
+      const rawSend = authWs.send.bind(authWs);
+      authWs.send = ((data: unknown, ...rest: unknown[]) => {
+        let toSend = data;
+        if (typeof data === 'string') {
+          try {
+            toSend = JSON.stringify(deepEncryptIds(JSON.parse(data)));
+          } catch {
+            // Not JSON — every send() in this file is JSON.stringify'd, so
+            // this shouldn't happen; fall back to sending it unchanged.
+          }
+        }
+        (rawSend as (...a: unknown[]) => void)(toSend, ...rest);
+      }) as typeof authWs.send;
+
       const session = req.sessionUser;
       if (!session) {
         // Unreachable in practice — verifyClient rejects the upgrade before
@@ -455,13 +486,21 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             case 'emitToPageEncrypted':
               if (userId && page && frame) {
                 if (this.skipPublished(eid)) break;
+                // Cross-instance fan-out: bypasses emitToPageEncrypted
+                // entirely, so the same deep-encrypt-into-a-fresh-copy step
+                // has to be repeated here — see that method's comment for
+                // why the raw `frame` itself must never be mutated in place.
+                const idEncryptedFrame = deepEncryptIds(frame) as Record<
+                  string,
+                  unknown
+                >;
                 void this.pageManager.emitToPageWith(
                   userId,
                   page,
                   (sid, dth) =>
                     this.wireCrypto.encryptForSession(
                       sid,
-                      frame,
+                      idEncryptedFrame,
                       dth,
                     ) as unknown as Promise<Record<string, unknown>>,
                 );
@@ -536,9 +575,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       const deviceToken = cookies[names.device] ?? null;
       const result = await this.validator.validate({
         accessToken: cookies[names.access] ?? null,
-        rbacToken: cookies[names.rbac] ?? null,
+        // rbac/user tokens are wrapped for transport (AuthTokenService
+        // .issueTokens) — unwrap here, same as SessionAuthGuard's
+        // extractRbacToken/extractUserToken do for the HTTP path.
+        // deviceToken is deliberately left raw — see token-codec.ts.
+        rbacToken: decryptTokenOrNull(cookies[names.rbac] ?? null),
         deviceToken,
-        userToken: cookies[names.user] ?? null,
+        userToken: decryptTokenOrNull(cookies[names.user] ?? null),
       });
 
       if (!result.ok) {
@@ -673,6 +716,23 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         this.signalCryptoResync(authWs);
         return;
       }
+    }
+
+    // Centralized inbound id-decryption — this is the single dispatch point
+    // for every frame, both this gateway's own control frames (register/
+    // watch/unwatch/page) and every handler MessagingWsGateway registers via
+    // registerHandler. Runs after the wire-crypto decrypt above so it always
+    // sees whichever payload the client actually sent, plaintext or E2EE.
+    try {
+      data = deepDecryptIds(data) as Record<string, unknown>;
+    } catch {
+      this.logger.warn({
+        category: 'websocket-exception',
+        event: 'ws.invalid_id',
+        userId: authWs.userId,
+        socketId: authWs.socketId,
+      });
+      return;
     }
 
     if (data.type === 'register') {
@@ -976,13 +1036,23 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     pageKey: string,
     payload: Record<string, unknown>,
   ): Promise<number> {
+    // Deep-encrypt ids into a fresh local copy for wire-crypto rather than
+    // mutating `payload` itself: `payload` also feeds the Redis publish
+    // below (`frame: payload`), which must stay raw — other replicas receive
+    // that raw frame and independently deep-encrypt it themselves (see the
+    // emitToPageEncrypted case in the subscriber handler above). Mutating it
+    // here would mean replicas re-encrypt an already-encrypted payload.
+    const idEncryptedPayload = deepEncryptIds(payload) as Record<
+      string,
+      unknown
+    >;
     const local = await this.pageManager.emitToPageWith(
       userId,
       pageKey,
       (sid, dth) =>
         this.wireCrypto.encryptForSession(
           sid,
-          payload,
+          idEncryptedPayload,
           dth,
         ) as unknown as Promise<Record<string, unknown>>,
     );
@@ -1013,6 +1083,16 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     userId: string,
     payload: Record<string, unknown>,
   ): Promise<number> {
+    // See emitToPageEncrypted's comment: encrypt into a fresh copy, never
+    // mutate `payload` itself. It also feeds the Redis publish below, and
+    // replicas call this same method again from the subscriber with that
+    // still-raw frame — recomputing fresh on each call (rather than reusing
+    // a mutated `payload`) is what keeps that re-entrant call correct
+    // instead of double-encrypting.
+    const idEncryptedPayload = deepEncryptIds(payload) as Record<
+      string,
+      unknown
+    >;
     const sockets = this.userSockets.get(userId);
     let sent = 0;
     if (sockets) {
@@ -1021,7 +1101,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         try {
           const enc = (await this.wireCrypto.encryptForSession(
             ws.sessionId,
-            payload,
+            idEncryptedPayload,
             ws.deviceTokenHash ?? '',
           )) as unknown as Record<string, unknown>;
           ws.send(JSON.stringify(enc));
@@ -1056,6 +1136,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     room: string,
     payload: Record<string, unknown>,
   ): Promise<number> {
+    // See emitToPageEncrypted's comment: encrypt into a fresh copy, never
+    // mutate `payload` itself — same reason (Redis publish + re-entrant
+    // replica calls both need the still-raw value).
+    const idEncryptedPayload = deepEncryptIds(payload) as Record<
+      string,
+      unknown
+    >;
     let sent = 0;
     const sockets = this.roomSockets.get(room);
     if (sockets) {
@@ -1065,7 +1152,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         try {
           const enc = (await this.wireCrypto.encryptForSession(
             ws.sessionId,
-            payload,
+            idEncryptedPayload,
             ws.deviceTokenHash ?? '',
           )) as unknown as Record<string, unknown>;
           ws.send(JSON.stringify(enc));

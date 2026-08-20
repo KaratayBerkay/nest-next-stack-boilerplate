@@ -10,6 +10,7 @@ import {
   verifyMfaEnrollmentServer,
   disableMfaServer,
 } from "@/api/server/auth/mfa";
+import { SecurityChangePassword } from "./SecurityChangePassword";
 import { SecurityMfaStatus } from "./SecurityMfaStatus";
 import { SecurityMfaWizard } from "./SecurityMfaWizard";
 import type {
@@ -102,6 +103,10 @@ export default function SecurityPageContent({
         title={t.securityHeading}
         actions={<PageInfoButton content={settingsSecurityPageInfo} />}
       />
+      <div className="border-border space-y-3 border-b pb-6">
+        <h2 className="text-sm font-semibold">{t.securityChangePassword}</h2>
+        <SecurityChangePassword t={t} />
+      </div>
       {!enrolling ? (
         <SecurityMfaStatus
           t={t}

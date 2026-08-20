@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import type { Request } from 'express';
 import { accessCookieName } from './access-cookie';
 import { JwtPayload, JwtUser } from './auth.types';
+import { decryptId } from '../common/id-codec/id-codec';
 
 interface AuthedRequest extends Request {
   user?: JwtUser;
@@ -43,9 +44,16 @@ export class JwtAuthGuard implements CanActivate {
 
     try {
       const payload = await this.jwt.verifyAsync<JwtPayload>(token);
+      // sub is encrypted (see AuthTokenService.issueTokens) — decrypt inside
+      // the same try so a malformed/tampered sub throws the same
+      // Unauthorized a bad signature would.
       req.user = {
-        userId: payload.sub,
-        email: payload.email,
+        userId: decryptId(payload.sub),
+        // email no longer travels in the JWT (see auth.types.ts) — nothing
+        // in this codebase's real product routes reaches this guard
+        // (SessionAuthGuard is used everywhere real; only demo resolvers
+        // use JwtAuthGuard directly), so an empty value here is harmless.
+        email: '',
         role: payload.role,
         tier: 'FREE',
       };

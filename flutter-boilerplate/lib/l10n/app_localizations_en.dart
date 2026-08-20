@@ -430,6 +430,27 @@ class AppLocalizationsEn extends AppLocalizations {
       'Invalid or missing reset token.';
 
   @override
+  String get authFormUndoPasswordChangeTitle => 'Undo Password Change';
+
+  @override
+  String get authFormUndoPasswordChangeDescription =>
+      'Someone changed the password on this account. If this wasn\'t you, tap below to restore your previous password and sign out of any sessions started since the change.';
+
+  @override
+  String get authFormUndoPasswordChangeSubmit => 'Undo Password Change';
+
+  @override
+  String get authFormUndoPasswordChangeSubmitting =>
+      'Restoring your password...';
+
+  @override
+  String get authFormUndoPasswordChangeSuccess =>
+      'Your password has been restored. Please sign in again.';
+
+  @override
+  String get authFormUndoPasswordChangeLoginLink => 'Sign In';
+
+  @override
   String get authFormForgotPasswordTitle => 'Forgot Password';
 
   @override
@@ -579,6 +600,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authErrorsResetPasswordFailed => 'Password reset failed';
+
+  @override
+  String get authErrorsCurrentPasswordRequired =>
+      'Current password is required';
+
+  @override
+  String get authErrorsUndoPasswordChangeTokenMissing =>
+      'This link is missing its token';
+
+  @override
+  String get authErrorsUndoPasswordChangeFailed =>
+      'Could not undo the password change — the link may have expired or already been used';
 
   @override
   String get authErrorsVerifyEmailTokenMissing =>
@@ -3857,6 +3890,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notificationLoadFailed => 'Failed to load';
 
   @override
+  String get notificationLoadMore => 'Load more';
+
+  @override
   String get notificationBasicFeatures => 'Basic notification features';
 
   @override
@@ -4618,6 +4654,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get v1ShellSkipToContent => 'Skip to content';
 
   @override
+  String get v1ShellAttachmentPreview => 'Attachment';
+
+  @override
   String get chatRoomCloseSidebar => 'Close rooms sidebar';
 
   @override
@@ -5303,7 +5342,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get securityChangePassword => 'Change Password';
 
   @override
-  String get securityChangePasswordComingSoon => 'Change password coming soon';
+  String get securityChangePasswordDescription =>
+      'You\'ll be signed out of all other devices, and we\'ll email you in case this wasn\'t you.';
+
+  @override
+  String get securityCurrentPasswordLabel => 'Current Password';
+
+  @override
+  String get securityNewPasswordLabel => 'New Password';
+
+  @override
+  String get securityConfirmNewPasswordLabel => 'Confirm New Password';
+
+  @override
+  String get securityChangePasswordSubmit => 'Change Password';
+
+  @override
+  String get securityChangePasswordSubmitting => 'Changing password...';
+
+  @override
+  String get securityChangePasswordSuccess =>
+      'Password changed. We\'ve emailed you in case this wasn\'t you.';
+
+  @override
+  String get securityChangePasswordFailed => 'Failed to change password';
 
   @override
   String get securityActiveSessions => 'Active Sessions';

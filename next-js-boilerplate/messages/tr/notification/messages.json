@@ -4,5 +4,6 @@
   "noNotifications": "Henüz bildirim yok",
   "enablePush": "Bildirimleri etkinleştir",
   "disablePush": "Bildirimleri devre dışı bırak",
-  "back": "Geri"
+  "back": "Geri",
+  "loadMore": "Daha fazla yükle"
 }

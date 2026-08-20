@@ -4,7 +4,7 @@ import type { Conversation } from "@/api/server/messages/conversations";
 import type { ConversationPage } from "@/api/server/messages/conversation-messages";
 import type { ConversationAttachmentsPage } from "@/api/server/messages/conversation-attachments";
 import type { RoomAttachmentsPage } from "@/api/server/messages/room-attachments";
-import type { ChatRoomMessage } from "@/types/chat-room/ChatRoomMessage-types";
+import type { RoomMessagesPage } from "@/api/server/messages/room-messages";
 import { startOfDay, endOfDay } from "@/lib/date-time";
 
 /** Search text + date range for the "All uploads" gallery, shared by the DM
@@ -50,10 +50,13 @@ async function fetchConversationMessages(
   return fetchConversationMessagesServer(peerId, before);
 }
 
-async function fetchRoomMessages(room: string): Promise<ChatRoomMessage[]> {
+async function fetchRoomMessages(
+  room: string,
+  before?: string,
+): Promise<RoomMessagesPage> {
   const { fetchRoomMessagesServer } =
     await import("@/api/server/messages/room-messages");
-  return fetchRoomMessagesServer(room);
+  return fetchRoomMessagesServer(room, before);
 }
 
 async function fetchConversationAttachments(
@@ -148,12 +151,14 @@ export function conversationAttachmentsQueryOptions(
 }
 
 export function roomMessagesQueryOptions(room: string | null) {
-  return queryOptions({
+  return infiniteQueryOptions<RoomMessagesPage>({
     queryKey: ["room", room],
-    queryFn: async () => {
-      if (!room) return [];
-      return fetchRoomMessages(room);
+    queryFn: async ({ pageParam }) => {
+      return fetchRoomMessages(room!, pageParam as string | undefined);
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.hasMore ? lastPage.messages[0]?.createdAt : undefined,
     enabled: !!room,
     staleTime: 30_000,
   });

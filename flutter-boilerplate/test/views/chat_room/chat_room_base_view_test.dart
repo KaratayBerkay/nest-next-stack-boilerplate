@@ -1,14 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_boilerplate/api/client/messages/query.dart';
+import 'package:flutter_boilerplate/api/server/messages/conversation_messages.dart';
 import 'package:flutter_boilerplate/api/server/messages/room_messages.dart';
 import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_boilerplate/l10n/app_localizations.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_boilerplate/types/auth/user.dart';
-import 'package:flutter_boilerplate/types/messages/message.dart';
 import 'package:flutter_boilerplate/views/chat_room/chat_room_base_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
@@ -17,6 +16,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockRealtimeClient extends Mock implements RealtimeClient {}
+
+class MockRoomMessagesServer extends Mock implements RoomMessagesServer {}
+
+class MockConversationMessagesServer extends Mock
+    implements ConversationMessagesServer {}
 
 const testUser = AuthenticatedUser(
   id: 'user-1',
@@ -51,16 +55,35 @@ Widget buildTestApp({
   final client = mockClient ?? MockRealtimeClient();
   when(() => client.status).thenReturn(RealtimeStatus.idle);
 
+  final roomServer = MockRoomMessagesServer();
+  when(
+    () => roomServer.call(
+      any(),
+      before: any(named: 'before'),
+      take: any(named: 'take'),
+    ),
+  ).thenAnswer(
+    (_) async =>
+        const RoomMessagesPage(messages: testRoomMessages, hasMore: false),
+  );
+
+  final conversationServer = MockConversationMessagesServer();
+  when(
+    () => conversationServer.call(
+      any(),
+      before: any(named: 'before'),
+      take: any(named: 'take'),
+    ),
+  ).thenAnswer(
+    (_) async => const ConversationMessagesPage(messages: [], hasMore: false),
+  );
+
   return ProviderScope(
     overrides: [
       realtimeProvider.overrideWith((ref) => client),
       realtimeConnectedProvider.overrideWith((ref) => true),
-      roomMessagesProvider.overrideWith(
-        (ref, room) async => testRoomMessages,
-      ),
-      conversationMessagesProvider.overrideWith(
-        (ref, id) async => <ChatMessage>[],
-      ),
+      roomMessagesServerProvider.overrideWithValue(roomServer),
+      conversationMessagesServerProvider.overrideWithValue(conversationServer),
     ],
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,

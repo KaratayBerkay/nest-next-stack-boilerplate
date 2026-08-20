@@ -73,6 +73,14 @@
       "verify": "E-postayı Doğrula",
       "resendCode": "Kodu yeniden gönder",
       "resending": "Gönderiliyor..."
+    },
+    "undoPasswordChange": {
+      "title": "Şifre Değişikliğini Geri Al",
+      "description": "Bu hesabın şifresi değiştirildi. Bu işlemi siz yapmadıysanız, önceki şifrenizi geri yüklemek ve değişiklikten sonra başlatılan tüm oturumları kapatmak için aşağıya tıklayın.",
+      "submit": "Şifre Değişikliğini Geri Al",
+      "submitting": "Şifreniz geri yükleniyor...",
+      "success": "Şifreniz geri yüklendi. Lütfen tekrar giriş yapın.",
+      "loginLink": "Giriş Yap"
     }
   },
   "social": {
@@ -99,6 +107,9 @@
     "resetPasswordTokenMissing": "Şifre sıfırlama token'ı eksik",
     "resetPasswordFailed": "Şifre sıfırlama başarısız",
     "verifyEmailTokenMissing": "Doğrulama token'ı eksik",
-    "verifyEmailFailed": "E-posta doğrulama başarısız"
+    "verifyEmailFailed": "E-posta doğrulama başarısız",
+    "currentPasswordRequired": "Mevcut şifre gerekli",
+    "undoPasswordChangeTokenMissing": "Bu bağlantıda token eksik",
+    "undoPasswordChangeFailed": "Şifre değişikliği geri alınamadı — bağlantının süresi dolmuş veya zaten kullanılmış olabilir"
   }
 }

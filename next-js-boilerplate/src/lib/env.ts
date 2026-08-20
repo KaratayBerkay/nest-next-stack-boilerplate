@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  clientEnvSchema,
-  serverEnvSchema,
-} from "@/validators/env/schema";
+import { clientEnvSchema, serverEnvSchema } from "@/validators/env/schema";
 
 export { clientEnvSchema, serverEnvSchema };
 
@@ -55,6 +52,7 @@ export function serverEnv(): ServerEnv {
       COOKIE_DOMAIN: process.env.COOKIE_DOMAIN,
       COOKIE_SAMESITE: process.env.COOKIE_SAMESITE,
       KAFKA_BROKER: process.env.KAFKA_BROKER,
+      SESSION_COOKIE_SECRET: process.env.SESSION_COOKIE_SECRET,
     });
     if (!result.success) {
       const missing = result.error.issues

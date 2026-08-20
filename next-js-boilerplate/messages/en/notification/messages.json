@@ -4,5 +4,6 @@
   "noNotifications": "No notifications yet",
   "enablePush": "Enable push notifications",
   "disablePush": "Disable push notifications",
-  "back": "Back"
+  "back": "Back",
+  "loadMore": "Load more"
 }

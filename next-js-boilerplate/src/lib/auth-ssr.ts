@@ -5,11 +5,8 @@ import { SESSION_USER_COOKIE } from "@/lib/cookie";
 import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
+import { decodeSessionUserCookie } from "@/lib/session-user-cookie";
 import type { User } from "@/types/auth/User";
-
-function decodeBase64(value: string): string {
-  return Buffer.from(value, "base64url").toString("utf-8");
-}
 
 async function fetchMe(accessToken: string): Promise<User | null> {
   try {
@@ -29,26 +26,23 @@ async function fetchMe(accessToken: string): Promise<User | null> {
 
 export const getSessionUser = cache(async (): Promise<User | null> => {
   // Fast path: read session_user cookie set at login/register time.
-  let cookieUser: User | null = null;
-  try {
-    const cookieStore = await cookies();
-    const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
-    if (encoded) {
-      cookieUser = JSON.parse(decodeBase64(encoded)) as User;
-      // Cookies minted before login/register/mfa started overlaying the real
-      // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
-      // sessionId — added after hideAvatar, which itself can't be selected on
-      // the login/register mutation's `user` type, @HideField()'d).
-      // Rather than trust that partial snapshot for the rest of the session,
-      // treat a missing sessionId as a signal to self-heal from `me` below.
-      // Keep this canary pointed at whichever SessionUserPayload field was
-      // added most recently.
-      if (cookieUser.sessionId !== undefined) {
-        return cookieUser;
-      }
+  const cookieStore = await cookies();
+  const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
+  const cookieUser: User | null = encoded
+    ? decodeSessionUserCookie<User>(encoded)
+    : null;
+  if (cookieUser) {
+    // Cookies minted before login/register/mfa started overlaying the real
+    // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
+    // sessionId — added after hideAvatar, which itself can't be selected on
+    // the login/register mutation's `user` type, @HideField()'d).
+    // Rather than trust that partial snapshot for the rest of the session,
+    // treat a missing sessionId as a signal to self-heal from `me` below.
+    // Keep this canary pointed at whichever SessionUserPayload field was
+    // added most recently.
+    if (cookieUser.sessionId !== undefined) {
+      return cookieUser;
     }
-  } catch {
-    // Malformed cookie — fall through to GraphQL.
   }
 
   const accessToken = await getAccessToken();

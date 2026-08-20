@@ -56,9 +56,33 @@ function generateResetPasswordFormSchema(errors: {
     });
 }
 
+function generateChangePasswordFormSchema(errors: {
+  currentPasswordRequired: string;
+  passwordRequired: string;
+  passwordMin: string;
+  passwordMax: string;
+  passwordsMustMatch: string;
+}) {
+  return z
+    .object({
+      currentPassword: z.string().min(1, errors.currentPasswordRequired),
+      newPassword: z
+        .string()
+        .min(1, errors.passwordRequired)
+        .min(8, errors.passwordMin)
+        .max(128, errors.passwordMax),
+      confirmNewPassword: z.string().min(1, errors.passwordRequired),
+    })
+    .refine((data) => data.newPassword === data.confirmNewPassword, {
+      message: errors.passwordsMustMatch,
+      path: ["confirmNewPassword"],
+    });
+}
+
 export const loginFormSchema = generateAuthLoginSchema;
 export const registerFormSchema = generateAuthRegisterSchema;
 export const resetPasswordFormSchema = generateResetPasswordFormSchema;
+export const changePasswordFormSchema = generateChangePasswordFormSchema;
 
 // ---------- Card page schemas ----------
 

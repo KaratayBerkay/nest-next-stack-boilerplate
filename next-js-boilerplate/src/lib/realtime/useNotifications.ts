@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import {
   notificationsQueryOptions,
   unreadCountQueryOptions,
@@ -22,7 +22,7 @@ export interface NotificationItem {
 }
 
 export function useNotifications() {
-  return useQuery(notificationsQueryOptions());
+  return useInfiniteQuery(notificationsQueryOptions());
 }
 
 export function useUnreadNotificationCount() {

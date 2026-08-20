@@ -11,7 +11,7 @@ export async function GET(request: Request) {
 
   const pageSize = Math.min(Math.max(parseInt(take ?? "20", 10) || 20, 1), 100);
   const { data, errors } = await graphqlFetch<{
-    myNotifications: unknown[];
+    myNotifications: { items: unknown[]; hasMore: boolean };
   }>(
     MY_NOTIFICATIONS_QUERY,
     {
@@ -28,8 +28,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const raw = data?.myNotifications ?? [];
-  const hasMore = raw.length > pageSize;
-  const items = hasMore ? raw.slice(0, pageSize) : raw;
+  // myNotifications already does the over-fetch-by-one/slice/hasMore
+  // calculation server-side (see notification.resolver.ts) — pass it
+  // through rather than re-deriving it from what's now a { items, hasMore }
+  // shape, not a flat array.
+  const { items = [], hasMore = false } = data?.myNotifications ?? {};
   return NextResponse.json({ items, hasMore });
 }

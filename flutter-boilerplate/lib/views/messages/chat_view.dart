@@ -97,11 +97,11 @@ class _ChatViewState extends ConsumerState<ChatView> {
 
   @override
   Widget build(BuildContext context) {
-    final messagesAsync =
+    final messagesState =
         ref.watch(conversationMessagesProvider(widget.conversationId));
 
-    final currentMessages = messagesAsync.asData?.value;
-    if (currentMessages != null && currentMessages.isNotEmpty) {
+    final currentMessages = messagesState.items;
+    if (currentMessages.isNotEmpty) {
       final newLastId = currentMessages.last.id;
       // `_lastMessageLastId` starts null, so the first successful load also
       // satisfies `newLastId != _lastMessageLastId` — that's intentional
@@ -131,7 +131,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
       _lastMessageLastId = newLastId;
     }
 
-    final hasMessages = currentMessages != null && currentMessages.isNotEmpty;
+    final hasMessages = currentMessages.isNotEmpty;
     final showScrollButton = !_isAtBottom && hasMessages;
 
     final body = Column(

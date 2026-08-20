@@ -21,6 +21,10 @@ export interface SecurityMfaStatusProps {
   onDisable: () => void;
 }
 
+export interface SecurityChangePasswordProps {
+  t: I18nMessages["settings"];
+}
+
 export interface SecurityMfaWizardProps {
   t: I18nMessages["settings"];
   step: MfaStep;

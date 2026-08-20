@@ -9,6 +9,7 @@ import {
 } from "@/lib/cookie";
 import { graphqlFetch, graphqlErrorBody } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
+import { encodeSessionUserCookie } from "@/lib/session-user-cookie";
 import {
   DEVICE_TOKEN_HEADER,
   RBAC_TOKEN_HEADER,
@@ -137,9 +138,7 @@ export const POST = withLogging(async (request, log) => {
   if (refreshToken)
     response.cookies.set(refreshTokenCookieOptions(refreshToken));
   response.cookies.set(
-    sessionUserCookieOptions(
-      Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
-    ),
+    sessionUserCookieOptions(encodeSessionUserCookie(sessionUser)),
   );
 
   log.info({ userId: (user as { id?: string })?.id }, "MFA login succeeded");

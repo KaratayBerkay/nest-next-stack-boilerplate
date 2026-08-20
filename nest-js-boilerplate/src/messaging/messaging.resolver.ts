@@ -1,6 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import {
   Args,
+  Int,
   Mutation,
   Parent,
   Query,
@@ -14,6 +15,7 @@ import { Message } from '../@generated/message/message.model';
 import { User } from '../@generated/user/user.model';
 import { MessagingService } from './messaging.service';
 import { Conversation } from './models/conversation.model';
+import { ConversationMessagesPage } from './models/conversation-messages-page.model';
 import { SendMessageInput } from './dto/send-message.input';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { decryptMessageBody } from './message-body.util';
@@ -39,13 +41,19 @@ export class MessagingResolver {
     return this.ms.getConversations(user.userId);
   }
 
-  @Query(() => [Message])
+  @Query(() => ConversationMessagesPage)
   async conversationMessages(
     @CurrentUser() user: JwtUser,
     @Args('userId') otherUserId: string,
+    @Args('before', { nullable: true }) before?: string,
+    @Args('take', { type: () => Int, nullable: true }) take?: number,
   ) {
-    const { messages } = await this.ms.getMessages(user.userId, otherUserId);
-    return messages;
+    return this.ms.getMessages(
+      user.userId,
+      otherUserId,
+      before,
+      take ? Math.min(Math.max(take, 1), 100) : 30,
+    );
   }
 
   @Mutation(() => Message)

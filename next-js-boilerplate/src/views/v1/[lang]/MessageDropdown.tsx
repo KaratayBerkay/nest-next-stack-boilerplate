@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { MessageDropdownProps } from "@/types/v1/MessageDropdown-types";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useAuth } from "@/features/auth/hooks/useAuth";
 import { useBreakpoint } from "@/hooks";
 import { useClickOutside } from "@/hooks/useClickOutside";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { routeToPageClaim } from "@/lib/realtime/route-mapping";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { createPortal } from "react-dom";
@@ -14,20 +17,77 @@ import { IconMail, IconChevronRight, IconX } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
 import { Badge } from "./Badge";
 
+const AUTO_OPEN_MS = 3000;
+
 export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
   const t = useMessages("v1-shell");
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const isDesktop = useBreakpoint("sm");
+  const realtime = useRealtime();
+  const { user } = useAuth();
+  const ownUserId = user?.id;
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const pathnameRef = useRef(pathname);
+  const searchParamsRef = useRef(searchParams);
+  const autoCloseTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
   const unread = useMemo(
     () => conversations.filter((c) => c.unread > 0),
     [conversations],
   );
 
+  useEffect(() => {
+    pathnameRef.current = pathname;
+    searchParamsRef.current = searchParams;
+  }, [pathname, searchParams]);
+
   useClickOutside(ref, () => {
     if (isDesktop) setOpen(false);
   });
+
+  // Auto-pop this same dropdown for a few seconds when a DM arrives, reusing
+  // the existing unread-list UI instead of a separate notification bubble.
+  // Desktop-only: the mobile variant below is a full-screen takeover, which
+  // would be a jarring thing to force open uninvited.
+  useEffect(() => {
+    if (!realtime || !ownUserId || !isDesktop) return;
+
+    const unsub = realtime.subscribe("direct-message", (frame) => {
+      const msg = frame.message as
+        | { id?: string; senderId?: string }
+        | undefined;
+      if (!msg?.id || !msg.senderId || msg.senderId === ownUserId) return;
+
+      const claim = routeToPageClaim(
+        pathnameRef.current,
+        searchParamsRef.current,
+      );
+      if (claim.page === "messages" && claim.params?.peer === msg.senderId) {
+        return;
+      }
+
+      setOpen(true);
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+      autoCloseTimerRef.current = setTimeout(
+        () => setOpen(false),
+        AUTO_OPEN_MS,
+      );
+    });
+
+    return () => {
+      unsub();
+      if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+    };
+  }, [realtime, ownUserId, isDesktop]);
+
+  const toggle = () => {
+    if (autoCloseTimerRef.current) clearTimeout(autoCloseTimerRef.current);
+    setOpen((p) => !p);
+  };
 
   const content = (
     <>
@@ -95,7 +155,7 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
           </>
         }
         label={t.toggleSidebar}
-        onClick={() => setOpen((p) => !p)}
+        onClick={toggle}
       />
 
       {open && isDesktop && (

@@ -73,6 +73,14 @@
       "verify": "Verify Email",
       "resendCode": "Resend code",
       "resending": "Sending..."
+    },
+    "undoPasswordChange": {
+      "title": "Undo Password Change",
+      "description": "Someone changed the password on this account. If this wasn't you, click below to restore your previous password and sign out of any sessions started since the change.",
+      "submit": "Undo Password Change",
+      "submitting": "Restoring your password...",
+      "success": "Your password has been restored. Please sign in again.",
+      "loginLink": "Sign In"
     }
   },
   "social": {
@@ -99,6 +107,9 @@
     "resetPasswordTokenMissing": "Reset password token is missing",
     "resetPasswordFailed": "Password reset failed",
     "verifyEmailTokenMissing": "Verification token is missing",
-    "verifyEmailFailed": "Email verification failed"
+    "verifyEmailFailed": "Email verification failed",
+    "currentPasswordRequired": "Current password is required",
+    "undoPasswordChangeTokenMissing": "This link is missing its token",
+    "undoPasswordChangeFailed": "Could not undo the password change — the link may have expired or already been used"
   }
 }

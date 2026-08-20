@@ -13,6 +13,7 @@ import {
   userTokenCookieOptions,
 } from "@/lib/cookie";
 import { ME_QUERY } from "@/lib/graphql/queries";
+import { encodeSessionUserCookie } from "@/lib/session-user-cookie";
 import {
   DEVICE_TOKEN_HEADER,
   RBAC_TOKEN_HEADER,
@@ -178,9 +179,7 @@ export const GET = async (
       if (refreshToken)
         response.cookies.set(refreshTokenCookieOptions(refreshToken));
       response.cookies.set(
-        sessionUserCookieOptions(
-          Buffer.from(JSON.stringify(sessionUser)).toString("base64url"),
-        ),
+        sessionUserCookieOptions(encodeSessionUserCookie(sessionUser)),
       );
 
       log.info(

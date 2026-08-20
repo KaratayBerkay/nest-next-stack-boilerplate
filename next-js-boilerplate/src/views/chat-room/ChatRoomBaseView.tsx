@@ -57,10 +57,16 @@ function ChatRoomContent({
 
   const realtime = useChatRoomRealtime(room, setRoomCounts, setRoomMembers);
   const {
-    data: messages = [],
+    data: roomData,
+    fetchNextPage,
+    hasNextPage,
     isLoading: msgsLoading,
     isError: msgsError,
   } = useRoom(room);
+  const messages = useMemo(
+    () => [...(roomData?.pages ?? [])].reverse().flatMap((p) => p.messages),
+    [roomData],
+  );
   const messagesRef = useYSwipeGesture<HTMLDivElement>();
   const { bottomRef, scrollToBottom, isAtBottom } = useAutoScroll(messages);
   const {
@@ -200,6 +206,8 @@ function ChatRoomContent({
           onlineUserIds={onlineUserIds}
           msgsLoading={msgsLoading}
           msgsError={msgsError}
+          hasNextPage={!!hasNextPage}
+          onFetchNextPage={() => void fetchNextPage()}
           input={input}
           attaching={anyUploading}
           uploadItems={uploadItems}
