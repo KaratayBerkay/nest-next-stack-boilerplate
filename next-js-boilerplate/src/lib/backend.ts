@@ -373,7 +373,7 @@ export function graphqlErrorBody(
   const ext = first?.extensions ?? {};
   const exc = ext.exc ?? "EX_INTERNAL";
   const fields = ext.fields;
-  let msg = first?.message ?? ext.msg ?? defaultMsg ?? "Internal server error";
+  let msg = ext.msg ?? first?.message ?? defaultMsg ?? "Internal server error";
   if (fields?.length) {
     const detail = fields.map((f) => f.msg).join(", ");
     msg = msg === "Validation failed" ? detail : `${msg}: ${detail}`;
@@ -392,6 +392,14 @@ export function graphqlErrorStatus(
   errors: GraphQlError[] | undefined,
   fallback = 500,
 ): number {
+  // The backend's global formatError (app.module.ts) always stamps the real
+  // HTTP status onto extensions.statusCode via toExceptionResponse — trust it
+  // first. EXC_TO_STATUS/code below are a fallback for errors that somehow
+  // bypass that formatter, not the primary source of truth; keeping them
+  // as a hand-maintained allowlist here previously meant any exc code not
+  // explicitly listed (e.g. EX_AUTH_OTP_INVALID) silently defaulted to 500.
+  const statusCode = errors?.[0]?.extensions?.statusCode;
+  if (typeof statusCode === "number") return statusCode;
   const exc = errors?.[0]?.extensions?.exc;
   if (exc && exc in EXC_TO_STATUS) return EXC_TO_STATUS[exc];
   const code = errors?.[0]?.extensions?.code;
