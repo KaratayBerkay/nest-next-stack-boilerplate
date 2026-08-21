@@ -1,176 +1,138 @@
-# Architecture overview
+# Architecture
 
-> High-level architecture of the boilers stack. For detailed design decisions, see
-> `docs/adr/`. For the roadmap, see `docs/todo/README.md`.
+Cross-cutting system design that spans multiple backend modules and/or multiple apps. Module-level
+detail lives in [backend/](./backend/README.md); per-page detail lives in
+[frontend/](./frontend/README.md) and [mobile/](./mobile/README.md). This page absorbs the
+still-accurate content of this repo's former Architecture Decision Records (deleted as part of this
+documentation rewrite — see [conventions.md § 11](./conventions.md)); one of the six, on E2EE, was
+found to describe a system that was deliberately replaced and is corrected here rather than carried
+forward (see [issues.md#cross-004](./issues.md#cross-004)).
 
-## Stack diagram
+## Workspace layout
 
-```mermaid
-graph TB
-    subgraph Browser["Browser"]
-        RSC["Next.js App<br/>(RSC + Client Components)"]
-        SW["Service Worker<br/>(Push + Cache)"]
-        WS["WebSocket Client<br/>(useMessaging)"]
-    end
+Two independent Node workspaces (`nest-js-boilerplate`, `next-js-boilerplate`) plus a Flutter app
+(`flutter-boilerplate`) share one Postgres/Redis/MinIO infrastructure, orchestrated by the root
+`docker-compose.yml`. Each app keeps its own `package.json`/`pubspec.yaml` and can be developed
+independently; `pnpm-workspace.yaml` at the repo root ties the two Node apps together for shared
+installs. See [docs/README.md](./README.md#workspace-layout) for the directory tree.
 
-    subgraph Nextjs["Next.js Server (BFF)"]
-        proxy["proxy.ts<br/>(Middleware: i18n, CSP, Auth)"]
-        RH["Route Handlers<br/>(/api/*)"]
-        RSC_SERVER["Server Components<br/>(RSC + Server Actions)"]
-    end
+## Session authentication — Redis-backed, four-token compound key
 
-    subgraph NestJS["NestJS Backend"]
-        direction TB
-        GraphQL["GraphQL API<br/>(Apollo Server)"]
-        REST["REST API<br/>(OpenAPI/Swagger)"]
-        GRPC["gRPC Services"]
-        WS_GATEWAY["WebSocket Gateways<br/>(Messaging + Realtime)"]
-        SSE["SSE Endpoint"]
+A guarded request never touches Postgres: one Redis lookup resolves identity, authorization, and
+tier. Every login/register issues four tokens:
 
-        subgraph Services["Business Services"]
-            Auth["Auth Module<br/>(Passport + JWT + Session)"]
-            Social["Social Module<br/>(Posts, Comments, Reactions)"]
-            Billing["Billing Module<br/>(Tiers + Mock Payments)"]
-            Messaging["Messaging Module<br/>(DMs + Chat Rooms)"]
-            Notifications["Notifications Module<br/>(In-app + Push)"]
-            Admin["Admin Module<br/>(Roles + Tier Management)"]
-            Profile["Profile Module<br/>(User Settings)"]
-            Upload["Upload Module<br/>(MinIO + Image Processing)"]
-        end
+| Token | Kind | Lifetime | Cookie | JS-accessible |
+|---|---|---|---|---|
+| `accessToken` | JWT (HS256) | 15m | `access_token` (`__Secure-` prefix in prod) | No (httpOnly) |
+| `refreshToken` | opaque | 30d | `refresh_token` | No (httpOnly) |
+| `rbacToken` | opaque | 15m (mirrors access) | `rbac_token` | No (httpOnly) |
+| `deviceToken` | opaque (≥90 chars) | 1y | `device_token` | No (httpOnly) |
+| `userToken` | opaque | 15m (mirrors access) | `user_token` | **Yes** — deliberately non-httpOnly so client code can read it for WS auth |
 
-        subgraph Infra["Infrastructure Services"]
-            Queue["BullMQ Job Queue"]
-            Outbox["Transactional Outbox"]
-            Mail["Mail Service<br/>(Resend/SMTP)"]
-            OTel["OpenTelemetry<br/>(Traces)"]
-        end
-    end
+All four are combined into one Redis HASH key: `sess:{sha256(access)}:{deriveRbac(rbac)}:{sha256(device)}:{deriveUser(user)}`.
+The `rbac`/`user` derivations are **date-bound** (HMAC-SHA256 with today's UTC date), forcing a
+silent refresh at midnight. Full detail — derivation formulas, the v2 Redis schema, revocation
+semantics, the BFF cookie bridge — lives in
+[backend/identity-access/auth/README.md](./backend/identity-access/auth/README.md) (Phase 1).
 
-    subgraph Data["Data Layer"]
-        PG[("PostgreSQL<br/>(Prisma ORM)"]
-        Redis[("Redis<br/>(Session Cache + Pub/Sub)"]
-        MinIO[("MinIO<br/>(S3 Object Storage)"]
-        ES[("Elasticsearch<br/>(Audit Logs)"]
-    end
+**Why not plain JWT, or a Postgres sessions table:** JWT-only can't revoke a single session before
+expiry; a Postgres session table adds a query to every guarded request. This hybrid gets instant
+revocation (delete the Redis key) with zero Postgres reads on the hot path, at the cost of Redis
+being a single point of failure — mitigated by fail-closed 503s, AOF persistence, and a
+refresh-fallback path.
 
-    subgraph Messaging_Infra["Message Brokers"]
-        Kafka[("Kafka<br/>(Frontend Events)"]
-        RabbitMQ[("RabbitMQ<br/>(AMQP)"]
-        NATS[("NATS<br/>(JetStream)"]
-        MQTT[("MQTT<br/>(IoT)"]
-    end
+## BFF proxy pattern — Next.js sits between the browser and the backend
 
-    %% Flows
-    Browser -->|HTTP| Nextjs
-    Browser -->|WebSocket| WS_GATEWAY
-    SW -->|Push API| Notifications
-
-    proxy -->|Route| RH
-    proxy -->|Route| RSC_SERVER
-    RH -->|GraphQL + REST| NestJS
-    RSC_SERVER -->|Server Fetch| NestJS
-
-    GraphQL --> Auth
-    GraphQL --> Social
-    GraphQL --> Billing
-    GraphQL --> Messaging
-    GraphQL --> Notifications
-    GraphQL --> Admin
-    GraphQL --> Profile
-    REST --> Upload
-
-    Auth --> Redis
-    Auth --> PG
-    Social --> PG
-    Billing --> PG
-    Billing --> Redis
-    Messaging --> PG
-    Messaging --> Redis
-    Notifications --> PG
-    Notifications --> Redis
-    Upload --> MinIO
-    Admin --> PG
-    Admin --> Redis
-    Profile --> PG
-    Profile --> Redis
-
-    Outbox --> PG
-    Outbox --> Queue
-    Queue --> Mail
-    Queue --> Notifications
-    Queue --> ES
-
-    Notifications -.->|VAPID| SW
-    Mail -.->|SMTP/Resend| Email["Email (User)"]
-
-    %% Styling
-    classDef browser fill:#e1f5fe,stroke:#01579b
-    classDef nextjs fill:#fff3e0,stroke:#e65100
-    classDef nestjs fill:#e8f5e9,stroke:#1b5e20
-    classDef data fill:#f3e5f5,stroke:#4a148c
-    classDef broker fill:#fff8e1,stroke:#f57f17
-    classDef external fill:#fce4ec,stroke:#b71c1c
-
-    class Browser browser
-    class Nextjs nextjs
-    class NestJS,GraphQL,REST,GRPC,WS_GATEWAY,SSE nestjs
-    class PG,Redis,MinIO,ES data
-    class Kafka,RabbitMQ,NATS,MQTT broker
-    class Email external
-```
-
-## Data flow patterns
-
-### Authenticated request (BFF path)
+The browser **never** calls the NestJS backend directly:
 
 ```
-Browser              Next.js BFF                  NestJS Backend         Redis/Postgres
-   │                     │                             │                     │
-   │── GET /v1/feed ────>│                             │                     │
-   │                     │── sessionTokenHeaders() ────>│                     │
-   │                     │── graphqlFetch(query) ──────>│                     │
-   │                     │                             │── HGETALL ──────────>│
-   │                     │                             │<── session data ─────│
-   │                     │                             │── (optional PG) ────>│
-   │                     │<── response ────────────────│                     │
-   │<── SSR page ────────│                             │                     │
+Browser → Next.js Route Handler (BFF) → NestJS GraphQL → Response → Browser
 ```
 
-### Real-time messaging
+The frontend and backend run as separate services on potentially different origins; a backend
+httpOnly cookie isn't readable by the frontend's client-side JS, and the backend's cookie names get
+a `__Secure-` prefix in production that the BFF has to bridge. The BFF layer
+(`next-js-boilerplate/src/app/api/**`, backed by `src/lib/backend.ts`):
 
-```
-Browser              NestJS Gateway              Redis               Other Browser
-   │                     │                         │                     │
-   │── ws connect ──────>│                         │                     │
-   │── {type:"auth"} ───>│── HGETALL ──────────────>│                     │
-   │<── authenticated ───│                         │                     │
-   │── {type:"message"} ─>│── PUBLISH ─────────────>│                     │
-   │                     │                         │── SUBSCRIBE ────────>│
-   │                     │<────────────────────────│                     │
-   │                     │── PG insert ────────────>│                     │
-   │<── {type:"message"} │                         │                     │
-   │                     │── {type:"message"} ────────────────────────────>│
-```
+- Owns the httpOnly cookies and forwards their values as `x-*-token` headers to the backend
+- Handles the CSRF double-submit echo for mutations
+- Implements silent refresh (401 → single-flight refresh → retry)
+- Forwards the real client IP via `x-forwarded-for`
 
-## Service ports
+**Consequence for mobile — verify per vertical, don't assume.** Flutter's GraphQL-shaped calls
+(`POST /graphql`, whether via `gql_helper.dart` or hand-rolled) always bypass this BFF and hit the
+backend directly — `/graphql` isn't a path the Next.js app serves at all. Flutter's REST-shaped calls
+are **not uniformly BFF-routed** — confirmed for the `messages` vertical (Phase 0): every REST call
+there hits the path the *backend's own controller* natively serves (e.g. `/api/friends`), not the
+frontend's differently-namespaced BFF path (`/api/messages/friends`) — meaning `messages` has **zero
+Next.js involvement on mobile**, for either call shape. An earlier research pass in this effort
+claimed Flutter's REST calls generally go through the BFF; that claim is retracted for `messages`
+and unverified elsewhere — see [issues.md#cross-007](./issues.md#cross-007). See
+[conventions.md § 9](./conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement)
+for the three-shape test to apply per file, and
+[issues.md#cross-003](./issues.md#cross-003) for the related note that the backend has no actual API
+versioning — the frontend's `v1` URL segment doesn't correspond to anything backend-side.
 
-| Service | Port | Profile |
-|---------|------|---------|
-| Next.js (frontend) | 3100 | core |
-| NestJS (backend) | 3000 | core |
-| gRPC | 5050 | core |
-| Postgres | 5432 | core |
-| Redis | 6379 | core |
-| Elasticsearch | 9200 | core |
-| Kibana | 5601 | core |
-| Fluent Bit | 24224 | core |
-| MinIO API | 9000 | core |
-| MinIO Console | 9001 | core |
-| RabbitMQ | 5672 | brokers |
-| NATS | 4222 | brokers |
-| MQTT | 1883 | brokers |
-| Kafka | 29092 | kafka |
-| MongoDB | 27017 | mongo |
-| Mailpit SMTP | 1025 | mail |
-| Mailpit UI | 8025 | mail |
-| Redis Commander | 8081 | tools |
+**Trade-off**: every call incurs an extra HTTP hop, and the frontend can't function without the
+backend being reachable (no static-export deployment story).
+
+## Transactional outbox — reliable event emission
+
+Audit logging, notifications, and any other async side effect of a domain change go through an
+`OutboxEvent` row written **inside the same database transaction** as the domain write, rather than
+firing the event directly from business logic (which risks inconsistency if the event fails after
+the DB write commits, or fires before a rollback). A background poller
+(`OutboxService.relayPendingEvents()`) claims pending rows with `SELECT ... FOR UPDATE SKIP LOCKED`
+and publishes them — in the current implementation this is BullMQ-queue-driven, not cron-polled (see
+[issues.md#cross-003](./issues.md#cross-003)'s neighboring finding that the generic `tasks/`
+cron-scheduling module is unused demo code). Failed publishes retry with exponential backoff.
+Detail: [backend/platform-core/outbox/README.md](./backend/platform-core/outbox/README.md) (Phase 5).
+
+## Tier-based RBAC — two orthogonal authorization axes
+
+1. **Role** (`USER | ADMIN | SUPERADMIN`) — who you are.
+2. **Tier** (`FREE | BASIC | MEDIUM | PREMIUM`) — what you've paid for, hierarchical
+   (`FREE < BASIC < MEDIUM < PREMIUM`).
+
+Tier enforcement uses `@MinTier(Tier)` + `TierGuard`, reading the tier from the **Redis session
+cache**, not the JWT — so `setUserTier()` (admin-only) updates Postgres and rewrites every live
+Redis session for that user via a reverse index (`user:{userId}:sessions`); the change takes effect
+on the user's *next* request, no re-login required (the old RBAC-token derivation fails, triggering
+one silent refresh). Frontend/mobile tier gating (`TierGate` component, tier-branch `*PageView`
+files) is **render-only** — every gated backend call is independently enforced server-side.
+Detail: [backend/billing-usage/billing/README.md](./backend/billing-usage/billing/README.md) (Phase 4).
+
+## Realtime transport — raw WebSocket, not socket.io
+
+Single `/ws` endpoint (`ws` library, not socket.io), one gateway (`RealtimeGateway`) that owns the
+transport, auth, and generic emit primitives; feature gateways (`MessagingWsGateway`) register frame
+handlers into it rather than opening their own connections. Authentication happens at the **WS
+upgrade** (cookie-based, before a socket exists), not via a post-connect message — see
+[issues.md#cross-005](./issues.md#cross-005) for why this is worth stating explicitly (older repo
+docs described a different, now-removed first-message protocol). One socket per device; a
+page-claim protocol (`{type:"page", page:"messages", params:{...}}`) scopes server-push delivery to
+whatever route the client is currently on. Full protocol detail:
+[backend/messaging-realtime/realtime/README.md](./backend/messaging-realtime/realtime/README.md).
+
+## Wire encryption — trusted-server transport + at-rest encryption
+
+**This replaced a different design.** As of 2026-08-04 this repo deliberately moved off a
+client-side X3DH/Double-Ratchet E2EE protocol (no plaintext ever readable server-side) to a
+**trusted-server** model: the backend holds a per-session X25519 keypair (Redis), the browser/app
+holds a device keypair, ECDH + HKDF derive a shared secret, and message bodies crossing WS/HTTP are
+XChaCha20-Poly1305 ciphertext under that shared secret. Message bodies at rest in Postgres are
+**separately** encrypted with a key the server derives from `MESSAGE_STORAGE_MASTER_KEY`. Both
+layers protect against network observation and a raw DB/backup leak; **neither protects against
+server or process compromise**, since the server can always re-derive both keys. This is a
+deliberate, documented trade-off (smaller crypto surface, real-time content moderation stays
+possible) — not an oversight — but the surviving reference doc for the old design was never marked
+superseded, which is why this section exists; see
+[issues.md#cross-004](./issues.md#cross-004) for the full account. Detail:
+[backend/messaging-realtime/wire-crypto/README.md](./backend/messaging-realtime/wire-crypto/README.md).
+
+## No backend API versioning
+
+There is no `/v2`, no `enableVersioning()`, no `setGlobalPrefix()` — the backend exposes one
+GraphQL schema at `/graphql` (plus a handful of REST controllers under real feature modules). The
+frontend's `v1/[lang]` URL segment is a **frontend routing convention only**; don't infer a backend
+version from it. See [issues.md#cross-003](./issues.md#cross-003).

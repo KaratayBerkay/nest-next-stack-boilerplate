@@ -1,16 +1,35 @@
-# Docs
+# Frontend (`next-js-boilerplate`)
 
-Documentation for the Next.js "implement-the-whole-docs" boilerplate. Kept the same
-way as the sibling
-[`nest-js-boilerplate`](../../nest-js-boilerplate/docs) project.
+Next.js App Router, BFF pattern (see
+[../architecture.md § BFF proxy pattern](../architecture.md#bff-proxy-pattern--nextjs-sits-between-the-browser-and-the-backend)) —
+the browser never calls the NestJS backend directly.
 
-- **[STATUS.md](STATUS.md)** — ⭐ start here: one-page snapshot of where the project is, what's done, what's left.
-- **[TODO.md](TODO.md)** — backlog: BFF proxy + httpOnly cookie auth, SSR/CSR cookie demos, SSE, WebSocket-from-NestJS, tests.
-- **[progress/](progress/README.md)** — the build plan, phases, decisions log, and changelog.
-  - **[progress/nextjs-feature-checklist.md](progress/nextjs-feature-checklist.md)** — the **mapping**: full Next.js feature → where-it-lives → proof-test matrix.
-- **[research/nextjs-2026.md](research/nextjs-2026.md)** — 2026 stack (Next 16 + Turbopack, React 19.2, Tailwind v4), App Router best practices, folder structure, scaffold command.
-- **[research/realtime-ssr-csr-cookies.md](research/realtime-ssr-csr-cookies.md)** — BFF proxy, SSR vs CSR cookies, SSE via `ReadableStream`, consuming NestJS WebSockets.
-- **[git-workflow.md](git-workflow.md)** — branching, Conventional Commits, hooks, command cheatsheet.
+## Scope of this documentation
 
-This project pairs with the **NestJS backend** at [`../../nest-js-boilerplate`](../../nest-js-boilerplate) — the
-Next.js app talks to it via a BFF proxy and consumes its WebSocket gateway.
+`next-js-boilerplate/src` has 195 `page.tsx` files repo-wide. **35 are real application pages**; the
+rest are component-showcase/demo galleries (a shadcnblocks marketing-block gallery, a UI-kit gallery,
+a forms gallery, and several Next.js framework-pattern demos) that exist to exercise the design
+system, not as product functionality. Only the real pages get individual docs — the galleries are
+indexed once in [_reference/showcase-index.md](./_reference/showcase-index.md) (Phase 5).
+
+## Page index
+
+| Vertical | Route(s) | Status |
+|---|---|---|
+| Auth | `/auth/{login,register,forgot-password,reset-password,verify-email,undo-password-change}` | ⬜ Phase 1 |
+| Marketing | `(marketing)/{about,pricing}` | ⬜ Phase 4 (pricing, part of the billing funnel) / Phase 5 (about) |
+| Home | [`v1/`](./v1/) root landing | ⬜ Phase 5 |
+| [Messaging](./v1/messages/) | `v1/messages`, `v1/chat-room` | messages ✅ — chat-room ⬜ Phase 3 |
+| Social | `v1/friends`, `v1/find-friends(/requests)` | ⬜ Phase 2 |
+| Posts/Feed | `v1/feed`, `v1/posts/[uuid]`, `v1/share` | ⬜ Phase 2 |
+| Notifications | `v1/notification` | ⬜ Phase 3 |
+| Users | `v1/users/{list,detail/[uuid]}` | ⬜ Phase 2 |
+| Billing | `(marketing)/pricing → v1/plans → v1/checkout/[tier] → v1/premium → v1/settings/billing` | ⬜ Phase 4 |
+| Admin | `v1/admin`, `v1/admin/audit-logs` | ⬜ Phase 5 |
+| Settings | `v1/settings/{account,api-keys,billing,general,privacy,security,sessions,usage}` | ⬜ split across Phases 1/2/4 |
+
+## Reference
+
+- [app-shell.md](./app-shell.md) — shared authenticated chrome (`src/views/v1/[lang]/`), not a page (Phase 5)
+- [billing-funnel.md](./billing-funnel.md) — the 5-step billing narrative hub (Phase 4)
+- [_reference/showcase-index.md](./_reference/showcase-index.md) — the excluded demo/showcase galleries (Phase 5)
