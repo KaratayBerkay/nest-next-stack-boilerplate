@@ -92,9 +92,13 @@ MessagesPageContent
 | Favorite/unfavorite | [messaging/endpoints.md § REST](../../../backend/messaging-realtime/messaging/endpoints.md#favorite--unfavorite-a-conversation) |
 | Mark read | [messaging/endpoints.md#mark-messages-read](../../../backend/messaging-realtime/messaging/endpoints.md#mark-messages-read) |
 | Real-time delivery, typing, read receipts | [realtime/endpoints.md](../../../backend/messaging-realtime/realtime/endpoints.md), [messaging/endpoints.md § WebSocket Events](../../../backend/messaging-realtime/messaging/endpoints.md#websocket-events) |
-| Attachment upload | `POST /api/upload/attachment-stream` (upload module, Phase 3) |
+| Attachment upload | [upload/endpoints.md § Stream a chat attachment upload](../../../backend/messaging-realtime/upload/endpoints.md#stream-a-chat-attachment-upload) |
 
 ## Known issues affecting this page
 
 - [CROSS-001](../../../issues.md#cross-001) — `MessagesSidebarFilterBar.tsx`'s favorites/groups
   filter has no Flutter counterpart.
+- [BE-017](../../../issues.md#be-017) — sending a message with an `attachments[].url` copied from
+  elsewhere silently re-links that attachment's access control to the new message — found while
+  documenting the upload module (Phase 3b); see
+  [upload/README.md § Known issues](../../../backend/messaging-realtime/upload/README.md#known-issues).

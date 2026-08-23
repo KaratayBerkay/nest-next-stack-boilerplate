@@ -15,13 +15,16 @@ click through from any doc straight to the code.
 
 - [conventions.md](./conventions.md) — how these docs are organized, link rules, templates
 - [architecture.md](./architecture.md) — cross-cutting system design (auth, BFF, outbox, tiers, monorepo layout)
+- [schema.md](./schema.md) — reverse index from product component to required Prisma tables/columns
 - [issues.md](./issues.md) — bugs, dead code, and doc/reality mismatches found while writing these docs
 
 ## Status
 
-This documentation set is being built incrementally, one feature vertical at a time, across
-backend + frontend + mobile together. Only verticals explicitly listed in a root README's index
-table are done — an app's README always states what's covered so far and what's still pending.
+Complete. Every real page/screen/module across all three apps has a doc — see each root README's
+index table (all rows ✅, none left `⬜`) and [issues.md](./issues.md) for the full bug/gap log
+(108+ entries, all triaged). Demo/showcase galleries are deliberately excluded and catalogued once
+each in `_reference/showcase-index.md` rather than documented individually — see
+[frontend/README.md § Scope of this documentation](./frontend/README.md#scope-of-this-documentation).
 
 ## Workspace layout
 

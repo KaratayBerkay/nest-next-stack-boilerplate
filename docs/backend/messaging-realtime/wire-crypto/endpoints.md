@@ -23,10 +23,12 @@ Base path: `/api/crypto` (see `@Controller('api/crypto')` in
 **Errors:** `400` (no session bound to the request) · `404` (device mode: key creation failed;
 session mode: no session crypto keys registered — shouldn't happen given `createSessionKeys` is
 called just before this check, but the controller checks anyway).
-**Used by:** Frontend [`useSessionCrypto.ts`](../../../frontend/v1/messages/hooks.md) (called on WS
-open and after login — see [architecture.md](../../../architecture.md)); mobile has a Dart
-equivalent (documented when a non-messages Flutter vertical needing it lands, or directly in
-[mobile/v1/messages/api.md](../../../mobile/v1/messages/api.md) if messages is the first caller).
+**Used by:** not page-specific on either platform — triggered from the shared realtime connection
+setup, see [README.md § Used by](./README.md#used-by) for both platforms' exact call sites (Frontend
+[`realtime-client.ts`](../../../../next-js-boilerplate/src/lib/realtime/realtime-client.ts) /
+`useSessionCrypto.ts`; Mobile
+[`api/server/crypto/handshake.dart`](../../../../flutter-boilerplate/lib/api/server/crypto/handshake.dart),
+called from [`realtime_provider.dart`](../../../../flutter-boilerplate/lib/lib/realtime/realtime_provider.dart)).
 
 ### Re-key
 

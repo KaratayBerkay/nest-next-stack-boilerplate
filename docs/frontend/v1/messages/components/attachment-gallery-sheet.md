@@ -4,7 +4,9 @@
 utils: [`AttachmentGallerySheet-utils.ts`](../../../../../next-js-boilerplate/src/views/messages/AttachmentGallerySheet-utils.ts)
 **Types:** [`AttachmentGallerySheet-types.ts`](../../../../../next-js-boilerplate/src/types/messages/AttachmentGallerySheet-types.ts)
 **Used in:** [ChatView](./chat-view.md) (opened from [ChatViewHeader](./chat-view-header.md)'s folder icon)
-**Mobile equivalent:** none confirmed in the mobile widget list for `messages` — verify during Phase 3.
+**Mobile equivalent:** none — confirmed absent, not just unlocated. See
+[mobile messages/screen.md § Confirmed parity gaps vs. web](../../../../mobile/v1/messages/screen.md#confirmed-parity-gaps-vs-web-found-while-documenting-this-screen)
+([CROSS-028](../../../../issues.md#cross-028)).
 
 ## Purpose
 

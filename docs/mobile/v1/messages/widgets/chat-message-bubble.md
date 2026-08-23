@@ -51,5 +51,5 @@ hop (verified, see [api.md](../api.md)):
 
 Contrast with the **web** equivalent's delete action, which is REST via the Next.js BFF — same
 backend outcome, different transport and different intermediary entirely. See
-[ChatMessageBubble (web)](../../../../frontend/v1/messages/components/chat-message-bubble.md#calls-indirect--this-component-never-calls-fetchahooks-mutation-directly)
+[ChatMessageBubble (web)](../../../../frontend/v1/messages/components/chat-message-bubble.md#calls-indirect--this-component-never-calls-fetcha-hooks-mutation-directly)
 for that path.

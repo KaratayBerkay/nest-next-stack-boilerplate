@@ -30,8 +30,14 @@ management, and composing [ChatViewHeader](./chat-view-header.md),
 - **No reply state** — no `replyTarget` equivalent exists (see
   [CROSS-006](../../../../issues.md#cross-006)); this widget is correspondingly simpler than its web
   counterpart, which owns reply staging/cancellation on top of everything above.
-- **No storage-limit gating** — no equivalent of web's `StorageLimitNotice` swap-in; unconfirmed
-  whether this is a real gap or out of scope for Phase 0 (usage/billing lands Phase 4).
+- **No storage-limit gating** — no equivalent of web's `StorageLimitNotice` swap-in. Confirmed a real
+  gap, not just out of Phase 0's scope: the limit **is** enforced server-side identically on both
+  platforms (`UsageService.assertCanSendMessage`), but nothing in mobile's chat composer reads
+  `messageUsageProvider`/`storageUsageProvider` to pre-emptively block sending — a mobile user who
+  hits the cap gets a real, hard send failure with no advance warning instead of this widget's web
+  counterpart's graceful pre-emptive block. See
+  [frontend StorageLimitNotice § Mobile equivalent](../../../../frontend/v1/messages/components/storage-limit-notice.md)
+  and [CROSS-033](../../../../issues.md#cross-033).
 
 ## Calls
 

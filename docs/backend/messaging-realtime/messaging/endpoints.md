@@ -26,7 +26,12 @@ from `@CurrentUser()`; a 401 (guard rejection) applies to all of them and isn't 
 per-request from [`realtime`](../realtime/README.md)'s in-memory `getOnlineUserIds()`, not stored.
 **Note:** despite the path, this is implemented in `MessagingController` via `MessagingFriendService`
 — see the module README's cross-module note.
-**Used by:** Frontend [friends](../../../frontend/v1/friends/page.md) (Phase 2), messages sidebar.
+**Used by:** Frontend [friends](../../../frontend/v1/friends/page.md) ·
+[find-friends](../../../frontend/v1/find-friends/page.md) (both via the same reused
+`friendsQueryOptions()`, see [frontend/v1/friends/api.md](../../../frontend/v1/friends/api.md)),
+messages sidebar; Mobile [friends](../../../mobile/v1/friends/screen.md) ·
+[users/list](../../../mobile/v1/users/list/screen.md) (both via the reused `friendsListProvider`, see
+[mobile/v1/friends/api.md](../../../mobile/v1/friends/api.md)).
 
 ### List pending friend requests
 
@@ -34,6 +39,15 @@ per-request from [`realtime`](../realtime/README.md)'s in-memory `getOnlineUserI
 **Source:** [`messaging.controller.ts#L86-L90`](../../../../nest-js-boilerplate/src/messaging/messaging.controller.ts)
 **Response:** merged incoming+outgoing pending requests, deduped by peer user id (incoming wins),
 each `{ id, direction: 'incoming'|'outgoing', user: {...}, createdAt }`.
+**Used by:** Frontend [find-friends](../../../frontend/v1/find-friends/page.md) (both tabs — the
+pending count badges the "Pending requests" tab even when the "Add friends" tab is active); Mobile
+[find-friends/requests](../../../mobile/v1/find-friends/requests/screen.md) and find-friends' Premium
+tier ([mobile/v1/find-friends/screen.md](../../../mobile/v1/find-friends/screen.md#premium-tier)) — ⚠
+see [MOB-007](../../../issues.md#mob-007): Flutter's `FriendRequest.fromJson` reads field names
+(`fromUserId`/`fromUserName`/`fromUserAvatar`) that don't exist anywhere in this response (the real
+shape nests per-user fields under `user`, and this endpoint's `direction` field isn't read by the
+Dart model at all) — the parse throws for every non-empty result, so this endpoint is effectively
+unconsumed successfully on mobile today despite being called correctly.
 
 ### Send / accept / decline a friend request
 
@@ -56,7 +70,13 @@ pending request).
 regardless of current page) rather than `emitToPage`, per the inline comment: a user sitting on
 `/messages` still needs their pending-list badge to update even though `/messages` isn't the
 `friend-request` page.
-**Used by:** Frontend [find-friends](../../../frontend/v1/find-friends/page.md) (Phase 2).
+**Used by:** Frontend [find-friends](../../../frontend/v1/find-friends/page.md) (send/accept/decline,
+all three) · [friends](../../../frontend/v1/friends/api.md) (re-exports the same hook, unused by that
+page itself); Mobile [find-friends](../../../mobile/v1/find-friends/screen.md) (all three, plus its
+[widgets](../../../mobile/v1/find-friends/README.md#widgets)) ·
+[users/detail](../../../mobile/v1/users/detail/screen.md) ("Add Friend" button — ⚠ see
+[MOB-003](../../../issues.md#mob-003): this caller always sends its own user id as the target, so
+`request` always hits the `403 EX_FORBIDDEN` self-friending case above).
 
 ### List conversations
 
@@ -90,7 +110,8 @@ Each message's `body` is decrypted via `decryptMessageBody` before returning.
 first (a flat gallery, not a chat-scroll order). Queries `MessageAttachment` directly rather than
 the upload-time `PendingUpload` table (whose `scopeId` for DMs is the uploader, not the
 conversation) — explicit `select` keeps ciphertext columns off the wire.
-**Used by:** Frontend messages attachment gallery (Phase 3, part of chat-room/messages media UI).
+**Used by:** Frontend [AttachmentGallerySheet](../../../frontend/v1/messages/components/attachment-gallery-sheet.md)
+(also documented in [messages/api.md](../../../frontend/v1/messages/api.md)).
 
 ### Send a direct message
 
@@ -182,7 +203,13 @@ entry is invalidated — the peer isn't notified and can't see that they were fa
 **Errors:** `404` unknown room slug · `403` `vip-`-prefixed room without `MEDIUM`+ tier
 (`hasRoomTierAccess` — the single shared gate used by every room join/read/write path, including the
 WS side).
-**Used by:** Frontend/Mobile chat-room (Phase 3).
+**Used by:** Frontend [chat-room page](../../../frontend/v1/chat-room/page.md) — the room-list entry
+(`GET /api/rooms`) via [`roomsQueryOptions`](../../../frontend/v1/chat-room/components/chat-room-base-view.md),
+messages sent via `POST /rooms/:roomId/messages`, and attachments via
+[RoomAttachmentGallerySheet](../../../frontend/v1/chat-room/components/room-attachment-gallery-sheet.md);
+Mobile [chat-room screen](../../../mobile/v1/chat-room/screen.md) — messages only
+(`room_messages.dart`); ⚠ mobile calls neither the room-list nor the room-attachments entry of this
+group — see [chat-room api.md (mobile)](../../../mobile/v1/chat-room/api.md).
 
 ## GraphQL
 
@@ -193,7 +220,16 @@ Resolver: [`messaging.resolver.ts`](../../../../nest-js-boilerplate/src/messagin
 
 **Kind:** GraphQL Query · **`users(search: String): [User!]!`**
 **Source:** [`messaging.resolver.ts#L31-L37`](../../../../nest-js-boilerplate/src/messaging/messaging.resolver.ts)
-Excludes the caller and anyone already `PENDING`/`ACCEPTED`/`BLOCKED` with them.
+Excludes the caller and anyone already `PENDING`/`ACCEPTED`/`BLOCKED` with them. No tier gate.
+**Used by:** Frontend [find-friends](../../../frontend/v1/find-friends/page.md) — via `GET
+/api/users/search`, a BFF route that wraps this query rather than exposing it directly (see
+[frontend/v1/find-friends/api.md § User search](../../../frontend/v1/find-friends/api.md#user-search)).
+⚠ Note: web's [users/list](../../../frontend/v1/users/list/page.md) page does **not** call this
+query despite living in a `src/api/**/users/` path suggestively named the same — that page is
+hardcoded demo data with zero backend calls, see [CROSS-016](../../../issues.md#cross-016). Mobile
+[find-friends](../../../mobile/v1/find-friends/screen.md) ·
+[users/list](../../../mobile/v1/users/list/screen.md) both genuinely call this, directly (GraphQL, no
+BFF hop — see [mobile/v1/find-friends/api.md](../../../mobile/v1/find-friends/api.md)).
 
 ### List conversations (GraphQL)
 
@@ -224,8 +260,13 @@ input [`send-message.input.ts`](../../../../nest-js-boilerplate/src/messaging/dt
 with the REST entry above, which returns both — see [BE-003](../../../issues.md#be-003).
 **`Message.body`** is not a plain field on the generated Prisma-backed `Message` type — it's the
 `@ResolveField` documented below, since the DB never stores plaintext.
-**Used by:** no caller found in the real-page scan yet (both frontend and mobile appear to use the
-REST path for sending) — flag for confirmation during Phase 3.
+**Used by:** Mobile — [`send_message.dart`](../../../../flutter-boilerplate/lib/api/server/messages/send_message.dart),
+called by `MessageActions.sendMessage` (see
+[mobile/v1/messages/api.md](../../../mobile/v1/messages/api.md)) — always, mobile has no REST/WS
+fallback for sending. **Not** frontend — web prefers the WebSocket, falling back to the REST route
+below, never this mutation (see [frontend/v1/messages/api.md § Send a message (client)](../../../frontend/v1/messages/api.md#send-a-message-client)).
+Corrected during the Phase 3 merge — the original "no caller found" note predated the mobile pilot
+docs that answer this.
 
 ### Mark messages read / delete for me / delete for everyone (GraphQL)
 

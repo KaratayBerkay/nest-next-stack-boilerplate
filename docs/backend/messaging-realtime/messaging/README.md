@@ -83,8 +83,8 @@ All three surfaces guard with `SessionAuthGuard` — see
 
 | App | Page / Screen |
 |---|---|
-| Frontend | [messages](../../../frontend/v1/messages/page.md) · chat-room (Phase 3) |
-| Mobile | [messages](../../../mobile/v1/messages/screen.md) · chat-room (Phase 3) |
+| Frontend | [messages](../../../frontend/v1/messages/page.md) · [chat-room](../../../frontend/v1/chat-room/page.md) · [friends](../../../frontend/v1/friends/page.md) · [find-friends](../../../frontend/v1/find-friends/page.md) (friend-request routes + user search, Phase 2 — see [endpoints.md](./endpoints.md) for the per-entry breakdown) |
+| Mobile | [messages](../../../mobile/v1/messages/screen.md) · [chat-room](../../../mobile/v1/chat-room/screen.md) · [friends](../../../mobile/v1/friends/screen.md) · [find-friends](../../../mobile/v1/find-friends/screen.md) · [users](../../../mobile/v1/users/README.md) (friends list, user search, friend-request routes — see [endpoints.md](./endpoints.md)) |
 
 ## Known issues
 

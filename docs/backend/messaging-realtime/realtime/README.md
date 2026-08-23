@@ -20,8 +20,9 @@ via `registerHandler()`/`registerPageCallbacks()` rather than opening their own 
 `verifyUpgrade()` runs during the WS handshake, **before a socket is ever created**: it reads the
 four session cookies (`access_token`, `rbac_token`, `device_token`, `user_token` — unprefixed; the
 `__Secure-` production prefix is a browser-cookie-jar concern the BFF already resolved before this
-point) directly off `req.headers.cookie`, unwraps the rbac/user tokens via the shared token-codec,
-and validates via `SessionValidatorService` (the same validator `SessionAuthGuard` uses for HTTP —
+point) directly off `req.headers.cookie`, unwraps the rbac/user tokens via the shared
+[`token-codec`](../../platform-core/common/token-codec/README.md), and validates via
+`SessionValidatorService` (the same validator `SessionAuthGuard` uses for HTTP —
 see [identity-access/auth](../../identity-access/auth/README.md)). Rejection here means the client
 never gets to speak the WebSocket protocol at all — no socket, no handshake exchange. On success,
 the server sends `{type:'authenticated', sessionId}` immediately after `connection` fires, with no
@@ -65,8 +66,10 @@ feature module that pushes live updates depends on this one.
 ## Used by
 
 Directly: [messaging](../messaging/README.md) (registers `direct-message`, `room-message`, etc.),
-notification (Phase 3), feed/post live updates (Phase 2). Indirectly: every page with a live badge
-or content push — see [endpoints.md § Frame families](./endpoints.md#frame-families) for the routing
+[notification](../notification/README.md) (registers no frame handlers of its own — pushes
+`Notifications`/`Item`/`Count`/`Read` frames via the generic `emitToService` primitive documented
+below), feed/post live updates (Phase 2). Indirectly: every page with a live badge
+or content push — see [endpoints.md § Server → client frame families](./endpoints.md#server--client-frame-families) for the routing
 table.
 
 ## Known issues

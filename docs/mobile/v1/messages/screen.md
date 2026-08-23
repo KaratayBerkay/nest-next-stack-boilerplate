@@ -83,8 +83,12 @@ search/sidebar-open state that here is local `State` inside
   [CROSS-006](../../../issues.md#cross-006) — a larger gap than the filter/favorites one, since
   reply-to is a core backend feature (`replyToId`/`replyTo` on every surface), not a recent
   web-only addition.
-- No attachment gallery ("all uploads") screen/sheet found in this widget set — unconfirmed as a gap
-  vs. simply not yet located; verify during Phase 3 (upload module).
+- ⚠ **No attachment gallery ("all uploads") screen/sheet** — confirmed absent, not just "not yet
+  located": `grep -rli "attachmentgallery\|alluploads"` across the entire Flutter app returns nothing.
+  Web has this feature in *both* [messages](../../../frontend/v1/messages/components/attachment-gallery-sheet.md)
+  and [chat-room](../../../frontend/v1/chat-room/components/room-attachment-gallery-sheet.md); mobile
+  has it in neither. Verified while documenting Phase 3b (upload + chat-room) — see
+  [CROSS-028](../../../issues.md#cross-028).
 
 ## API
 

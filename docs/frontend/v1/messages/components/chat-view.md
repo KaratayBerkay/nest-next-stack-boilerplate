@@ -3,7 +3,11 @@
 **Source:** [`ChatView.tsx`](../../../../../next-js-boilerplate/src/views/messages/ChatView.tsx) ·
 utils: [`ChatView-utils.ts`](../../../../../next-js-boilerplate/src/views/messages/ChatView-utils.ts)
 **Types:** [`ChatView-types.ts`](../../../../../next-js-boilerplate/src/types/messages/ChatView-types.ts)
-**Used in:** [messages page](../page.md) (also reused conceptually by chat-room, Phase 3)
+**Used in:** [messages page](../page.md) — **not** literally shared with
+[chat-room](../../chat-room/components/chat-room-base-view.md), confirmed by reading both trees: they
+are architecturally similar (same orchestrator-composes-header/list/input shape) but chat-room has its
+own separate component tree, sharing only the underlying hooks/API layer. See
+[chat-room page.md § How this differs from messages](../../chat-room/page.md#how-this-differs-from-messages--architecture).
 **Mobile equivalent:** [ChatView widget](../../../../mobile/v1/messages/widgets/chat-view.md)
 
 ## Purpose
@@ -32,8 +36,9 @@ upload flow, infinite-scroll message loading, and connection-state rendering. Co
 - **Connection-state gating**: renders a dedicated "reconnecting" skeleton for
   `connectionState === "connecting"` and a `ConnectionUnstable` notice for `"unstable"`, before
   attempting to render the normal message list/input at all.
-- **Storage-limit gating**: `messageUsageQueryOptions()` ([usage](../../../../backend/billing-usage/),
-  Phase 4) determines `storageLimitReached`; when true, [StorageLimitNotice](./storage-limit-notice.md)
+- **Storage-limit gating**: `messageUsageQueryOptions()` (backend
+  [Get message-storage usage](../../../../backend/billing-usage/usage/endpoints.md#get-message-storage-usage))
+  determines `storageLimitReached`; when true, [StorageLimitNotice](./storage-limit-notice.md)
   replaces the reply banner + input bar entirely (not just the input).
 
 ### `ChatView-utils.ts`

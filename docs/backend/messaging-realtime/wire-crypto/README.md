@@ -96,9 +96,16 @@ Source: [`storage-crypto.service.ts`](../../../../nest-js-boilerplate/src/wire-c
 ## Used by
 
 Every WS connection ([realtime](../realtime/README.md)) and every message send
-([messaging](../messaging/README.md)) — not a page-level dependency in its own right. The frontend
-handshake trigger is `useSessionCrypto.ts` (documented in
-[frontend/v1/messages/hooks.md](../../../frontend/v1/messages/hooks.md)).
+([messaging](../messaging/README.md)) — not a page-level dependency in its own right. On both
+platforms the handshake is triggered from the shared realtime connection setup, not a per-vertical
+hook: Frontend
+[`realtime-client.ts`](../../../../next-js-boilerplate/src/lib/realtime/realtime-client.ts) (session
+state then surfaced via `useSessionCrypto.ts`, documented in
+[frontend/v1/messages/hooks.md](../../../frontend/v1/messages/hooks.md#usesessioncrypto)); Mobile
+[`realtime_provider.dart`](../../../../flutter-boilerplate/lib/lib/realtime/realtime_provider.dart),
+which wraps [`lib/lib/crypto/session.dart`](../../../../flutter-boilerplate/lib/lib/crypto/session.dart)
+and calls [`api/server/crypto/handshake.dart`](../../../../flutter-boilerplate/lib/api/server/crypto/handshake.dart)
+directly (matches this module's own native route, no BFF hop).
 
 ## Known issues
 

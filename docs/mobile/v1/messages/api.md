@@ -27,10 +27,15 @@ for the shape test applied to reach this conclusion.
 | [`friend_requests.dart`](../../../../flutter-boilerplate/lib/api/server/messages/friend_requests.dart) | Direct REST | `GET /api/friends/requests` | [List pending friend requests](../../../backend/messaging-realtime/messaging/endpoints.md#list-pending-friend-requests) |
 | [`accept_friend_request.dart`](../../../../flutter-boilerplate/lib/api/server/messages/accept_friend_request.dart), [`decline_friend_request.dart`](../../../../flutter-boilerplate/lib/api/server/messages/decline_friend_request.dart), [`send_friend_request.dart`](../../../../flutter-boilerplate/lib/api/server/messages/send_friend_request.dart) | Direct REST | `POST /api/friends/{accept,decline,request}/:userId` | [Send / accept / decline a friend request](../../../backend/messaging-realtime/messaging/endpoints.md#send--accept--decline-a-friend-request) |
 | [`room_messages.dart`](../../../../flutter-boilerplate/lib/api/server/messages/room_messages.dart) | Direct REST | `GET /api/rooms/:room/messages` | [List / read / write chat rooms](../../../backend/messaging-realtime/messaging/endpoints.md#list--read--write-chat-rooms) — used by chat-room (Phase 3), not this screen directly |
-| [`upload_attachment.dart`](../../../../flutter-boilerplate/lib/api/server/messages/upload_attachment.dart) | Direct REST | `POST /upload/attachment` (note: **not** `-stream` — mobile uses the buffered multipart endpoint; web's `useAttachmentUploads` uses the streamed variant for progress events) | upload module, Phase 3 |
+| [`upload_attachment.dart`](../../../../flutter-boilerplate/lib/api/server/messages/upload_attachment.dart) | Direct REST | `POST /upload/attachment` (note: **not** `-stream` — mobile uses the buffered multipart endpoint; web's `useAttachmentUploads` uses the streamed variant for progress events) | [Upload a chat attachment](../../../backend/messaging-realtime/upload/endpoints.md#upload-a-chat-attachment) — ⚠ this call has no `scope` parameter anywhere in its chain, so it never sends the `x-scope-kind`/`x-scope-id` headers the backend reads; every mobile attachment (from this screen or [chat-room](../../../mobile/v1/chat-room/screen.md)) lands in the default DM storage folder — see [MOB-017](../../../issues.md#mob-017) |
 
 No file here calls a favorite/unfavorite or conversation/room-attachments-gallery endpoint — matches
-the confirmed absence of that UI on mobile ([CROSS-001](../../../issues.md#cross-001)).
+the confirmed absence of that UI on mobile ([CROSS-001](../../../issues.md#cross-001)). Also confirmed
+absent app-wide, not just this vertical: the shared `AttachmentPreview` widget every attachment
+preview on mobile renders through has no `thumbnailUrl` parameter at all, so the thumbnails the
+[upload module](../../../backend/messaging-realtime/upload/README.md#thumbnail-generation) generates
+never actually render on mobile — see [CROSS-027](../../../issues.md#cross-027), found while documenting
+Phase 3b (upload + chat-room).
 
 ## Client layer (`lib/api/client/messages/`)
 

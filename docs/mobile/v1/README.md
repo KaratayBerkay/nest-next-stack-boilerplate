@@ -7,13 +7,18 @@ registered as `GoRoute`s under this path prefix in
 
 | Route | Docs | Status |
 |---|---|---|
+| `v1/:lang` (root) | [screen.md](./screen.md) | ✅ Phase 5 |
 | `v1/:lang/messages` | [messages/screen.md](./messages/screen.md) | ✅ |
-| `v1/:lang/chat-room` | chat-room/screen.md | ⬜ Phase 3 |
-| `v1/:lang/friends`, `find-friends` | — | ⬜ Phase 2 |
-| `v1/:lang/feed`, `posts`, `share` | — | ⬜ Phase 2 |
-| `v1/:lang/notification` | — | ⬜ Phase 3 |
-| `v1/:lang/users` | — | ⬜ Phase 2 |
-| `v1/:lang/plans`, `checkout`, `premium` | — | ⬜ Phase 4 |
-| `v1/:lang/admin` | — | ⬜ Phase 5 |
-| `v1/:lang/settings/*` | — | ⬜ split Phases 1/2/4 |
-| `v1/:lang/security` (top-level, not nested under settings — unlike web) | — | ⬜ Phase 1 |
+| `v1/:lang/chat-room` | [chat-room/screen.md](./chat-room/screen.md) | ✅ Phase 3b |
+| `v1/:lang/friends` | [friends/screen.md](./friends/screen.md) | ✅ Phase 2a |
+| `v1/:lang/find-friends`(`/requests`) | [find-friends/README.md](./find-friends/README.md) | ✅ Phase 2a |
+| `v1/:lang/feed` | [feed/screen.md](./feed/screen.md) | ✅ Phase 2b |
+| `v1/:lang/posts` (list/create/detail — no direct web equivalent for list/create, see each screen's doc) | [posts/README.md](./posts/README.md) | ✅ Phase 2b |
+| `v1/:lang/share` | [share/screen.md](./share/screen.md) | ✅ Phase 2b |
+| `v1/:lang/notification` | [notification/screen.md](./notification/screen.md) | ✅ Phase 3a |
+| `v1/:lang/users` | [users/README.md](./users/README.md) | ✅ Phase 2a |
+| `v1/:lang/plans` | [plans/screen.md](./plans/screen.md) | ✅ Phase 4a |
+| `v1/:lang/checkout` | [checkout/screen.md](./checkout/screen.md) | ✅ Phase 4a |
+| `v1/:lang/premium` | [premium/screen.md](./premium/screen.md) — not part of the billing funnel, see [CROSS-035](../../issues.md#cross-035) | ✅ Phase 4b |
+| `v1/:lang/admin`(`/audit-logs`) | [admin/README.md](./admin/README.md) | ✅ Phase 5 |
+| `v1/:lang/settings/*` (8 sub-screens, incl. `security` — genuinely nested, see [CROSS-014](../../issues.md#cross-014)) | [settings/README.md](./settings/README.md) | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing ✅ Phase 4b — usage ✅ (gap closed post-Phase 5, see settings/README.md) |
