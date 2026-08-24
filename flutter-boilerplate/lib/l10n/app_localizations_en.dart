@@ -4582,6 +4582,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get v1ShellNavMessages => 'Messages';
 
   @override
+  String get v1ShellNavRtc => 'Calls & Live';
+
+  @override
   String get v1ShellNavFindFriends => 'Find Friends';
 
   @override
@@ -5803,4 +5806,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsCancelPendingChangeFailed =>
       'Failed to cancel pending plan change';
+
+  @override
+  String get rtcTitle => 'Calls & Live';
+
+  @override
+  String get rtcSubtitle =>
+      'Voice and video calls, group meetings, and live streaming.';
+
+  @override
+  String get rtcCallsTitle => 'Calls';
+
+  @override
+  String get rtcCallsDescription =>
+      '1:1 voice and video calls with your friends.';
+
+  @override
+  String get rtcMeetingsTitle => 'Meetings';
+
+  @override
+  String get rtcMeetingsDescription =>
+      'Group video meetings with screen share.';
+
+  @override
+  String get rtcLiveTitle => 'Live';
+
+  @override
+  String get rtcLiveDescription => 'Go live, or watch someone else\'s stream.';
+
+  @override
+  String get rtcComingSoon => 'Coming soon';
 }

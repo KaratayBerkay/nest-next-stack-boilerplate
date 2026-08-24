@@ -1440,6 +1440,7 @@
   "v1ShellNavUsers": "Kullanıcılar",
   "v1ShellNavChatRoom": "Sohbet Odası",
   "v1ShellNavMessages": "Mesajlar",
+  "v1ShellNavRtc": "Aramalar ve Yayın",
   "v1ShellNavFindFriends": "Arkadaş Bul",
   "v1ShellNavFriends": "Arkadaşlar",
   "v1ShellNavUiComponents": "UI Bileşenleri",
@@ -1958,5 +1959,14 @@
   "settingsPlanChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
   "settingsCancelPendingChange": "{date} tarihinde {tier} planına geçişiniz planlandı — önce bunu iptal edin",
   "settingsCancelPendingChangeSuccess": "Planlanan plan değişikliği iptal edildi",
-  "settingsCancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi"
+  "settingsCancelPendingChangeFailed": "Planlanan plan değişikliği iptal edilemedi",
+  "rtcTitle": "Aramalar ve Yayın",
+  "rtcSubtitle": "Sesli ve görüntülü aramalar, grup toplantıları ve canlı yayın.",
+  "rtcCallsTitle": "Aramalar",
+  "rtcCallsDescription": "Arkadaşlarınızla birebir sesli ve görüntülü aramalar.",
+  "rtcMeetingsTitle": "Toplantılar",
+  "rtcMeetingsDescription": "Ekran paylaşımlı grup görüntülü toplantıları.",
+  "rtcLiveTitle": "Canlı Yayın",
+  "rtcLiveDescription": "Canlı yayın yapın veya başkasının yayınını izleyin.",
+  "rtcComingSoon": "Yakında"
 }

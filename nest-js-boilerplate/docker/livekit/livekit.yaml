@@ -1,0 +1,28 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  # Dev only — the compose service binds to the host network via container
+  # ports below, but LiveKit itself needs to know its own reachable address
+  # to hand out to clients. Set to the host's real LAN/public IP (or turn
+  # this on and configure node_ip) for anything beyond localhost-only dev,
+  # same caveat voice-call-system's coturn config carries for TURN_LISTENING_IP.
+  use_external_ip: false
+# livekit runs with network_mode: host (see docker-compose.yml), so it has
+# no Docker-internal DNS — every other service must be addressed via
+# localhost + its published host port, not its compose service name.
+redis:
+  address: localhost:6379
+# Dev-only static key pair — matches LIVEKIT_API_KEY/LIVEKIT_API_SECRET in
+# .vault-envs/backend.env. LiveKit requires secrets >= 32 chars. Rotate via
+# Vault for any non-local deployment.
+keys:
+  devkey: mv7UGPhgFgSTNoNaA3Pq2V4QLG6Q9wB6
+webhook:
+  api_key: devkey
+  # No global route prefix in this app (see main.ts) — RtcWebhookController's
+  # @Controller('rtc/webhook') resolves to /rtc/webhook/livekit, not
+  # /api/rtc/webhook/livekit.
+  urls:
+    - http://localhost:3000/rtc/webhook/livekit

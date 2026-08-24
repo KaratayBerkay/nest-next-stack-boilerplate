@@ -22,6 +22,7 @@ import {
   IconSettings,
   IconShield,
   IconEye,
+  IconVideo,
 } from "@tabler/icons-react";
 
 const AUTH_REQUIRED_HREFS = [
@@ -29,6 +30,7 @@ const AUTH_REQUIRED_HREFS = [
   "/share",
   "/chat-room",
   "/messages",
+  "/rtc",
   FIND_FRIENDS_PATH,
   FRIENDS_PATH,
   "/premium",
@@ -51,6 +53,7 @@ export function V1Nav({ onNav }: V1NavProps) {
     { href: "/users/list", label: t.navUsers, Icon: IconUsers },
     { href: "/chat-room", label: t.navChatRoom, Icon: IconMessage },
     { href: "/messages", label: t.navMessages, Icon: IconMail },
+    { href: "/rtc", label: t.navRtc, Icon: IconVideo, auth: true },
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
     { href: FRIENDS_PATH, label: t.navFriends, Icon: IconUsers },
     { href: "/premium", label: t.navPremium, Icon: IconShield, auth: true },

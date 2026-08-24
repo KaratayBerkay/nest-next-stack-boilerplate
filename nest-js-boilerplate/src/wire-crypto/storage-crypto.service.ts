@@ -9,6 +9,10 @@ import type { StorageEnvelopeV1 } from './wire-crypto.types';
 // Legacy prefix kept for backward compatibility with existing encrypted data.
 const STORAGE_CONTEXT = 'e2ee-storage-v1';
 const ROOM_STORAGE_CONTEXT = 'room-storage-v1';
+// Own context so RTC chat (call/meeting/stream) is cryptographically
+// separate from RoomMessage's shared key — a future rotation of one never
+// has to touch the other.
+const RTC_ROOM_STORAGE_CONTEXT = 'rtc-room-storage-v1';
 
 /**
  * At-rest encryption for message bodies stored in Postgres.
@@ -57,6 +61,16 @@ export class StorageCryptoService {
       this.masterKey,
       new Uint8Array(0),
       new TextEncoder().encode(ROOM_STORAGE_CONTEXT),
+      32,
+    );
+  }
+
+  private rtcRoomKey(): Uint8Array {
+    return hkdf(
+      sha256,
+      this.masterKey,
+      new Uint8Array(0),
+      new TextEncoder().encode(RTC_ROOM_STORAGE_CONTEXT),
       32,
     );
   }
@@ -254,6 +268,47 @@ export class StorageCryptoService {
       return JSON.parse(Buffer.from(plain).toString('utf8')) as unknown;
     } catch {
       throw new UnauthorizedException('At-rest room message decryption failed');
+    }
+  }
+
+  /** Encrypt an RTC chat message (call/meeting/stream — shared key per room kind). */
+  encryptForRtcRoom(payload: unknown): StorageEnvelopeV1 {
+    const nonce = randomBytes(24);
+    const cipher = xchacha20poly1305(
+      this.rtcRoomKey(),
+      nonce,
+      new TextEncoder().encode(RTC_ROOM_STORAGE_CONTEXT),
+    );
+    const ct = cipher.encrypt(
+      new TextEncoder().encode(JSON.stringify(payload)),
+    );
+    return {
+      v: 'storage-v1',
+      nonce: nonce.toString('base64'),
+      ct: Buffer.from(ct).toString('base64'),
+    };
+  }
+
+  /** Decrypt an RTC chat message envelope (shared key). */
+  decryptForRtcRoom(envelope: unknown): unknown {
+    const storage = envelope as Partial<StorageEnvelopeV1>;
+    if (
+      storage?.v !== 'storage-v1' ||
+      typeof storage?.nonce !== 'string' ||
+      typeof storage?.ct !== 'string'
+    ) {
+      throw new UnauthorizedException('Malformed at-rest envelope');
+    }
+    try {
+      const cipher = xchacha20poly1305(
+        this.rtcRoomKey(),
+        Buffer.from(storage.nonce, 'base64'),
+        new TextEncoder().encode(RTC_ROOM_STORAGE_CONTEXT),
+      );
+      const plain = cipher.decrypt(Buffer.from(storage.ct, 'base64'));
+      return JSON.parse(Buffer.from(plain).toString('utf8')) as unknown;
+    } catch {
+      throw new UnauthorizedException('At-rest RTC message decryption failed');
     }
   }
 }

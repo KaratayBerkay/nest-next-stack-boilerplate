@@ -1440,6 +1440,7 @@
   "v1ShellNavUsers": "Users",
   "v1ShellNavChatRoom": "Chat Room",
   "v1ShellNavMessages": "Messages",
+  "v1ShellNavRtc": "Calls & Live",
   "v1ShellNavFindFriends": "Find Friends",
   "v1ShellNavFriends": "Friends",
   "v1ShellNavUiComponents": "UI Components",
@@ -1989,5 +1990,14 @@
   "settingsPlanChangeScheduled": "Your plan will change to {tier} on {date}.",
   "settingsCancelPendingChange": "You have a change to {tier} scheduled for {date} — cancel that first",
   "settingsCancelPendingChangeSuccess": "Pending plan change cancelled",
-  "settingsCancelPendingChangeFailed": "Failed to cancel pending plan change"
+  "settingsCancelPendingChangeFailed": "Failed to cancel pending plan change",
+  "rtcTitle": "Calls & Live",
+  "rtcSubtitle": "Voice and video calls, group meetings, and live streaming.",
+  "rtcCallsTitle": "Calls",
+  "rtcCallsDescription": "1:1 voice and video calls with your friends.",
+  "rtcMeetingsTitle": "Meetings",
+  "rtcMeetingsDescription": "Group video meetings with screen share.",
+  "rtcLiveTitle": "Live",
+  "rtcLiveDescription": "Go live, or watch someone else's stream.",
+  "rtcComingSoon": "Coming soon"
 }

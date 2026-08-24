@@ -391,6 +391,15 @@ model User {
   triggered          Notification[]         @relation("NotificationActor")
   pushSubscriptions  PushSubscription[]
 
+  // rtc (calls, meetings, streams)
+  rtcRoomsCreated   RtcRoom[]        @relation("RtcRoomCreator")
+  rtcParticipations RtcParticipant[]
+  callsAsCaller     CallSession[]    @relation("CallCaller")
+  callsAsCallee     CallSession[]    @relation("CallCallee")
+  meetingsHosted    Meeting[]        @relation("MeetingHost")
+  streamsHosted     LiveStream[]     @relation("StreamBroadcaster")
+  rtcChatMessages   RtcChatMessage[]
+
   // money
   wallets Wallet[]
 
@@ -973,6 +982,168 @@ model RoomMessageAttachment {
   createdAt     DateTime    @default(now()) @db.Timestamptz(6)
 
   @@index([roomMessageId])
+}
+
+// ---------------------------------------------------------------------------
+// RTC (LiveKit-backed): 1:1 calls, group meetings, live streaming.
+//
+// RtcRoom/RtcParticipant are a shared spine — NOT an extension of
+// Room/RoomParticipant, which are purpose-built for persistent, slug-joinable
+// E2EE'd chat rooms. Ephemeral SFU-backed media sessions are a different
+// enough concept to earn their own tables. See docs/progress/rtc-suite.md.
+// ---------------------------------------------------------------------------
+enum RtcRoomKind {
+  CALL
+  MEETING
+  STREAM
+}
+
+enum RtcRoomState {
+  // CALL only: ringing, no LiveKit room minted yet — an unanswered call
+  // costs nothing. MEETING/STREAM go straight to ACTIVE (create-and-join
+  // is one action for those).
+  PENDING
+  ACTIVE
+  ENDED
+}
+
+enum RtcParticipantRole {
+  CALLER
+  CALLEE
+  HOST
+  COHOST
+  PARTICIPANT
+  BROADCASTER
+  VIEWER
+}
+
+// Mirrors voice-call-system's CallState (call.interface.ts) + MISSED, added
+// for ring-timeout support the reference repo doesn't have.
+enum CallEndState {
+  RINGING
+  CONNECTING
+  CONNECTED
+  ENDED
+  REJECTED
+  FAILED
+  CANCELLED
+  MISSED
+}
+
+model RtcRoom {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  kind            RtcRoomKind
+  state           RtcRoomState     @default(PENDING)
+  livekitRoomName String?          @unique
+  createdById     String           @db.Uuid
+  createdBy       User             @relation("RtcRoomCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  participants    RtcParticipant[]
+  chatMessages    RtcChatMessage[]
+  call            CallSession?
+  meeting         Meeting?
+  stream          LiveStream?
+  startedAt       DateTime?        @db.Timestamptz(6)
+  endedAt         DateTime?        @db.Timestamptz(6)
+  createdAt       DateTime         @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @db.Timestamptz(6)
+
+  @@index([kind, state])
+  @@index([createdById])
+}
+
+model RtcParticipant {
+  id              String             @id @default(uuid(7)) @db.Uuid
+  roomId          String             @db.Uuid
+  room            RtcRoom            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId          String             @db.Uuid
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            RtcParticipantRole
+  // Resolves LiveKit webhook participant events back to this row.
+  livekitIdentity String?
+  joinedAt        DateTime           @default(now()) @db.Timestamptz(6)
+  leftAt          DateTime?          @db.Timestamptz(6)
+
+  @@unique([roomId, userId])
+  @@index([roomId, leftAt])
+  @@index([userId])
+}
+
+model CallSession {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  roomId     String       @unique @db.Uuid
+  room       RtcRoom      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  callerId   String       @db.Uuid
+  caller     User         @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+  calleeId   String       @db.Uuid
+  callee     User         @relation("CallCallee", fields: [calleeId], references: [id], onDelete: Cascade)
+  state      CallEndState @default(RINGING)
+  hasVideo   Boolean      @default(true)
+  // Persisted at accept-time from MIN(caller tier, callee tier) via
+  // RTC_TIER_MULTIPLIER — drives the server-side forced-hangup timer.
+  maxDurationMinutes Int?
+  ringingAt  DateTime     @default(now()) @db.Timestamptz(6)
+  acceptedAt DateTime?    @db.Timestamptz(6)
+  endedAt    DateTime?    @db.Timestamptz(6)
+  // 'hangup' | 'rejected' | 'cancelled' | 'missed' | 'failed' | 'tier_limit'
+  endReason  String?
+
+  @@index([callerId, ringingAt(sort: Desc)])
+  @@index([calleeId, ringingAt(sort: Desc)])
+}
+
+model Meeting {
+  id     String  @id @default(uuid(7)) @db.Uuid
+  roomId String  @unique @db.Uuid
+  room   RtcRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  hostId String  @db.Uuid
+  host   User    @relation("MeetingHost", fields: [hostId], references: [id], onDelete: Cascade)
+  title  String
+  // Shareable join link, same idea as Room.slug.
+  slug   String  @unique
+  // Derived from FREE_MEETING_MAX_PARTICIPANTS * RTC_TIER_MULTIPLIER[host
+  // tier] at creation time, persisted (not recomputed live) so a later
+  // host-tier change doesn't retroactively resize an in-progress meeting.
+  maxParticipants    Int
+  maxDurationMinutes Int
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([hostId])
+}
+
+model LiveStream {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  roomId        String   @unique @db.Uuid
+  room          RtcRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  broadcasterId String   @db.Uuid
+  broadcaster   User     @relation("StreamBroadcaster", fields: [broadcasterId], references: [id], onDelete: Cascade)
+  title         String
+  slug          String   @unique
+  isLive        Boolean  @default(true)
+  // Historical high-water mark; the live number comes from LiveKit's
+  // RoomServiceClient.listParticipants at query time, not this column.
+  peakViewerCount Int      @default(0)
+  startedAt       DateTime @default(now()) @db.Timestamptz(6)
+  endedAt         DateTime? @db.Timestamptz(6)
+
+  @@index([isLive, startedAt(sort: Desc)])
+  @@index([broadcasterId])
+}
+
+// v/ct/nonce — same shape as RoomMessage, NOT plaintext. Encrypted via
+// StorageCryptoService.encryptForRtcRoom/decryptForRtcRoom (its own HKDF
+// context, cryptographically separate from RoomMessage's shared room key).
+model RtcChatMessage {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  roomId    String   @db.Uuid
+  room      RtcRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  senderId  String   @db.Uuid
+  sender    User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  v         String
+  ct        String   @db.Text
+  nonce     String
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([roomId, createdAt])
 }
 
 // Server-side home of the storage envelope created at upload time. v/nonce

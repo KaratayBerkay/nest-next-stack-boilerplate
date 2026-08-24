@@ -122,6 +122,7 @@
     "joi": "^18.2.3",
     "jsonwebtoken": "^9.0.3",
     "kafkajs": "^2.2.4",
+    "livekit-server-sdk": "^2.18.0",
     "minio": "^8.0.7",
     "mongoose": "^9.7.2",
     "mqtt": "^5.15.1",

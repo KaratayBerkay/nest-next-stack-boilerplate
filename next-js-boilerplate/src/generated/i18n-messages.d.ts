@@ -11434,6 +11434,18 @@ export type I18nMessages = {
       "planChangeScheduled": string;
     }
 
+  "rtc": {
+      "title": string;
+      "subtitle": string;
+      "callsTitle": string;
+      "callsDescription": string;
+      "meetingsTitle": string;
+      "meetingsDescription": string;
+      "liveTitle": string;
+      "liveDescription": string;
+      "comingSoon": string;
+    }
+
   "settings": {
       "navGeneral": string;
       "navAccount": string;
@@ -11821,6 +11833,7 @@ export type I18nMessages = {
       "navUsers": string;
       "navChatRoom": string;
       "navMessages": string;
+      "navRtc": string;
       "navFindFriends": string;
       "navFriends": string;
       "navUiComponents": string;

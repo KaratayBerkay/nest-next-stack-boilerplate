@@ -5,6 +5,9 @@ export const clientEnvSchema = z.object({
   NEXT_PUBLIC_REALTIME_WS_URL: z
     .string()
     .regex(/^(\/|wss?:\/\/)/, "expected a ws://, wss://, or /path URL"),
+  NEXT_PUBLIC_LIVEKIT_URL: z
+    .string()
+    .regex(/^wss?:\/\//, "expected a ws:// or wss:// URL"),
   NEXT_PUBLIC_VAPID_PUBLIC_KEY: z.string(),
   NEXT_PUBLIC_STRIPE_KEY: z.string(),
 });

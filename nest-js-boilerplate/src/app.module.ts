@@ -47,6 +47,7 @@ import { LoggingModule } from './logging/logging.module';
 import { MailModule } from './mail/mail.module';
 import { MfaModule } from './mfa/mfa.module';
 import { MessagingModule } from './messaging/messaging.module';
+import { RtcModule } from './rtc/rtc.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { UsageModule } from './usage/usage.module';
 import { OpenapiModule } from './openapi/openapi.module';
@@ -166,6 +167,7 @@ const CORE_MODULES = [
   TeamMembersModule,
   MfaModule,
   MessagingModule,
+  RtcModule,
   RealtimeModule,
   UsageModule,
   ProfileModule,

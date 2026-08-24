@@ -67,7 +67,9 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to upload profile photos.</string>
+	<string>This app uses the camera to upload profile photos and for video calls, meetings, and live streaming.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for voice/video calls, meetings, and live streaming.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to the photo library to upload images.</string>
 	<key>NSFaceIDUsageDescription</key>

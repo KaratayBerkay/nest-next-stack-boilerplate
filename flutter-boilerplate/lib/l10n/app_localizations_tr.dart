@@ -4592,6 +4592,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get v1ShellNavMessages => 'Mesajlar';
 
   @override
+  String get v1ShellNavRtc => 'Aramalar ve Yayın';
+
+  @override
   String get v1ShellNavFindFriends => 'Arkadaş Bul';
 
   @override
@@ -5815,4 +5818,35 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get settingsCancelPendingChangeFailed =>
       'Planlanan plan değişikliği iptal edilemedi';
+
+  @override
+  String get rtcTitle => 'Aramalar ve Yayın';
+
+  @override
+  String get rtcSubtitle =>
+      'Sesli ve görüntülü aramalar, grup toplantıları ve canlı yayın.';
+
+  @override
+  String get rtcCallsTitle => 'Aramalar';
+
+  @override
+  String get rtcCallsDescription =>
+      'Arkadaşlarınızla birebir sesli ve görüntülü aramalar.';
+
+  @override
+  String get rtcMeetingsTitle => 'Toplantılar';
+
+  @override
+  String get rtcMeetingsDescription =>
+      'Ekran paylaşımlı grup görüntülü toplantıları.';
+
+  @override
+  String get rtcLiveTitle => 'Canlı Yayın';
+
+  @override
+  String get rtcLiveDescription =>
+      'Canlı yayın yapın veya başkasının yayınını izleyin.';
+
+  @override
+  String get rtcComingSoon => 'Yakında';
 }

@@ -61,6 +61,18 @@ const nextConfig: NextConfig = {
         },
       ],
     },
+    {
+      // The blanket camera=()/microphone=() above blocks getUserMedia()
+      // everywhere, including here — RTC (calls/meetings/streaming) needs
+      // both, plus display-capture for meeting screen-share.
+      source: "/v1/:lang/rtc/:path*",
+      headers: [
+        {
+          key: "Permissions-Policy",
+          value: "camera=(self), microphone=(self), display-capture=(self)",
+        },
+      ],
+    },
   ],
   logging: {
     fetches: {

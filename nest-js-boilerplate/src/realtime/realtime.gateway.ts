@@ -95,6 +95,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private roomSockets = new Map<string, Map<string, AuthWs>>();
   private pendingByIp = new Map<string, number>();
   private handlers = new Map<string, FrameHandler>();
+  /** Callbacks run on every non-detached socket close — see
+   *  registerDisconnectHandler. */
+  private disconnectHandlers: Array<(ws: AuthWs) => void> = [];
   private redisFailureCount = 0;
   private userIps = new Map<string, Map<string, number>>();
   /** IDs of emitToPageEncrypted messages published by THIS instance.
@@ -380,6 +383,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
           // same deterministic socketId.
           return;
         }
+        this.runDisconnectHandlers(authWs);
         this.cleanupSocket(authWs);
       });
     });
@@ -634,6 +638,28 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Handler for frame type "${type}" is already registered`);
     }
     this.handlers.set(type, handler);
+  }
+
+  /**
+   * Runs `fn` on every socket close that isn't a device replacement (see the
+   * `detached` check around this gateway's `ws.on('close', ...)`). There was
+   * previously no hook for "a socket just disconnected" — messaging never
+   * needed one — added for RTC's 1:1 call ringing layer, which must
+   * auto-end a RINGING call if the callee's socket drops before they
+   * answer.
+   */
+  registerDisconnectHandler(fn: (ws: AuthWs) => void): void {
+    this.disconnectHandlers.push(fn);
+  }
+
+  private runDisconnectHandlers(ws: AuthWs): void {
+    for (const fn of this.disconnectHandlers) {
+      try {
+        fn(ws);
+      } catch (err) {
+        this.logger.error('WS disconnect handler error', err as Error);
+      }
+    }
   }
 
   // ==================== Message routing ====================

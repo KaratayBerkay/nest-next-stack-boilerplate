@@ -66,6 +66,13 @@ class V1Nav extends ConsumerWidget {
         t.v1ShellNavMessages,
       ),
       _NavLink(
+        '/rtc',
+        const Icon(Icons.videocam_outlined),
+        Icons.videocam,
+        t.v1ShellNavRtc,
+        auth: true,
+      ),
+      _NavLink(
         '/find-friends',
         const Icon(Icons.person_add_outlined),
         Icons.person_add,

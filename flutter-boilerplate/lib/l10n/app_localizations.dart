@@ -8684,6 +8684,12 @@ abstract class AppLocalizations {
   /// **'Messages'**
   String get v1ShellNavMessages;
 
+  /// No description provided for @v1ShellNavRtc.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls & Live'**
+  String get v1ShellNavRtc;
+
   /// No description provided for @v1ShellNavFindFriends.
   ///
   /// In en, this message translates to:
@@ -10963,6 +10969,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Failed to cancel pending plan change'**
   String get settingsCancelPendingChangeFailed;
+
+  /// No description provided for @rtcTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls & Live'**
+  String get rtcTitle;
+
+  /// No description provided for @rtcSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice and video calls, group meetings, and live streaming.'**
+  String get rtcSubtitle;
+
+  /// No description provided for @rtcCallsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls'**
+  String get rtcCallsTitle;
+
+  /// No description provided for @rtcCallsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'1:1 voice and video calls with your friends.'**
+  String get rtcCallsDescription;
+
+  /// No description provided for @rtcMeetingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Meetings'**
+  String get rtcMeetingsTitle;
+
+  /// No description provided for @rtcMeetingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Group video meetings with screen share.'**
+  String get rtcMeetingsDescription;
+
+  /// No description provided for @rtcLiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Live'**
+  String get rtcLiveTitle;
+
+  /// No description provided for @rtcLiveDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Go live, or watch someone else\'s stream.'**
+  String get rtcLiveDescription;
+
+  /// No description provided for @rtcComingSoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get rtcComingSoon;
 }
 
 class _AppLocalizationsDelegate

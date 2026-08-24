@@ -55,6 +55,28 @@ services:
       timeout: 3s
       retries: 10
 
+  # ──────────────────────────────────────────────────────
+  # LiveKit — self-hosted SFU for RTC (1:1 calls, group meetings,
+  # streaming). Replaces a standalone coturn/TURN deployment entirely:
+  # LiveKit's own rtc.* config below is its built-in TURN/STUN.
+  # ──────────────────────────────────────────────────────
+  livekit:
+    image: livekit/livekit-server:v1.8
+    restart: unless-stopped
+    # host networking, not bridge+ports like this file's other services:
+    # the 10k-port UDP media range below can't be reliably bridge-mapped
+    # (Docker's per-port userland-proxy fails the whole range if even one
+    # port in it happens to already be bound on the host) — same reasoning
+    # voice-call-system's coturn service uses network_mode: host for its
+    # own wide UDP relay range.
+    network_mode: host
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: ["--config", "/etc/livekit.yaml"]
+    volumes:
+      - ./nest-js-boilerplate/docker/livekit/livekit.yaml:/etc/livekit.yaml:ro
+
   redis-commander:
     image: rediscommander/redis-commander:latest
     profiles: ["tools", "all"]
@@ -231,6 +253,7 @@ services:
       args:
         NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-}"
         NEXT_PUBLIC_REALTIME_WS_URL: "${NEXT_PUBLIC_REALTIME_WS_URL:-}"
+        NEXT_PUBLIC_LIVEKIT_URL: "${NEXT_PUBLIC_LIVEKIT_URL:-}"
         NEXT_PUBLIC_STRIPE_KEY: "${NEXT_PUBLIC_STRIPE_KEY:-}"
         NEXT_PUBLIC_VAPID_PUBLIC_KEY: "${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}"
         NEXT_PUBLIC_IMAGE_HOSTNAMES: "${NEXT_PUBLIC_IMAGE_HOSTNAMES:-}"

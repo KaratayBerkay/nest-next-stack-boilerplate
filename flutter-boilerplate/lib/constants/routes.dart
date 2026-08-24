@@ -17,6 +17,7 @@ class Routes {
   static const v1Home = '/v1/:lang';
   static const v1Feed = '/v1/:lang/feed';
   static const v1Messages = '/v1/:lang/messages';
+  static const v1Rtc = '/v1/:lang/rtc';
   static const v1Notification = '/v1/:lang/notification';
   static const v1Posts = '/v1/:lang/posts';
   static const v1PostDetail = '/v1/:lang/posts/:uuid';
