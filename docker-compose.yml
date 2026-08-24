@@ -207,6 +207,14 @@ services:
       context: ./nest-js-boilerplate
     restart: unless-stopped
     init: true
+    # `livekit` runs with network_mode: host (see that service), so it's on
+    # a different network than `app` (bridge + published ports, like every
+    # other service here) — compose DNS (http://livekit:7880) can't reach
+    # it. host-gateway resolves host.docker.internal to the Docker host's
+    # own IP, which IS reachable from a bridge-networked container; set
+    # LIVEKIT_HTTP_URL accordingly in Vault (secret/production/backend).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       vault-init:
         condition: service_completed_successfully
