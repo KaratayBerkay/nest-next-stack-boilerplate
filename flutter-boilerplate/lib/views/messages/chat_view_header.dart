@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/query.dart';
@@ -26,6 +28,7 @@ class ChatViewHeader extends ConsumerWidget {
     final convAsync = ref.watch(conversationsProvider);
     final onlineUsers = ref.watch(onlineUsersProvider);
     final typingUsers = ref.watch(typingUsersProvider);
+    final rtcState = ref.watch(rtcCallProvider);
 
     return convAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -93,6 +96,34 @@ class ChatViewHeader extends ConsumerWidget {
                     ),
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.call_outlined),
+                tooltip: t.rtcVoiceCallLabel,
+                onPressed: rtcState.phase == RtcCallPhase.idle && isOnline
+                    ? () => ref.read(rtcCallProvider.notifier).startCall(
+                          RtcCallPeer(
+                            id: conversationId,
+                            name: name,
+                            avatarUrl: avatarUrl,
+                          ),
+                          false,
+                        )
+                    : null,
+              ),
+              IconButton(
+                icon: const Icon(Icons.videocam_outlined),
+                tooltip: t.rtcVideoCallLabel,
+                onPressed: rtcState.phase == RtcCallPhase.idle && isOnline
+                    ? () => ref.read(rtcCallProvider.notifier).startCall(
+                          RtcCallPeer(
+                            id: conversationId,
+                            name: name,
+                            avatarUrl: avatarUrl,
+                          ),
+                          true,
+                        )
+                    : null,
               ),
             ],
           ),

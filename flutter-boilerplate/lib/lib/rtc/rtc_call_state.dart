@@ -1,0 +1,68 @@
+/// Mirrors next-js-boilerplate's RtcCallProvider.tsx state shape exactly —
+/// same phase names, same frame types drive the same transitions. Kept as a
+/// plain immutable value class (not a StateNotifier itself; see
+/// rtc_call_provider.dart for the notifier).
+enum RtcCallPhase { idle, outgoingRinging, incomingRinging, connected }
+
+class RtcCallPeer {
+  final String id;
+  final String name;
+  final String? avatarUrl;
+
+  const RtcCallPeer({required this.id, required this.name, this.avatarUrl});
+}
+
+class RtcLiveKitInfo {
+  final String token;
+  final String roomName;
+  final int? maxDurationMinutes;
+
+  const RtcLiveKitInfo({
+    required this.token,
+    required this.roomName,
+    this.maxDurationMinutes,
+  });
+}
+
+class RtcCallState {
+  final RtcCallPhase phase;
+  final String? callId;
+  final RtcCallPeer? peer;
+  final bool hasVideo;
+  final RtcLiveKitInfo? livekit;
+  final int? warningSecondsRemaining;
+  final String? lastError;
+
+  const RtcCallState({
+    this.phase = RtcCallPhase.idle,
+    this.callId,
+    this.peer,
+    this.hasVideo = true,
+    this.livekit,
+    this.warningSecondsRemaining,
+    this.lastError,
+  });
+
+  static const idle = RtcCallState();
+
+  RtcCallState copyWith({
+    RtcCallPhase? phase,
+    String? callId,
+    RtcCallPeer? peer,
+    bool? hasVideo,
+    RtcLiveKitInfo? livekit,
+    int? warningSecondsRemaining,
+    String? lastError,
+  }) {
+    return RtcCallState(
+      phase: phase ?? this.phase,
+      callId: callId ?? this.callId,
+      peer: peer ?? this.peer,
+      hasVideo: hasVideo ?? this.hasVideo,
+      livekit: livekit ?? this.livekit,
+      warningSecondsRemaining:
+          warningSecondsRemaining ?? this.warningSecondsRemaining,
+      lastError: lastError ?? this.lastError,
+    );
+  }
+}

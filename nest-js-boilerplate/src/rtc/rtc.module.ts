@@ -6,7 +6,10 @@ import { RedisModule } from '../redis/redis.module';
 import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
 import { LiveKitService } from './livekit.service';
 import { RtcResolver } from './rtc.resolver';
+import { RtcController } from './rtc.controller';
 import { RtcWebhookController } from './rtc-webhook.controller';
+import { RtcCallService } from './rtc-call.service';
+import { RtcCallWsGateway } from './rtc-call-ws.gateway';
 
 @Module({
   imports: [
@@ -16,8 +19,8 @@ import { RtcWebhookController } from './rtc-webhook.controller';
     RedisModule,
     WireCryptoModule,
   ],
-  controllers: [RtcWebhookController],
-  providers: [LiveKitService, RtcResolver],
-  exports: [LiveKitService],
+  controllers: [RtcWebhookController, RtcController],
+  providers: [LiveKitService, RtcResolver, RtcCallService, RtcCallWsGateway],
+  exports: [LiveKitService, RtcCallService],
 })
 export class RtcModule {}

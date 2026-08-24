@@ -2,10 +2,16 @@
 
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/button/icon-button";
-import { IconChevronLeft, IconFolder } from "@tabler/icons-react";
+import {
+  IconChevronLeft,
+  IconFolder,
+  IconPhone,
+  IconVideo,
+} from "@tabler/icons-react";
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useRtcCall } from "@/lib/rtc/RtcCallProvider";
 import type { ChatViewHeaderProps } from "@/types/messages/ChatViewHeader-types";
 
 function handleBack(
@@ -25,7 +31,19 @@ export function ChatViewHeader({
   onOpenGallery,
 }: ChatViewHeaderProps) {
   const t = useMessages("messages");
+  const tRtc = useMessages("rtc");
   const isOnline = onlineUsers.has(selectedUser.id);
+  const { state, startCall } = useRtcCall();
+  const canCall = isOnline && state.phase === "idle";
+  const startCallWithPeer = (hasVideo: boolean) =>
+    startCall(
+      {
+        id: selectedUser.id,
+        name: selectedUser.name ?? selectedUser.email ?? "?",
+        avatarUrl: selectedUser.avatarUrl ?? null,
+      },
+      hasVideo,
+    );
 
   return (
     <div className="flex items-center gap-3 border-b px-5 py-3">
@@ -64,6 +82,22 @@ export function ChatViewHeader({
           )}
         </p>
       </div>
+      <IconButton
+        icon={<IconPhone size={18} />}
+        label={tRtc.voiceCallLabel}
+        variant="ghost"
+        size="icon-sm"
+        disabled={!canCall}
+        onClick={() => startCallWithPeer(false)}
+      />
+      <IconButton
+        icon={<IconVideo size={18} />}
+        label={tRtc.videoCallLabel}
+        variant="ghost"
+        size="icon-sm"
+        disabled={!canCall}
+        onClick={() => startCallWithPeer(true)}
+      />
       {onOpenGallery ? (
         <IconButton
           icon={<IconFolder size={18} />}

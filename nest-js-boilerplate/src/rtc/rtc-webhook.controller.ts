@@ -1,8 +1,10 @@
 import { Controller, Logger, Post, Req, Res } from '@nestjs/common';
 import type { Request, Response } from 'express';
-import { RtcRoomState } from '../@generated/prisma/rtc-room-state.enum';
+// Native @prisma/client enums — see rtc-call.service.ts's import comment for why.
+import { RtcRoomKind, RtcRoomState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveKitService } from './livekit.service';
+import { RtcCallService } from './rtc-call.service';
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
@@ -19,6 +21,7 @@ export class RtcWebhookController {
   constructor(
     private readonly liveKit: LiveKitService,
     private readonly prisma: PrismaService,
+    private readonly rtcCallService: RtcCallService,
   ) {}
 
   @Post('livekit')
@@ -83,10 +86,21 @@ export class RtcWebhookController {
 
   private async handleRoomFinished(livekitRoomName?: string) {
     if (!livekitRoomName) return;
-    await this.prisma.rtcRoom.updateMany({
+    const room = await this.prisma.rtcRoom.findUnique({
       where: { livekitRoomName },
+      select: { id: true, kind: true },
+    });
+    if (!room) return;
+    await this.prisma.rtcRoom.update({
+      where: { id: room.id },
       data: { state: RtcRoomState.ENDED, endedAt: new Date() },
     });
+    if (room.kind === RtcRoomKind.CALL) {
+      // Safety net for whenever handleParticipantLeft's early-close didn't
+      // already end the CallSession (e.g. both sides drop near-
+      // simultaneously) — no-ops if it's already ENDED.
+      await this.rtcCallService.handleRoomEndedByLiveKit(room.id);
+    }
   }
 
   private async handleParticipantLeft(
@@ -96,12 +110,17 @@ export class RtcWebhookController {
     if (!livekitRoomName || !identity) return;
     const room = await this.prisma.rtcRoom.findUnique({
       where: { livekitRoomName },
-      select: { id: true },
+      select: { id: true, kind: true },
     });
     if (!room) return;
     await this.prisma.rtcParticipant.updateMany({
       where: { roomId: room.id, livekitIdentity: identity, leftAt: null },
       data: { leftAt: new Date() },
     });
+    if (room.kind === RtcRoomKind.CALL) {
+      // A 1:1 call is over the moment either side leaves — don't wait for
+      // LiveKit's own ~60s departureTimeout to notice via room_finished.
+      await this.rtcCallService.handlePeerLeft(room.id);
+    }
   }
 }

@@ -66,6 +66,7 @@ import '../views/pricing/page_content.dart';
 import '../views/routing/item_content.dart';
 import '../views/routing/post_page.dart';
 import '../views/routing/slug_page.dart';
+import '../views/rtc/calls_page_view.dart';
 import '../views/rtc/page_view.dart';
 import '../views/security/page_view.dart';
 import '../views/settings/account/page_view.dart';
@@ -324,6 +325,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => RtcPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/rtc/calls',
+            name: 'v1RtcCalls',
+            builder: (_, state) => const RtcCallsPageContent(),
           ),
           GoRoute(
             path: '/v1/:lang/notification',

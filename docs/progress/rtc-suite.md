@@ -125,7 +125,7 @@ Each phase is independently demoable. Work through them in order with a check-in
 phases.
 
 1. **LiveKit infra + token-minting + tier-limit foundation + empty nav shell** — ✅ done, see below.
-2. **1:1 calls end-to-end, tier-capped from the start** — not started.
+2. **1:1 calls end-to-end, tier-capped from the start** — ✅ done, see below.
 3. **Group meetings end-to-end, caps + encrypted chat from the start** — not started.
 4. **Live streaming end-to-end, go-live gated, chat encrypted from the start** — not started.
 5. **Polish / cross-cutting** (push notifications, LiveKit Egress recording/HLS,
@@ -241,9 +241,10 @@ phase.
 3. Call duration cap uses `MIN(caller tier, callee tier)`.
 4. Meeting caps are keyed to the host's tier only.
 5. Ring-timeout value (45s, ported from the reference repo's own client-side convention)
-   and the `MISSED` call-end state — not yet exercised by code (Phase 2).
-6. No dedicated route for an active 1:1 call (global overlay, no URL) — planned for
-   Phase 2's `IncomingCallModal`/`IncomingCallDialog`.
+   and the `MISSED` call-end state — implemented in Phase 2, see below.
+6. No dedicated route for an active 1:1 call (global overlay, no URL) — implemented in
+   Phase 2 as a global `RtcCallOverlay`/`RtcCallProvider` (web) and `RtcCallOverlay`/
+   `rtcCallProvider` (Flutter), mounted app-shell-wide, not per-page.
 7. Meeting-host-leaves policy: "meeting continues, no ownership transfer" — Phase 3.
 8. REST-via-BFF as the frontend's authoritative integration path, GraphQL secondary —
    Phase 2+.
@@ -251,3 +252,143 @@ phase.
    LiveKit per-room max-duration config) — needs an implementation-time check against the
    pinned `livekit/livekit-server:v1.8` image before Phase 3 commits to the sweep-only
    design.
+
+---
+
+## Phase 2 — 1:1 calls end-to-end, tier-capped from the start
+
+**Status: done, verified against a live local stack (module boot, route mapping, REST
+auth-gating all confirmed; two-browser/two-device audio-video verification is the user's
+to do by hand — needs real mic/camera hardware this environment can't drive, same
+carve-out as Phase 1's LiveKit smoke test).**
+
+### Backend (`nest-js-boilerplate`)
+
+- `src/common/id-codec/uuid-fields.ts`: added `callId` to `MANUAL_ID_ALIASES` — the WS
+  protocol's `CallSession.id` field has no matching scalar FK anywhere in the schema for
+  the per-model classifier to pick up automatically (same reasoning as the existing
+  `cursor`/`readerId`/`deviceId` aliases).
+- `src/rtc/rtc-call.service.ts` (new): the call state machine. Ports voice-call-system's
+  validation rules (no self-call, busy-if-active, accept/reject/cancel only by the real
+  participant) onto `RealtimeGateway.registerHandler`, not a new gateway. "Busy" and
+  ring/duration timers are resolved by reading `CallSession` from Postgres rather than an
+  in-memory map (the reference repo's map only works single-instance; this app assumes N
+  replicas) — a deliberate, documented simplification: timers are still plain
+  `setTimeout`s on whichever replica handled the invite/accept, so a replica restart
+  mid-call can strand a call with nothing to unstick it (rare, low-stakes, same class of
+  gap the Phase 3 meeting-duration sweep will solve properly). Ring-timeout is 45s
+  (ported from the reference repo's own client-side convention). Call duration cap is
+  `MIN(caller tier, callee tier)`, computed fresh from the DB at accept-time (never from
+  a possibly-stale `ws.tier`), with a warning frame 60s before the forced hangup.
+  `getActiveCallSnapshot`/`getCallHistory` back the two REST reads below; the former
+  returns the exact same `rtc:invite`/`rtc:accepted` frame shapes the WS pushes use
+  (including peer identity for the `rtc:accepted` case, added specifically so a
+  page-refresh mid-call can re-render who the user is talking to), so the frontend/mobile
+  reducer can feed a recovery read through the identical code path as a live frame.
+- `src/rtc/rtc-call-ws.gateway.ts` (new): thin — registers `rtc:invite`/`rtc:accept`/
+  `rtc:reject`/`rtc:cancel`/`rtc:hangup` on the shared `RealtimeGateway` and the
+  RINGING-phase `registerDisconnectHandler` hook added in Phase 1; all validation/state
+  lives in the service.
+- `src/rtc/rtc.controller.ts` (new): `GET /api/rtc/calls` (paginated history) and
+  `GET /api/rtc/calls/active` (recovery snapshot) — REST-via-BFF, matching Judgment call
+  10's resolution; no GraphQL surface added for calls (WS already owns every state
+  transition, REST only serves reads).
+- `src/rtc/rtc-webhook.controller.ts`: extended `handleParticipantLeft`/
+  `handleRoomFinished` — for a CALL-kind room, one side leaving now ends the call
+  immediately (`RtcCallService.handlePeerLeft`) rather than waiting on LiveKit's own
+  ~60s `departureTimeout`, with `handleRoomEndedByLiveKit` as an idempotent safety net on
+  `room_finished`. This is the path that closes out a call whose participant's app
+  crashed or lost network without ever sending `rtc:hangup`.
+- `src/rtc/rtc.module.ts`: wired `RtcCallService`/`RtcCallWsGateway`/`RtcController` in.
+- **Verified live**: rebuilt and booted the real app image — `RtcModule`/`RtcController`/
+  `RtcWebhookController` all initialize with no DI errors, `RtcController` routes mapped
+  (`GET /api/rtc/calls`, `GET /api/rtc/calls/active`), both correctly 401 unauthenticated
+  rather than 404/500. `pnpm typecheck`/lint clean on every touched/new file (one real fix
+  along the way: the four RTC Prisma enums had to be imported from `@prisma/client`
+  directly in this new call-service/webhook code, not the `@generated/prisma/*.enum.ts`
+  GraphQL-registration wrappers Phase 1 used — those are a structurally-identical but
+  nominally distinct TS type, and eslint's `no-unsafe-enum-comparison` correctly caught
+  every `call.state !== CallEndState.X` comparison against the wrong one).
+
+### Frontend (`next-js-boilerplate`)
+
+- `src/lib/rtc/RtcCallProvider.tsx` (new): app-shell-wide call-state reducer/context —
+  `idle → outgoing-ringing/incoming-ringing → connected`, exact mirror of the backend's
+  frame vocabulary. Subscribes to every `rtc:*` WS frame via `useRealtime()`, and recovers
+  a missed point-in-time push via `activeCallQueryOptions()` (invalidated on every WS
+  reconnect from `resync.ts`, same "pull covers a race" idea as messaging's
+  get-room-members). Mounted in `V1Shell.tsx` alongside `RealtimeProvider`.
+- `src/components/rtc/RtcCallOverlay.tsx` (new): the one global UI surface for the whole
+  call lifecycle — incoming-call `Dialog`, outgoing-ring/connecting screen, in-call
+  video/audio + mute/camera/hangup controls. Rendered once in `V1Shell`, works from any
+  page.
+- `src/hooks/rtc/useLiveKitRoom.ts` (new): thin wrapper around `livekit-client`'s
+  low-level `Room`/`Track` API (no `@livekit/components-react`, matching this repo's
+  custom-component culture). Takes caller-owned video/audio element refs rather than
+  creating and returning its own — a hook return value mixing refs with plain reactive
+  state trips react-compiler's ref-during-render lint check on *every* property access
+  off the returned object, not just the ref ones; refs now live in the consuming
+  component (`useRef` in `RtcCallOverlay`), passed in.
+- `src/api/server/rtc/{call-history,active-call}.ts` + `src/api/client/rtc/query.ts` +
+  `src/app/api/rtc/[...path]/route.ts`: the two-layer REST-via-BFF stack for the two new
+  backend reads, matching the established `messages/[...path]` pattern (this one
+  explicitly prefixes `rtc/` in the backend URL, since `RtcController` lives at
+  `api/rtc` rather than bare `api`).
+- `src/views/messages/ChatViewHeader.tsx`: added voice/video call buttons — the real entry
+  point for placing a call (mirrors WhatsApp's own chat-header convention), disabled
+  while the peer is offline or the user is already in a call.
+- `src/views/rtc/RtcHubView.tsx` / `src/views/rtc/RtcCallHistoryView.tsx` +
+  `src/app/v1/[lang]/rtc/calls/page.tsx`: the Calls card is now a live link (Meetings/Live
+  stay "Coming soon"); the history page lists past calls with a one-tap "call again".
+- `messages/{en,tr}/rtc/messages.json` + regenerated `src/generated/i18n-messages*`: ~25
+  new keys for the whole call UI.
+- **Verified**: `pnpm typecheck` and `pnpm lint` both clean on every touched/new file
+  (two real react-compiler-driven fixes along the way, beyond the ref-mixing one above:
+  an `eslint-disable` for `exhaustive-deps` had to be replaced with a real dependency
+  instead, since react-compiler refuses to optimize any component containing a disabled
+  hooks-lint rule). Rebuilt and booted the real Next.js image — `/` 200s, the new
+  `/api/rtc/[...path]` BFF proxy correctly round-trips to the backend and 401s
+  unauthenticated rather than 404/500. Two-browser live call verification (ring → accept
+  → connected → hangup, reject/cancel/busy/self-call/disconnect-mid-ring, the 15-minute
+  FREE cap firing its warning then forced hangup) is the user's to do by hand, per this
+  repo's established convention for real-time/media features.
+
+### Mobile (`flutter-boilerplate`)
+
+- `lib/lib/rtc/rtc_call_state.dart` / `rtc_call_provider.dart` (new): a `StateNotifier`
+  mirror of the web reducer — same phase names, same guard conditions. Fed by
+  `realtime_provider.dart`'s central `handleEventFrame` switch (new `rtc:*` cases dispatch
+  into the notifier) rather than owning its own subscription — this app funnels every
+  frame through one switch, unlike web's per-type `realtime.subscribe(type, handler)`.
+  `resyncAfterConnect` invalidates `activeCallProvider` on every reconnect, same recovery
+  idea as web.
+- `lib/components/rtc/rtc_call_overlay.dart` (new): owns the LiveKit `Room` directly
+  (connect on entering `connected`, disconnect on leaving) rather than through a reusable
+  hook-style abstraction — the connection lifecycle is tied 1:1 to this one widget's
+  mount lifetime. Mounted via `MaterialApp.router`'s `builder` param (not a `Stack` around
+  the whole `MaterialApp`, which would put it *outside* the app's own
+  `Localizations`/`Directionality` scope and break `AppLocalizations.of(context)` — same
+  risk the existing `_BiometricOverlay` pattern runs, sidestepped here rather than copied).
+- `lib/app_config.dart` / `.env.example`: added `AppConfig.livekitUrl` — Phase 1 wired
+  `NEXT_PUBLIC_LIVEKIT_URL` for web but never added a Flutter-side equivalent; a real gap,
+  filled now (`LIVEKIT_URL`, defaults `ws://localhost:7880`).
+- `lib/api/server/rtc/{call_history,active_call}.dart` + `lib/api/client/rtc/query.dart` +
+  `lib/types/rtc/{call_history_entry,active_call_snapshot}.dart`: two-layer Dio stack for
+  the same two backend reads, calling the backend directly (no BFF layer on mobile).
+- `lib/views/messages/chat_view_header.dart`: call/video-call `IconButton`s, same
+  disabled-while-offline-or-busy behavior as web.
+- `lib/views/rtc/page_view.dart` / `calls_page_view.dart` + router/route entries: Calls
+  card now navigates to a real history list; Meetings/Live stay "Coming soon".
+- `lib/l10n/app_{en,tr}.arb` + regenerated `app_localizations*.dart`: ~26 new `rtc*` keys.
+  Two (`rtcCallingTitle`, `rtcCallLimitWarning`) carry ICU placeholders — Flutter's
+  codegen turns those into callable methods (`t.rtcCallingTitle(name)`), not the
+  web/JSON approach of a plain string plus manual `.replace()`.
+- **Verified**: `flutter analyze` clean (whole project) and `dart format` clean on every
+  touched/new file. Real issues caught and fixed along the way: `LocalTrackPublication
+  .track` returns `LocalTrack?`, not `VideoTrack?` — narrowing via `is` didn't survive
+  being read back out of a `final` local inside a `setState` closure, so those two sites
+  use an explicit `as` cast instead of relying on flow-typing through the closure; a
+  method named `onError` on the notifier collided with `StateNotifier`'s own inherited
+  member of that name (renamed `onCallError`). Not built to a real APK/device in this
+  pass — real two-device call verification needs actual camera/mic hardware, same
+  carve-out as web.

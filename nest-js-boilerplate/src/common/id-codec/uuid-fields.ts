@@ -44,10 +44,13 @@ import { join } from 'node:path';
 //     (`deviceId: session.deviceId ?? ''`) — a raw Device.id under a
 //     hand-picked field name; caught live (`me`-style bug — see
 //     id-encryption-transport-boundary-2026-08-19 memory).
+//   - `callId`: rtc-call-ws.gateway.ts's WS protocol — a CallSession.id
+//     carried under a locally-chosen key (there's no scalar `callId` FK
+//     anywhere in the schema for a per-model classification to pick up).
 // Used by the flat args/REST/WS decrypt-deep and encrypt-deep walkers, and
 // also by encryptFieldIfId's fallback path for any GraphQL type that isn't a
 // recognized Prisma model (see that function's doc comment).
-const MANUAL_ID_ALIASES = ['cursor', 'readerId', 'deviceId'];
+const MANUAL_ID_ALIASES = ['cursor', 'readerId', 'deviceId', 'callId'];
 
 interface ParsedField {
   name: string;

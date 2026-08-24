@@ -5836,4 +5836,86 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcComingSoon => 'Coming soon';
+
+  @override
+  String get rtcIncomingCallTitle => 'Incoming call';
+
+  @override
+  String get rtcIncomingVideoCallTitle => 'Incoming video call';
+
+  @override
+  String rtcCallingTitle(Object name) {
+    return 'Calling $name…';
+  }
+
+  @override
+  String get rtcConnectingTitle => 'Connecting…';
+
+  @override
+  String get rtcAccept => 'Accept';
+
+  @override
+  String get rtcDecline => 'Decline';
+
+  @override
+  String get rtcCancel => 'Cancel';
+
+  @override
+  String get rtcHangup => 'End call';
+
+  @override
+  String get rtcMute => 'Mute';
+
+  @override
+  String get rtcUnmute => 'Unmute';
+
+  @override
+  String get rtcCameraOn => 'Turn on camera';
+
+  @override
+  String get rtcCameraOff => 'Turn off camera';
+
+  @override
+  String rtcCallLimitWarning(Object seconds) {
+    return 'Call ends in ${seconds}s — upgrade for longer calls';
+  }
+
+  @override
+  String get rtcVideoCallLabel => 'Video call';
+
+  @override
+  String get rtcVoiceCallLabel => 'Voice call';
+
+  @override
+  String get rtcHistoryTitle => 'Call history';
+
+  @override
+  String get rtcNoCallHistory => 'No calls yet';
+
+  @override
+  String get rtcLoadMore => 'Load more';
+
+  @override
+  String get rtcStateEnded => 'Ended';
+
+  @override
+  String get rtcStateRejected => 'Declined';
+
+  @override
+  String get rtcStateCancelled => 'Cancelled';
+
+  @override
+  String get rtcStateMissed => 'Missed';
+
+  @override
+  String get rtcStateFailed => 'Failed to connect';
+
+  @override
+  String get rtcUserOffline => 'That user is offline';
+
+  @override
+  String get rtcUserBusy => 'That user is busy';
+
+  @override
+  String get rtcCannotCallSelf => 'You cannot call yourself';
 }

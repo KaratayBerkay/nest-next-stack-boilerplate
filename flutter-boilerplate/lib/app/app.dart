@@ -9,6 +9,7 @@ import 'package:flutter_boilerplate/lib/stripe_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app_config.dart';
+import '../components/rtc/rtc_call_overlay.dart';
 import '../constants/theme.dart';
 import '../hooks/use_auth.dart';
 import '../hooks/use_biometric.dart';
@@ -141,6 +142,17 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
       supportedLocales: const [Locale('en'), Locale('tr')],
       localizationsDelegates: messages,
       routerConfig: ref.watch(routerProvider),
+      // Renders inside MaterialApp's own Localizations/Directionality scope
+      // (unlike wrapping `app` in an outer Stack, which would make this a
+      // sibling with no ancestor to resolve AppLocalizations.of(context)
+      // from) — the documented way to lay a global overlay on top of
+      // whatever route is active.
+      builder: (context, child) => Stack(
+        children: [
+          if (child != null) child,
+          const Positioned.fill(child: RtcCallOverlay()),
+        ],
+      ),
     );
 
     if (_biometricLocked) {

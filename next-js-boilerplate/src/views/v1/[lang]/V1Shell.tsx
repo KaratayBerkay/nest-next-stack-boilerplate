@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { RealtimeProvider } from "@/lib/realtime/RealtimeProvider";
 import { useConversations } from "@/lib/realtime/useConversations";
+import { RtcCallProvider } from "@/lib/rtc/RtcCallProvider";
+import { RtcCallOverlay } from "@/components/rtc/RtcCallOverlay";
 import { useDeviceType } from "@/hooks";
 import { useEdgeSwipe } from "@/hooks/useEdgeSwipe";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -54,53 +56,56 @@ export function V1Shell({ children }: V1ShellProps) {
 
   return (
     <RealtimeProvider>
-      <div className="flex h-dvh flex-col">
-        <a
-          href="#main-content"
-          className="bg-brand text-brand-fg sr-only rounded-md px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100]"
-        >
-          {t.skipToContent}
-        </a>
-        <V1Header
-          toggle={toggle}
-          open={open}
-          loading={loading}
-          user={user}
-          logout={logout}
-          lang={lang}
-          conversations={conversations}
-          sidebarOpen={sidebarOpen}
-          toggleRef={toggleRef}
-        />
-
-        <div className="relative flex min-h-0 flex-1">
-          {sidebarOpen && (
-            <div
-              className="animate-fade-in bg-overlay/30 fixed inset-0 z-30 md:hidden"
-              onClick={() => {
-                close();
-                toggleRef.current?.focus();
-              }}
-              aria-hidden="true"
-            />
-          )}
-
-          <V1Sidebar
-            ref={sidebarRef}
-            sidebarOpen={sidebarOpen}
+      <RtcCallProvider>
+        <div className="flex h-dvh flex-col">
+          <a
+            href="#main-content"
+            className="bg-brand text-brand-fg sr-only rounded-md px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[100]"
+          >
+            {t.skipToContent}
+          </a>
+          <V1Header
+            toggle={toggle}
+            open={open}
+            loading={loading}
             user={user}
             logout={logout}
             lang={lang}
-            onNav={close}
+            conversations={conversations}
+            sidebarOpen={sidebarOpen}
+            toggleRef={toggleRef}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <main className="surface flex min-h-0 flex-1 flex-col overflow-y-auto p-4 @sm:p-5">
-              {children}
-            </main>
+          <div className="relative flex min-h-0 flex-1">
+            {sidebarOpen && (
+              <div
+                className="animate-fade-in bg-overlay/30 fixed inset-0 z-30 md:hidden"
+                onClick={() => {
+                  close();
+                  toggleRef.current?.focus();
+                }}
+                aria-hidden="true"
+              />
+            )}
+
+            <V1Sidebar
+              ref={sidebarRef}
+              sidebarOpen={sidebarOpen}
+              user={user}
+              logout={logout}
+              lang={lang}
+              onNav={close}
+            />
+
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              <main className="surface flex min-h-0 flex-1 flex-col overflow-y-auto p-4 @sm:p-5">
+                {children}
+              </main>
+            </div>
           </div>
         </div>
-      </div>
+        <RtcCallOverlay />
+      </RtcCallProvider>
     </RealtimeProvider>
   );
 }

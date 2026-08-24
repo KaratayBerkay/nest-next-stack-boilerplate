@@ -11444,6 +11444,37 @@ export type I18nMessages = {
       "liveTitle": string;
       "liveDescription": string;
       "comingSoon": string;
+      "incomingCallTitle": string;
+      "incomingVideoCallTitle": string;
+      "callingTitle": string;
+      "connectingTitle": string;
+      "accept": string;
+      "decline": string;
+      "cancel": string;
+      "hangup": string;
+      "mute": string;
+      "unmute": string;
+      "cameraOn": string;
+      "cameraOff": string;
+      "callLimitWarning": string;
+      "videoCallLabel": string;
+      "voiceCallLabel": string;
+      "historyTitle": string;
+      "noCallHistory": string;
+      "incoming": string;
+      "outgoing": string;
+      "callButton": string;
+      "videoCallButton": string;
+      "cameraOffLabel": string;
+      "stateEnded": string;
+      "stateRejected": string;
+      "stateCancelled": string;
+      "stateMissed": string;
+      "stateFailed": string;
+      "loadMore": string;
+      "userOffline": string;
+      "userBusy": string;
+      "cannotCallSelf": string;
     }
 
   "settings": {

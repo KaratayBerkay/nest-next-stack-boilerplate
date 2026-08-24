@@ -5,6 +5,7 @@ import '../../api/client/messages/mark_read.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
+import '../../api/client/rtc/query.dart';
 import '../../api/server/crypto/handshake.dart';
 import '../../api/server/crypto/re_key.dart';
 import '../../api/server/messages/room_messages.dart';
@@ -16,6 +17,8 @@ import '../../hooks/use_messages_page.dart';
 import '../../types/messages/message.dart';
 import '../../types/notification/notification_item.dart';
 import '../riverpod_compat.dart';
+import '../rtc/rtc_call_provider.dart';
+import '../rtc/rtc_call_state.dart';
 import 'realtime_client.dart';
 import 'route_claim.dart';
 
@@ -112,6 +115,9 @@ void resyncAfterConnect(Ref ref) {
   ref.invalidate(notificationsProvider);
   ref.invalidate(notificationsUnreadCountProvider);
   ref.invalidate(dmUnreadNotificationsProvider);
+  // Recovers a ringing/connected call whose point-in-time rtc:invite/
+  // rtc:accepted push landed during the connection gap.
+  ref.invalidate(activeCallProvider);
 
   final uri = ref.read(routerProvider).routerDelegate.currentConfiguration.uri;
   final claim = routeToPageClaim(uri);
@@ -199,6 +205,52 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
       // vanished with zero user feedback.
       final text = (frame['message'] ?? frame['msg']) as String?;
       _showRealtimeError(ref, text);
+    case 'rtc:ringing':
+      final callId = frame['callId'] as String?;
+      if (callId != null) ref.read(rtcCallProvider.notifier).onRinging(callId);
+    case 'rtc:invite':
+      final callId = frame['callId'] as String?;
+      final callerId = frame['callerId'] as String?;
+      if (callId != null && callerId != null) {
+        ref.read(rtcCallProvider.notifier).onIncoming(
+              callId,
+              RtcCallPeer(
+                id: callerId,
+                name: frame['callerName'] as String? ?? '',
+                avatarUrl: frame['callerAvatarUrl'] as String?,
+              ),
+              frame['hasVideo'] as bool? ?? false,
+            );
+      }
+    case 'rtc:accepted':
+      final callId = frame['callId'] as String?;
+      final token = frame['token'] as String?;
+      final roomName = frame['roomName'] as String?;
+      if (callId != null && token != null && roomName != null) {
+        ref.read(rtcCallProvider.notifier).onAccepted(
+              callId,
+              token,
+              roomName,
+              (frame['maxDurationMinutes'] as num?)?.toInt(),
+            );
+      }
+    case 'rtc:rejected':
+    case 'rtc:cancelled':
+    case 'rtc:hangup':
+    case 'rtc:missed':
+      final callId = frame['callId'] as String?;
+      if (callId != null) ref.read(rtcCallProvider.notifier).onEnded(callId);
+    case 'rtc:call-limit-warning':
+      final callId = frame['callId'] as String?;
+      final seconds = (frame['secondsRemaining'] as num?)?.toInt();
+      if (callId != null && seconds != null) {
+        ref.read(rtcCallProvider.notifier).onWarning(callId, seconds);
+      }
+    case 'rtc:error':
+      ref.read(rtcCallProvider.notifier).onCallError(
+            frame['callId'] as String?,
+            frame['reason'] as String? ?? 'error',
+          );
     case 'direct-message':
       ref.invalidate(conversationsProvider);
       final message = frame['message'] as Map<String, dynamic>?;

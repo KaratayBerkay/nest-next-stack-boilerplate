@@ -35,6 +35,10 @@ class Urls {
   static const messagesUnreadCount = '/api/messages/unread-count';
   static const roomMessages = '/api/messages/room';
 
+  // RTC
+  static const rtcCalls = '/api/rtc/calls';
+  static const rtcActiveCall = '/api/rtc/calls/active';
+
   // Notifications
   static const notifications = '/api/notifications';
   static const notificationsRead = '/api/notifications/read';

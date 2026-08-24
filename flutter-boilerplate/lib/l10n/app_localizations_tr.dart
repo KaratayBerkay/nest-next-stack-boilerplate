@@ -5849,4 +5849,86 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcComingSoon => 'Yakında';
+
+  @override
+  String get rtcIncomingCallTitle => 'Gelen arama';
+
+  @override
+  String get rtcIncomingVideoCallTitle => 'Gelen görüntülü arama';
+
+  @override
+  String rtcCallingTitle(Object name) {
+    return '$name aranıyor…';
+  }
+
+  @override
+  String get rtcConnectingTitle => 'Bağlanıyor…';
+
+  @override
+  String get rtcAccept => 'Kabul et';
+
+  @override
+  String get rtcDecline => 'Reddet';
+
+  @override
+  String get rtcCancel => 'Vazgeç';
+
+  @override
+  String get rtcHangup => 'Aramayı bitir';
+
+  @override
+  String get rtcMute => 'Sesi kapat';
+
+  @override
+  String get rtcUnmute => 'Sesi aç';
+
+  @override
+  String get rtcCameraOn => 'Kamerayı aç';
+
+  @override
+  String get rtcCameraOff => 'Kamerayı kapat';
+
+  @override
+  String rtcCallLimitWarning(Object seconds) {
+    return 'Arama $seconds sn içinde sona eriyor — daha uzun aramalar için yükseltin';
+  }
+
+  @override
+  String get rtcVideoCallLabel => 'Görüntülü arama';
+
+  @override
+  String get rtcVoiceCallLabel => 'Sesli arama';
+
+  @override
+  String get rtcHistoryTitle => 'Arama geçmişi';
+
+  @override
+  String get rtcNoCallHistory => 'Henüz arama yok';
+
+  @override
+  String get rtcLoadMore => 'Daha fazla yükle';
+
+  @override
+  String get rtcStateEnded => 'Sona erdi';
+
+  @override
+  String get rtcStateRejected => 'Reddedildi';
+
+  @override
+  String get rtcStateCancelled => 'İptal edildi';
+
+  @override
+  String get rtcStateMissed => 'Cevapsız';
+
+  @override
+  String get rtcStateFailed => 'Bağlanamadı';
+
+  @override
+  String get rtcUserOffline => 'Bu kullanıcı çevrim dışı';
+
+  @override
+  String get rtcUserBusy => 'Bu kullanıcı meşgul';
+
+  @override
+  String get rtcCannotCallSelf => 'Kendinizi arayamazsınız';
 }

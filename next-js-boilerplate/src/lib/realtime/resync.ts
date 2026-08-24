@@ -9,6 +9,9 @@ export function resyncAfterConnect(
   qc.invalidateQueries({ queryKey: ["notifications", "list"] });
   qc.invalidateQueries({ queryKey: ["notifications", "count"] });
   qc.invalidateQueries({ queryKey: ["notifications", "dm-count"] });
+  // Recovers a ringing/connected call whose point-in-time rtc:invite/
+  // rtc:accepted push landed during the connection gap.
+  qc.invalidateQueries({ queryKey: ["rtc", "active-call"] });
 
   if (currentClaim?.page === "feed") {
     qc.invalidateQueries({ queryKey: ["feed"] });

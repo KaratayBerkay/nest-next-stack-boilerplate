@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Badge;
+import 'package:go_router/go_router.dart';
 
 import '../../components/ui/badge/badge.dart';
 import '../../components/ui/card/card.dart';
@@ -21,9 +22,19 @@ class RtcPageContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final sections = [
-      (Icons.call_outlined, t.rtcCallsTitle, t.rtcCallsDescription),
-      (Icons.groups_outlined, t.rtcMeetingsTitle, t.rtcMeetingsDescription),
-      (Icons.podcasts_outlined, t.rtcLiveTitle, t.rtcLiveDescription),
+      (
+        Icons.call_outlined,
+        t.rtcCallsTitle,
+        t.rtcCallsDescription,
+        '/v1/$lang/rtc/calls',
+      ),
+      (
+        Icons.groups_outlined,
+        t.rtcMeetingsTitle,
+        t.rtcMeetingsDescription,
+        null
+      ),
+      (Icons.podcasts_outlined, t.rtcLiveTitle, t.rtcLiveDescription, null),
     ];
 
     return SafeArea(
@@ -37,33 +48,38 @@ class RtcPageContent extends StatelessWidget {
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 16),
-          for (final (icon, title, description) in sections)
+          for (final (icon, title, description, route) in sections)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
-              child: CardWidget(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    CardHeader(
-                      child: Row(
-                        children: [
-                          Icon(icon),
-                          const SizedBox(width: 8),
-                          CardTitle(text: title),
-                        ],
+              child: InkWell(
+                onTap: route != null ? () => context.push(route) : null,
+                child: CardWidget(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CardHeader(
+                        child: Row(
+                          children: [
+                            Icon(icon),
+                            const SizedBox(width: 8),
+                            CardTitle(text: title),
+                          ],
+                        ),
                       ),
-                    ),
-                    CardContent(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          CardDescription(text: description),
-                          const SizedBox(height: 8),
-                          Badge(text: t.rtcComingSoon),
-                        ],
+                      CardContent(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CardDescription(text: description),
+                            if (route == null) ...[
+                              const SizedBox(height: 8),
+                              Badge(text: t.rtcComingSoon),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

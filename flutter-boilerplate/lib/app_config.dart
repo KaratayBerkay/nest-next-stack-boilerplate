@@ -9,6 +9,10 @@ class AppConfig {
       String.fromEnvironment('STRIPE_PUBLISHABLE_KEY');
   static const wsUrl =
       String.fromEnvironment('WS_URL', defaultValue: 'ws://localhost:3001/ws');
+  static const livekitUrl = String.fromEnvironment(
+    'LIVEKIT_URL',
+    defaultValue: 'ws://localhost:7880',
+  );
   static const appEnv =
       String.fromEnvironment('APP_ENV', defaultValue: 'development');
   static const appName = String.fromEnvironment('APP_NAME');

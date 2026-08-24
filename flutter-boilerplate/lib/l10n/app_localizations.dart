@@ -11023,6 +11023,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Coming soon'**
   String get rtcComingSoon;
+
+  /// No description provided for @rtcIncomingCallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming call'**
+  String get rtcIncomingCallTitle;
+
+  /// No description provided for @rtcIncomingVideoCallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Incoming video call'**
+  String get rtcIncomingVideoCallTitle;
+
+  /// No description provided for @rtcCallingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Calling {name}…'**
+  String rtcCallingTitle(Object name);
+
+  /// No description provided for @rtcConnectingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get rtcConnectingTitle;
+
+  /// No description provided for @rtcAccept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get rtcAccept;
+
+  /// No description provided for @rtcDecline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get rtcDecline;
+
+  /// No description provided for @rtcCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get rtcCancel;
+
+  /// No description provided for @rtcHangup.
+  ///
+  /// In en, this message translates to:
+  /// **'End call'**
+  String get rtcHangup;
+
+  /// No description provided for @rtcMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get rtcMute;
+
+  /// No description provided for @rtcUnmute.
+  ///
+  /// In en, this message translates to:
+  /// **'Unmute'**
+  String get rtcUnmute;
+
+  /// No description provided for @rtcCameraOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on camera'**
+  String get rtcCameraOn;
+
+  /// No description provided for @rtcCameraOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn off camera'**
+  String get rtcCameraOff;
+
+  /// No description provided for @rtcCallLimitWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Call ends in {seconds}s — upgrade for longer calls'**
+  String rtcCallLimitWarning(Object seconds);
+
+  /// No description provided for @rtcVideoCallLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Video call'**
+  String get rtcVideoCallLabel;
+
+  /// No description provided for @rtcVoiceCallLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice call'**
+  String get rtcVoiceCallLabel;
+
+  /// No description provided for @rtcHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Call history'**
+  String get rtcHistoryTitle;
+
+  /// No description provided for @rtcNoCallHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'No calls yet'**
+  String get rtcNoCallHistory;
+
+  /// No description provided for @rtcLoadMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Load more'**
+  String get rtcLoadMore;
+
+  /// No description provided for @rtcStateEnded.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get rtcStateEnded;
+
+  /// No description provided for @rtcStateRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'Declined'**
+  String get rtcStateRejected;
+
+  /// No description provided for @rtcStateCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelled'**
+  String get rtcStateCancelled;
+
+  /// No description provided for @rtcStateMissed.
+  ///
+  /// In en, this message translates to:
+  /// **'Missed'**
+  String get rtcStateMissed;
+
+  /// No description provided for @rtcStateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to connect'**
+  String get rtcStateFailed;
+
+  /// No description provided for @rtcUserOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'That user is offline'**
+  String get rtcUserOffline;
+
+  /// No description provided for @rtcUserBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'That user is busy'**
+  String get rtcUserBusy;
+
+  /// No description provided for @rtcCannotCallSelf.
+  ///
+  /// In en, this message translates to:
+  /// **'You cannot call yourself'**
+  String get rtcCannotCallSelf;
 }
 
 class _AppLocalizationsDelegate

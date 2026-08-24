@@ -126,6 +126,9 @@ export const GQL_BACKEND_PATH = "/graphql" as const;
 export const VAULT_SECRET_PATH =
   "secret/data/secret/production/frontend" as const;
 
+export const RTC_CALLS_URL = "/api/rtc/calls" as const;
+export const RTC_ACTIVE_CALL_URL = "/api/rtc/calls/active" as const;
+
 export const NOTIFICATIONS_URL = "/api/notifications" as const;
 export const NOTIFICATIONS_UNREAD_COUNT_URL =
   "/api/notifications/unread-count" as const;
