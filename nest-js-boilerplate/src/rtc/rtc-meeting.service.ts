@@ -9,7 +9,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LiveKitService } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs } from '../realtime/realtime.types';
-import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
+import { RtcChatService } from './rtc-chat.service';
 // Native @prisma/client enums — see rtc-call.service.ts's import comment for
 // why these come from here and not the @generated/prisma/*.enum wrappers.
 import { RtcParticipantRole, RtcRoomKind, RtcRoomState } from '@prisma/client';
@@ -20,14 +20,7 @@ import {
   meetingMaxParticipants,
 } from './rtc-tier-limits.constants';
 
-export interface MeetingChatMessageView {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderAvatarUrl: string | null;
-  text: string;
-  createdAt: string;
-}
+export type { RtcChatMessageView as MeetingChatMessageView } from './rtc-chat.service';
 
 /** How long before a meeting's tier-scaled duration cap the sweep sends a
  *  one-time warning frame. Mirrors the call-limit warning's lead time. */
@@ -63,7 +56,7 @@ export class RtcMeetingService {
     private readonly prisma: PrismaService,
     private readonly liveKit: LiveKitService,
     private readonly realtime: RealtimeGateway,
-    private readonly storageCrypto: StorageCryptoService,
+    private readonly chat: RtcChatService,
   ) {}
 
   async createMeeting(userId: string, title: string) {
@@ -184,7 +177,7 @@ export class RtcMeetingService {
   async leaveMeeting(userId: string, slug: string): Promise<void> {
     const meeting = await this.prisma.meeting.findUnique({ where: { slug } });
     if (!meeting) return;
-    await this.markParticipantLeft(meeting.roomId, userId);
+    await this.chat.markParticipantLeft(meeting.roomId, userId);
     this.realtime.broadcastToRoom(chatChannel(slug), {
       type: 'rtc:meeting-participant-left',
       slug,
@@ -193,14 +186,11 @@ export class RtcMeetingService {
   }
 
   async endMeeting(userId: string, slug: string): Promise<void> {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { slug },
-      include: { room: true },
-    });
-    if (!meeting) throw new NotFoundException('Meeting not found');
-    if (meeting.hostId !== userId) {
-      throw new ForbiddenException('Only the host can end this meeting');
-    }
+    const meeting = await this.mustFindMeetingAsHost(
+      userId,
+      slug,
+      'Only the host can end this meeting',
+    );
     await this.finishMeeting(
       meeting.roomId,
       slug,
@@ -214,21 +204,18 @@ export class RtcMeetingService {
     slug: string,
     targetUserId: string,
   ): Promise<void> {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { slug },
-      include: { room: true },
-    });
-    if (!meeting) throw new NotFoundException('Meeting not found');
-    if (meeting.hostId !== hostUserId) {
-      throw new ForbiddenException('Only the host can remove a participant');
-    }
+    const meeting = await this.mustFindMeetingAsHost(
+      hostUserId,
+      slug,
+      'Only the host can remove a participant',
+    );
     if (meeting.room.livekitRoomName) {
       await this.liveKit.removeParticipant(
         meeting.room.livekitRoomName,
         targetUserId,
       );
     }
-    await this.markParticipantLeft(meeting.roomId, targetUserId);
+    await this.chat.markParticipantLeft(meeting.roomId, targetUserId);
     this.realtime.emitToUser(targetUserId, {
       type: 'rtc:meeting-removed',
       slug,
@@ -246,14 +233,11 @@ export class RtcMeetingService {
     targetUserId: string,
     muted: boolean,
   ): Promise<void> {
-    const meeting = await this.prisma.meeting.findUnique({
-      where: { slug },
-      include: { room: true },
-    });
-    if (!meeting) throw new NotFoundException('Meeting not found');
-    if (meeting.hostId !== hostUserId) {
-      throw new ForbiddenException('Only the host can mute a participant');
-    }
+    const meeting = await this.mustFindMeetingAsHost(
+      hostUserId,
+      slug,
+      'Only the host can mute a participant',
+    );
     if (!meeting.room.livekitRoomName) return;
     await this.liveKit.muteParticipantAudio(
       meeting.room.livekitRoomName,
@@ -273,12 +257,12 @@ export class RtcMeetingService {
     if (!ws.userId || typeof slug !== 'string' || !slug) return;
     const active = await this.activeParticipant(ws.userId, slug);
     if (!active) return;
-    this.realtime.registerRoomSocket(chatChannel(slug), ws);
+    this.chat.registerSocket(chatChannel(slug), ws);
   }
 
   leaveRoomChat(ws: AuthWs, slug: unknown): void {
-    if (typeof slug !== 'string' || !slug || !ws.socketId) return;
-    this.realtime.leaveRoomSocket(chatChannel(slug), ws.socketId);
+    if (typeof slug !== 'string' || !slug) return;
+    this.chat.leaveSocket(chatChannel(slug), ws.socketId);
   }
 
   async sendChatMessage(
@@ -292,25 +276,12 @@ export class RtcMeetingService {
     const meeting = await this.activeParticipant(ws.userId, slug);
     if (!meeting) return;
 
-    const { v, ct, nonce } = this.storageCrypto.encryptForRtcRoom({
-      text: body,
-    });
-    const saved = await this.prisma.rtcChatMessage.create({
-      data: { roomId: meeting.roomId, senderId: ws.userId, v, ct, nonce },
-      include: { sender: true },
-    });
-
-    await this.realtime.emitToRoomEncrypted(chatChannel(slug), {
-      type: 'rtc:chat-message',
+    await this.chat.sendMessage({
+      channel: chatChannel(slug),
       slug,
-      message: {
-        id: saved.id,
-        senderId: saved.senderId,
-        senderName: displayName(saved.sender),
-        senderAvatarUrl: saved.sender.avatarUrl ?? null,
-        text: body,
-        createdAt: saved.createdAt.toISOString(),
-      },
+      roomId: meeting.roomId,
+      senderId: ws.userId,
+      text: body,
     });
   }
 
@@ -319,7 +290,7 @@ export class RtcMeetingService {
     slug: string,
     before: string | undefined,
     take: number,
-  ): Promise<{ hasMore: boolean; messages: MeetingChatMessageView[] }> {
+  ) {
     const meeting = await this.prisma.meeting.findUnique({ where: { slug } });
     if (!meeting) throw new NotFoundException('Meeting not found');
     const participant = await this.prisma.rtcParticipant.findUnique({
@@ -328,42 +299,7 @@ export class RtcMeetingService {
     if (!participant) {
       throw new ForbiddenException('Not a participant of this meeting');
     }
-
-    const rows = await this.prisma.rtcChatMessage.findMany({
-      where: {
-        roomId: meeting.roomId,
-        ...(before ? { createdAt: { lt: new Date(before) } } : {}),
-      },
-      orderBy: { createdAt: 'desc' },
-      take: take + 1,
-      include: { sender: true },
-    });
-    const hasMore = rows.length > take;
-    const page = rows.slice(0, take);
-    return {
-      hasMore,
-      messages: page.map((row) => {
-        let text = '';
-        try {
-          const decrypted = this.storageCrypto.decryptForRtcRoom({
-            v: row.v,
-            ct: row.ct,
-            nonce: row.nonce,
-          }) as { text?: string };
-          text = decrypted.text ?? '';
-        } catch {
-          text = '';
-        }
-        return {
-          id: row.id,
-          senderId: row.senderId,
-          senderName: displayName(row.sender),
-          senderAvatarUrl: row.sender.avatarUrl ?? null,
-          text,
-          createdAt: row.createdAt.toISOString(),
-        };
-      }),
-    };
+    return this.chat.getHistory(meeting.roomId, before, take);
   }
 
   // ==================== LiveKit-webhook-driven ====================
@@ -420,6 +356,28 @@ export class RtcMeetingService {
 
   // ==================== Internal ====================
 
+  /** Shared guard for the three host-only controls (end/remove/mute) — finds
+   *  the meeting by slug and confirms the caller is its host, or throws.
+   *  Doesn't check RtcRoomState the way mustFindActiveMeeting does: a host
+   *  ending an already-ending meeting, or muting a participant right as it
+   *  wraps up, should still resolve to a normal not-found/forbidden error
+   *  rather than a distinct "already ended" one. */
+  private async mustFindMeetingAsHost(
+    hostUserId: string,
+    slug: string,
+    forbiddenMessage: string,
+  ) {
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { slug },
+      include: { room: true },
+    });
+    if (!meeting) throw new NotFoundException('Meeting not found');
+    if (meeting.hostId !== hostUserId) {
+      throw new ForbiddenException(forbiddenMessage);
+    }
+    return meeting;
+  }
+
   private async mustFindActiveMeeting(slug: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { slug },
@@ -436,21 +394,10 @@ export class RtcMeetingService {
   private async activeParticipant(userId: string, slug: string) {
     const meeting = await this.prisma.meeting.findUnique({ where: { slug } });
     if (!meeting) return null;
-    const participant = await this.prisma.rtcParticipant.findUnique({
-      where: { roomId_userId: { roomId: meeting.roomId, userId } },
-    });
-    if (!participant || participant.leftAt) return null;
+    if (!(await this.chat.isActiveParticipant(meeting.roomId, userId))) {
+      return null;
+    }
     return meeting;
-  }
-
-  private async markParticipantLeft(
-    roomId: string,
-    userId: string,
-  ): Promise<void> {
-    await this.prisma.rtcParticipant.updateMany({
-      where: { roomId, userId, leftAt: null },
-      data: { leftAt: new Date() },
-    });
   }
 
   private async broadcastLeaveBySlugForRoom(

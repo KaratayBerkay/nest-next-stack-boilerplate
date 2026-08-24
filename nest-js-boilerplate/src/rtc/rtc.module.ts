@@ -11,8 +11,10 @@ import { RtcWebhookController } from './rtc-webhook.controller';
 import { RtcCallService } from './rtc-call.service';
 import { RtcCallWsGateway } from './rtc-call-ws.gateway';
 import { RtcMeetingService } from './rtc-meeting.service';
-import { RtcMeetingWsGateway } from './rtc-meeting-ws.gateway';
 import { RtcMeetingSweepService } from './rtc-meeting-sweep.service';
+import { RtcStreamService } from './rtc-stream.service';
+import { RtcChatService } from './rtc-chat.service';
+import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
 
 @Module({
   imports: [
@@ -29,9 +31,16 @@ import { RtcMeetingSweepService } from './rtc-meeting-sweep.service';
     RtcCallService,
     RtcCallWsGateway,
     RtcMeetingService,
-    RtcMeetingWsGateway,
     RtcMeetingSweepService,
+    RtcStreamService,
+    RtcChatService,
+    RtcChatWsGateway,
   ],
-  exports: [LiveKitService, RtcCallService, RtcMeetingService],
+  exports: [
+    LiveKitService,
+    RtcCallService,
+    RtcMeetingService,
+    RtcStreamService,
+  ],
 })
 export class RtcModule {}

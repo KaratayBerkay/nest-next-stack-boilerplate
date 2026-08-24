@@ -21,6 +21,9 @@ class Routes {
   static const v1RtcCalls = '/v1/:lang/rtc/calls';
   static const v1RtcMeetings = '/v1/:lang/rtc/meetings';
   static const v1RtcMeetingRoom = '/v1/:lang/rtc/meetings/:slug';
+  static const v1RtcLive = '/v1/:lang/rtc/live';
+  static const v1RtcGoLive = '/v1/:lang/rtc/live/go-live';
+  static const v1RtcLiveViewer = '/v1/:lang/rtc/live/:slug';
   static const v1Notification = '/v1/:lang/notification';
   static const v1Posts = '/v1/:lang/posts';
   static const v1PostDetail = '/v1/:lang/posts/:uuid';

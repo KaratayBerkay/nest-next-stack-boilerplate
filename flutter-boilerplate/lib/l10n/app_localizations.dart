@@ -11341,6 +11341,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back to meetings'**
   String get rtcBackToMeetings;
+
+  /// No description provided for @rtcGoLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Go live'**
+  String get rtcGoLive;
+
+  /// No description provided for @rtcNoLiveStreams.
+  ///
+  /// In en, this message translates to:
+  /// **'No one is live right now'**
+  String get rtcNoLiveStreams;
+
+  /// No description provided for @rtcGoLiveTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Go live'**
+  String get rtcGoLiveTitle;
+
+  /// No description provided for @rtcStreamTitlePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Friday jam session'**
+  String get rtcStreamTitlePlaceholder;
+
+  /// No description provided for @rtcStartingStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Starting…'**
+  String get rtcStartingStream;
+
+  /// No description provided for @rtcViewerCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} watching'**
+  String rtcViewerCount(Object count);
+
+  /// No description provided for @rtcEndStream.
+  ///
+  /// In en, this message translates to:
+  /// **'End stream'**
+  String get rtcEndStream;
+
+  /// No description provided for @rtcEndStreamConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'End this live stream for everyone?'**
+  String get rtcEndStreamConfirm;
+
+  /// No description provided for @rtcJoiningStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining stream…'**
+  String get rtcJoiningStream;
+
+  /// No description provided for @rtcOwnStreamNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'This is your own stream'**
+  String get rtcOwnStreamNotice;
+
+  /// No description provided for @rtcManageStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your stream'**
+  String get rtcManageStream;
+
+  /// No description provided for @rtcStreamNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This stream doesn\'t exist or has already ended'**
+  String get rtcStreamNotFound;
+
+  /// No description provided for @rtcStreamEndedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The stream has ended'**
+  String get rtcStreamEndedNotice;
+
+  /// No description provided for @rtcBackToLive.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to live'**
+  String get rtcBackToLive;
+
+  /// No description provided for @rtcBroadcasterOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for the broadcaster…'**
+  String get rtcBroadcasterOffline;
+
+  /// No description provided for @rtcLeaveStream.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get rtcLeaveStream;
 }
 
 class _AppLocalizationsDelegate

@@ -95,3 +95,94 @@ export const MEETING_CHAT_MESSAGES_QUERY = `
     }
   }
 `;
+
+const STREAM_FIELDS = `
+  id
+  title
+  slug
+  isLive
+  peakViewerCount
+  viewerCount
+  startedAt
+  endedAt
+  room {
+    id
+    state
+    startedAt
+    endedAt
+  }
+  broadcaster {
+    id
+    name
+    email
+    avatarUrl
+  }
+`;
+
+export const LIVE_STREAMS_QUERY = `
+  query LiveStreams {
+    liveStreams {
+      ${STREAM_FIELDS}
+    }
+  }
+`;
+
+export const STREAM_BY_SLUG_QUERY = `
+  query StreamBySlug($slug: String!) {
+    streamBySlug(slug: $slug) {
+      ${STREAM_FIELDS}
+    }
+  }
+`;
+
+export const GO_LIVE_MUTATION = `
+  mutation GoLive($title: String!) {
+    goLive(title: $title) {
+      token
+      roomName
+      stream {
+        ${STREAM_FIELDS}
+      }
+    }
+  }
+`;
+
+export const JOIN_STREAM_AS_VIEWER_MUTATION = `
+  mutation JoinStreamAsViewer($slug: String!) {
+    joinStreamAsViewer(slug: $slug) {
+      token
+      roomName
+      stream {
+        ${STREAM_FIELDS}
+      }
+    }
+  }
+`;
+
+export const LEAVE_STREAM_AS_VIEWER_MUTATION = `
+  mutation LeaveStreamAsViewer($slug: String!) {
+    leaveStreamAsViewer(slug: $slug)
+  }
+`;
+
+export const END_STREAM_MUTATION = `
+  mutation EndStream($slug: String!) {
+    endStream(slug: $slug)
+  }
+`;
+
+export const STREAM_CHAT_MESSAGES_QUERY = `
+  query StreamChatMessages($slug: String!, $before: String, $take: Int) {
+    streamChatMessages(slug: $slug, before: $before, take: $take) {
+      hasMore
+      messages {
+        id
+        senderId
+        senderName
+        senderAvatarUrl
+        text
+        createdAt
+      }
+    }
+  }
+`;

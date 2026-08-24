@@ -16,7 +16,7 @@ import { useMessages } from "@/lib/i18n/MessagesProvider";
 const SECTIONS = [
   { key: "calls", Icon: IconPhoneCall, href: "calls", live: true },
   { key: "meetings", Icon: IconUsers, href: "meetings", live: true },
-  { key: "live", Icon: IconBroadcast, href: "live", live: false },
+  { key: "live", Icon: IconBroadcast, href: "live", live: true },
 ] as const;
 
 export function RtcHubView() {

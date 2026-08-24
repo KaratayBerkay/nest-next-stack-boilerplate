@@ -127,7 +127,7 @@ phases.
 1. **LiveKit infra + token-minting + tier-limit foundation + empty nav shell** — ✅ done, see below.
 2. **1:1 calls end-to-end, tier-capped from the start** — ✅ done, see below.
 3. **Group meetings end-to-end, caps + encrypted chat from the start** — ✅ done, see below.
-4. **Live streaming end-to-end, go-live gated, chat encrypted from the start** — not started.
+4. **Live streaming end-to-end, go-live gated, chat encrypted from the start** — ✅ done, see below.
 5. **Polish / cross-cutting** (push notifications, LiveKit Egress recording/HLS,
    moderation, call-history UI) — not started.
 
@@ -564,3 +564,192 @@ already existed from Phase 1.**
   analyzer pass, catching anything analyzer-clean-but-uncompilable. Not installed/run on a
   real device in this pass — live multi-device meeting verification needs actual camera/mic
   hardware, same carve-out Phase 2 used for calls.
+
+---
+
+## Phase 4 — Live streaming end-to-end, go-live gated, chat encrypted from the start
+
+**Status: done. Backend verified against a live local stack with a real GraphQL round trip
+(FREE-tier `goLive` blocked, tier upgraded, `goLive` succeeds, a FREE-tier viewer joins
+ungated, chat/discovery queries round-trip, a non-broadcaster is rejected from `endStream`,
+the real broadcaster ends it, `psql` confirms every DB state transition). Web verified via a
+live rebuild/boot + typecheck/lint. Mobile verified via `flutter analyze`/`build apk
+--release`. No schema changes needed — `LiveStream` already existed from Phase 1.**
+
+### Backend (`nest-js-boilerplate`)
+
+- `src/rtc/rtc-stream.service.ts` (new): `goLive` creates the `RtcRoom`(STREAM) + LiveKit
+  room and mints a publisher token in one call — unlike meetings' create-then-join split,
+  going live IS joining as broadcaster, so there's no separate "join my own stream" step.
+  `liveStreams()` lists `WHERE isLive ORDER BY startedAt DESC` (public discovery);
+  `joinStreamAsViewer` mints a subscriber-only token (`canPublish: false`) and is completely
+  ungated — every tier can watch. `endStream` is broadcaster-only. No duration cap exists
+  for streams (unlike calls/meetings) — the plan never asked for one, and "going live" isn't
+  a scarce resource the same way a call slot or a meeting seat is.
+- **Viewer count is computed from LiveKit's own `listParticipants` at read time**
+  (`LiveKitService.listParticipantCount`, already present since Phase 1), never from a
+  Postgres count — `LiveStream.peakViewerCount` is a historical high-water mark only,
+  updated opportunistically inside `joinStreamAsViewer` when the live count exceeds it. The
+  broadcaster occupies one LiveKit participant slot too, so `getViewerCount` subtracts 1
+  while `isLive` so "3 viewers" never silently includes the streamer. Exposed as a
+  `@ResolveField(() => Int) viewerCount` on `RtcResolver` (`@Resolver(() => LiveStream)`,
+  changed from a bare `@Resolver()` — the same shape `post.resolver.ts`'s
+  `@Resolver(() => Post)` already uses, freely mixing root `Query`/`Mutation` fields with a
+  type-scoped `@ResolveField`), reading `stream.room.livekitRoomName` off the already-loaded
+  parent object — the id-codec's GraphQL schema transformer only rewrites a field's *return*
+  value, never the `@Parent()` source it receives, so this sees the real internal room name
+  regardless of what the client-facing `room.id`/`stream.id` fields get encrypted to.
+- **`goLive` is gated `@UseGuards(TierGuard) @MinTier(MIN_TIER_TO_GO_LIVE)`** (already-existing
+  MEDIUM constant from Phase 1's `rtc-tier-limits.constants.ts`, unused until now) — the
+  exact `TierGuard`/`@MinTier` shape confirmed live at `post.resolver.ts:101-102` in earlier
+  phases. `joinStreamAsViewer`/`liveStreams`/`streamBySlug` carry no such guard.
+- **Stream chat reuses the meeting chat mechanism with zero new design cost**, exactly as the
+  plan predicted — but the two services sharing the *same* `rtc:join-room-chat`/
+  `rtc:leave-room-chat`/`rtc:chat-message` WS frame types (`RealtimeGateway.registerHandler`
+  only allows one handler per frame type) meant Phase 3's `RtcMeetingWsGateway` couldn't
+  simply be copied; it's renamed/broadened to `rtc-chat-ws.gateway.ts`'s `RtcChatWsGateway`,
+  which calls *both* `RtcMeetingService` and `RtcStreamService` on every chat frame. This is
+  safe because meeting slugs and stream slugs are two separate randomly-generated
+  namespaces — each service's own `activeParticipant`/slug-lookup guard silently no-ops on a
+  slug it doesn't own, so at most one of the two calls ever actually does anything.
+- **New `src/rtc/rtc-chat.service.ts`**, extracted mid-phase after the meeting/stream chat
+  methods showed up as real, flagged duplication (`sendChatMessage`/`joinRoomChat`/
+  `getChatHistory`/`markParticipantLeft` were ~150 lines near-identical between the two
+  services). Owns everything downstream of "I already know this is an active participant of
+  `roomId`, addressed by this WS channel key" — encrypt-and-persist-and-broadcast a message,
+  paginate-and-decrypt history, mark a participant left, and the generic half of the
+  active-participant check (`isActiveParticipant(roomId, userId)`). Slug resolution stays in
+  each domain service (a `Meeting` lookup vs. a `LiveStream` lookup genuinely differs).
+  `RtcMeetingService`/`RtcStreamService` both take `RtcChatService` in their constructor now
+  instead of `StorageCryptoService` directly.
+- Also extracted while in the neighborhood: `RtcMeetingService.mustFindMeetingAsHost` — the
+  "find meeting by slug, confirm caller is host, or throw" guard that `endMeeting`/
+  `removeMeetingParticipant`/`muteMeetingParticipant` had each hand-copied.
+- `src/rtc/rtc-webhook.controller.ts` (modified): `handleRoomFinished`/`handleParticipantLeft`
+  now also branch on `RtcRoomKind.STREAM`, delegating to new
+  `RtcStreamService.handleRoomEndedByLiveKit`/`notifyViewerLeftByLiveKit` — same
+  webhook-is-authoritative pattern as calls/meetings. A dropped **broadcaster** connection
+  does *not* end the stream via `participant_left` (mirrors meetings' host-leaves policy
+  exactly) — only an explicit `endStream` or LiveKit's own empty/departure-timeout-driven
+  `room_finished` ends it.
+- `src/rtc/rtc.resolver.ts` (extended): `liveStreams`/`streamBySlug`/`streamChatMessages`
+  queries, `goLive`/`joinStreamAsViewer`/`leaveStreamAsViewer`/`endStream` mutations, a
+  shared `LiveStreamJoinResult` `@ObjectType` (`{token, roomName, stream}` — one type for
+  both `goLive` and `joinStreamAsViewer` since the calling mutation already implies the
+  caller's role, unlike `JoinMeetingResult`, which needs an explicit `role` field because one
+  mutation serves both host and participant).
+- `src/rtc/rtc.module.ts`: registered `RtcStreamService`/`RtcChatService`, renamed
+  `RtcMeetingWsGateway` provider to `RtcChatWsGateway`.
+- **Verified**: `tsc --noEmit` and scoped `eslint --fix` clean on every new/changed file (two
+  real prettier findings auto-fixed, two `prefer-optional-chain` warnings left as warnings —
+  pre-existing severity level in this repo's eslint config, not new). Rebuilt and booted the
+  real backend image clean (`GraphQLModule` mapped `/graphql`, `Nest application successfully
+  started`, no errors in logs — would have crash-looped on any resolver type error the same
+  way Phase 3's `senderAvatarUrl` bug did). Then a full live GraphQL round trip against the
+  running container: registered a FREE-tier test user, confirmed `goLive` correctly rejects
+  with `EX_FORBIDDEN "Requires MEDIUM subscription or higher"`; promoted the user to MEDIUM
+  via `psql` and re-logged-in (tier is snapshotted into the session at login, not re-read
+  live, so a DB-only tier change needs a fresh login to take effect); `goLive` succeeded and
+  minted a real LiveKit publisher token; registered a second FREE-tier user who joined as
+  viewer with a subscriber-only token (`canPublish: false`), confirming viewing is genuinely
+  ungated; `streamChatMessages` round-tripped correctly (empty — sending a message requires a
+  real WS connection curl can't establish, same limitation Phase 3 accepted); the viewer was
+  correctly rejected from `endStream` (`"Only the broadcaster can end this stream"`);
+  `liveStreams` discovery correctly listed the stream while live and excluded it once ended;
+  the real broadcaster's `endStream` succeeded and a direct `psql` read confirmed every state
+  transition: `LiveStream.isLive → false` + `endedAt` set, `RtcRoom.state → ENDED` + its own
+  `endedAt` set, and both the `BROADCASTER` and `VIEWER` `RtcParticipant` rows got `leftAt`
+  populated by the bulk end.
+
+### Frontend (`next-js-boilerplate`)
+
+- Same GraphQL-via-BFF-route pattern Phase 3 established for meetings (not calls' direct-REST
+  shape) — `src/app/api/rtc/streams/**` (7 new route handlers: list/go-live, `[slug]`,
+  `[slug]/join`, `/leave`, `/end`, `/chat`) wrapping `graphqlFetch` calls;
+  `src/lib/graphql/rtc.ts` gained the stream query/mutation strings + a shared `STREAM_FIELDS`
+  fragment (mirrors `MEETING_FIELDS`) that includes `viewerCount`.
+- `src/hooks/rtc/useLiveKitStreamRoom.ts` (new): the single-broadcaster analog of Phase 3's
+  `useLiveKitMeetingRoom` — a stream has exactly one video that matters, never a per-viewer
+  grid (every viewer that joins the LiveKit room *is* a `RemoteParticipant`, but none are
+  ever rendered). `isLocalBroadcaster` picks whether "the broadcaster" is the local
+  participant (go-live page, publish-capable token) or a remote one found by identity
+  (viewer page, subscribe-only token) — one hook drives both pages. Same react-compiler-safe
+  contract as the meeting hook: only ever returns `Track` objects and plain state, never a
+  DOM ref — `src/components/rtc/StreamPlayer.tsx` owns its own local
+  `useRef`/`useEffect` attach/detach pair, mirroring `MeetingParticipantTile`.
+- `src/views/rtc/RtcGoLiveView.tsx` (new): wraps the actual form/live component
+  (`RtcGoLiveForm`) in `<TierGate min="MEDIUM" fallback={<AccessDenied .../>}>` *inside* the
+  client view, not in the server `page.tsx` — `AccessDenied`'s title/message/ctaLabel need
+  `useMessages()` for localization, which a server component can't call directly. One page,
+  two phases (setup form → live broadcasting view) instead of a second route — going live
+  and managing the live stream are the same continuous session, so there's no
+  refresh-resilience gap to design around the way calls/meetings' overlay-vs-route tradeoff
+  (Open judgment call 6) has to.
+- `src/views/rtc/RtcLiveViewerView.tsx` (new): join-on-mount, single video player, chat panel,
+  live viewer-count updates via `rtc:stream-viewer-joined`/`-left`, `rtc:stream-ended`
+  handling. If the joining user turns out to be the stream's own broadcaster (checked against
+  `stream.broadcaster.id`), shows an "this is your own stream" notice with a link to the
+  go-live management page instead of opening a second LiveKit connection under the same
+  identity.
+- `src/views/rtc/RtcLiveDiscoveryView.tsx` (new): a card grid (`liveStreams` query),
+  broadcaster avatar/name, live viewer-count badge, a "Go live" button linking to
+  `/rtc/live/go-live`. `src/views/rtc/RtcHubView.tsx` — the Live card is now a live link too
+  (all three RTC sections are live as of this phase).
+- `next.config.ts`'s Permissions-Policy override (`/v1/:lang/rtc/:path*`, added in Phase 1)
+  already covers `/rtc/live/**` — confirmed by inspection, no change needed, same as Phase 3.
+- `messages/{en,tr}/rtc/messages.json` + regenerated `src/generated/i18n-messages*`: ~20 new
+  keys for the live-streaming UI.
+- **Verified**: `tsc --noEmit` and scoped `eslint --fix` clean on every new/changed file (one
+  real fix: a `Badge` `variant="destructive"` that doesn't exist on this component's variant
+  union — corrected to `"error"`, the closest match already in `BadgeVariant`). Rebuilt and
+  booted the real Next.js image clean (production `next build` succeeded, which — unlike a
+  bare `tsc --noEmit` — also runs Next's own static analysis/route generation over every new
+  page). Live multi-viewer stream verification (screen-share, real camera/mic hardware, the
+  viewer-count badge updating live in two real browser tabs) is the user's to do by hand,
+  same carve-out Phase 2/3 used.
+
+### Mobile (`flutter-boilerplate`)
+
+- `lib/types/rtc/stream.dart` + `lib/api/server/rtc/stream_fields.dart` +
+  `lib/api/server/rtc/streams_{list,go_live,get,join,leave,end,chat}.dart` (8 files) +
+  `lib/api/client/rtc/streams_{actions,query,chat_live}.dart` — exact mirror of the meeting
+  Dart layer's shape, GraphQL-over-Dio straight to `/graphql` (no BFF on mobile, same as
+  Phase 3).
+- `lib/lib/realtime/realtime_provider.dart` (modified): the existing `rtc:chat-message` case
+  now tries *both* `meetingChatProvider(slug)` and `streamChatProvider(slug)` (each guarded
+  by its own `ref.exists`, same reasoning as the backend's `RtcChatWsGateway` — the two are
+  separate slug namespaces, so at most one ever matches). Three new cases —
+  `rtc:stream-ended`, `rtc:stream-viewer-joined`/`-left` — write into a new
+  `lib/lib/rtc/stream_signal.dart` family notifier (`StreamSignal{seq, ended, viewerCount}`),
+  the stream analog of `MeetingSignal`.
+- `lib/views/rtc/go_live_page_view.dart` (new): `RtcGoLivePageContent` wraps the actual form
+  (`_RtcGoLiveForm`) in this app's own `TierGate` widget (`lib/lib/tier_view.dart` —
+  `allowedTiers: const [Tier.medium, Tier.premium]`, `freeWidget: _RtcGoLiveForm(...)` reused
+  as the fallback slot for the medium tier too since no `mediumWidget` is given; a tier
+  outside `allowedTiers` falls through to the widget's own built-in, non-localized
+  `_UpgradePrompt` — a pre-existing limitation of this widget, not something this phase
+  introduced). `_RtcGoLiveForm` owns the LiveKit `Room` directly (publisher token, camera
+  preview via `VideoTrackRenderer`), same pattern as `meeting_room_page_view.dart`.
+- `lib/views/rtc/live_viewer_page_view.dart` (new): `RtcLiveViewerPageContent` owns its own
+  `Room` (subscriber token), finds the broadcaster's video by matching `Participant.identity`
+  against `stream.broadcaster.id` rather than rendering every remote participant — a stream
+  has exactly one video that matters, same reasoning as the web hook.
+- `lib/views/rtc/live_discovery_page_view.dart` (new) + `lib/views/rtc/page_view.dart`
+  (modified): Live card now navigates to a real discovery list instead of "Coming soon" — all
+  three RTC hub cards are live as of this phase. Router entries: `/v1/:lang/rtc/live`,
+  `/v1/:lang/rtc/live/go-live`, `/v1/:lang/rtc/live/:slug` (declared in that order —
+  `go-live`'s static segment must be registered before the dynamic `:slug` sibling, same
+  precedent as `meetings` before `meetings/:slug`).
+- `lib/l10n/app_{en,tr}.arb` + regenerated `app_localizations*.dart`: ~17 new `rtc*` keys.
+  `flutter gen-l10n` infers a placeholder method (`String rtcViewerCount(Object count)`) from
+  `{count}` in the message even with no explicit `@rtcViewerCount` metadata block — confirmed
+  by checking `rtcMeetingLimitWarning`'s own generated signature from Phase 2 before assuming
+  the simpler ARB entry would work.
+- **Verified**: `flutter analyze` clean (whole project, after fixing two lints this phase's
+  own change to `page_view.dart` surfaced — the RTC hub's `sections` tuple list no longer has
+  any `null` route now that Live is live too, so Dart narrowed the tuple's route field from
+  `String?` to `String`, making the old `route != null`/`route == null` branches statically
+  dead; simplified rather than suppressed), `dart format` clean on every touched/new file, and
+  `flutter build apk --release` — a real compile (124.9MB), not just an analyzer pass. Not
+  installed/run on a real device — live multi-device stream verification needs actual
+  camera/mic hardware, same carve-out Phase 2/3 used.

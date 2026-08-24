@@ -6015,4 +6015,55 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcBackToMeetings => 'Toplantılara dön';
+
+  @override
+  String get rtcGoLive => 'Canlı yayına geç';
+
+  @override
+  String get rtcNoLiveStreams => 'Şu anda kimse canlı yayında değil';
+
+  @override
+  String get rtcGoLiveTitle => 'Canlı yayına geç';
+
+  @override
+  String get rtcStreamTitlePlaceholder => 'ör. Cuma akşamı sohbeti';
+
+  @override
+  String get rtcStartingStream => 'Başlatılıyor…';
+
+  @override
+  String rtcViewerCount(Object count) {
+    return '$count izleyici';
+  }
+
+  @override
+  String get rtcEndStream => 'Yayını bitir';
+
+  @override
+  String get rtcEndStreamConfirm =>
+      'Bu canlı yayın herkes için sona erdirilsin mi?';
+
+  @override
+  String get rtcJoiningStream => 'Yayına katılıyor…';
+
+  @override
+  String get rtcOwnStreamNotice => 'Bu sizin kendi yayınınız';
+
+  @override
+  String get rtcManageStream => 'Yayınınızı yönetin';
+
+  @override
+  String get rtcStreamNotFound => 'Bu yayın mevcut değil veya sona erdi';
+
+  @override
+  String get rtcStreamEndedNotice => 'Yayın sona erdi';
+
+  @override
+  String get rtcBackToLive => 'Canlı yayına dön';
+
+  @override
+  String get rtcBroadcasterOffline => 'Yayıncı bekleniyor…';
+
+  @override
+  String get rtcLeaveStream => 'Ayrıl';
 }

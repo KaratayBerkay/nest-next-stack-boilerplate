@@ -5,16 +5,22 @@ import {
   Int,
   Mutation,
   ObjectType,
+  Parent,
   Query,
+  ResolveField,
   Resolver,
 } from '@nestjs/graphql';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { Meeting } from '../@generated/meeting/meeting.model';
+import { LiveStream } from '../@generated/live-stream/live-stream.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TIER_RANK } from '../authorization/tier-rank';
+import { TierGuard } from '../authorization/tier.guard';
+import { MinTier } from '../authorization/min-tier.decorator';
 import { RtcMeetingService } from './rtc-meeting.service';
+import { RtcStreamService } from './rtc-stream.service';
 import {
   FREE_CALL_MAX_DURATION_MINUTES,
   MIN_TIER_TO_GO_LIVE,
@@ -83,10 +89,32 @@ class RtcChatMessagesPage {
   hasMore: boolean;
 }
 
+// Shared shape for both goLive and joinStreamAsViewer — the two mutations
+// already imply which role the caller has (broadcaster vs. viewer), so
+// there's no separate `role` field the way JoinMeetingResult needs one.
+@ObjectType()
+class LiveStreamJoinResult {
+  @Field()
+  token: string;
+
+  @Field()
+  roomName: string;
+
+  @Field(() => LiveStream)
+  stream: LiveStream;
+}
+
+// Type-argument'd so @ResolveField(viewerCount) below has a parent type to
+// attach to — this doesn't stop the class from also declaring root Query/
+// Mutation fields unrelated to LiveStream (see post.resolver.ts's identical
+// @Resolver(() => Post) shape, which mixes both).
 @UseGuards(SessionAuthGuard)
-@Resolver()
+@Resolver(() => LiveStream)
 export class RtcResolver {
-  constructor(private readonly meetings: RtcMeetingService) {}
+  constructor(
+    private readonly meetings: RtcMeetingService,
+    private readonly streams: RtcStreamService,
+  ) {}
 
   @Query(() => RtcTierLimits)
   rtcTierLimits(@CurrentUser() user: JwtUser): RtcTierLimits {
@@ -180,5 +208,64 @@ export class RtcResolver {
       muted,
     );
     return true;
+  }
+
+  // ==================== Live streaming ====================
+
+  @Query(() => [LiveStream])
+  liveStreams() {
+    return this.streams.liveStreams();
+  }
+
+  @Query(() => LiveStream, { nullable: true })
+  streamBySlug(@Args('slug') slug: string) {
+    return this.streams.streamBySlug(slug);
+  }
+
+  @Query(() => RtcChatMessagesPage)
+  async streamChatMessages(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+    @Args('before', { nullable: true }) before?: string,
+    @Args('take', { type: () => Int, nullable: true }) take?: number,
+  ) {
+    return this.streams.getChatHistory(
+      user.userId,
+      slug,
+      before,
+      take ? Math.min(Math.max(take, 1), 100) : 50,
+    );
+  }
+
+  @UseGuards(TierGuard)
+  @MinTier(MIN_TIER_TO_GO_LIVE)
+  @Mutation(() => LiveStreamJoinResult)
+  goLive(@CurrentUser() user: JwtUser, @Args('title') title: string) {
+    return this.streams.goLive(user.userId, title);
+  }
+
+  @Mutation(() => LiveStreamJoinResult)
+  joinStreamAsViewer(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
+    return this.streams.joinStreamAsViewer(user.userId, slug);
+  }
+
+  @Mutation(() => Boolean)
+  async leaveStreamAsViewer(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    await this.streams.leaveStreamAsViewer(user.userId, slug);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  async endStream(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
+    await this.streams.endStream(user.userId, slug);
+    return true;
+  }
+
+  @ResolveField(() => Int)
+  async viewerCount(@Parent() stream: LiveStream): Promise<number> {
+    return this.streams.getViewerCount(stream);
   }
 }

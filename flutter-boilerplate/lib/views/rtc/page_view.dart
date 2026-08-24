@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart' hide Badge;
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../components/ui/badge/badge.dart';
 import '../../components/ui/card/card.dart';
 import '../../components/ui/card/card_content.dart';
 import '../../components/ui/card/card_description.dart';
@@ -34,7 +33,12 @@ class RtcPageContent extends StatelessWidget {
         t.rtcMeetingsDescription,
         '/v1/$lang/rtc/meetings',
       ),
-      (Icons.podcasts_outlined, t.rtcLiveTitle, t.rtcLiveDescription, null),
+      (
+        Icons.podcasts_outlined,
+        t.rtcLiveTitle,
+        t.rtcLiveDescription,
+        '/v1/$lang/rtc/live',
+      ),
     ];
 
     return SafeArea(
@@ -52,7 +56,7 @@ class RtcPageContent extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: InkWell(
-                onTap: route != null ? () => context.push(route) : null,
+                onTap: () => context.push(route),
                 child: CardWidget(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,16 +71,7 @@ class RtcPageContent extends StatelessWidget {
                         ),
                       ),
                       CardContent(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            CardDescription(text: description),
-                            if (route == null) ...[
-                              const SizedBox(height: 8),
-                              Badge(text: t.rtcComingSoon),
-                            ],
-                          ],
-                        ),
+                        child: CardDescription(text: description),
                       ),
                     ],
                   ),

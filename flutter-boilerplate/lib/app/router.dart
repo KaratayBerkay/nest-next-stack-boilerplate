@@ -67,6 +67,9 @@ import '../views/routing/item_content.dart';
 import '../views/routing/post_page.dart';
 import '../views/routing/slug_page.dart';
 import '../views/rtc/calls_page_view.dart';
+import '../views/rtc/go_live_page_view.dart';
+import '../views/rtc/live_discovery_page_view.dart';
+import '../views/rtc/live_viewer_page_view.dart';
 import '../views/rtc/meeting_room_page_view.dart';
 import '../views/rtc/meetings_list_page_view.dart';
 import '../views/rtc/page_view.dart';
@@ -344,6 +347,28 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/v1/:lang/rtc/meetings/:slug',
             name: 'v1RtcMeetingRoom',
             builder: (_, state) => RtcMeetingRoomPageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+              slug: state.pathParameters['slug'] ?? '',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/rtc/live',
+            name: 'v1RtcLive',
+            builder: (_, state) => RtcLiveDiscoveryPageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/rtc/live/go-live',
+            name: 'v1RtcGoLive',
+            builder: (_, state) => RtcGoLivePageContent(
+              lang: state.pathParameters['lang'] ?? 'en',
+            ),
+          ),
+          GoRoute(
+            path: '/v1/:lang/rtc/live/:slug',
+            name: 'v1RtcLiveViewer',
+            builder: (_, state) => RtcLiveViewerPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
               slug: state.pathParameters['slug'] ?? '',
             ),

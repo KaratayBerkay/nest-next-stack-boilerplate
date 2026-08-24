@@ -2052,5 +2052,21 @@
   "rtcMeetingRemovedNotice": "You were removed from the meeting",
   "rtcMeetingLimitWarning": "Meeting ends in {seconds}s — upgrade for longer meetings",
   "rtcYouLabel": "You",
-  "rtcBackToMeetings": "Back to meetings"
+  "rtcBackToMeetings": "Back to meetings",
+  "rtcGoLive": "Go live",
+  "rtcNoLiveStreams": "No one is live right now",
+  "rtcGoLiveTitle": "Go live",
+  "rtcStreamTitlePlaceholder": "e.g. Friday jam session",
+  "rtcStartingStream": "Starting…",
+  "rtcViewerCount": "{count} watching",
+  "rtcEndStream": "End stream",
+  "rtcEndStreamConfirm": "End this live stream for everyone?",
+  "rtcJoiningStream": "Joining stream…",
+  "rtcOwnStreamNotice": "This is your own stream",
+  "rtcManageStream": "Manage your stream",
+  "rtcStreamNotFound": "This stream doesn't exist or has already ended",
+  "rtcStreamEndedNotice": "The stream has ended",
+  "rtcBackToLive": "Back to live",
+  "rtcBroadcasterOffline": "Waiting for the broadcaster…",
+  "rtcLeaveStream": "Leave"
 }

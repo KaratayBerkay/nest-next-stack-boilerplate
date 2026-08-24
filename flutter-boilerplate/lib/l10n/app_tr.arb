@@ -2021,5 +2021,21 @@
   "rtcMeetingRemovedNotice": "Toplantıdan çıkarıldınız",
   "rtcMeetingLimitWarning": "Toplantı {seconds} sn içinde sona eriyor — daha uzun toplantılar için yükseltin",
   "rtcYouLabel": "Siz",
-  "rtcBackToMeetings": "Toplantılara dön"
+  "rtcBackToMeetings": "Toplantılara dön",
+  "rtcGoLive": "Canlı yayına geç",
+  "rtcNoLiveStreams": "Şu anda kimse canlı yayında değil",
+  "rtcGoLiveTitle": "Canlı yayına geç",
+  "rtcStreamTitlePlaceholder": "ör. Cuma akşamı sohbeti",
+  "rtcStartingStream": "Başlatılıyor…",
+  "rtcViewerCount": "{count} izleyici",
+  "rtcEndStream": "Yayını bitir",
+  "rtcEndStreamConfirm": "Bu canlı yayın herkes için sona erdirilsin mi?",
+  "rtcJoiningStream": "Yayına katılıyor…",
+  "rtcOwnStreamNotice": "Bu sizin kendi yayınınız",
+  "rtcManageStream": "Yayınınızı yönetin",
+  "rtcStreamNotFound": "Bu yayın mevcut değil veya sona erdi",
+  "rtcStreamEndedNotice": "Yayın sona erdi",
+  "rtcBackToLive": "Canlı yayına dön",
+  "rtcBroadcasterOffline": "Yayıncı bekleniyor…",
+  "rtcLeaveStream": "Ayrıl"
 }

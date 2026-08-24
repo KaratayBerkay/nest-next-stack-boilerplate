@@ -6002,4 +6002,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcBackToMeetings => 'Back to meetings';
+
+  @override
+  String get rtcGoLive => 'Go live';
+
+  @override
+  String get rtcNoLiveStreams => 'No one is live right now';
+
+  @override
+  String get rtcGoLiveTitle => 'Go live';
+
+  @override
+  String get rtcStreamTitlePlaceholder => 'e.g. Friday jam session';
+
+  @override
+  String get rtcStartingStream => 'Starting…';
+
+  @override
+  String rtcViewerCount(Object count) {
+    return '$count watching';
+  }
+
+  @override
+  String get rtcEndStream => 'End stream';
+
+  @override
+  String get rtcEndStreamConfirm => 'End this live stream for everyone?';
+
+  @override
+  String get rtcJoiningStream => 'Joining stream…';
+
+  @override
+  String get rtcOwnStreamNotice => 'This is your own stream';
+
+  @override
+  String get rtcManageStream => 'Manage your stream';
+
+  @override
+  String get rtcStreamNotFound =>
+      'This stream doesn\'t exist or has already ended';
+
+  @override
+  String get rtcStreamEndedNotice => 'The stream has ended';
+
+  @override
+  String get rtcBackToLive => 'Back to live';
+
+  @override
+  String get rtcBroadcasterOffline => 'Waiting for the broadcaster…';
+
+  @override
+  String get rtcLeaveStream => 'Leave';
 }

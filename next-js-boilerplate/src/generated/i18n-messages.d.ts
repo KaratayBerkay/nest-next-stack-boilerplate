@@ -11510,6 +11510,26 @@ export type I18nMessages = {
       "meetingLimitWarning": string;
       "youLabel": string;
       "backToMeetings": string;
+      "goLive": string;
+      "noLiveStreams": string;
+      "goLiveTitle": string;
+      "streamTitleLabel": string;
+      "streamTitlePlaceholder": string;
+      "startingStream": string;
+      "viewerCount": string;
+      "endStream": string;
+      "endStreamConfirm": string;
+      "joiningStream": string;
+      "ownStreamNotice": string;
+      "manageStream": string;
+      "streamNotFound": string;
+      "streamEndedNotice": string;
+      "backToLive": string;
+      "broadcasterOffline": string;
+      "leaveStream": string;
+      "goLiveUpsellTitle": string;
+      "goLiveUpsellMessage": string;
+      "upgradeButton": string;
     }
 
   "settings": {
