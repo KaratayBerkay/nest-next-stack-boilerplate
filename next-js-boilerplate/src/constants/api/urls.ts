@@ -128,6 +128,8 @@ export const VAULT_SECRET_PATH =
 
 export const RTC_CALLS_URL = "/api/rtc/calls" as const;
 export const RTC_ACTIVE_CALL_URL = "/api/rtc/calls/active" as const;
+export const RTC_MEETINGS_URL = "/api/rtc/meetings" as const;
+export const RTC_MEETINGS_PREFIX = "/api/rtc/meetings/" as const;
 
 export const NOTIFICATIONS_URL = "/api/notifications" as const;
 export const NOTIFICATIONS_UNREAD_COUNT_URL =

@@ -11475,6 +11475,41 @@ export type I18nMessages = {
       "userOffline": string;
       "userBusy": string;
       "cannotCallSelf": string;
+      "myMeetingsTitle": string;
+      "noMeetings": string;
+      "newMeeting": string;
+      "newMeetingTitle": string;
+      "meetingTitleLabel": string;
+      "meetingTitlePlaceholder": string;
+      "create": string;
+      "creating": string;
+      "join": string;
+      "copyLink": string;
+      "linkCopied": string;
+      "meetingEndedLabel": string;
+      "meetingActiveLabel": string;
+      "hostLabel": string;
+      "participantsTitle": string;
+      "leaveMeeting": string;
+      "endMeeting": string;
+      "endMeetingConfirm": string;
+      "chatTitle": string;
+      "chatPlaceholder": string;
+      "send": string;
+      "noChatMessages": string;
+      "screenShareOn": string;
+      "screenShareOff": string;
+      "muteParticipant": string;
+      "removeParticipant": string;
+      "removeParticipantConfirm": string;
+      "joiningMeeting": string;
+      "meetingNotFound": string;
+      "meetingFull": string;
+      "meetingEndedNotice": string;
+      "meetingRemovedNotice": string;
+      "meetingLimitWarning": string;
+      "youLabel": string;
+      "backToMeetings": string;
     }
 
   "settings": {

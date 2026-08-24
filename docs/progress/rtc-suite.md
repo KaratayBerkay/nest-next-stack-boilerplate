@@ -126,7 +126,7 @@ phases.
 
 1. **LiveKit infra + token-minting + tier-limit foundation + empty nav shell** — ✅ done, see below.
 2. **1:1 calls end-to-end, tier-capped from the start** — ✅ done, see below.
-3. **Group meetings end-to-end, caps + encrypted chat from the start** — not started.
+3. **Group meetings end-to-end, caps + encrypted chat from the start** — ✅ done, see below.
 4. **Live streaming end-to-end, go-live gated, chat encrypted from the start** — not started.
 5. **Polish / cross-cutting** (push notifications, LiveKit Egress recording/HLS,
    moderation, call-history UI) — not started.
@@ -239,19 +239,33 @@ phase.
    above.
 2. 1:1 calls are ungated-but-duration-capped (free for every tier, FREE cap 15 min).
 3. Call duration cap uses `MIN(caller tier, callee tier)`.
-4. Meeting caps are keyed to the host's tier only.
+4. Meeting caps are keyed to the host's tier only — implemented as designed: persisted on
+   `Meeting.maxParticipants`/`maxDurationMinutes` at creation time, never recomputed from
+   a live host-tier lookup.
 5. Ring-timeout value (45s, ported from the reference repo's own client-side convention)
    and the `MISSED` call-end state — implemented in Phase 2, see below.
 6. No dedicated route for an active 1:1 call (global overlay, no URL) — implemented in
    Phase 2 as a global `RtcCallOverlay`/`RtcCallProvider` (web) and `RtcCallOverlay`/
    `rtcCallProvider` (Flutter), mounted app-shell-wide, not per-page.
-7. Meeting-host-leaves policy: "meeting continues, no ownership transfer" — Phase 3.
-8. REST-via-BFF as the frontend's authoritative integration path, GraphQL secondary —
-   Phase 2+.
-9. Meeting duration-cap enforcement mechanism (periodic sweep vs. a possible native
-   LiveKit per-room max-duration config) — needs an implementation-time check against the
-   pinned `livekit/livekit-server:v1.8` image before Phase 3 commits to the sweep-only
-   design.
+7. Meeting-host-leaves policy: "meeting continues, no ownership transfer" — implemented in
+   Phase 3 exactly as recommended: `leaveMeeting` never special-cases the host, `endMeeting`
+   is the only host-driven termination, and LiveKit's own empty-room `departureTimeout` is
+   the backstop for a host who vanishes without clicking End.
+8. REST-via-BFF as the frontend's authoritative integration path, GraphQL secondary — held
+   for calls (REST), but Meeting CRUD is GraphQL end-to-end per the plan's own explicit
+   call-out ("Meeting CRUD & Stream endpoints — RtcResolver (GraphQL)"). Phase 3's Next.js
+   BFF route handlers still wrap that GraphQL traffic in a REST-shaped surface for the
+   browser (mirrors the pre-existing `api-keys` feature's own GraphQL-via-BFF-route
+   pattern) — Flutter calls `/graphql` directly, no BFF layer on mobile.
+9. Meeting duration-cap enforcement mechanism: confirmed via the pinned
+   `livekit/livekit-server` version's `livekit-server-sdk` `CreateOptions` type — no native
+   per-room max-duration field exists (only `emptyTimeout`/`departureTimeout`/
+   `maxParticipants`), so Phase 3 ships the periodic-sweep design as planned:
+   `RtcMeetingSweepService` (`@Interval`, 30s) scans active MEETING rooms and force-ends
+   any past `startedAt + maxDurationMinutes`. Deliberately more robust than 1:1 calls' own
+   per-replica `setTimeout`s — any replica's tick can catch up an expired meeting, not just
+   the one that "started" it, so a mid-meeting replica restart can only delay the cutoff by
+   up to one sweep interval, never strand it.
 
 ---
 
@@ -392,3 +406,161 @@ carve-out as Phase 1's LiveKit smoke test).**
   member of that name (renamed `onCallError`). Not built to a real APK/device in this
   pass — real two-device call verification needs actual camera/mic hardware, same
   carve-out as web.
+
+---
+
+## Phase 3 — Group meetings end-to-end, caps + encrypted chat from the start
+
+**Status: done, backend verified against a live local stack (schema build + resolver
+reachability); web verified via a live rebuild/boot + typecheck/lint; mobile verified via
+`flutter analyze`/`build apk --release`. No schema changes needed — all six RTC models
+already existed from Phase 1.**
+
+### Backend (`nest-js-boilerplate`)
+
+- `src/rtc/rtc-meeting.service.ts` (new): the meeting lifecycle. `createMeeting` mints the
+  LiveKit room immediately (unlike calls — no ringing phase, create-and-ready-on-create),
+  persisting tier-derived `maxParticipants`/`maxDurationMinutes` at creation time so a later
+  host-tier change never retroactively resizes an in-progress meeting. `joinMeeting`
+  enforces the cap (`EX_MEETING_FULL`) only for a *new* participant — an already-active
+  participant reconnecting (its `RtcParticipant` row has `leftAt: null`) always gets a fresh
+  token without re-checking capacity, so a second device or a page refresh never
+  double-counts against the cap. `leaveMeeting`/`endMeeting`/`removeMeetingParticipant`/
+  `muteMeetingParticipant` round out host controls; `removeMeetingParticipant` calls
+  LiveKit's `removeParticipant` (kicks the connection) and `muteMeetingParticipant` calls a
+  new `LiveKitService.muteParticipantAudio` (LiveKit has no "mute by identity" call — it
+  looks the participant's current audio track up via `getParticipant` first, then
+  `mutePublishedTrack`s that specific track).
+- **The meeting's own `RtcRoom.id`/`Meeting.id` never reach the client at all** — `slug` is
+  the only client-facing handle (join link, WS chat-channel key, host-control target),
+  deliberately avoiding the need for a new `MANUAL_ID_ALIASES` entry the way `callId` needed
+  one in Phase 2. The WS chat channel is namespaced `rtc-meeting:${slug}` in
+  `RealtimeGateway`'s shared `roomSockets` keyspace, per the plan's own explicit warning not
+  to collide with a chat-room `Room.slug` there.
+- `src/rtc/rtc-meeting-ws.gateway.ts` (new): registers `rtc:join-room-chat`/
+  `rtc:leave-room-chat`/`rtc:chat-message` on the shared `RealtimeGateway`, exactly
+  `MessagingWsGateway`'s join-room/room-message pattern. Meeting *lifecycle* (create/join/
+  leave/end/host-controls) is GraphQL, not WS — only the chat channel rides the WS gateway.
+- `src/rtc/rtc-meeting-sweep.service.ts` (new): the meeting duration cap, `@Interval`-based
+  (not `@Cron`, matching this repo's own documented reason — `cron`'s date math can compute
+  a negative delay across a clock jump; `tasks.service.ts` already established the
+  precedent). A 30s full scan of active MEETING rooms, force-ending anything past
+  `startedAt + maxDurationMinutes` — deliberately *more* robust than 1:1 calls' own
+  per-replica `setTimeout`s (an accepted Phase 2 gap): any replica's tick can catch up an
+  expired meeting, not just the one that "started" it, so this is the cross-replica
+  mechanism Phase 2's own doc comment said Phase 3 would need to solve properly. A one-time
+  warning frame (60s lead, mirroring the call warning) is deduped via a plain in-memory
+  `Set` — accepted as possibly-duplicated-or-missed across replica restarts, same low-stakes
+  tradeoff class as the call warning.
+- `src/rtc/rtc-webhook.controller.ts` (modified): `handleRoomFinished`/`handleParticipantLeft`
+  now also branch on `RtcRoomKind.MEETING` (previously only handled `CALL`), delegating to
+  new `RtcMeetingService.handleRoomEndedByLiveKit`/`notifyParticipantLeftByLiveKit` — the
+  same "LiveKit webhook is the authoritative departure signal" pattern calls established,
+  now covering the case where every meeting participant's connection just drops without
+  anyone clicking Leave/End.
+- `src/rtc/rtc.resolver.ts` (rewritten): extended past the Phase 1 `rtcTierLimits` query with
+  `myMeetings`/`meetingBySlug`/`meetingChatMessages` queries and `createMeeting`/
+  `joinMeeting`/`leaveMeeting`/`endMeeting`/`removeMeetingParticipant`/
+  `muteMeetingParticipant` mutations, plus two hand-rolled `@ObjectType`s
+  (`JoinMeetingResult`, `RtcChatMessageView`/`RtcChatMessagesPage`) since those shapes don't
+  match any generated Prisma model.
+- Meeting chat reuses `StorageCryptoService.encryptForRtcRoom`/`decryptForRtcRoom` (already
+  added in Phase 1, unused until now) — `{v, ct, nonce}` columns on `RtcChatMessage`, same
+  shape as `RoomMessage`, never plaintext at rest.
+- `src/rtc/livekit.service.ts` (modified): added `muteParticipantAudio` (see above).
+- `src/rtc/rtc.module.ts`: registered `RtcMeetingService`/`RtcMeetingWsGateway`/
+  `RtcMeetingSweepService`.
+- **Verified**: `tsc --noEmit -p tsconfig.build.json` and scoped `eslint` clean on every
+  new/changed file. Real bug caught before it shipped: a hand-rolled GraphQL `@ObjectType`
+  field typed `string | null` (`RtcChatMessageView.senderAvatarUrl`) crashed the whole app
+  at boot with `UndefinedTypeError` — NestJS GraphQL's reflection-based type inference can't
+  resolve a nullable union automatically; fixed with an explicit `@Field(() => String, {
+  nullable: true })`, matching the pattern the Phase-1-generated `RtcRoom.livekitRoomName`
+  field already used. Caught by actually rebuilding and booting the real backend image (the
+  container crash-looped) — `tsc`/`eslint` alone never would have caught it, since the error
+  is a runtime GraphQL-schema-build failure, not a type error. After the fix: clean boot,
+  `myMeetings` query round-trips through `SessionAuthGuard` correctly (proper 401 for an
+  unauthenticated request, not a 500/schema error) confirming the resolver and its six new
+  operations are wired end-to-end.
+
+### Frontend (`next-js-boilerplate`)
+
+- Meeting CRUD is GraphQL end-to-end (per the plan's own explicit call-out), but reaches
+  the browser through the same REST-shaped Next.js BFF route-handler pattern the
+  pre-existing `api-keys` feature already established — `src/app/api/rtc/meetings/**`
+  (7 new route handlers) call `graphqlFetch` server-side and expose a plain REST surface;
+  `src/lib/graphql/rtc.ts` holds the query/mutation strings. This is a different shape than
+  Phase 2's calls REST (which hits `RtcController` directly, no GraphQL underneath) —
+  documented explicitly since it's a real, deliberate branch in the "REST-via-BFF" judgment
+  call, not an inconsistency.
+- `src/hooks/rtc/useLiveKitMeetingRoom.ts` (new): the N-participant analog of Phase 2's
+  `useLiveKitRoom` — the shape differs enough (a dynamic participant list vs. two fixed
+  video elements) to warrant its own hook rather than generalizing that one. Never returns
+  a DOM ref (same react-compiler lesson Phase 2 learned): each participant tile owns its
+  own local `useRef`/`useEffect` `track.attach(el)`/`detach(el)` pair
+  (`MeetingParticipantTile.tsx`), so the hook itself only ever returns LiveKit `Track`
+  *objects* (SDK data, not React refs) plus plain state and toggle functions.
+- `src/views/rtc/RtcMeetingRoomView.tsx` (new): join-on-mount, video grid, chat/participants
+  tab panel, mic/camera/screen-share toggles, host-only mute/remove controls, end-meeting
+  confirm dialog. Chat history seeds from a REST read
+  (`meetingChatQueryOptions`/`meetingChatMessages`), then live messages append via the
+  existing `rtc:*` WS vocabulary extended with `rtc:chat-message`/
+  `rtc:meeting-participant-joined`/`-left`/`rtc:meeting-ended`/`rtc:meeting-removed`/
+  `rtc:meeting-force-muted`/`rtc:meeting-limit-warning`.
+- `src/views/rtc/RtcMeetingsListView.tsx` (new): "my meetings" (host-created only, matching
+  the plan's own framing) + a create dialog; `src/views/rtc/RtcHubView.tsx` — the Meetings
+  card is now a live link (Live stays "Coming soon").
+- `next.config.ts`'s Permissions-Policy override (`/v1/:lang/rtc/:path*`, added in Phase 1)
+  already covers the new `/rtc/meetings/**` routes — no change needed, confirmed by
+  inspection before assuming otherwise.
+- `messages/{en,tr}/rtc/messages.json` + regenerated `src/generated/i18n-messages*`: ~30 new
+  keys for the meetings UI.
+- **Verified**: `tsc --noEmit` and scoped `eslint` clean on every touched/new file. Two real
+  lint-driven fixes: `react-hooks/set-state-in-effect` on a redundant `setPhase("joining")`
+  call at the top of the join effect (the `useState` initializer already covers it — removed
+  rather than suppressed, since an eslint-disable on any `react-hooks/*` rule stops
+  react-compiler from optimizing the whole component, the same Phase 2 lesson); and a
+  `realtime.status` read used directly as a `useEffect` dependency, which doesn't reliably
+  re-fire on status transitions (the provider's plain object reference isn't guaranteed to
+  change) — switched to the purpose-built `useRealtimeStatus()` hook this codebase already
+  provides for exactly this. Rebuilt and booted the real Next.js image — `/v1/en/rtc/meetings`
+  redirects (302) rather than erroring for an unauthenticated request, no server errors in
+  the logs. Live two-browser meeting verification (3+ participants, screen-share, host
+  mute-all/remove/end, the participant/duration caps actually firing, a direct `psql` read
+  confirming `RtcChatMessage.ct` is ciphertext) is the user's to do by hand, same carve-out
+  Phase 2 used for calls.
+
+### Mobile (`flutter-boilerplate`)
+
+- Meeting GraphQL calls go straight to `/graphql` via the shared `dioProvider` (no BFF layer
+  on mobile, confirmed by mirroring the pre-existing `api_keys` feature's own Dart
+  GraphQL-over-Dio pattern) — `lib/api/server/rtc/meetings_*.dart` (8 files, one per
+  operation) + `lib/api/client/rtc/meetings_{actions,query,chat_live}.dart`.
+- `lib/lib/realtime/realtime_provider.dart` (modified): six new `rtc:meeting-*`/
+  `rtc:chat-message` cases in the central `handleEventFrame` switch — this app funnels
+  every WS frame through one switch (no per-type `subscribe()` the way web has), so a
+  page-scoped feature like a meeting room needs its live updates routed through provider
+  state instead. `rtc:chat-message` patches `meetingChatProvider(slug)` (a
+  `StateNotifierProvider.family` mirroring `roomMessagesProvider`'s own
+  `appendLive`-on-a-`PaginatedListState` shape exactly), and the control signals
+  (joined/ended/removed/force-muted/limit-warning) write into a new
+  `lib/lib/rtc/meeting_signal.dart` family notifier — both guarded by `ref.exists(...)` so a
+  frame for a meeting nobody's currently watching is a no-op, the same guard
+  `room-message`'s existing case already uses.
+- `lib/views/rtc/meeting_room_page_view.dart` (new): owns the LiveKit `Room` directly, same
+  pattern as `RtcCallOverlay` (Phase 2) — connect on join, rebuild a plain `List` of
+  participant views on every relevant `RoomEvent`, tear down on dispose. Two Dart-SDK
+  surface differences from the JS SDK worth remembering: `videoTrackPublications`/
+  `audioTrackPublications` are `List<T>`, not `Map`, and `isMicrophoneEnabled()`/
+  `isCameraEnabled()`/`isScreenShareEnabled()` are methods, not getters. A manual two-button
+  chat/participants toggle (`_tab` state + two `TextButton`s) is used instead of `TabBar`,
+  which requires a `TabController`/`DefaultTabController` ancestor this page doesn't have.
+- `lib/views/rtc/meetings_list_page_view.dart` (new) + `lib/views/rtc/page_view.dart`
+  (modified): Meetings card now navigates to a real list + create-dialog page; Live stays
+  "Coming soon". Router entries: `/v1/:lang/rtc/meetings` and `/v1/:lang/rtc/meetings/:slug`.
+- `lib/l10n/app_{en,tr}.arb` + regenerated `app_localizations*.dart`: ~28 new `rtc*` keys.
+- **Verified**: `flutter analyze` clean (whole project), `dart format` clean on every
+  touched/new file, and `flutter build apk --release` — a real compile, not just an
+  analyzer pass, catching anything analyzer-clean-but-uncompilable. Not installed/run on a
+  real device in this pass — live multi-device meeting verification needs actual camera/mic
+  hardware, same carve-out Phase 2 used for calls.

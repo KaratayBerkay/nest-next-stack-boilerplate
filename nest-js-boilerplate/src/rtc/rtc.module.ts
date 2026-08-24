@@ -10,6 +10,9 @@ import { RtcController } from './rtc.controller';
 import { RtcWebhookController } from './rtc-webhook.controller';
 import { RtcCallService } from './rtc-call.service';
 import { RtcCallWsGateway } from './rtc-call-ws.gateway';
+import { RtcMeetingService } from './rtc-meeting.service';
+import { RtcMeetingWsGateway } from './rtc-meeting-ws.gateway';
+import { RtcMeetingSweepService } from './rtc-meeting-sweep.service';
 
 @Module({
   imports: [
@@ -20,7 +23,15 @@ import { RtcCallWsGateway } from './rtc-call-ws.gateway';
     WireCryptoModule,
   ],
   controllers: [RtcWebhookController, RtcController],
-  providers: [LiveKitService, RtcResolver, RtcCallService, RtcCallWsGateway],
-  exports: [LiveKitService, RtcCallService],
+  providers: [
+    LiveKitService,
+    RtcResolver,
+    RtcCallService,
+    RtcCallWsGateway,
+    RtcMeetingService,
+    RtcMeetingWsGateway,
+    RtcMeetingSweepService,
+  ],
+  exports: [LiveKitService, RtcCallService, RtcMeetingService],
 })
 export class RtcModule {}

@@ -5931,4 +5931,88 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcCannotCallSelf => 'Kendinizi arayamazsınız';
+
+  @override
+  String get rtcMyMeetingsTitle => 'Toplantılarım';
+
+  @override
+  String get rtcNoMeetings => 'Henüz bir toplantı oluşturmadınız';
+
+  @override
+  String get rtcNewMeeting => 'Yeni toplantı';
+
+  @override
+  String get rtcNewMeetingTitle => 'Yeni bir toplantı başlat';
+
+  @override
+  String get rtcMeetingTitlePlaceholder => 'ör. Haftalık senkron';
+
+  @override
+  String get rtcCreate => 'Oluştur';
+
+  @override
+  String get rtcJoin => 'Katıl';
+
+  @override
+  String get rtcCopyLink => 'Bağlantıyı kopyala';
+
+  @override
+  String get rtcLinkCopied => 'Bağlantı kopyalandı';
+
+  @override
+  String get rtcMeetingActiveLabel => 'Aktif';
+
+  @override
+  String get rtcMeetingEndedLabel => 'Sona erdi';
+
+  @override
+  String get rtcParticipantsTitle => 'Katılımcılar';
+
+  @override
+  String get rtcLeaveMeeting => 'Ayrıl';
+
+  @override
+  String get rtcEndMeeting => 'Toplantıyı bitir';
+
+  @override
+  String get rtcEndMeetingConfirm =>
+      'Bu toplantı herkes için sona erdirilsin mi?';
+
+  @override
+  String get rtcChatTitle => 'Sohbet';
+
+  @override
+  String get rtcChatPlaceholder => 'Herkese mesaj gönder…';
+
+  @override
+  String get rtcNoChatMessages => 'Henüz mesaj yok';
+
+  @override
+  String get rtcMuteParticipant => 'Sesini kapat';
+
+  @override
+  String get rtcRemoveParticipant => 'Çıkar';
+
+  @override
+  String get rtcJoiningMeeting => 'Toplantıya katılıyor…';
+
+  @override
+  String get rtcMeetingNotFound => 'Bu toplantı mevcut değil veya sona erdi';
+
+  @override
+  String get rtcMeetingEndedNotice => 'Toplantı sona erdi';
+
+  @override
+  String get rtcMeetingRemovedNotice => 'Toplantıdan çıkarıldınız';
+
+  @override
+  String rtcMeetingLimitWarning(Object seconds) {
+    return 'Toplantı $seconds sn içinde sona eriyor — daha uzun toplantılar için yükseltin';
+  }
+
+  @override
+  String get rtcYouLabel => 'Siz';
+
+  @override
+  String get rtcBackToMeetings => 'Toplantılara dön';
 }

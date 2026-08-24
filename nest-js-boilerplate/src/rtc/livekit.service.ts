@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import {
   AccessToken,
   RoomServiceClient,
+  TrackType,
   WebhookReceiver,
   type VideoGrant,
 } from 'livekit-server-sdk';
@@ -82,7 +83,9 @@ export class LiveKitService {
     } catch (err) {
       // Already gone (e.g. LiveKit's own empty-room timeout beat us to it)
       // — not an error from the caller's point of view.
-      this.logger.warn(`deleteRoom(${roomName}) failed: ${(err as Error).message}`);
+      this.logger.warn(
+        `deleteRoom(${roomName}) failed: ${(err as Error).message}`,
+      );
     }
   }
 
@@ -102,6 +105,39 @@ export class LiveKitService {
       trackSid,
       muted,
     );
+  }
+
+  /**
+   * Host-driven mute. LiveKit has no "mute by identity" call — muting a
+   * published track requires its trackSid, so this looks the participant up
+   * first to find their current audio track. A best-effort no-op (not an
+   * error) if the participant or their room has already gone away.
+   */
+  async muteParticipantAudio(
+    roomName: string,
+    identity: string,
+    muted: boolean,
+  ): Promise<void> {
+    try {
+      const participant = await this.roomService.getParticipant(
+        roomName,
+        identity,
+      );
+      const audioTrack = participant.tracks.find(
+        (t) => t.type === TrackType.AUDIO,
+      );
+      if (!audioTrack) return;
+      await this.roomService.mutePublishedTrack(
+        roomName,
+        identity,
+        audioTrack.sid,
+        muted,
+      );
+    } catch (err) {
+      this.logger.warn(
+        `muteParticipantAudio(${roomName}, ${identity}) failed: ${(err as Error).message}`,
+      );
+    }
   }
 
   async listParticipantCount(roomName: string): Promise<number> {

@@ -11179,6 +11179,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You cannot call yourself'**
   String get rtcCannotCallSelf;
+
+  /// No description provided for @rtcMyMeetingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'My meetings'**
+  String get rtcMyMeetingsTitle;
+
+  /// No description provided for @rtcNoMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'You haven\'t created any meetings yet'**
+  String get rtcNoMeetings;
+
+  /// No description provided for @rtcNewMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'New meeting'**
+  String get rtcNewMeeting;
+
+  /// No description provided for @rtcNewMeetingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start a new meeting'**
+  String get rtcNewMeetingTitle;
+
+  /// No description provided for @rtcMeetingTitlePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Weekly sync'**
+  String get rtcMeetingTitlePlaceholder;
+
+  /// No description provided for @rtcCreate.
+  ///
+  /// In en, this message translates to:
+  /// **'Create'**
+  String get rtcCreate;
+
+  /// No description provided for @rtcJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get rtcJoin;
+
+  /// No description provided for @rtcCopyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get rtcCopyLink;
+
+  /// No description provided for @rtcLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied'**
+  String get rtcLinkCopied;
+
+  /// No description provided for @rtcMeetingActiveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get rtcMeetingActiveLabel;
+
+  /// No description provided for @rtcMeetingEndedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ended'**
+  String get rtcMeetingEndedLabel;
+
+  /// No description provided for @rtcParticipantsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Participants'**
+  String get rtcParticipantsTitle;
+
+  /// No description provided for @rtcLeaveMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave'**
+  String get rtcLeaveMeeting;
+
+  /// No description provided for @rtcEndMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'End meeting'**
+  String get rtcEndMeeting;
+
+  /// No description provided for @rtcEndMeetingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'End this meeting for everyone?'**
+  String get rtcEndMeetingConfirm;
+
+  /// No description provided for @rtcChatTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get rtcChatTitle;
+
+  /// No description provided for @rtcChatPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Message everyone…'**
+  String get rtcChatPlaceholder;
+
+  /// No description provided for @rtcNoChatMessages.
+  ///
+  /// In en, this message translates to:
+  /// **'No messages yet'**
+  String get rtcNoChatMessages;
+
+  /// No description provided for @rtcMuteParticipant.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get rtcMuteParticipant;
+
+  /// No description provided for @rtcRemoveParticipant.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get rtcRemoveParticipant;
+
+  /// No description provided for @rtcJoiningMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Joining meeting…'**
+  String get rtcJoiningMeeting;
+
+  /// No description provided for @rtcMeetingNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'This meeting doesn\'t exist or has already ended'**
+  String get rtcMeetingNotFound;
+
+  /// No description provided for @rtcMeetingEndedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'The meeting has ended'**
+  String get rtcMeetingEndedNotice;
+
+  /// No description provided for @rtcMeetingRemovedNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You were removed from the meeting'**
+  String get rtcMeetingRemovedNotice;
+
+  /// No description provided for @rtcMeetingLimitWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Meeting ends in {seconds}s — upgrade for longer meetings'**
+  String rtcMeetingLimitWarning(Object seconds);
+
+  /// No description provided for @rtcYouLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get rtcYouLabel;
+
+  /// No description provided for @rtcBackToMeetings.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to meetings'**
+  String get rtcBackToMeetings;
 }
 
 class _AppLocalizationsDelegate

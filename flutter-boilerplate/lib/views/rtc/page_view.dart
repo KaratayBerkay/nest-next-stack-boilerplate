@@ -32,7 +32,7 @@ class RtcPageContent extends StatelessWidget {
         Icons.groups_outlined,
         t.rtcMeetingsTitle,
         t.rtcMeetingsDescription,
-        null
+        '/v1/$lang/rtc/meetings',
       ),
       (Icons.podcasts_outlined, t.rtcLiveTitle, t.rtcLiveDescription, null),
     ];

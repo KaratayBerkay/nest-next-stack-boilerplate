@@ -5918,4 +5918,88 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcCannotCallSelf => 'You cannot call yourself';
+
+  @override
+  String get rtcMyMeetingsTitle => 'My meetings';
+
+  @override
+  String get rtcNoMeetings => 'You haven\'t created any meetings yet';
+
+  @override
+  String get rtcNewMeeting => 'New meeting';
+
+  @override
+  String get rtcNewMeetingTitle => 'Start a new meeting';
+
+  @override
+  String get rtcMeetingTitlePlaceholder => 'e.g. Weekly sync';
+
+  @override
+  String get rtcCreate => 'Create';
+
+  @override
+  String get rtcJoin => 'Join';
+
+  @override
+  String get rtcCopyLink => 'Copy link';
+
+  @override
+  String get rtcLinkCopied => 'Link copied';
+
+  @override
+  String get rtcMeetingActiveLabel => 'Active';
+
+  @override
+  String get rtcMeetingEndedLabel => 'Ended';
+
+  @override
+  String get rtcParticipantsTitle => 'Participants';
+
+  @override
+  String get rtcLeaveMeeting => 'Leave';
+
+  @override
+  String get rtcEndMeeting => 'End meeting';
+
+  @override
+  String get rtcEndMeetingConfirm => 'End this meeting for everyone?';
+
+  @override
+  String get rtcChatTitle => 'Chat';
+
+  @override
+  String get rtcChatPlaceholder => 'Message everyone…';
+
+  @override
+  String get rtcNoChatMessages => 'No messages yet';
+
+  @override
+  String get rtcMuteParticipant => 'Mute';
+
+  @override
+  String get rtcRemoveParticipant => 'Remove';
+
+  @override
+  String get rtcJoiningMeeting => 'Joining meeting…';
+
+  @override
+  String get rtcMeetingNotFound =>
+      'This meeting doesn\'t exist or has already ended';
+
+  @override
+  String get rtcMeetingEndedNotice => 'The meeting has ended';
+
+  @override
+  String get rtcMeetingRemovedNotice => 'You were removed from the meeting';
+
+  @override
+  String rtcMeetingLimitWarning(Object seconds) {
+    return 'Meeting ends in ${seconds}s — upgrade for longer meetings';
+  }
+
+  @override
+  String get rtcYouLabel => 'You';
+
+  @override
+  String get rtcBackToMeetings => 'Back to meetings';
 }

@@ -5,6 +5,7 @@ import { RtcRoomKind, RtcRoomState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveKitService } from './livekit.service';
 import { RtcCallService } from './rtc-call.service';
+import { RtcMeetingService } from './rtc-meeting.service';
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
@@ -22,6 +23,7 @@ export class RtcWebhookController {
     private readonly liveKit: LiveKitService,
     private readonly prisma: PrismaService,
     private readonly rtcCallService: RtcCallService,
+    private readonly rtcMeetingService: RtcMeetingService,
   ) {}
 
   @Post('livekit')
@@ -100,6 +102,11 @@ export class RtcWebhookController {
       // already end the CallSession (e.g. both sides drop near-
       // simultaneously) — no-ops if it's already ENDED.
       await this.rtcCallService.handleRoomEndedByLiveKit(room.id);
+    } else if (room.kind === RtcRoomKind.MEETING) {
+      // Safety net for whenever nobody called endMeeting explicitly (e.g.
+      // every participant's connection just dropped) — no-ops if already
+      // ENDED (explicit end / the duration sweep both race this webhook).
+      await this.rtcMeetingService.handleRoomEndedByLiveKit(room.id);
     }
   }
 
@@ -121,6 +128,11 @@ export class RtcWebhookController {
       // A 1:1 call is over the moment either side leaves — don't wait for
       // LiveKit's own ~60s departureTimeout to notice via room_finished.
       await this.rtcCallService.handlePeerLeft(room.id);
+    } else if (room.kind === RtcRoomKind.MEETING) {
+      // The DB leftAt update already happened above (kind-agnostic) — this
+      // only notifies peers still in the meeting so a hard-crash/dropped
+      // connection isn't silent until someone else's join/leave fires.
+      this.rtcMeetingService.notifyParticipantLeftByLiveKit(room.id, identity);
     }
   }
 }

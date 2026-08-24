@@ -5,6 +5,7 @@ import '../../api/client/messages/mark_read.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/client/notifications/query.dart';
 import '../../api/client/posts/query.dart';
+import '../../api/client/rtc/meetings_chat_live.dart';
 import '../../api/client/rtc/query.dart';
 import '../../api/server/crypto/handshake.dart';
 import '../../api/server/crypto/re_key.dart';
@@ -16,7 +17,9 @@ import '../../hooks/use_auth.dart';
 import '../../hooks/use_messages_page.dart';
 import '../../types/messages/message.dart';
 import '../../types/notification/notification_item.dart';
+import '../../types/rtc/meeting.dart';
 import '../riverpod_compat.dart';
+import '../rtc/meeting_signal.dart';
 import '../rtc/rtc_call_provider.dart';
 import '../rtc/rtc_call_state.dart';
 import 'realtime_client.dart';
@@ -251,6 +254,57 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
             frame['callId'] as String?,
             frame['reason'] as String? ?? 'error',
           );
+    case 'rtc:chat-message':
+      final slug = frame['slug'] as String?;
+      final message = frame['message'] as Map<String, dynamic>?;
+      // Only patch an already-instantiated provider — same guard as
+      // room-message's equivalent case (the meeting room page isn't
+      // necessarily mounted for every rtc:chat-message this client relays).
+      if (slug != null &&
+          message != null &&
+          ref.exists(meetingChatProvider(slug))) {
+        ref
+            .read(meetingChatProvider(slug).notifier)
+            .appendLive(MeetingChatMessage.fromJson(message));
+      }
+    case 'rtc:meeting-participant-joined':
+      final slug = frame['slug'] as String?;
+      final joinedUserId = frame['userId'] as String?;
+      final myMeetingUserId = ref.read(currentUserProvider)?.id;
+      if (slug != null &&
+          joinedUserId != myMeetingUserId &&
+          ref.exists(meetingSignalProvider(slug))) {
+        ref
+            .read(meetingSignalProvider(slug).notifier)
+            .participantJoined(frame['name'] as String? ?? '');
+      }
+    case 'rtc:meeting-ended':
+      final slug = frame['slug'] as String?;
+      if (slug != null && ref.exists(meetingSignalProvider(slug))) {
+        ref.read(meetingSignalProvider(slug).notifier).ended();
+      }
+    case 'rtc:meeting-removed':
+      final slug = frame['slug'] as String?;
+      if (slug != null && ref.exists(meetingSignalProvider(slug))) {
+        ref.read(meetingSignalProvider(slug).notifier).removed();
+      }
+    case 'rtc:meeting-force-muted':
+      final slug = frame['slug'] as String?;
+      final muted = frame['muted'] as bool? ?? false;
+      if (slug != null && muted && ref.exists(meetingSignalProvider(slug))) {
+        ref.read(meetingSignalProvider(slug).notifier).forceMuted();
+      }
+    case 'rtc:meeting-limit-warning':
+      final slug = frame['slug'] as String?;
+      final meetingWarningSeconds =
+          (frame['secondsRemaining'] as num?)?.toInt();
+      if (slug != null &&
+          meetingWarningSeconds != null &&
+          ref.exists(meetingSignalProvider(slug))) {
+        ref
+            .read(meetingSignalProvider(slug).notifier)
+            .warning(meetingWarningSeconds);
+      }
     case 'direct-message':
       ref.invalidate(conversationsProvider);
       final message = frame['message'] as Map<String, dynamic>?;
