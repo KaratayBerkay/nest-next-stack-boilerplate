@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { IconMicrophoneOff } from "@tabler/icons-react";
+import { IconMicrophoneOff, IconVolume } from "@tabler/icons-react";
 import type { Track } from "livekit-client";
 import { Avatar } from "@/components/ui/Avatar";
+import type { StreamPlayerProps } from "@/types/rtc/StreamPlayer-types";
 
 function useTrackAttach(track: Track | null, kind: "video" | "audio") {
   const ref = useRef<HTMLVideoElement & HTMLAudioElement>(null);
@@ -24,19 +25,14 @@ export function StreamPlayer({
   audioTrack,
   broadcasterName,
   offlineLabel,
-}: {
-  videoTrack: Track | null;
-  screenShareTrack: Track | null;
-  audioTrack: Track | null;
-  broadcasterName: string;
-  offlineLabel: string;
-}) {
+  isLive = false,
+}: StreamPlayerProps) {
   const activeVideoTrack = screenShareTrack ?? videoTrack;
   const videoRef = useTrackAttach(activeVideoTrack, "video");
   const audioRef = useTrackAttach(audioTrack, "audio");
 
   return (
-    <div className="bg-surface relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-lg">
+    <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-t-lg bg-black">
       {activeVideoTrack ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption -- live stream video, no caption track exists
         <video
@@ -46,17 +42,26 @@ export function StreamPlayer({
           className="h-full w-full object-contain"
         />
       ) : (
-        <div className="flex flex-col items-center gap-2">
+        <div className="flex flex-col items-center gap-3">
           <Avatar fallback={broadcasterName || "?"} size="xl" />
-          <span className="text-fg-muted text-sm">{offlineLabel}</span>
+          <span className="text-sm text-neutral-400">{offlineLabel}</span>
         </div>
       )}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live stream audio, no caption track exists */}
       <audio ref={audioRef} autoPlay />
 
+      {isLive && (
+        <div className="absolute top-3 left-3 flex items-center gap-2">
+          <span className="rounded bg-red-600 px-1.5 py-0.5 text-xs font-bold tracking-wide text-white uppercase">
+            Live
+          </span>
+        </div>
+      )}
+
       {activeVideoTrack && !audioTrack && (
-        <div className="bg-overlay/60 text-bg absolute right-2 bottom-2 rounded p-1.5">
-          <IconMicrophoneOff size={16} aria-hidden />
+        <div className="absolute right-3 bottom-3 flex items-center gap-1 rounded bg-black/60 px-2 py-1 text-neutral-400">
+          <IconVolume size={14} aria-hidden />
+          <IconMicrophoneOff size={14} aria-hidden />
         </div>
       )}
     </div>

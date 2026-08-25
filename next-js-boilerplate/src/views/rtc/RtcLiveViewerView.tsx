@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { IconFlag } from "@tabler/icons-react";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Avatar } from "@/components/ui/Avatar";
 import { PulseBlockFallback } from "@/fallbacks";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,6 +28,66 @@ interface ChatItem {
   senderName: string;
   text: string;
   createdAt: string;
+}
+
+function StreamChat({
+  chat,
+  chatInput,
+  onChatInputChange,
+  onSendChat,
+  t,
+}: {
+  chat: ChatItem[];
+  chatInput: string;
+  onChatInputChange: (v: string) => void;
+  onSendChat: () => void;
+  t: Record<string, string>;
+}) {
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chat.length]);
+
+  return (
+    <div className="flex h-full flex-col rounded-r-lg bg-neutral-900">
+      <div className="border-b border-neutral-700 px-4 py-3">
+        <h2 className="text-sm font-semibold text-white">Stream Chat</h2>
+      </div>
+      <div className="flex-1 space-y-0.5 overflow-y-auto px-4 py-2">
+        {chat.length === 0 ? (
+          <p className="py-8 text-center text-sm text-neutral-500">
+            {t.noChatMessages}
+          </p>
+        ) : (
+          chat.map((m) => (
+            <div key={m.id} className="py-1 text-sm leading-snug">
+              <span className="font-semibold text-white">{m.senderName}</span>
+              <span className="ml-1.5 text-neutral-300">{m.text}</span>
+            </div>
+          ))
+        )}
+        <div ref={bottomRef} />
+      </div>
+      <div className="border-t border-neutral-700 p-3">
+        <div className="flex gap-2">
+          <Input
+            value={chatInput}
+            onChange={(e) => onChatInputChange(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") onSendChat();
+            }}
+            placeholder={t.chatPlaceholder}
+            aria-label={t.chatTitle}
+            className="border-neutral-600 bg-neutral-800 text-white placeholder:text-neutral-500"
+          />
+          <Button size="sm" onClick={onSendChat} disabled={!chatInput.trim()}>
+            {t.send}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function RtcLiveViewerView() {
@@ -178,75 +239,73 @@ export function RtcLiveViewerView() {
   }
 
   return (
-    <div className="flex h-full min-h-[600px] w-full flex-col gap-4 p-4 lg:flex-row">
-      <div className="flex flex-1 flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <h1 className="truncate text-lg font-semibold">
-            {join?.stream.title}
-          </h1>
-          <span className="text-fg-muted text-sm">
-            {t.viewerCount.replace("{count}", String(viewerCount))}
-          </span>
-        </div>
-
-        <StreamPlayer
-          videoTrack={livekit.videoTrack}
-          screenShareTrack={livekit.screenShareTrack}
-          audioTrack={livekit.audioTrack}
-          broadcasterName={join?.stream.broadcaster.name || ""}
-          offlineLabel={t.broadcasterOffline}
-        />
-
-        <div className="flex items-center justify-center gap-3 pt-2">
-          <RtcReportDialog
-            onSubmit={(reason, details) =>
-              reportStream(slug, reason, details, join?.stream.broadcaster.id)
-            }
-          >
-            {(open) => (
-              <IconButton
-                variant="ghost"
-                icon={<IconFlag />}
-                label={t.reportTitle}
-                onClick={open}
-              />
-            )}
-          </RtcReportDialog>
-          <Button variant="ghost" onClick={handleLeave}>
-            {t.leaveStream}
-          </Button>
-        </div>
-      </div>
-
-      <div className="flex w-full flex-col rounded-lg border lg:w-80">
-        <div className="border-b px-3 py-2 text-sm font-medium">
-          {t.chatTitle}
-        </div>
-        <div className="flex-1 space-y-2 overflow-y-auto p-3">
-          {chat.length === 0 ? (
-            <p className="text-fg-muted text-sm">{t.noChatMessages}</p>
-          ) : (
-            chat.map((m) => (
-              <div key={m.id} className="text-sm">
-                <span className="font-medium">{m.senderName}: </span>
-                <span>{m.text}</span>
-              </div>
-            ))
-          )}
-        </div>
-        <div className="flex gap-2 border-t p-2">
-          <Input
-            value={chatInput}
-            onChange={(e) => setChatInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") sendChat();
-            }}
-            placeholder={t.chatPlaceholder}
-            aria-label={t.chatTitle}
+    <div className="flex h-full flex-col overflow-hidden bg-neutral-950">
+      <div className="flex flex-1 overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-y-auto">
+          <StreamPlayer
+            videoTrack={livekit.videoTrack}
+            screenShareTrack={livekit.screenShareTrack}
+            audioTrack={livekit.audioTrack}
+            broadcasterName={join?.stream.broadcaster.name || ""}
+            offlineLabel={t.broadcasterOffline}
+            isLive
           />
-          <Button size="sm" onClick={sendChat} disabled={!chatInput.trim()}>
-            {t.send}
-          </Button>
+
+          <div className="border-b border-neutral-800 px-4 py-3">
+            <div className="flex items-start gap-3">
+              <Avatar
+                fallback={join?.stream.broadcaster.name || "?"}
+                size="md"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h1 className="truncate text-base font-semibold text-white">
+                    {join?.stream.title}
+                  </h1>
+                </div>
+                <p className="mt-0.5 truncate text-sm text-neutral-400">
+                  {join?.stream.broadcaster.name}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-neutral-400">
+                  {t.viewerCount.replace("{count}", String(viewerCount))}
+                </span>
+                <RtcReportDialog
+                  onSubmit={(reason, details) =>
+                    reportStream(
+                      slug,
+                      reason,
+                      details,
+                      join?.stream.broadcaster.id,
+                    )
+                  }
+                >
+                  {(open) => (
+                    <IconButton
+                      variant="ghost"
+                      icon={<IconFlag />}
+                      label={t.reportTitle}
+                      onClick={open}
+                    />
+                  )}
+                </RtcReportDialog>
+                <Button variant="ghost" size="sm" onClick={handleLeave}>
+                  {t.leaveStream}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-80 flex-shrink-0">
+          <StreamChat
+            chat={chat}
+            chatInput={chatInput}
+            onChatInputChange={setChatInput}
+            onSendChat={sendChat}
+            t={t}
+          />
         </div>
       </div>
     </div>
