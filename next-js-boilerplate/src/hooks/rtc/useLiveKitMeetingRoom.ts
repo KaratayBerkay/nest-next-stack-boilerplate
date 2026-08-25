@@ -14,6 +14,7 @@ export interface MeetingParticipantView {
   micEnabled: boolean;
   cameraEnabled: boolean;
   screenShareEnabled: boolean;
+  isSpeaking: boolean;
 }
 
 export interface UseLiveKitMeetingRoomResult {
@@ -27,7 +28,10 @@ export interface UseLiveKitMeetingRoomResult {
   toggleScreenShare: () => void;
 }
 
-function toView(p: Participant): MeetingParticipantView {
+function toView(
+  p: Participant,
+  activeSpeakerIds: ReadonlySet<string>,
+): MeetingParticipantView {
   const videoPub = [...p.videoTrackPublications.values()].find(
     (pub) => pub.source === Track.Source.Camera,
   );
@@ -47,6 +51,7 @@ function toView(p: Participant): MeetingParticipantView {
     micEnabled: p.isMicrophoneEnabled,
     cameraEnabled: p.isCameraEnabled,
     screenShareEnabled: p.isScreenShareEnabled,
+    isSpeaking: activeSpeakerIds.has(p.identity),
   };
 }
 
@@ -71,6 +76,9 @@ export function useLiveKitMeetingRoom(
   const [localMicEnabled, setLocalMicEnabled] = useState(true);
   const [localCameraEnabled, setLocalCameraEnabled] = useState(true);
   const [localScreenShareEnabled, setLocalScreenShareEnabled] = useState(false);
+  const [activeSpeakerIds, setActiveSpeakerIds] = useState<ReadonlySet<string>>(
+    new Set(),
+  );
 
   const rebuildParticipants = useCallback(() => {
     const room = roomRef.current;
@@ -79,10 +87,12 @@ export function useLiveKitMeetingRoom(
       return;
     }
     setParticipants([
-      toView(room.localParticipant),
-      ...Array.from(room.remoteParticipants.values(), toView),
+      toView(room.localParticipant, activeSpeakerIds),
+      ...Array.from(room.remoteParticipants.values(), (p) =>
+        toView(p, activeSpeakerIds),
+      ),
     ]);
-  }, []);
+  }, [activeSpeakerIds]);
 
   useEffect(() => {
     const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
@@ -102,6 +112,9 @@ export function useLiveKitMeetingRoom(
       .on(RoomEvent.TrackUnmuted, onAnyChange)
       .on(RoomEvent.LocalTrackPublished, onAnyChange)
       .on(RoomEvent.LocalTrackUnpublished, onAnyChange)
+      .on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
+        setActiveSpeakerIds(new Set(speakers.map((s) => s.identity)));
+      })
       .on(RoomEvent.Disconnected, () => setConnected(false));
 
     void (async () => {

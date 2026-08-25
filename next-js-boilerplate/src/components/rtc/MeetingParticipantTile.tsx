@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { IconMicrophoneOff, IconScreenShare } from "@tabler/icons-react";
 import type { Track } from "livekit-client";
 import { Avatar } from "@/components/ui/Avatar";
-import type { MeetingParticipantView } from "@/hooks/rtc/useLiveKitMeetingRoom";
+import type { MeetingParticipantTileProps } from "@/types/rtc/MeetingParticipantTile-types";
 
 function useTrackAttach(track: Track | null, kind: "video" | "audio") {
   const ref = useRef<HTMLVideoElement & HTMLAudioElement>(null);
@@ -22,10 +22,7 @@ function useTrackAttach(track: Track | null, kind: "video" | "audio") {
 export function MeetingParticipantTile({
   participant,
   youLabel,
-}: {
-  participant: MeetingParticipantView;
-  youLabel: string;
-}) {
+}: MeetingParticipantTileProps) {
   const activeVideoTrack =
     participant.screenShareTrack ?? participant.videoTrack;
   const videoRef = useTrackAttach(activeVideoTrack, "video");
@@ -36,7 +33,13 @@ export function MeetingParticipantTile({
   const showVideo = Boolean(activeVideoTrack) && participant.cameraEnabled;
 
   return (
-    <div className="bg-surface relative flex aspect-video items-center justify-center overflow-hidden rounded-lg">
+    <div
+      className={`bg-surface relative flex aspect-video items-center justify-center overflow-hidden rounded-lg transition-shadow ${
+        participant.isSpeaking
+          ? "shadow-[0_0_12px_rgba(52,211,153,0.4)] ring-2 ring-emerald-400"
+          : "ring-1 ring-transparent"
+      }`}
+    >
       {showVideo ? (
         // eslint-disable-next-line jsx-a11y/media-has-caption -- live meeting video, no caption track exists
         <video
@@ -51,6 +54,10 @@ export function MeetingParticipantTile({
       )}
       {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live meeting audio, no caption track exists */}
       <audio ref={audioRef} autoPlay />
+
+      {participant.isSpeaking && (
+        <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-emerald-400" />
+      )}
 
       <div className="bg-overlay/60 text-bg absolute right-2 bottom-2 left-2 flex items-center justify-between rounded px-2 py-1 text-xs">
         <span className="truncate">
