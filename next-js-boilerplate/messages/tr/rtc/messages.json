@@ -110,5 +110,7 @@
   "reportSubmitted": "Teşekkürler — şikayetiniz iletildi.",
   "startRecording": "Kaydı başlat",
   "stopRecording": "Kaydı durdur",
-  "recordingComingSoonNote": "Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor."
+  "recordingComingSoonNote": "Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor.",
+  "speakerOn": "Hoparlör açık",
+  "speakerOff": "Hoparlör kapalı"
 }

@@ -110,5 +110,7 @@
   "reportSubmitted": "Thanks — your report has been submitted.",
   "startRecording": "Start recording",
   "stopRecording": "Stop recording",
-  "recordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet."
+  "recordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet.",
+  "speakerOn": "Speaker on",
+  "speakerOff": "Speaker off"
 }

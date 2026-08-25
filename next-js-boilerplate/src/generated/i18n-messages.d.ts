@@ -11547,6 +11547,8 @@ export type I18nMessages = {
       "startRecording": string;
       "stopRecording": string;
       "recordingComingSoonNote": string;
+      "speakerOn": string;
+      "speakerOff": string;
     }
 
   "settings": {
