@@ -199,6 +199,68 @@ export function useLiveKitRoom(
     };
   }, [token, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
 
+  // ---- Wake Lock: prevent OS from sleeping the screen during a call ----
+  useEffect(() => {
+    if (!connected) return;
+
+    const wakeLockRef: { current: WakeLockSentinel | null } = { current: null };
+
+    const acquire = async () => {
+      try {
+        if (!("wakeLock" in navigator)) return;
+        // Re-entrant: browser may auto-release on visibility change.
+        if (wakeLockRef.current) return;
+        const sentinel = await navigator.wakeLock.request("screen");
+        wakeLockRef.current = sentinel;
+        sentinel.addEventListener("release", () => {
+          wakeLockRef.current = null;
+        });
+      } catch {
+        // Wake Lock denied (permission policy, headless browser, etc.) —
+        // non-fatal, the call still works without it.
+      }
+    };
+
+    // Re-acquire when the page becomes visible again (tab switch, app
+    // foreground). The browser auto-releases the sentinel on visibility
+    // change, so we need to grab a fresh one.
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
+
+    void acquire();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    };
+  }, [connected]);
+
+  // ---- Media Session: tell the OS this is an active call, not idle tab ----
+  useEffect(() => {
+    if (!connected || !("mediaSession" in navigator)) return;
+
+    const peer = roomRef.current?.remoteParticipants.values().next().value;
+    const title = peer?.name || "Active Call";
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title,
+      artist: "Voice Call",
+      artwork: [],
+    });
+
+    // Indicate the session is "playing" so the OS treats it as active
+    // media (no JS throttle, no WebSocket dormancy, foreground priority).
+    navigator.mediaSession.playbackState = "playing";
+
+    return () => {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+    };
+  }, [connected]);
+
   const toggleMic = useCallback(async () => {
     const room = roomRef.current;
     if (!room) return;
