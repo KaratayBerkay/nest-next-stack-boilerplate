@@ -90,7 +90,14 @@ class _RtcLiveViewerPageContentState
       ..on<lk.ParticipantConnectedEvent>((_) => rebuild())
       ..on<lk.ParticipantDisconnectedEvent>((_) => rebuild())
       ..on<lk.TrackSubscribedEvent>((_) => rebuild())
-      ..on<lk.TrackUnsubscribedEvent>((_) => rebuild());
+      ..on<lk.TrackUnsubscribedEvent>((_) => rebuild())
+      ..on<lk.RoomReconnectingEvent>((_) {
+        debugPrint('[LiveViewer] Reconnecting…');
+      })
+      ..on<lk.RoomReconnectedEvent>((_) {
+        debugPrint('[LiveViewer] Reconnected');
+        rebuild();
+      });
 
     try {
       await room.connect(AppConfig.livekitUrl, token);

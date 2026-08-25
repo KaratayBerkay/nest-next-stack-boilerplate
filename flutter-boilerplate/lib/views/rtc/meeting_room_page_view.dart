@@ -118,7 +118,14 @@ class _RtcMeetingRoomPageContentState
       ..on<lk.TrackMutedEvent>((_) => _rebuildParticipants())
       ..on<lk.TrackUnmutedEvent>((_) => _rebuildParticipants())
       ..on<lk.LocalTrackPublishedEvent>((_) => _rebuildParticipants())
-      ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildParticipants());
+      ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildParticipants())
+      ..on<lk.RoomReconnectingEvent>((_) {
+        debugPrint('[MeetingRoom] Reconnecting…');
+      })
+      ..on<lk.RoomReconnectedEvent>((_) {
+        debugPrint('[MeetingRoom] Reconnected');
+        _rebuildParticipants();
+      });
 
     try {
       await room.connect(AppConfig.livekitUrl, token);

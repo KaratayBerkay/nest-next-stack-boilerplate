@@ -99,7 +99,14 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
 
     listener
       ..on<lk.LocalTrackPublishedEvent>((_) => _rebuildLocalVideo())
-      ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildLocalVideo());
+      ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildLocalVideo())
+      ..on<lk.RoomReconnectingEvent>((_) {
+        debugPrint('[GoLive] Reconnecting…');
+      })
+      ..on<lk.RoomReconnectedEvent>((_) {
+        debugPrint('[GoLive] Reconnected');
+        _rebuildLocalVideo();
+      });
 
     try {
       await room.connect(AppConfig.livekitUrl, token);

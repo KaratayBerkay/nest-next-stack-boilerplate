@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Room, RoomEvent, Track, type Participant } from "livekit-client";
+import {
+  Room,
+  RoomEvent,
+  Track,
+  ConnectionQuality,
+  type Participant,
+} from "livekit-client";
 import { clientEnv } from "@/lib/env";
 
 export interface UseLiveKitStreamRoomResult {
@@ -81,7 +87,7 @@ export function useLiveKitStreamRoom(
     const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
     if (!token || !url) return;
 
-    const room = new Room();
+    const room = new Room({ adaptiveStream: true, dynacast: true });
     roomRef.current = room;
     let disposed = false;
     const onAnyChange = () => rebuildBroadcasterTracks();
@@ -95,7 +101,31 @@ export function useLiveKitStreamRoom(
       .on(RoomEvent.TrackUnmuted, onAnyChange)
       .on(RoomEvent.LocalTrackPublished, onAnyChange)
       .on(RoomEvent.LocalTrackUnpublished, onAnyChange)
-      .on(RoomEvent.Disconnected, () => setConnected(false));
+      .on(RoomEvent.Disconnected, () => setConnected(false))
+      .on(RoomEvent.Reconnecting, () => {
+        console.warn("[useLiveKitStreamRoom] Reconnecting…");
+      })
+      .on(RoomEvent.Reconnected, () => {
+        console.info("[useLiveKitStreamRoom] Reconnected");
+        rebuildBroadcasterTracks();
+      })
+      .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
+        console.warn(
+          "[useLiveKitStreamRoom] Track subscription failed for",
+          trackSid,
+        );
+      })
+      .on(
+        RoomEvent.ConnectionQualityChanged,
+        (quality: ConnectionQuality, participant) => {
+          if (quality === ConnectionQuality.Poor) {
+            console.warn(
+              "[useLiveKitStreamRoom] Poor connection quality from",
+              participant?.identity ?? "local",
+            );
+          }
+        },
+      );
 
     void (async () => {
       try {

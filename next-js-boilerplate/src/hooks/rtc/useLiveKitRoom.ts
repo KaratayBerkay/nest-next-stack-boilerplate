@@ -1,26 +1,21 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Room,
   RoomEvent,
   Track,
-  type RemoteParticipant,
+  ConnectionQuality,
+  type RoomOptions,
+  type TrackPublication,
   type RemoteTrack,
-  type RemoteTrackPublication,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
 
 export interface UseLiveKitRoomElements {
-  localVideoRef: RefObject<HTMLVideoElement | null>;
-  remoteVideoRef: RefObject<HTMLVideoElement | null>;
-  remoteAudioRef: RefObject<HTMLAudioElement | null>;
+  localVideoRef: React.RefObject<HTMLVideoElement | null>;
+  remoteVideoRef: React.RefObject<HTMLVideoElement | null>;
+  remoteAudioRef: React.RefObject<HTMLAudioElement | null>;
 }
 
 export interface UseLiveKitRoomResult {
@@ -32,18 +27,32 @@ export interface UseLiveKitRoomResult {
   toggleCamera: () => void;
 }
 
+function attachCameraTrack(pub: TrackPublication, el: HTMLVideoElement | null) {
+  if (pub.track && pub.source === Track.Source.Camera && el) {
+    pub.track.attach(el);
+  }
+}
+
+function attachRemoteTrack(track: RemoteTrack, el: HTMLMediaElement | null) {
+  if (el) track.attach(el);
+}
+
 /**
- * Thin wrapper around livekit-client's low-level Room/Track API — no
+ * Thin wrapper around livekit-client's low-level Room API — no
  * @livekit/components-react, matching this repo's own custom-component
- * culture for mute/camera-toggle/participant-tile UI. `token` is minted
- * server-side (RtcCallProvider's rtc:accepted/active-call snapshot); this
- * hook owns nothing about call signaling, only the media connection once a
- * token exists.
+ * culture. `token` is minted server-side by the WebSocket gateway.
  *
- * Video/audio element refs are created by the caller and passed in, not
- * returned from here — a hook return value that mixes refs with plain
- * reactive state trips react-compiler's ref-during-render check on every
- * property access off the returned object, not just the ref ones.
+ * Video/audio element refs are created by the caller (RtcCallOverlay) and
+ * passed in — react-compiler doesn't allow hook returns that mix refs with
+ * reactive state, so we keep them on the call-site side.
+ *
+ * Key design decisions:
+ * - Room creation + connect is driven ONLY by `token` (via useEffect dep).
+ *   Mic/camera are toggled *after* connect without re-creating the room.
+ * - `TrackSubscribed` handles both local and remote tracks generically.
+ * - `LocalTrackPublished`/`LocalTrackUnpublished` ensure the local camera
+ *   video element stays in sync across toggle cycles.
+ * - A `disposed` flag prevents a stale async connect from clobbering state.
  */
 export function useLiveKitRoom(
   token: string | null,
@@ -56,59 +65,128 @@ export function useLiveKitRoom(
   const [remoteConnected, setRemoteConnected] = useState(false);
   const [micEnabled, setMicEnabled] = useState(true);
   const [cameraEnabled, setCameraEnabled] = useState(hasVideo);
+  const cameraRef = useRef(hasVideo);
+
+  useEffect(() => {
+    cameraRef.current = cameraEnabled;
+  }, [cameraEnabled]);
+
+  /** Re-scan the remote participant's tracks and attach any that are missing
+   *  from the DOM — called after reconnection to recover lost media. */
+  const reattachRemoteTracks = useCallback(
+    (room: Room) => {
+      for (const p of room.remoteParticipants.values()) {
+        for (const pub of p.trackPublications.values()) {
+          if (!pub.track) continue;
+          if (pub.kind === Track.Kind.Audio) {
+            attachRemoteTrack(pub.track, remoteAudioRef.current);
+          } else if (
+            pub.kind === Track.Kind.Video &&
+            pub.source === Track.Source.Camera
+          ) {
+            attachRemoteTrack(pub.track, remoteVideoRef.current);
+          }
+        }
+      }
+    },
+    [remoteAudioRef, remoteVideoRef],
+  );
 
   useEffect(() => {
     const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
     if (!token || !url) return;
 
-    const room = new Room();
+    const roomOpts: RoomOptions = {
+      adaptiveStream: true,
+      dynacast: true,
+    };
+    const room = new Room(roomOpts);
     roomRef.current = room;
     let disposed = false;
 
-    const attachRemote = (track: RemoteTrack) => {
-      if (track.kind === Track.Kind.Video && remoteVideoRef.current) {
-        track.attach(remoteVideoRef.current);
-      } else if (track.kind === Track.Kind.Audio && remoteAudioRef.current) {
-        track.attach(remoteAudioRef.current);
+    room
+      .on(RoomEvent.TrackSubscribed, (track) => {
+        attachRemoteTrack(
+          track,
+          track.kind === Track.Kind.Audio
+            ? remoteAudioRef.current
+            : remoteVideoRef.current,
+        );
+      })
+      .on(RoomEvent.TrackUnsubscribed, (track) => {
+        track.detach();
+      })
+      .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
+        console.warn(
+          "[useLiveKitRoom] Track subscription failed for",
+          trackSid,
+        );
+      })
+      .on(RoomEvent.LocalTrackPublished, (pub) => {
+        attachCameraTrack(pub, localVideoRef.current);
+      })
+      .on(RoomEvent.LocalTrackUnpublished, (pub) => {
+        if (pub.track && pub.source === Track.Source.Camera) {
+          pub.track.detach();
+        }
+      })
+      .on(RoomEvent.ParticipantConnected, () => setRemoteConnected(true))
+      .on(RoomEvent.ParticipantDisconnected, () => setRemoteConnected(false))
+      .on(RoomEvent.Disconnected, () => setConnected(false))
+      .on(RoomEvent.Reconnecting, () => {
+        console.warn("[useLiveKitRoom] Reconnecting…");
+      })
+      .on(RoomEvent.Reconnected, () => {
+        console.info("[useLiveKitRoom] Reconnected");
+        reattachRemoteTracks(room);
+      })
+      .on(
+        RoomEvent.ConnectionQualityChanged,
+        (quality: ConnectionQuality, participant) => {
+          if (quality === ConnectionQuality.Poor) {
+            console.warn(
+              "[useLiveKitRoom] Poor connection quality from",
+              participant?.identity ?? "local",
+            );
+          }
+        },
+      );
+
+    const connectWithRetry = async (attempt: number): Promise<void> => {
+      try {
+        await room.connect(url, token);
+      } catch (err) {
+        if (disposed) return;
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 2000));
+          return connectWithRetry(attempt + 1);
+        }
+        throw err;
       }
     };
 
-    room
-      .on(
-        RoomEvent.TrackSubscribed,
-        (
-          track: RemoteTrack,
-          _pub: RemoteTrackPublication,
-          _participant: RemoteParticipant,
-        ) => attachRemote(track),
-      )
-      .on(RoomEvent.TrackUnsubscribed, (track: RemoteTrack) => track.detach())
-      .on(RoomEvent.ParticipantConnected, () => setRemoteConnected(true))
-      .on(RoomEvent.ParticipantDisconnected, () => setRemoteConnected(false))
-      .on(RoomEvent.Disconnected, () => setConnected(false));
-
     void (async () => {
       try {
-        await room.connect(url, token);
+        await connectWithRetry(0);
         if (disposed) {
           await room.disconnect();
           return;
         }
         setConnected(true);
         setRemoteConnected(room.remoteParticipants.size > 0);
+
         await room.localParticipant.setMicrophoneEnabled(true);
-        if (hasVideo) {
+
+        if (cameraRef.current) {
           const pub = await room.localParticipant.setCameraEnabled(true);
-          if (pub?.track && localVideoRef.current) {
-            pub.track.attach(localVideoRef.current);
-          }
+          if (pub) attachCameraTrack(pub, localVideoRef.current);
         } else {
+          await room.localParticipant.setCameraEnabled(false);
           setCameraEnabled(false);
         }
       } catch {
-        // Connection failed — `connected` stays false; the call UI's own
-        // hangup control lets the user bail out, and the server-side
-        // duration cap / LiveKit webhook cleanup aren't affected either way.
+        // Connection failed after retries — `connected` stays false; the
+        // hangup button lets the user bail out and server-side cleanup runs.
       }
     })();
 
@@ -116,27 +194,38 @@ export function useLiveKitRoom(
       disposed = true;
       void room.disconnect();
       roomRef.current = null;
+      setConnected(false);
+      setRemoteConnected(false);
     };
-  }, [token, hasVideo, localVideoRef, remoteVideoRef, remoteAudioRef]);
+  }, [token, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
 
-  const toggleMic = useCallback(() => {
+  const toggleMic = useCallback(async () => {
     const room = roomRef.current;
     if (!room) return;
     const next = !micEnabled;
     setMicEnabled(next);
-    void room.localParticipant.setMicrophoneEnabled(next);
+    try {
+      await room.localParticipant.setMicrophoneEnabled(next);
+    } catch {
+      setMicEnabled(!next);
+    }
   }, [micEnabled]);
 
-  const toggleCamera = useCallback(() => {
+  const toggleCamera = useCallback(async () => {
     const room = roomRef.current;
     if (!room) return;
     const next = !cameraEnabled;
     setCameraEnabled(next);
-    void room.localParticipant.setCameraEnabled(next).then((pub) => {
-      if (next && pub?.track && localVideoRef.current) {
-        pub.track.attach(localVideoRef.current);
+    try {
+      const pub = await room.localParticipant.setCameraEnabled(next);
+      if (next && pub) {
+        attachCameraTrack(pub, localVideoRef.current);
+      } else if (!next && pub?.track) {
+        pub.track.detach();
       }
-    });
+    } catch {
+      setCameraEnabled(!next);
+    }
   }, [cameraEnabled, localVideoRef]);
 
   return {

@@ -73,7 +73,7 @@ export class LiveKitService {
       // left both auto-close quickly — RTC rooms are ephemeral by design,
       // never meant to sit open with no one connected.
       emptyTimeout: 60,
-      departureTimeout: 60,
+      departureTimeout: 15,
     });
   }
 
