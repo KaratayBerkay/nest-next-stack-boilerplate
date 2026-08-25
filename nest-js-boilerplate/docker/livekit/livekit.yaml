@@ -5,13 +5,11 @@ rtc:
   port_range_end: 60000
   # The compose service binds to the host network via container ports below,
   # but LiveKit itself needs to know its own reachable address to hand out
-  # to clients in ICE candidates. When false, LiveKit advertises private
-  # IPs that are unreachable from other devices on the network — breaking
-  # video/audio on anything beyond localhost. Set node_ip to the host's
-  # real LAN IP for production; for local dev on the same machine, the
-  # built-in STUN is sufficient once this flag is on.
-  use_external_ip: true
-  node_ip: ${HOST_LAN_IP:-127.0.0.1}
+  # to clients in ICE candidates. When false, LiveKit uses its auto-detected
+  # local IP — works for localhost-only dev. For production or LAN testing
+  # with real devices, set to true and provide node_ip with the host's real
+  # LAN/public IP so clients receive routable ICE candidates.
+  use_external_ip: false
 # livekit runs with network_mode: host (see docker-compose.yml), so it has
 # no Docker-internal DNS — every other service must be addressed via
 # localhost + its published host port, not its compose service name.
