@@ -6066,4 +6066,55 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcLeaveStream => 'Ayrıl';
+
+  @override
+  String get rtcInviteToMeeting => 'Davet et';
+
+  @override
+  String get rtcNoFriendsToInvite =>
+      'Toplantılara davet etmek için önce arkadaş ekleyin';
+
+  @override
+  String get rtcInvite => 'Davet et';
+
+  @override
+  String get rtcInvited => 'Davet edildi';
+
+  @override
+  String get rtcClose => 'Kapat';
+
+  @override
+  String get rtcReportTitle => 'Şikayet et';
+
+  @override
+  String get rtcReportReasonHarassment => 'Taciz veya kötüye kullanım';
+
+  @override
+  String get rtcReportReasonSpam => 'Spam';
+
+  @override
+  String get rtcReportReasonInappropriate => 'Uygunsuz içerik';
+
+  @override
+  String get rtcReportReasonOther => 'Diğer';
+
+  @override
+  String get rtcReportDetailsPlaceholder =>
+      'Yardımcı olabilecek ayrıntılar ekleyin (opsiyonel)';
+
+  @override
+  String get rtcReportSubmit => 'Şikayeti gönder';
+
+  @override
+  String get rtcReportSubmitted => 'Teşekkürler — şikayetiniz iletildi.';
+
+  @override
+  String get rtcStartRecording => 'Kaydı başlat';
+
+  @override
+  String get rtcStopRecording => 'Kaydı durdur';
+
+  @override
+  String get rtcRecordingComingSoonNote =>
+      'Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor.';
 }

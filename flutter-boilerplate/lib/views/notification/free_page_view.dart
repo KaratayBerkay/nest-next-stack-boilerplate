@@ -103,6 +103,7 @@ class FreeNotificationPage extends ConsumerWidget {
                               final payload = item.payload;
                               final kind = payload?['kind'] as String?;
                               final postId = payload?['postId'] as String?;
+                              final slug = payload?['slug'] as String?;
                               return NotificationItemWidget(
                                 item: item,
                                 lang: lang,
@@ -117,6 +118,17 @@ class FreeNotificationPage extends ConsumerWidget {
                                     if (kind == 'friend-request' ||
                                         kind == 'friend-accepted') {
                                       return '/v1/$lang/find-friends/requests';
+                                    }
+                                    if (kind == 'rtc-missed-call') {
+                                      return '/v1/$lang/rtc/calls';
+                                    }
+                                    if (kind == 'rtc-meeting-invite' &&
+                                        slug != null) {
+                                      return '/v1/$lang/rtc/meetings/$slug';
+                                    }
+                                    if (kind == 'rtc-stream-live' &&
+                                        slug != null) {
+                                      return '/v1/$lang/rtc/live/$slug';
                                     }
                                     if (postId != null) {
                                       return '/v1/$lang/posts/$postId';

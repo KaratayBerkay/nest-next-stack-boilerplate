@@ -9,6 +9,7 @@ import 'package:livekit_client/livekit_client.dart' as lk;
 import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
 import '../../app_config.dart';
+import '../../components/rtc/rtc_report_dialog.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/stream.dart';
@@ -144,6 +145,20 @@ class _RtcLiveViewerPageContentState
     if (mounted) context.pop();
   }
 
+  Future<void> _report() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => RtcReportDialog(
+        onSubmit: (reason, details) => ref.read(streamActionsProvider).report(
+              widget.slug,
+              reason,
+              details: details,
+              reportedUserId: _join?.stream.broadcaster.id,
+            ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     if (_sentJoinChat) {
@@ -239,6 +254,11 @@ class _RtcLiveViewerPageContentState
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Center(child: Text(t.rtcViewerCount(_viewerCount))),
+          ),
+          IconButton(
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: t.rtcReportTitle,
+            onPressed: _report,
           ),
           IconButton(
             icon: const Icon(Icons.logout),

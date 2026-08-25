@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   IconMicrophone,
   IconMicrophoneOff,
@@ -24,7 +25,9 @@ import {
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useLiveKitStreamRoom } from "@/hooks/rtc/useLiveKitStreamRoom";
 import { StreamPlayer } from "@/components/rtc/StreamPlayer";
+import { RtcRecordingControl } from "@/components/rtc/RtcRecordingControl";
 import { useStreamActions } from "@/api/client/rtc/streams-actions";
+import { streamRecordingQueryOptions } from "@/api/client/rtc/streams-query";
 import type { LiveStreamJoinResult } from "@/api/server/rtc/streams/types";
 
 export function RtcGoLiveView() {
@@ -61,7 +64,8 @@ function RtcGoLiveForm() {
   const { toast } = useToast();
   const realtime = useRealtime();
   const realtimeStatus = useRealtimeStatus();
-  const { goLive, endStream } = useStreamActions();
+  const { goLive, endStream, startRecording, stopRecording } =
+    useStreamActions();
 
   const [title, setTitle] = useState("");
   const [starting, setStarting] = useState(false);
@@ -87,6 +91,10 @@ function RtcGoLiveForm() {
   };
 
   const slug = live?.stream.slug ?? "";
+
+  const { data: recording, refetch: refetchRecording } = useQuery(
+    streamRecordingQueryOptions(slug, Boolean(slug)),
+  );
 
   useEffect(() => {
     if (!realtime || realtimeStatus !== "open" || !slug) return;
@@ -223,6 +231,20 @@ function RtcGoLiveForm() {
               />
             )}
           </ConfirmDialog>
+        </div>
+
+        <div className="flex justify-center">
+          <RtcRecordingControl
+            recording={recording}
+            onStart={async () => {
+              await startRecording(slug);
+              await refetchRecording();
+            }}
+            onStop={async () => {
+              await stopRecording(slug);
+              await refetchRecording();
+            }}
+          />
         </div>
       </div>
 

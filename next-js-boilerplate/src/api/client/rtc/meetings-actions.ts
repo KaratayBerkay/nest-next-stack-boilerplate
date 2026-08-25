@@ -1,3 +1,5 @@
+import type { RtcReportReason } from "@/api/server/rtc/shared-types";
+
 export function useMeetingActions() {
   const createMeeting = async (title: string) => {
     const { createMeetingServer } =
@@ -38,6 +40,35 @@ export function useMeetingActions() {
     return removeParticipantServer(slug, userId);
   };
 
+  const inviteToMeeting = async (slug: string, userId: string) => {
+    const { inviteToMeetingServer } =
+      await import("@/api/server/rtc/meetings/invite");
+    return inviteToMeetingServer(slug, userId);
+  };
+
+  const reportMeeting = async (
+    slug: string,
+    reason: RtcReportReason,
+    details?: string,
+    reportedUserId?: string,
+  ) => {
+    const { reportMeetingServer } =
+      await import("@/api/server/rtc/meetings/report");
+    return reportMeetingServer(slug, reason, details, reportedUserId);
+  };
+
+  const startRecording = async (slug: string) => {
+    const { startMeetingRecordingServer } =
+      await import("@/api/server/rtc/meetings/recording");
+    return startMeetingRecordingServer(slug);
+  };
+
+  const stopRecording = async (slug: string) => {
+    const { stopMeetingRecordingServer } =
+      await import("@/api/server/rtc/meetings/recording");
+    return stopMeetingRecordingServer(slug);
+  };
+
   return {
     createMeeting,
     joinMeeting,
@@ -45,5 +76,9 @@ export function useMeetingActions() {
     endMeeting,
     muteParticipant,
     removeParticipant,
+    inviteToMeeting,
+    reportMeeting,
+    startRecording,
+    stopRecording,
   };
 }

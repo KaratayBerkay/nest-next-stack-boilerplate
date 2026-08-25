@@ -199,6 +199,9 @@ enum NotificationType {
   SYSTEM
   BILLING
   SECURITY
+  MISSED_CALL
+  MEETING_INVITE
+  STREAM_LIVE
 }
 
 enum WalletTxnType {
@@ -392,13 +395,16 @@ model User {
   pushSubscriptions  PushSubscription[]
 
   // rtc (calls, meetings, streams)
-  rtcRoomsCreated   RtcRoom[]        @relation("RtcRoomCreator")
-  rtcParticipations RtcParticipant[]
-  callsAsCaller     CallSession[]    @relation("CallCaller")
-  callsAsCallee     CallSession[]    @relation("CallCallee")
-  meetingsHosted    Meeting[]        @relation("MeetingHost")
-  streamsHosted     LiveStream[]     @relation("StreamBroadcaster")
-  rtcChatMessages   RtcChatMessage[]
+  rtcRoomsCreated        RtcRoom[]        @relation("RtcRoomCreator")
+  rtcParticipations      RtcParticipant[]
+  callsAsCaller          CallSession[]    @relation("CallCaller")
+  callsAsCallee          CallSession[]    @relation("CallCallee")
+  meetingsHosted         Meeting[]        @relation("MeetingHost")
+  streamsHosted          LiveStream[]     @relation("StreamBroadcaster")
+  rtcChatMessages        RtcChatMessage[]
+  rtcReportsFiled        RtcReport[]      @relation("RtcReportReporter")
+  rtcReportsReceived     RtcReport[]      @relation("RtcReportReportedUser")
+  rtcRecordingsRequested RtcRecording[]
 
   // money
   wallets Wallet[]
@@ -1039,9 +1045,11 @@ model RtcRoom {
   createdBy       User             @relation("RtcRoomCreator", fields: [createdById], references: [id], onDelete: Cascade)
   participants    RtcParticipant[]
   chatMessages    RtcChatMessage[]
+  reports         RtcReport[]
   call            CallSession?
   meeting         Meeting?
   stream          LiveStream?
+  recording       RtcRecording?
   startedAt       DateTime?        @db.Timestamptz(6)
   endedAt         DateTime?        @db.Timestamptz(6)
   createdAt       DateTime         @default(now()) @db.Timestamptz(6)
@@ -1069,37 +1077,37 @@ model RtcParticipant {
 }
 
 model CallSession {
-  id         String       @id @default(uuid(7)) @db.Uuid
-  roomId     String       @unique @db.Uuid
-  room       RtcRoom      @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  callerId   String       @db.Uuid
-  caller     User         @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
-  calleeId   String       @db.Uuid
-  callee     User         @relation("CallCallee", fields: [calleeId], references: [id], onDelete: Cascade)
-  state      CallEndState @default(RINGING)
-  hasVideo   Boolean      @default(true)
+  id                 String       @id @default(uuid(7)) @db.Uuid
+  roomId             String       @unique @db.Uuid
+  room               RtcRoom      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  callerId           String       @db.Uuid
+  caller             User         @relation("CallCaller", fields: [callerId], references: [id], onDelete: Cascade)
+  calleeId           String       @db.Uuid
+  callee             User         @relation("CallCallee", fields: [calleeId], references: [id], onDelete: Cascade)
+  state              CallEndState @default(RINGING)
+  hasVideo           Boolean      @default(true)
   // Persisted at accept-time from MIN(caller tier, callee tier) via
   // RTC_TIER_MULTIPLIER — drives the server-side forced-hangup timer.
   maxDurationMinutes Int?
-  ringingAt  DateTime     @default(now()) @db.Timestamptz(6)
-  acceptedAt DateTime?    @db.Timestamptz(6)
-  endedAt    DateTime?    @db.Timestamptz(6)
+  ringingAt          DateTime     @default(now()) @db.Timestamptz(6)
+  acceptedAt         DateTime?    @db.Timestamptz(6)
+  endedAt            DateTime?    @db.Timestamptz(6)
   // 'hangup' | 'rejected' | 'cancelled' | 'missed' | 'failed' | 'tier_limit'
-  endReason  String?
+  endReason          String?
 
   @@index([callerId, ringingAt(sort: Desc)])
   @@index([calleeId, ringingAt(sort: Desc)])
 }
 
 model Meeting {
-  id     String  @id @default(uuid(7)) @db.Uuid
-  roomId String  @unique @db.Uuid
-  room   RtcRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  hostId String  @db.Uuid
-  host   User    @relation("MeetingHost", fields: [hostId], references: [id], onDelete: Cascade)
-  title  String
+  id                 String   @id @default(uuid(7)) @db.Uuid
+  roomId             String   @unique @db.Uuid
+  room               RtcRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  hostId             String   @db.Uuid
+  host               User     @relation("MeetingHost", fields: [hostId], references: [id], onDelete: Cascade)
+  title              String
   // Shareable join link, same idea as Room.slug.
-  slug   String  @unique
+  slug               String   @unique
   // Derived from FREE_MEETING_MAX_PARTICIPANTS * RTC_TIER_MULTIPLIER[host
   // tier] at creation time, persisted (not recomputed live) so a later
   // host-tier change doesn't retroactively resize an in-progress meeting.
@@ -1111,18 +1119,18 @@ model Meeting {
 }
 
 model LiveStream {
-  id            String   @id @default(uuid(7)) @db.Uuid
-  roomId        String   @unique @db.Uuid
-  room          RtcRoom  @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  broadcasterId String   @db.Uuid
-  broadcaster   User     @relation("StreamBroadcaster", fields: [broadcasterId], references: [id], onDelete: Cascade)
-  title         String
-  slug          String   @unique
-  isLive        Boolean  @default(true)
+  id              String    @id @default(uuid(7)) @db.Uuid
+  roomId          String    @unique @db.Uuid
+  room            RtcRoom   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  broadcasterId   String    @db.Uuid
+  broadcaster     User      @relation("StreamBroadcaster", fields: [broadcasterId], references: [id], onDelete: Cascade)
+  title           String
+  slug            String    @unique
+  isLive          Boolean   @default(true)
   // Historical high-water mark; the live number comes from LiveKit's
   // RoomServiceClient.listParticipants at query time, not this column.
-  peakViewerCount Int      @default(0)
-  startedAt       DateTime @default(now()) @db.Timestamptz(6)
+  peakViewerCount Int       @default(0)
+  startedAt       DateTime  @default(now()) @db.Timestamptz(6)
   endedAt         DateTime? @db.Timestamptz(6)
 
   @@index([isLive, startedAt(sort: Desc)])
@@ -1144,6 +1152,59 @@ model RtcChatMessage {
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([roomId, createdAt])
+}
+
+enum RtcReportReason {
+  HARASSMENT
+  SPAM
+  INAPPROPRIATE_CONTENT
+  OTHER
+}
+
+// One report row per submission (not deduped/aggregated) — reviewer tooling
+// is future work, this phase only guarantees reports are captured and
+// queryable. reportedUserId is null for a room-level report (e.g. a stream's
+// content) vs. a specific participant.
+model RtcReport {
+  id             String          @id @default(uuid(7)) @db.Uuid
+  roomId         String          @db.Uuid
+  room           RtcRoom         @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  reporterId     String          @db.Uuid
+  reporter       User            @relation("RtcReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reportedUserId String?         @db.Uuid
+  reportedUser   User?           @relation("RtcReportReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reason         RtcReportReason
+  details        String?         @db.Text
+  createdAt      DateTime        @default(now()) @db.Timestamptz(6)
+
+  @@index([roomId])
+  @@index([reporterId])
+}
+
+enum RtcRecordingStatus {
+  NOT_STARTED
+  RECORDING
+  STOPPED
+}
+
+// Scaffolding only (Phase 5) — tracks host intent/timestamps for a
+// start/stop-recording control. No LiveKit Egress process is actually
+// started: fileUrl stays null until a future phase wires a real egress
+// container + object-storage output. See RtcRecordingService for the seam.
+model RtcRecording {
+  id            String             @id @default(uuid(7)) @db.Uuid
+  roomId        String             @unique @db.Uuid
+  room          RtcRoom            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  requestedById String             @db.Uuid
+  requestedBy   User               @relation(fields: [requestedById], references: [id], onDelete: Cascade)
+  status        RtcRecordingStatus @default(NOT_STARTED)
+  egressId      String?
+  fileUrl       String?
+  startedAt     DateTime?          @db.Timestamptz(6)
+  endedAt       DateTime?          @db.Timestamptz(6)
+  createdAt     DateTime           @default(now()) @db.Timestamptz(6)
+
+  @@index([roomId])
 }
 
 // Server-side home of the storage envelope created at upload time. v/nonce

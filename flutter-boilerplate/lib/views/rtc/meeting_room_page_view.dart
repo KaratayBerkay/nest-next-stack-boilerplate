@@ -6,13 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
 
+import '../../api/client/friends/query.dart';
 import '../../api/client/rtc/meetings_actions.dart';
 import '../../api/client/rtc/meetings_chat_live.dart';
 import '../../app_config.dart';
+import '../../components/rtc/rtc_report_dialog.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/meeting.dart';
+import '../../types/rtc/recording.dart';
 
 enum _RoomPhase { joining, active, ended, removed, notFound }
 
@@ -74,6 +77,8 @@ class _RtcMeetingRoomPageContentState
   int _lastHandledSignalSeq = 0;
   int _tab = 0;
   final _chatController = TextEditingController();
+  RtcRecording? _recording;
+  bool _recordingBusy = false;
 
   @override
   void initState() {
@@ -246,6 +251,38 @@ class _RtcMeetingRoomPageContentState
     if (mounted) context.pop();
   }
 
+  Future<void> _invite() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _InviteFriendsSheet(slug: widget.slug),
+    );
+  }
+
+  Future<void> _report() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) => RtcReportDialog(
+        onSubmit: (reason, details) => ref
+            .read(meetingActionsProvider)
+            .report(widget.slug, reason, details: details),
+      ),
+    );
+  }
+
+  Future<void> _toggleRecording() async {
+    setState(() => _recordingBusy = true);
+    try {
+      final actions = ref.read(meetingActionsProvider);
+      final next = _recording?.status == 'RECORDING'
+          ? await actions.stopRecording(widget.slug)
+          : await actions.startRecording(widget.slug);
+      if (mounted) setState(() => _recording = next);
+    } finally {
+      if (mounted) setState(() => _recordingBusy = false);
+    }
+  }
+
   @override
   void dispose() {
     if (_sentJoinChat) {
@@ -336,6 +373,16 @@ class _RtcMeetingRoomPageContentState
         title: Text(_join?.meeting.title ?? ''),
         actions: [
           IconButton(
+            icon: const Icon(Icons.person_add_alt),
+            tooltip: t.rtcInviteToMeeting,
+            onPressed: _invite,
+          ),
+          IconButton(
+            icon: const Icon(Icons.flag_outlined),
+            tooltip: t.rtcReportTitle,
+            onPressed: _report,
+          ),
+          IconButton(
             icon: Icon(isHost ? Icons.call_end : Icons.logout),
             tooltip: isHost ? t.rtcEndMeeting : t.rtcLeaveMeeting,
             onPressed: isHost ? _end : _leave,
@@ -344,6 +391,37 @@ class _RtcMeetingRoomPageContentState
       ),
       body: Column(
         children: [
+          if (isHost)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: _recordingBusy ? null : _toggleRecording,
+                    icon: Icon(
+                      _recording?.status == 'RECORDING'
+                          ? Icons.stop_circle
+                          : Icons.fiber_manual_record,
+                      color:
+                          _recording?.status == 'RECORDING' ? Colors.red : null,
+                    ),
+                    label: Text(
+                      _recording?.status == 'RECORDING'
+                          ? t.rtcStopRecording
+                          : t.rtcStartRecording,
+                    ),
+                  ),
+                  if (_recording?.status == 'RECORDING')
+                    Expanded(
+                      child: Text(
+                        t.rtcRecordingComingSoonNote,
+                        style: Theme.of(context).textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           Expanded(
             child: GridView.builder(
               padding: const EdgeInsets.all(8),
@@ -595,6 +673,81 @@ class _ParticipantsPanel extends ConsumerWidget {
               : null,
         );
       },
+    );
+  }
+}
+
+/// Friend picker for "invite to meeting" — reuses the existing friends list
+/// (server-side enforces the target actually is a friend).
+class _InviteFriendsSheet extends ConsumerStatefulWidget {
+  final String slug;
+
+  const _InviteFriendsSheet({required this.slug});
+
+  @override
+  ConsumerState<_InviteFriendsSheet> createState() =>
+      _InviteFriendsSheetState();
+}
+
+class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
+  final Set<String> _invitedIds = {};
+
+  Future<void> _invite(String userId) async {
+    await ref.read(meetingActionsProvider).invite(widget.slug, userId);
+    if (mounted) setState(() => _invitedIds.add(userId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final friendsAsync = ref.watch(friendsListProvider);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              t.rtcInviteToMeeting,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 12),
+            friendsAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(24),
+                child: CircularProgressIndicator(),
+              ),
+              error: (err, stack) => Text(t.rtcNoFriendsToInvite),
+              data: (friends) => friends.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(t.rtcNoFriendsToInvite),
+                    )
+                  : ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 320),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: friends.length,
+                        itemBuilder: (context, index) {
+                          final friend = friends[index];
+                          final invited = _invitedIds.contains(friend.id);
+                          return ListTile(
+                            leading: Avatar(name: friend.name, radius: 16),
+                            title: Text(friend.name),
+                            trailing: TextButton(
+                              onPressed:
+                                  invited ? null : () => _invite(friend.id),
+                              child: Text(invited ? t.rtcInvited : t.rtcInvite),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

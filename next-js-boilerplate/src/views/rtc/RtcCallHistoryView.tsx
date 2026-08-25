@@ -6,11 +6,14 @@ import {
   IconPhoneOutgoing,
   IconVideo,
   IconPhone,
+  IconFlag,
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
+import { Button, IconButton } from "@/components/ui/Button";
 import { PulseBlockFallback } from "@/fallbacks";
+import { RtcReportDialog } from "@/components/rtc/RtcReportDialog";
 import { callHistoryQueryOptions } from "@/api/client/rtc/query";
+import { useCallActions } from "@/api/client/rtc/calls-actions";
 import type { CallHistoryEntry } from "@/api/server/rtc/call-history";
 import { getRelativeTime } from "@/lib/date-time";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -34,9 +37,11 @@ const STATE_KEY: Record<
 function CallRow({ call }: { call: CallHistoryEntry }) {
   const t = useMessages("rtc");
   const { state, startCall } = useRtcCall();
+  const { reportCall } = useCallActions();
   const DirectionIcon =
     call.direction === "incoming" ? IconPhoneIncoming : IconPhoneOutgoing;
   const stateKey = STATE_KEY[call.state] ?? "stateEnded";
+  const isMissed = call.state === "MISSED" && call.direction === "incoming";
 
   return (
     <div className="flex items-center gap-3 border-b px-2 py-3 last:border-b-0">
@@ -46,8 +51,14 @@ function CallRow({ call }: { call: CallHistoryEntry }) {
         size="md"
       />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{call.peer.name}</p>
-        <div className="text-fg-muted flex items-center gap-1.5 text-xs">
+        <p
+          className={`truncate text-sm font-medium ${isMissed ? "text-error" : ""}`}
+        >
+          {call.peer.name}
+        </p>
+        <div
+          className={`flex items-center gap-1.5 text-xs ${isMissed ? "text-error" : "text-fg-muted"}`}
+        >
           <DirectionIcon size={14} aria-hidden />
           {call.hasVideo && <IconVideo size={14} aria-hidden />}
           <span>{t[stateKey]}</span>
@@ -55,6 +66,19 @@ function CallRow({ call }: { call: CallHistoryEntry }) {
           <span>{getRelativeTime(call.ringingAt)}</span>
         </div>
       </div>
+      <RtcReportDialog
+        onSubmit={(reason, details) => reportCall(call.id, reason, details)}
+      >
+        {(open) => (
+          <IconButton
+            size="icon-sm"
+            variant="ghost"
+            icon={<IconFlag size={16} />}
+            label={t.reportTitle}
+            onClick={open}
+          />
+        )}
+      </RtcReportDialog>
       <Button
         size="icon-sm"
         variant="ghost"

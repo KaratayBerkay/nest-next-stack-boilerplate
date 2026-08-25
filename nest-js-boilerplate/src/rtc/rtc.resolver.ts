@@ -13,6 +13,9 @@ import {
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { Meeting } from '../@generated/meeting/meeting.model';
 import { LiveStream } from '../@generated/live-stream/live-stream.model';
+import { RtcReport } from '../@generated/rtc-report/rtc-report.model';
+import { RtcRecording } from '../@generated/rtc-recording/rtc-recording.model';
+import { RtcReportReason } from '../@generated/prisma/rtc-report-reason.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -21,6 +24,8 @@ import { TierGuard } from '../authorization/tier.guard';
 import { MinTier } from '../authorization/min-tier.decorator';
 import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
+import { RtcReportService } from './rtc-report.service';
+import { RtcRecordingService } from './rtc-recording.service';
 import {
   FREE_CALL_MAX_DURATION_MINUTES,
   MIN_TIER_TO_GO_LIVE,
@@ -114,6 +119,8 @@ export class RtcResolver {
   constructor(
     private readonly meetings: RtcMeetingService,
     private readonly streams: RtcStreamService,
+    private readonly reports: RtcReportService,
+    private readonly recordings: RtcRecordingService,
   ) {}
 
   @Query(() => RtcTierLimits)
@@ -166,6 +173,16 @@ export class RtcResolver {
   @Mutation(() => JoinMeetingResult)
   joinMeeting(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
     return this.meetings.joinMeeting(user.userId, slug);
+  }
+
+  @Mutation(() => Boolean)
+  async inviteToMeeting(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+    @Args('userId') targetUserId: string,
+  ) {
+    await this.meetings.inviteToMeeting(user.userId, slug, targetUserId);
+    return true;
   }
 
   @Mutation(() => Boolean)
@@ -267,5 +284,97 @@ export class RtcResolver {
   @ResolveField(() => Int)
   async viewerCount(@Parent() stream: LiveStream): Promise<number> {
     return this.streams.getViewerCount(stream);
+  }
+
+  // ==================== Reporting ====================
+  // Minimal, real reporting (Phase 5): persisted rows, no review UI yet —
+  // see RtcReportService's doc comment.
+
+  @Mutation(() => RtcReport)
+  reportMeeting(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+    @Args('reason', { type: () => RtcReportReason }) reason: RtcReportReason,
+    @Args('details', { nullable: true }) details?: string,
+    @Args('reportedUserId', { nullable: true }) reportedUserId?: string,
+  ) {
+    return this.reports.reportMeeting(
+      user.userId,
+      slug,
+      reason,
+      details,
+      reportedUserId,
+    );
+  }
+
+  @Mutation(() => RtcReport)
+  reportStream(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+    @Args('reason', { type: () => RtcReportReason }) reason: RtcReportReason,
+    @Args('details', { nullable: true }) details?: string,
+    @Args('reportedUserId', { nullable: true }) reportedUserId?: string,
+  ) {
+    return this.reports.reportStream(
+      user.userId,
+      slug,
+      reason,
+      details,
+      reportedUserId,
+    );
+  }
+
+  @Mutation(() => RtcReport)
+  reportCall(
+    @CurrentUser() user: JwtUser,
+    @Args('callId') callId: string,
+    @Args('reason', { type: () => RtcReportReason }) reason: RtcReportReason,
+    @Args('details', { nullable: true }) details?: string,
+  ) {
+    return this.reports.reportCall(user.userId, callId, reason, details);
+  }
+
+  // ==================== Recording (scaffolding — see RtcRecordingService) ====================
+
+  @Query(() => RtcRecording, { nullable: true })
+  meetingRecording(@Args('slug') slug: string) {
+    return this.recordings.recordingForRoom('meeting', slug);
+  }
+
+  @Query(() => RtcRecording, { nullable: true })
+  streamRecording(@Args('slug') slug: string) {
+    return this.recordings.recordingForRoom('stream', slug);
+  }
+
+  @Mutation(() => RtcRecording)
+  startMeetingRecording(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    return this.recordings.startRecording(user.userId, 'meeting', slug);
+  }
+
+  @Mutation(() => RtcRecording)
+  stopMeetingRecording(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    return this.recordings.stopRecording(user.userId, 'meeting', slug);
+  }
+
+  @Mutation(() => RtcRecording)
+  startStreamRecording(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    return this.recordings.startRecording(user.userId, 'stream', slug);
+  }
+
+  @Mutation(() => RtcRecording)
+  stopStreamRecording(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    return this.recordings.stopRecording(user.userId, 'stream', slug);
   }
 }

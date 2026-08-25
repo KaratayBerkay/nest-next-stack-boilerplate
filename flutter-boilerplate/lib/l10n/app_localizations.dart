@@ -11437,6 +11437,102 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave'**
   String get rtcLeaveStream;
+
+  /// No description provided for @rtcInviteToMeeting.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get rtcInviteToMeeting;
+
+  /// No description provided for @rtcNoFriendsToInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add some friends to invite them to meetings'**
+  String get rtcNoFriendsToInvite;
+
+  /// No description provided for @rtcInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite'**
+  String get rtcInvite;
+
+  /// No description provided for @rtcInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get rtcInvited;
+
+  /// No description provided for @rtcClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get rtcClose;
+
+  /// No description provided for @rtcReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get rtcReportTitle;
+
+  /// No description provided for @rtcReportReasonHarassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or abuse'**
+  String get rtcReportReasonHarassment;
+
+  /// No description provided for @rtcReportReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam'**
+  String get rtcReportReasonSpam;
+
+  /// No description provided for @rtcReportReasonInappropriate.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate content'**
+  String get rtcReportReasonInappropriate;
+
+  /// No description provided for @rtcReportReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get rtcReportReasonOther;
+
+  /// No description provided for @rtcReportDetailsPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add any details that might help (optional)'**
+  String get rtcReportDetailsPlaceholder;
+
+  /// No description provided for @rtcReportSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit report'**
+  String get rtcReportSubmit;
+
+  /// No description provided for @rtcReportSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks — your report has been submitted.'**
+  String get rtcReportSubmitted;
+
+  /// No description provided for @rtcStartRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Start recording'**
+  String get rtcStartRecording;
+
+  /// No description provided for @rtcStopRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording'**
+  String get rtcStopRecording;
+
+  /// No description provided for @rtcRecordingComingSoonNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording is logged for the host only — video capture isn\'t available yet.'**
+  String get rtcRecordingComingSoonNote;
 }
 
 class _AppLocalizationsDelegate

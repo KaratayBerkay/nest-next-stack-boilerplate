@@ -15,6 +15,8 @@ import { RtcChatService } from './rtc-chat.service';
 import { RtcParticipantRole, RtcRoomKind, RtcRoomState } from '@prisma/client';
 import { displayName } from '../common/utils/display-name';
 import type { LiveStream, RtcRoom } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service';
+import { FriendsService } from '../friends/friends.service';
 
 export type { RtcChatMessageView as StreamChatMessageView } from './rtc-chat.service';
 
@@ -53,6 +55,8 @@ export class RtcStreamService {
     private readonly liveKit: LiveKitService,
     private readonly realtime: RealtimeGateway,
     private readonly chat: RtcChatService,
+    private readonly notifications: NotificationService,
+    private readonly friends: FriendsService,
   ) {}
 
   async goLive(userId: string, title: string) {
@@ -101,7 +105,53 @@ export class RtcStreamService {
     });
 
     this.logger.log({ category: 'rtc', event: 'stream.started', slug });
+    this.notifyFriendsWentLive(userId, stream.title, slug);
     return { token, roomName: livekitRoomName, stream };
+  }
+
+  /** Fire-and-forget: every friend of the broadcaster gets a persisted
+   *  STREAM_LIVE notification (falls back to push if they're not
+   *  currently connected, per NotificationService.create's own rule).
+   *  Not awaited — goLive shouldn't be slower for a broadcaster with many
+   *  friends, and one failed notification shouldn't fail the mutation. */
+  private notifyFriendsWentLive(
+    broadcasterId: string,
+    streamTitle: string,
+    slug: string,
+  ): void {
+    void (async () => {
+      const [broadcaster, friendIds] = await Promise.all([
+        this.prisma.user.findUnique({
+          where: { id: broadcasterId },
+          select: { name: true, email: true },
+        }),
+        this.friends.getFriendIds(broadcasterId),
+      ]);
+      const who = displayName(broadcaster ?? { name: null, email: 'Someone' });
+      const results = await Promise.allSettled(
+        friendIds.map((friendId) =>
+          this.notifications.create({
+            userId: friendId,
+            actorId: broadcasterId,
+            type: 'STREAM_LIVE',
+            title: `${who} is live now`,
+            body: streamTitle,
+            payload: { kind: 'rtc-stream-live', slug },
+          }),
+        ),
+      );
+      const failed = results.filter((r) => r.status === 'rejected').length;
+      if (failed > 0) {
+        this.logger.warn(
+          `stream-live notify: ${failed}/${friendIds.length} failed for ${slug}`,
+        );
+      }
+    })().catch((err: Error) =>
+      this.logger.error(
+        { event: 'stream_live_notification_failed', error: err.message },
+        `Stream-live notification failed: ${err.message}`,
+      ),
+    );
   }
 
   async liveStreams() {

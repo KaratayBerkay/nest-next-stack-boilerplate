@@ -33,3 +33,15 @@ export function streamChatQueryOptions(slug: string) {
     enabled: Boolean(slug),
   });
 }
+
+export function streamRecordingQueryOptions(slug: string, enabled: boolean) {
+  return queryOptions({
+    queryKey: ["rtc", "streams", slug, "recording"],
+    queryFn: async () => {
+      const { getStreamRecordingServer } =
+        await import("@/api/server/rtc/streams/recording");
+      return getStreamRecordingServer(slug);
+    },
+    enabled: Boolean(slug) && enabled,
+  });
+}

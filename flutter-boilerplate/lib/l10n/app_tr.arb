@@ -2037,5 +2037,21 @@
   "rtcStreamEndedNotice": "Yayın sona erdi",
   "rtcBackToLive": "Canlı yayına dön",
   "rtcBroadcasterOffline": "Yayıncı bekleniyor…",
-  "rtcLeaveStream": "Ayrıl"
+  "rtcLeaveStream": "Ayrıl",
+  "rtcInviteToMeeting": "Davet et",
+  "rtcNoFriendsToInvite": "Toplantılara davet etmek için önce arkadaş ekleyin",
+  "rtcInvite": "Davet et",
+  "rtcInvited": "Davet edildi",
+  "rtcClose": "Kapat",
+  "rtcReportTitle": "Şikayet et",
+  "rtcReportReasonHarassment": "Taciz veya kötüye kullanım",
+  "rtcReportReasonSpam": "Spam",
+  "rtcReportReasonInappropriate": "Uygunsuz içerik",
+  "rtcReportReasonOther": "Diğer",
+  "rtcReportDetailsPlaceholder": "Yardımcı olabilecek ayrıntılar ekleyin (opsiyonel)",
+  "rtcReportSubmit": "Şikayeti gönder",
+  "rtcReportSubmitted": "Teşekkürler — şikayetiniz iletildi.",
+  "rtcStartRecording": "Kaydı başlat",
+  "rtcStopRecording": "Kaydı durdur",
+  "rtcRecordingComingSoonNote": "Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor."
 }

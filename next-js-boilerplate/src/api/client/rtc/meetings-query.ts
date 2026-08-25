@@ -34,3 +34,15 @@ export function meetingChatQueryOptions(slug: string) {
     enabled: Boolean(slug),
   });
 }
+
+export function meetingRecordingQueryOptions(slug: string, enabled: boolean) {
+  return queryOptions({
+    queryKey: ["rtc", "meetings", slug, "recording"],
+    queryFn: async () => {
+      const { getMeetingRecordingServer } =
+        await import("@/api/server/rtc/meetings/recording");
+      return getMeetingRecordingServer(slug);
+    },
+    enabled: Boolean(slug) && enabled,
+  });
+}

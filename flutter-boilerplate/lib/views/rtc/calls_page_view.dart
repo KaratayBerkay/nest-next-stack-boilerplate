@@ -4,7 +4,9 @@ import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/rtc/calls_actions.dart';
 import '../../api/client/rtc/query.dart';
+import '../../components/rtc/rtc_report_dialog.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -67,10 +69,15 @@ class _CallHistoryTile extends ConsumerWidget {
       'FAILED' => t.rtcStateFailed,
       _ => call.state,
     };
+    final isMissed = call.state == 'MISSED' && call.direction == 'incoming';
+    final rowColor = isMissed ? colors.danger : colors.fgMuted;
 
     return ListTile(
       leading: Avatar(imageUrl: call.peer.avatarUrl, name: call.peer.name),
-      title: Text(call.peer.name),
+      title: Text(
+        call.peer.name,
+        style: isMissed ? TextStyle(color: colors.danger) : null,
+      ),
       subtitle: Row(
         children: [
           Icon(
@@ -78,31 +85,48 @@ class _CallHistoryTile extends ConsumerWidget {
                 ? Icons.call_received
                 : Icons.call_made,
             size: 14,
-            color: colors.fgMuted,
+            color: rowColor,
           ),
           if (call.hasVideo) ...[
             const SizedBox(width: 4),
-            Icon(Icons.videocam, size: 14, color: colors.fgMuted),
+            Icon(Icons.videocam, size: 14, color: rowColor),
           ],
           const SizedBox(width: 6),
           Text(
             '$stateLabel · ${DateTimeHelper.relative(call.ringingAt)}',
-            style: TextStyle(color: colors.fgMuted, fontSize: 12),
+            style: TextStyle(color: rowColor, fontSize: 12),
           ),
         ],
       ),
-      trailing: IconButton(
-        icon: Icon(call.hasVideo ? Icons.videocam : Icons.call),
-        onPressed: rtcState.phase == RtcCallPhase.idle
-            ? () => ref.read(rtcCallProvider.notifier).startCall(
-                  RtcCallPeer(
-                    id: call.peer.id,
-                    name: call.peer.name,
-                    avatarUrl: call.peer.avatarUrl,
-                  ),
-                  call.hasVideo,
-                )
-            : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            icon: const Icon(Icons.flag_outlined, size: 20),
+            tooltip: t.rtcReportTitle,
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (context) => RtcReportDialog(
+                onSubmit: (reason, details) => ref
+                    .read(callActionsProvider)
+                    .report(call.id, reason, details: details),
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(call.hasVideo ? Icons.videocam : Icons.call),
+            onPressed: rtcState.phase == RtcCallPhase.idle
+                ? () => ref.read(rtcCallProvider.notifier).startCall(
+                      RtcCallPeer(
+                        id: call.peer.id,
+                        name: call.peer.name,
+                        avatarUrl: call.peer.avatarUrl,
+                      ),
+                      call.hasVideo,
+                    )
+                : null,
+          ),
+        ],
       ),
     );
   }

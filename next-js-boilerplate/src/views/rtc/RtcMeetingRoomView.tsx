@@ -13,6 +13,8 @@ import {
   IconPhoneOff,
   IconMicrophoneOff as IconMuteAction,
   IconUserX,
+  IconUserPlus,
+  IconFlag,
 } from "@tabler/icons-react";
 import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -27,7 +29,13 @@ import {
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useLiveKitMeetingRoom } from "@/hooks/rtc/useLiveKitMeetingRoom";
 import { MeetingParticipantTile } from "@/components/rtc/MeetingParticipantTile";
-import { meetingChatQueryOptions } from "@/api/client/rtc/meetings-query";
+import { RtcInviteDialog } from "@/components/rtc/RtcInviteDialog";
+import { RtcReportDialog } from "@/components/rtc/RtcReportDialog";
+import { RtcRecordingControl } from "@/components/rtc/RtcRecordingControl";
+import {
+  meetingChatQueryOptions,
+  meetingRecordingQueryOptions,
+} from "@/api/client/rtc/meetings-query";
 import { useMeetingActions } from "@/api/client/rtc/meetings-actions";
 import type { JoinMeetingResult } from "@/api/server/rtc/meetings/types";
 
@@ -55,6 +63,10 @@ export function RtcMeetingRoomView() {
     endMeeting,
     muteParticipant,
     removeParticipant,
+    inviteToMeeting,
+    reportMeeting,
+    startRecording,
+    stopRecording,
   } = useMeetingActions();
 
   const [phase, setPhase] = useState<
@@ -168,6 +180,10 @@ export function RtcMeetingRoomView() {
 
   const isHost = join?.role === "HOST";
 
+  const { data: recording, refetch: refetchRecording } = useQuery(
+    meetingRecordingQueryOptions(slug, isHost && phase === "active"),
+  );
+
   const handleLeave = () => {
     void leaveMeeting(slug);
     router.push(`/v1/${lang}/rtc/meetings`);
@@ -255,6 +271,28 @@ export function RtcMeetingRoomView() {
             }
             onClick={livekit.toggleScreenShare}
           />
+          <RtcInviteDialog onInvite={(userId) => inviteToMeeting(slug, userId)}>
+            {(open) => (
+              <IconButton
+                variant="secondary"
+                icon={<IconUserPlus />}
+                label={t.inviteToMeeting}
+                onClick={open}
+              />
+            )}
+          </RtcInviteDialog>
+          <RtcReportDialog
+            onSubmit={(reason, details) => reportMeeting(slug, reason, details)}
+          >
+            {(open) => (
+              <IconButton
+                variant="secondary"
+                icon={<IconFlag />}
+                label={t.reportTitle}
+                onClick={open}
+              />
+            )}
+          </RtcReportDialog>
           {isHost ? (
             <ConfirmDialog
               title={t.endMeeting}
@@ -281,6 +319,22 @@ export function RtcMeetingRoomView() {
             />
           )}
         </div>
+
+        {isHost && (
+          <div className="flex justify-center">
+            <RtcRecordingControl
+              recording={recording}
+              onStart={async () => {
+                await startRecording(slug);
+                await refetchRecording();
+              }}
+              onStop={async () => {
+                await stopRecording(slug);
+                await refetchRecording();
+              }}
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex w-full flex-col rounded-lg border lg:w-80">

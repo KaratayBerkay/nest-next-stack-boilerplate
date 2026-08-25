@@ -18,6 +18,7 @@ import {
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { displayName } from '../common/utils/display-name';
 import { callMaxDurationMinutes } from './rtc-tier-limits.constants';
+import { NotificationService } from '../notification/notification.service';
 
 // Ported from voice-call-system's own client-side ring convention (the
 // reference repo has no server-side ring-timeout at all — foreground-only,
@@ -79,6 +80,7 @@ export class RtcCallService {
     private readonly prisma: PrismaService,
     private readonly liveKit: LiveKitService,
     private readonly realtime: RealtimeGateway,
+    private readonly notifications: NotificationService,
   ) {}
 
   async invite(
@@ -319,6 +321,7 @@ export class RtcCallService {
           type: 'rtc:missed',
           callId: call.id,
         });
+        this.notifyMissedCall(call);
       }
     }
   }
@@ -514,6 +517,36 @@ export class RtcCallService {
     await this.endCall(callId, CallEndState.MISSED, 'missed');
     this.realtime.emitToUser(call.callerId, { type: 'rtc:missed', callId });
     this.realtime.emitToUser(call.calleeId, { type: 'rtc:missed', callId });
+    this.notifyMissedCall(call);
+  }
+
+  /** Fire-and-forget: the callee gets a persisted MISSED_CALL notification
+   *  (falls back to a push if they have no live NOTIFICATION socket, per
+   *  NotificationService.create's own rule) so a missed call surfaces even
+   *  after the rtc:missed WS frame above was sent to nobody listening. */
+  private notifyMissedCall(call: {
+    id: string;
+    callerId: string;
+    calleeId: string;
+  }): void {
+    void (async () => {
+      const caller = await this.prisma.user.findUnique({
+        where: { id: call.callerId },
+        select: { name: true, email: true },
+      });
+      await this.notifications.create({
+        userId: call.calleeId,
+        actorId: call.callerId,
+        type: 'MISSED_CALL',
+        title: `Missed call from ${displayName(caller ?? { name: null, email: 'Someone' })}`,
+        payload: { kind: 'rtc-missed-call', callId: call.id },
+      });
+    })().catch((err: Error) =>
+      this.logger.error(
+        { event: 'missed_call_notification_failed', error: err.message },
+        `Missed call notification failed: ${err.message}`,
+      ),
+    );
   }
 
   private startDurationCap(callId: string, maxDurationMinutes: number): void {

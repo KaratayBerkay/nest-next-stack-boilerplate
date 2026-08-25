@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/Button";
+import { IconFlag } from "@tabler/icons-react";
+import { Button, IconButton } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { PulseBlockFallback } from "@/fallbacks";
 import { useToast } from "@/components/ui/Toast";
@@ -15,6 +16,7 @@ import {
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useLiveKitStreamRoom } from "@/hooks/rtc/useLiveKitStreamRoom";
 import { StreamPlayer } from "@/components/rtc/StreamPlayer";
+import { RtcReportDialog } from "@/components/rtc/RtcReportDialog";
 import { streamChatQueryOptions } from "@/api/client/rtc/streams-query";
 import { useStreamActions } from "@/api/client/rtc/streams-actions";
 import type { LiveStreamJoinResult } from "@/api/server/rtc/streams/types";
@@ -37,7 +39,7 @@ export function RtcLiveViewerView() {
   const { user } = useAuth();
   const realtime = useRealtime();
   const realtimeStatus = useRealtimeStatus();
-  const { joinStream, leaveStream } = useStreamActions();
+  const { joinStream, leaveStream, reportStream } = useStreamActions();
 
   const [phase, setPhase] = useState<
     "joining" | "active" | "ended" | "not-found" | "own-stream"
@@ -195,7 +197,21 @@ export function RtcLiveViewerView() {
           offlineLabel={t.broadcasterOffline}
         />
 
-        <div className="flex items-center justify-center pt-2">
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <RtcReportDialog
+            onSubmit={(reason, details) =>
+              reportStream(slug, reason, details, join?.stream.broadcaster.id)
+            }
+          >
+            {(open) => (
+              <IconButton
+                variant="ghost"
+                icon={<IconFlag />}
+                label={t.reportTitle}
+                onClick={open}
+              />
+            )}
+          </RtcReportDialog>
           <Button variant="ghost" onClick={handleLeave}>
             {t.leaveStream}
           </Button>

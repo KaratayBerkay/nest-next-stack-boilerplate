@@ -93,5 +93,22 @@
   "leaveStream": "Leave",
   "goLiveUpsellTitle": "Go Live requires an upgrade",
   "goLiveUpsellMessage": "Live streaming is available on the Medium plan and above.",
-  "upgradeButton": "See plans"
+  "upgradeButton": "See plans",
+  "inviteToMeeting": "Invite",
+  "noFriendsToInvite": "Add some friends to invite them to meetings",
+  "invite": "Invite",
+  "invited": "Invited",
+  "close": "Close",
+  "reportTitle": "Report",
+  "reportReasonLabel": "Reason",
+  "reportReasonHarassment": "Harassment or abuse",
+  "reportReasonSpam": "Spam",
+  "reportReasonInappropriate": "Inappropriate content",
+  "reportReasonOther": "Other",
+  "reportDetailsPlaceholder": "Add any details that might help (optional)",
+  "reportSubmit": "Submit report",
+  "reportSubmitted": "Thanks — your report has been submitted.",
+  "startRecording": "Start recording",
+  "stopRecording": "Stop recording",
+  "recordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet."
 }

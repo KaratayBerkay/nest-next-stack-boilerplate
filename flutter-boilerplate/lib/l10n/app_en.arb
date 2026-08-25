@@ -2068,5 +2068,21 @@
   "rtcStreamEndedNotice": "The stream has ended",
   "rtcBackToLive": "Back to live",
   "rtcBroadcasterOffline": "Waiting for the broadcaster…",
-  "rtcLeaveStream": "Leave"
+  "rtcLeaveStream": "Leave",
+  "rtcInviteToMeeting": "Invite",
+  "rtcNoFriendsToInvite": "Add some friends to invite them to meetings",
+  "rtcInvite": "Invite",
+  "rtcInvited": "Invited",
+  "rtcClose": "Close",
+  "rtcReportTitle": "Report",
+  "rtcReportReasonHarassment": "Harassment or abuse",
+  "rtcReportReasonSpam": "Spam",
+  "rtcReportReasonInappropriate": "Inappropriate content",
+  "rtcReportReasonOther": "Other",
+  "rtcReportDetailsPlaceholder": "Add any details that might help (optional)",
+  "rtcReportSubmit": "Submit report",
+  "rtcReportSubmitted": "Thanks — your report has been submitted.",
+  "rtcStartRecording": "Start recording",
+  "rtcStopRecording": "Stop recording",
+  "rtcRecordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet."
 }

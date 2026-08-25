@@ -80,6 +80,44 @@ export const MUTE_MEETING_PARTICIPANT_MUTATION = `
   }
 `;
 
+export const INVITE_TO_MEETING_MUTATION = `
+  mutation InviteToMeeting($slug: String!, $userId: String!) {
+    inviteToMeeting(slug: $slug, userId: $userId)
+  }
+`;
+
+const RECORDING_FIELDS = `
+  id
+  status
+  fileUrl
+  startedAt
+  endedAt
+`;
+
+export const MEETING_RECORDING_QUERY = `
+  query MeetingRecording($slug: String!) {
+    meetingRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
+export const START_MEETING_RECORDING_MUTATION = `
+  mutation StartMeetingRecording($slug: String!) {
+    startMeetingRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
+export const STOP_MEETING_RECORDING_MUTATION = `
+  mutation StopMeetingRecording($slug: String!) {
+    stopMeetingRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
 export const MEETING_CHAT_MESSAGES_QUERY = `
   query MeetingChatMessages($slug: String!, $before: String, $take: Int) {
     meetingChatMessages(slug: $slug, before: $before, take: $take) {
@@ -183,6 +221,54 @@ export const STREAM_CHAT_MESSAGES_QUERY = `
         text
         createdAt
       }
+    }
+  }
+`;
+
+export const STREAM_RECORDING_QUERY = `
+  query StreamRecording($slug: String!) {
+    streamRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
+export const START_STREAM_RECORDING_MUTATION = `
+  mutation StartStreamRecording($slug: String!) {
+    startStreamRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
+export const STOP_STREAM_RECORDING_MUTATION = `
+  mutation StopStreamRecording($slug: String!) {
+    stopStreamRecording(slug: $slug) {
+      ${RECORDING_FIELDS}
+    }
+  }
+`;
+
+export const REPORT_MEETING_MUTATION = `
+  mutation ReportMeeting($slug: String!, $reason: RtcReportReason!, $details: String, $reportedUserId: String) {
+    reportMeeting(slug: $slug, reason: $reason, details: $details, reportedUserId: $reportedUserId) {
+      id
+    }
+  }
+`;
+
+export const REPORT_STREAM_MUTATION = `
+  mutation ReportStream($slug: String!, $reason: RtcReportReason!, $details: String, $reportedUserId: String) {
+    reportStream(slug: $slug, reason: $reason, details: $details, reportedUserId: $reportedUserId) {
+      id
+    }
+  }
+`;
+
+export const REPORT_CALL_MUTATION = `
+  mutation ReportCall($callId: String!, $reason: RtcReportReason!, $details: String) {
+    reportCall(callId: $callId, reason: $reason, details: $details) {
+      id
     }
   }
 `;

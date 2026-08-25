@@ -4,6 +4,8 @@ import { AuthorizationModule } from '../authorization/authorization.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { RedisModule } from '../redis/redis.module';
 import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
+import { NotificationModule } from '../notification/notification.module';
+import { FriendsModule } from '../friends/friends.module';
 import { LiveKitService } from './livekit.service';
 import { RtcResolver } from './rtc.resolver';
 import { RtcController } from './rtc.controller';
@@ -15,6 +17,8 @@ import { RtcMeetingSweepService } from './rtc-meeting-sweep.service';
 import { RtcStreamService } from './rtc-stream.service';
 import { RtcChatService } from './rtc-chat.service';
 import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
+import { RtcReportService } from './rtc-report.service';
+import { RtcRecordingService } from './rtc-recording.service';
 
 @Module({
   imports: [
@@ -23,6 +27,8 @@ import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
     RealtimeModule,
     RedisModule,
     WireCryptoModule,
+    NotificationModule,
+    FriendsModule,
   ],
   controllers: [RtcWebhookController, RtcController],
   providers: [
@@ -35,6 +41,8 @@ import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
     RtcStreamService,
     RtcChatService,
     RtcChatWsGateway,
+    RtcReportService,
+    RtcRecordingService,
   ],
   exports: [
     LiveKitService,

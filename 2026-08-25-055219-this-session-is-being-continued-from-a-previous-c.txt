@@ -1,0 +1,3219 @@
+ ▐▛███▛█   Claude Code v2.1.241
+▝▜██████▀  Sonnet 5 · Claude Pro
+  ▝▝ ▝▝    ~/repos/boilers/nest-next-stack-boilerplate
+
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+● Pushed — 85374f42..6a1bd8c0 main -> main. Pre-push hooks re-ran flutter 
+  analyze (clean) and dart format (0 changed), confirming everything was already
+  in order.
+
+  Phase 4 (live streaming) shipped in 6a1bd8c0, across backend, web, and
+  Flutter:
+
+  - Backend: RtcStreamService (go-live-is-join-in-one-call, ungated viewing, no
+    duration cap), viewer count read live from LiveKit (not Postgres), goLive
+    gated @MinTier(MEDIUM). Extracted a shared RtcChatService after
+    meeting/stream chat code showed up as ~150 lines of real duplication — both
+    services now delegate to it, sharing the same WS chat frame types via a
+    renamed RtcChatWsGateway.
+  - Web: go-live page (setup → live, one page, no second route to keep in sync),
+    viewer page, discovery grid — same GraphQL-via-BFF pattern as meetings.
+  - Flutter: mirrored end-to-end, including the shared rtc:chat-message WS case
+    now trying both meeting and stream chat providers.
+
+  Verified live, not just statically: rebuilt and booted both Docker images
+  clean; ran a full GraphQL round-trip against the running backend — FREE-tier
+  blocked from goLive, promoted to MEDIUM via psql + re-login, goLive succeeded
+  with a real LiveKit publisher token, a second FREE-tier user joined as viewer
+  ungated with a subscriber-only token, a non-broadcaster was correctly rejected
+  from endStream, and the real broadcaster's endStream produced correct
+  psql-confirmed state transitions across LiveStream, RtcRoom, and both
+  RtcParticipant rows. flutter build apk --release compiled for real (124.9MB).
+
+  All three RTC hub cards (Calls / Meetings / Live) are now live in both web and
+  Flutter. Live multi-viewer testing (screen-share, real camera/mic, viewer
+  count updating across two real browser tabs) is yours to do by hand, same
+  carve-out as Phases 2–3.
+
+  Per the roadmap, Phase 5 (polish/cross-cutting: push notifications, egress 
+  recording, call-history UI) is next whenever you want to continue — just say
+  the word.
+
+✻ Baked for 41m 48s
+
+❯ /export                                                                       
+  ⎿  Conversation exported to: /home/berkay-server/repos/boilers/nest-next-stack
+     -boilerplate/2026-08-25-021941-rtc.txt
+
+❯ /compact                                                                      
+  ⎿  Compacted (ctrl+o to see full summary)
+  ⎿  Read next-js-boilerplate/src/views/rtc/RtcLiveDiscoveryView.tsx (72 lines)
+  ⎿  Read next-js-boilerplate/src/hooks/rtc/useLiveKitStreamRoom.ts (177 lines)
+  ⎿  Referenced file docs/progress/rtc-suite.md
+  ⎿  Read ../../../../../tmp/p4cookies.txt (5 lines)
+  ⎿  Read flutter-boilerplate/lib/views/rtc/live_viewer_page_view.dart (337 
+     lines)
+  ⎿  Plan file referenced (~/.claude/plans/serialized-churning-dahl.md)
+  ⎿  Skills restored (flutter-conversion)
+
+❯ is phase 5 last phase ?                                                       
+
+● Yes — Phase 5 is the last phase in the plan. Per the plan's Phase 6 section
+  ("Phased build sequence"), it's scoped as polish/cross-cutting:
+
+  - Push notifications for missed calls, meeting invites, and stream-went-live
+    (PushNotificationService already exists at src/push-notification/; needs new
+    NotificationType values)
+  - LiveKit Egress for recording/HLS
+  - Call-history polish, moderation/reporting hooks
+
+  After that, the RTC suite (calls + meetings + streaming) is fully built out.
+  Want me to start Phase 5, or is there something specific from that list you
+  want prioritized (e.g. just push notifications, skip egress/recording for
+  now)?
+
+✻ Baked for 4s
+
+❯ okey continue                                                                 
+
+● I'll start Phase 5. Let me first survey how push notifications are wired for
+  existing features, and check the call-history/moderation surfaces already in
+  place.
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/nest-js-
+      boilerplate && echo "=== push-notification dir ===" && ls -la
+      src/push-notification/ 2>…)
+  ⎿  === push-notification dir ===
+     total 40
+     drwxrwxr-x   2 berkay-server berkay-server 4096 Jul 12 22:34 .
+     … +17 lines (ctrl+o to expand)
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+● Bash(sed -n '180,230p' prisma/schema.prisma)
+  ⎿  }
+
+     enum RoomType {
+     … +48 lines (ctrl+o to expand)
+
+  Searched for 6 patterns, read 3 files (ctrl+o to expand)
+
+● Bash(sed -n '1,60p' src/messaging/messaging-friend.service.ts)
+  ⎿  import { ForbiddenException, Logger, NotFoundException } from '@nestjs
+     /common';
+     import type { Prisma } from '@prisma/client';
+     … +57 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-js-
+      boilerplate && find src -iname "*notification*" -not -path "*ui/badge*" |
+      sort)
+  ⎿  src/api/client/notifications
+     src/api/client/push-notifications
+     src/api/server/notifications
+     … +25 lines (ctrl+o to expand)
+
+  Read 2 files (ctrl+o to expand)
+● Bash(find /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-j
+      s-boilerplate/src/lib/notifications -type f | xargs -I{} echo {} )
+  ⎿  /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-js-
+     boilerplate/src/lib/notifications/useMarkPostNotificationsRead.ts
+     /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-js-
+     boilerplate/src/lib/notifications/target.ts
+
+  Read 1 file (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate && echo
+      "=== web rtc routes ===" && find
+      next-js-boilerplate/src/app/v1/\[lang\]/rtc -type f |…)
+  ⎿  === web rtc routes ===
+     next-js-boilerplate/src/app/v1/[lang]/rtc/calls/page.tsx
+     next-js-boilerplate/src/app/v1/[lang]/rtc/error.tsx
+     … +23 lines (ctrl+o to expand)
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/nest-js-
+      boilerplate && echo "=== report system? ===" && find src -iname "*report*"
+      -not -path "…)
+  ⎿  === report system? ===
+     src/graphql-other/reports.resolver.ts
+     src/providers/cats-report.service.ts
+     … +123 lines (ctrl+o to expand)
+
+  Searched for 2 patterns, read 2 files (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate && echo
+      "=== storage/upload backend ===" && grep -rn
+      "S3\|minio\|MinIO\|AWS_S3\|@aws-sdk" nest-…)
+  ⎿  === storage/upload backend ===
+     nest-js-boilerplate/package.json:126:    "minio": "^8.0.7",
+     ---
+     … +33 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● User answered Claude's questions:
+  ⎿  · LiveKit Egress (recording/HLS) needs a separate `livekit/egress` 
+     container plus S3-compatible output. This repo's only object storage is 
+     Cloudflare R2 (external cloud — creds live in Vault, likely not present in 
+     this local sandbox, same situation as the MXRoute mail issue from a past 
+     session). How should I handle it in Phase 5? → Scaffolding only, no live 
+     wiring
+     · Moderation/reporting: I checked — this codebase has zero existing 
+     report/moderation infrastructure (the 
+     report.controller.ts/reports.resolver.ts files are unrelated NestJS-docs 
+     demo code). Building real reporting is a new subsystem, not a small hook. 
+     How should I scope it? → Minimal RTC-only report feature (Recommended)
+
+  Searched for 1 pattern, read 3 files (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/nest-js-
+      boilerplate && grep -n "^enum RtcRoomKind\|^enum RtcRoomState\|^enum
+      RtcParticipantRole…)
+  ⎿  995:enum RtcRoomKind {
+     1001:enum RtcRoomState {
+     1010:enum RtcParticipantRole {
+     … +7 lines (ctrl+o to expand)
+
+● Bash(sed -n '/^model RtcRoom /,/^model RtcChatMessage/p' prisma/schema.prisma
+      | head -140)
+  ⎿  model RtcRoom {
+       id              String           @id @default(uuid(7)) @db.Uuid
+       kind            RtcRoomKind
+     … +100 lines (ctrl+o to expand)
+
+● Now let me check the User relation block for RTC and the migrations directory
+  convention, plus the FriendsService/comment.service.ts notification title
+  style for consistency.
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+● Now let me make the schema edits: extend NotificationType, add
+  RtcReport/RtcRecording models + enums, and wire the RtcRoom/User relations.
+
+● Update(nest-js-boilerplate/prisma/schema.prisma)
+  ⎿  Added 3 lines
+      199    SYSTEM
+      200    BILLING
+      201    SECURITY
+      202 +  MISSED_CALL                                                 
+      203 +  MEETING_INVITE                                              
+      204 +  STREAM_LIVE                                                 
+      205  }
+      206  
+      207  enum WalletTxnType {
+
+● Update(nest-js-boilerplate/prisma/schema.prisma)
+  ⎿  Added 2 lines
+      1042    createdBy       User             @relation("RtcRoomCreator"
+            , fields: [createdById], references: [id], onDelete: Cascade)
+      1043    participants    RtcParticipant[]
+      1044    chatMessages    RtcChatMessage[]
+      1045 +  reports         RtcReport[]                                
+      1046    call            CallSession?
+      1047    meeting         Meeting?
+      1048    stream          LiveStream?
+      1049 +  recording       RtcRecording?                              
+      1050    startedAt       DateTime?        @db.Timestamptz(6)
+      1051    endedAt         DateTime?        @db.Timestamptz(6)
+      1052    createdAt       DateTime         @default(now()) @db.Timest
+            amptz(6)
+● Now add the two new models + enums after RtcChatMessage, and extend User's
+  relation block:
+
+● Update(nest-js-boilerplate/prisma/schema.prisma)
+  ⎿  Added 53 lines
+      1151    @@index([roomId, createdAt])
+      1152  }
+      1153  
+      1154 +enum RtcReportReason {                                       
+      1155 +  HARASSMENT                                                 
+      1156 +  SPAM                                                       
+      1157 +  INAPPROPRIATE_CONTENT                                      
+      1158 +  OTHER                                                      
+      1159 +}                                                            
+      1160 +                                                             
+      1161 +// One report row per submission (not deduped/aggregated) — r
+           +eviewer tooling                                              
+      1162 +// is future work, this phase only guarantees reports are cap
+           +tured and                                                    
+      1163 +// queryable. reportedUserId is null for a room-level report 
+           +(e.g. a stream's                                             
+      1164 +// content) vs. a specific participant.                      
+      1165 +model RtcReport {                                            
+      1166 +  id             String           @id @default(uuid(7)) @db.U
+           +uid                                                          
+      1167 +  roomId         String           @db.Uuid                   
+      1168 +  room           RtcRoom          @relation(fields: [roomId],
+           + references: [id], onDelete: Cascade)                        
+      1169 +  reporterId     String           @db.Uuid                   
+      1170 +  reporter       User             @relation("RtcReportReporte
+           +r", fields: [reporterId], references: [id], onDelete: Cascade
+           +)                                                            
+      1171 +  reportedUserId String?          @db.Uuid                   
+      1172 +  reportedUser   User?            @relation("RtcReportReporte
+           +dUser", fields: [reportedUserId], references: [id], onDelete:
+           + Cascade)                                                    
+      1173 +  reason         RtcReportReason                             
+      1174 +  details        String?          @db.Text                   
+      1175 +  createdAt      DateTime         @default(now()) @db.Timesta
+           +mptz(6)                                                      
+      1176 +                                                             
+      1177 +  @@index([roomId])                                          
+      1178 +  @@index([reporterId])                                      
+      1179 +}                                                            
+      1180 +                                                             
+      1181 +enum RtcRecordingStatus {                                    
+      1182 +  NOT_STARTED                                                
+      1183 +  RECORDING                                                  
+      1184 +  STOPPED                                                    
+      1185 +}                                                            
+      1186 +                                                             
+      1187 +// Scaffolding only (Phase 5) — tracks host intent/timestamps
+           + for a                                                       
+      1188 +// start/stop-recording control. No LiveKit Egress process is
+           + actually                                                    
+      1189 +// started: fileUrl stays null until a future phase wires a r
+           +eal egress                                                   
+      1190 +// container + object-storage output. See RtcRecordingService
+           + for the seam.                                               
+      1191 +model RtcRecording {                                         
+      1192 +  id              String             @id @default(uuid(7)) @d
+           +b.Uuid                                                       
+      1193 +  roomId          String             @unique @db.Uuid        
+      1194 +  room            RtcRoom            @relation(fields: [roomI
+           +d], references: [id], onDelete: Cascade)                     
+      1195 +  requestedById   String             @db.Uuid                
+      1196 +  requestedBy     User               @relation(fields: [reque
+           +stedById], references: [id], onDelete: Cascade)              
+      1197 +  status          RtcRecordingStatus @default(NOT_STARTED)   
+      1198 +  egressId        String?                                    
+      1199 +  fileUrl         String?                                    
+      1200 +  startedAt       DateTime?          @db.Timestamptz(6)      
+      1201 +  endedAt         DateTime?          @db.Timestamptz(6)      
+      1202 +  createdAt       DateTime           @default(now()) @db.Time
+           +stamptz(6)                                                   
+      1203 +                                                             
+      1204 +  @@index([roomId])                                          
+      1205 +}                                                            
+      1206 +                                                             
+      1207  // Server-side home of the storage envelope created at upload
+             time. v/nonce
+      1208  // are generated by the upload endpoint and persisted here so
+             GET
+      1209  // /upload/serve can decrypt whatever ciphertext it fetches f
+            rom R2 — R2 is
+
+● Update(nest-js-boilerplate/prisma/schema.prisma)
+  ⎿  Added 3 lines
+      402    meetingsHosted    Meeting[]        @relation("MeetingHost")
+      403    streamsHosted     LiveStream[]     @relation("StreamBroadcas
+           ter")
+      404    rtcChatMessages   RtcChatMessage[]
+      405 +  rtcReportsFiled    RtcReport[]     @relation("RtcReportRepor
+          +ter")                                                         
+      406 +  rtcReportsReceived RtcReport[]     @relation("RtcReportRepor
+          +tedUser")                                                     
+      407 +  rtcRecordingsRequested RtcRecording[]                       
+      408  
+      409    // money
+      410    wallets Wallet[]
+
+  Read 1 file, listed 1 directory (ctrl+o to expand)
+
+● Bash(mkdir -p /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/ne
+      st-js-boilerplate/prisma/migrations/20260825120000_add_rtc_phase5)
+  ⎿  Done
+
+● Write(nest-js-boilerplate/prisma/migrations/20260825120000_add_rtc_phase5/migr
+       ation.sql)
+  ⎿  Wrote 65 lines to nest-js-boilerplate/prisma/migrations/20260825120000
+     _add_rtc_phase5/migration.sql
+       1 -- AlterEnum
+       2 ALTER TYPE "NotificationType" ADD VALUE 'MISSED_CALL';
+       3 ALTER TYPE "NotificationType" ADD VALUE 'MEETING_INVITE';
+       5 
+       6 -- CreateEnum
+       7 CREATE TYPE "RtcReportReason" AS ENUM ('HARASSMENT', 'SPAM', 'IN
+         APPROPRIATE_CONTENT', 'OTHER');
+       9 -- CreateEnum
+      10 CREATE TYPE "RtcRecordingStatus" AS ENUM ('NOT_STARTED', 'RECORD
+         ING', 'STOPPED');
+     … +69 lines (ctrl+o to expand)
+
+● Bash(npx prisma format 2>&1 | tail -30)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+     … +4 lines (ctrl+o to expand)
+
+● Good, that formatted cleanly. Now regenerate the Prisma client and NestJS
+  GraphQL types:
+
+● Bash(npx prisma generate 2>&1 | tail -40)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+     … +15 lines (ctrl+o to expand)
+
+  Listed 1 directory (ctrl+o to expand)
+
+● Good, generation succeeded. Now let's check id-codec's uuid field registry to
+  see whether RtcReport.id/RtcRecording.id need registering as encrypted fields
+  (per the established transport-encryption pattern), and check the id-codec's
+  known-fields config.
+
+  Searched for 3 patterns, read 4 files (ctrl+o to expand)
+
+● Bash(cat src/friends/friends.module.ts 2>/dev/null; echo "---rtc-meeting
+      mustFindMeetingAsHost---"; sed -n '360,400p'
+      src/rtc/rtc-meeting.service.ts; echo "---rtc-st…)
+  ⎿  import { Module, forwardRef } from '@nestjs/common';
+     import { AuthContractsModule } from '../auth/auth-contracts.module';
+     import { FriendsResolver } from './friends.resolver';
+     … +98 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 3 files (ctrl+o to expand)
+
+● Update(nest-js-boilerplate/src/rtc/rtc-call.service.ts)
+  ⎿  Added 1 line
+      18  import { SubscriptionTier } from '../@generated/prisma/subscrip
+          tion-tier.enum';
+      19  import { displayName } from '../common/utils/display-name';
+      20  import { callMaxDurationMinutes } from './rtc-tier-limits.const
+          ants';
+      21 +import { NotificationService } from '../notification/notificati
+         +on.service';                                                   
+      22  
+      23  // Ported from voice-call-system's own client-side ring convent
+          ion (the
+      24  // reference repo has no server-side ring-timeout at all — fore
+          ground-only,
+
+● Update(nest-js-boilerplate/src/rtc/rtc-call.service.ts)
+  ⎿  Added 1 line
+      80      private readonly prisma: PrismaService,
+      81      private readonly liveKit: LiveKitService,
+      82      private readonly realtime: RealtimeGateway,
+      83 +    private readonly notifications: NotificationService,       
+      84    ) {}
+      85  
+      86    async invite(
+● Now hook the notification into both MISSED paths and add the helper:
+
+● Update(nest-js-boilerplate/src/rtc/rtc-call.service.ts)
+  ⎿  Added 1 line
+      321            type: 'rtc:missed',
+      322            callId: call.id,
+      323          });
+      324 +        this.notifyMissedCall(call);                          
+      325        }
+      326      }
+      327    }
+
+● Update(nest-js-boilerplate/src/rtc/rtc-call.service.ts)
+  ⎿  Added 30 lines
+      517      await this.endCall(callId, CallEndState.MISSED, 'missed');
+      518      this.realtime.emitToUser(call.callerId, { type: 'rtc:misse
+           d', callId });
+      519      this.realtime.emitToUser(call.calleeId, { type: 'rtc:misse
+           d', callId });
+      520 +    this.notifyMissedCall(call);                              
+      521    }
+      522  
+      523 +  /** Fire-and-forget: the callee gets a persisted MISSED_CALL
+          + notification                                                 
+      524 +   *  (falls back to a push if they have no live NOTIFICATION 
+          +socket, per                                                   
+      525 +   *  NotificationService.create's own rule) so a missed call 
+          +surfaces even                                                 
+      526 +   *  after the rtc:missed WS frame above was sent to nobody l
+          +istening. */                                                  
+      527 +  private notifyMissedCall(call: {                            
+      528 +    id: string;                                               
+      529 +    callerId: string;                                         
+      530 +    calleeId: string;                                         
+      531 +  }): void {                                                  
+      532 +    void (async () => {                                       
+      533 +      const caller = await this.prisma.user.findUnique({      
+      534 +        where: { id: call.callerId },                         
+      535 +        select: { name: true, email: true },                  
+      536 +      });                                                     
+      537 +      await this.notifications.create({                       
+      538 +        userId: call.calleeId,                                
+      539 +        actorId: call.callerId,                               
+      540 +        type: 'MISSED_CALL',                                  
+      541 +        title: `Missed call from ${displayName(caller ?? { nam
+          +e: null, email: 'Someone' })}`,                               
+      542 +        payload: { kind: 'rtc-missed-call', callId: call.id },
+      543 +      });                                                     
+      544 +    })().catch((err: Error) =>                                
+      545 +      this.logger.error(                                      
+      546 +        { event: 'missed_call_notification_failed', error: err
+          +.message },                                                   
+      547 +        `Missed call notification failed: ${err.message}`,    
+      548 +      ),                                                      
+      549 +    );                                                        
+      550 +  }                                                           
+      551 +                                                              
+      552    private startDurationCap(callId: string, maxDurationMinutes:
+            number): void {
+      553      const totalMs = maxDurationMinutes * 60_000;
+      554      const warnMs = Math.max(
+
+● Now let's wire meeting invites into RtcMeetingService:
+
+● Update(nest-js-boilerplate/src/rtc/rtc-meeting.service.ts)
+  ⎿  Added 2 lines
+      19    meetingMaxDurationMinutes,
+      20    meetingMaxParticipants,
+      21  } from './rtc-tier-limits.constants';
+      22 +import { NotificationService } from '../notification/notificati
+         +on.service';                                                   
+      23 +import { FriendsService } from '../friends/friends.service';   
+      24  
+      25  export type { RtcChatMessageView as MeetingChatMessageView } fr
+          om './rtc-chat.service';
+      26  
+
+● Update(nest-js-boilerplate/src/rtc/rtc-meeting.service.ts)
+  ⎿  Added 2 lines
+      59      private readonly liveKit: LiveKitService,
+      60      private readonly realtime: RealtimeGateway,
+      61      private readonly chat: RtcChatService,
+      62 +    private readonly notifications: NotificationService,       
+      63 +    private readonly friends: FriendsService,                  
+      64    ) {}
+      65  
+      66    async createMeeting(userId: string, title: string) {
+
+● Update(nest-js-boilerplate/src/rtc/rtc-meeting.service.ts)
+  ⎿  Added 33 lines
+      178      };
+      179    }
+      180  
+      181 +  /** Invite a friend to an in-progress meeting — the inviter 
+          +must currently                                                
+      182 +   *  be an active participant (host or otherwise) and the tar
+          +get must be a                                                 
+      183 +   *  friend, matching FRIEND_REQUEST's existing shape rather 
+          +than letting                                                  
+      184 +   *  any authenticated user notification-spam an arbitrary us
+          +erId. */                                                      
+      185 +  async inviteToMeeting(                                      
+      186 +    inviterId: string,                                        
+      187 +    slug: string,                                             
+      188 +    targetUserId: string,                                     
+      189 +  ): Promise<void> {                                          
+      190 +    const meeting = await this.activeParticipant(inviterId, sl
+          +ug);                                                          
+      191 +    if (!meeting) {                                           
+      192 +      throw new NotFoundException('Meeting not found or alread
+          +y ended');                                                    
+      193 +    }                                                         
+      194 +    if (targetUserId === inviterId) {                         
+      195 +      throw new ForbiddenException('Cannot invite yourself'); 
+      196 +    }                                                         
+      197 +    if (!(await this.friends.areFriends(inviterId, targetUserI
+          +d))) {                                                        
+      198 +      throw new ForbiddenException('You can only invite friend
+          +s');                                                          
+      199 +    }                                                         
+      200 +    const inviter = await this.prisma.user.findUnique({       
+      201 +      where: { id: inviterId },                               
+      202 +      select: { name: true, email: true },                    
+      203 +    });                                                       
+      204 +    await this.notifications.create({                         
+      205 +      userId: targetUserId,                                   
+      206 +      actorId: inviterId,                                     
+      207 +      type: 'MEETING_INVITE',                                 
+      208 +      title: `${displayName(inviter ?? { name: null, email: 'S
+          +omeone' })} invited you to a meeting`,                        
+      209 +      body: meeting.title,                                    
+      210 +      payload: { kind: 'rtc-meeting-invite', slug },          
+      211 +    });                                                       
+      212 +  }                                                           
+      213 +                                                              
+      214    async leaveMeeting(userId: string, slug: string): Promise<vo
+           id> {
+      215      const meeting = await this.prisma.meeting.findUnique({ whe
+           re: { slug } });
+      216      if (!meeting) return;
+
+● Now RtcStreamService — notify friends on go-live:
+
+● Update(nest-js-boilerplate/src/rtc/rtc-stream.service.ts)
+  ⎿  Added 2 lines
+      15  import { RtcParticipantRole, RtcRoomKind, RtcRoomState } from '
+          @prisma/client';
+      16  import { displayName } from '../common/utils/display-name';
+      17  import type { LiveStream, RtcRoom } from '@prisma/client';
+      18 +import { NotificationService } from '../notification/notificati
+         +on.service';                                                   
+      19 +import { FriendsService } from '../friends/friends.service';   
+      20  
+      21  export type { RtcChatMessageView as StreamChatMessageView } fro
+          m './rtc-chat.service';
+      22  
+
+● Update(nest-js-boilerplate/src/rtc/rtc-stream.service.ts)
+  ⎿  Added 2 lines
+      55      private readonly liveKit: LiveKitService,
+      56      private readonly realtime: RealtimeGateway,
+      57      private readonly chat: RtcChatService,
+      58 +    private readonly notifications: NotificationService,       
+      59 +    private readonly friends: FriendsService,                  
+      60    ) {}
+      61  
+      62    async goLive(userId: string, title: string) {
+
+● Update(nest-js-boilerplate/src/rtc/rtc-stream.service.ts)
+  ⎿  Added 46 lines
+      105      });
+      106  
+      107      this.logger.log({ category: 'rtc', event: 'stream.started'
+           , slug });
+      108 +    this.notifyFriendsWentLive(userId, stream.title, slug);   
+      109      return { token, roomName: livekitRoomName, stream };
+      110    }
+      111  
+      112 +  /** Fire-and-forget: every friend of the broadcaster gets a 
+          +persisted                                                     
+      113 +   *  STREAM_LIVE notification (falls back to push if they're 
+          +not                                                           
+      114 +   *  currently connected, per NotificationService.create's ow
+          +n rule).                                                      
+      115 +   *  Not awaited — goLive shouldn't be slower for a broadcast
+          +er with many                                                  
+      116 +   *  friends, and one failed notification shouldn't fail the 
+          +mutation. */                                                  
+      117 +  private notifyFriendsWentLive(                              
+      118 +    broadcasterId: string,                                    
+      119 +    streamTitle: string,                                      
+      120 +    slug: string,                                             
+      121 +  ): void {                                                   
+      122 +    void (async () => {                                       
+      123 +      const [broadcaster, friendIds] = await Promise.all([    
+      124 +        this.prisma.user.findUnique({                         
+      125 +          where: { id: broadcasterId },                       
+      126 +          select: { name: true, email: true },                
+      127 +        }),                                                   
+      128 +        this.friends.getFriendIds(broadcasterId),             
+      129 +      ]);                                                     
+      130 +      const who = displayName(broadcaster ?? { name: null, ema
+          +il: 'Someone' });                                             
+      131 +      const results = await Promise.allSettled(               
+      132 +        friendIds.map((friendId) =>                           
+      133 +          this.notifications.create({                         
+      134 +            userId: friendId,                                 
+      135 +            actorId: broadcasterId,                           
+      136 +            type: 'STREAM_LIVE',                              
+      137 +            title: `${who} is live now`,                      
+      138 +            body: streamTitle,                                
+      139 +            payload: { kind: 'rtc-stream-live', slug },       
+      140 +          }),                                                 
+      141 +        ),                                                    
+      142 +      );                                                      
+      143 +      const failed = results.filter((r) => r.status === 'rejec
+          +ted').length;                                                 
+      144 +      if (failed > 0) {                                       
+      145 +        this.logger.warn(                                     
+      146 +          `stream-live notify: ${failed}/${friendIds.length} f
+          +ailed for ${slug}`,                                           
+      147 +        );                                                    
+      148 +      }                                                       
+      149 +    })().catch((err: Error) =>                                
+      150 +      this.logger.error(                                      
+      151 +        { event: 'stream_live_notification_failed', error: err
+          +.message },                                                   
+      152 +        `Stream-live notification failed: ${err.message}`,    
+      153 +      ),                                                      
+      154 +    );                                                        
+      155 +  }                                                           
+      156 +                                                              
+      157    async liveStreams() {
+      158      return this.prisma.liveStream.findMany({
+      159        where: { isLive: true },
+
+● Now let's create the report and recording services:
+
+● Write(nest-js-boilerplate/src/rtc/rtc-report.service.ts)
+  ⎿  Wrote 116 lines to nest-js-boilerplate/src/rtc/rtc-report.service.ts
+       1 import { ForbiddenException, Injectable, NotFoundException } fro
+       2 import { PrismaService } from '../prisma/prisma.service';
+       3 import type { RtcReportReason } from '@prisma/client';
+       5 /**
+       6  * Minimal, real reporting for RTC content (Phase 5) — a report 
+       7  * persisted row, nothing more: no review queue, no moderation a
+         ction, no
+         ; this only
+       9  * guarantees abuse reports are captured and queryable rather th
+      10  *
+     … +125 lines (ctrl+o to expand)
+
+● Write(nest-js-boilerplate/src/rtc/rtc-recording.service.ts)
+  ⎿  Wrote 107 lines to
+     nest-js-boilerplate/src/rtc/rtc-recording.service.ts
+       1 import { ForbiddenException, Injectable, NotFoundException } fro
+       2 import { PrismaService } from '../prisma/prisma.service';
+       3 import { RtcRecordingStatus } from '@prisma/client';
+       4 
+       6 
+       7 /**
+         — see the
+       9  * RtcRecording model's schema doc). Persists host/broadcaster i
+         ntent and
+          (DB, API,
+     … +116 lines (ctrl+o to expand)
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Bash(grep -rln "@Args" src/*/*.resolver.ts | xargs grep -B1 "type: () =>" |
+      grep -B1 "@Args" | head -30)
+  ⎿  src/sdl-generator/recipes.resolver.ts-  @Query(() => Recipe, { name: '
+     recipe' })
+     src/sdl-generator/recipes.resolver.ts:  recipe(@Args('id', { type: ()
+     … +27 lines (ctrl+o to expand)
+
+● Now let's add the resolver mutations. First read the current resolver imports
+  section to integrate cleanly:
+
+● Update(nest-js-boilerplate/src/rtc/rtc.resolver.ts)
+  ⎿  Added 5 lines
+      13  import { SubscriptionTier } from '../@generated/prisma/subscrip
+          tion-tier.enum';
+      14  import { Meeting } from '../@generated/meeting/meeting.model';
+      15  import { LiveStream } from '../@generated/live-stream/live-stre
+          am.model';
+      16 +import { RtcReport } from '../@generated/rtc-report/rtc-report.
+         +model';                                                        
+      17 +import { RtcRecording } from '../@generated/rtc-recording/rtc-r
+         +ecording.model';                                               
+      18 +import { RtcReportReason } from '../@generated/prisma/rtc-repor
+         +t-reason.enum';                                                
+      19  import type { JwtUser } from '../auth/auth.types';
+      20  import { CurrentUser } from '../auth/current-user.decorator';
+      21  import { SessionAuthGuard } from '../auth/session-auth.guard';
+     ...
+      24  import { MinTier } from '../authorization/min-tier.decorator';
+      25  import { RtcMeetingService } from './rtc-meeting.service';
+      26  import { RtcStreamService } from './rtc-stream.service';
+      27 +import { RtcReportService } from './rtc-report.service';       
+      28 +import { RtcRecordingService } from './rtc-recording.service'; 
+      29  import {
+      30    FREE_CALL_MAX_DURATION_MINUTES,
+      31    MIN_TIER_TO_GO_LIVE,
+
+● Update(nest-js-boilerplate/src/rtc/rtc.resolver.ts)
+  ⎿  Added 2 lines
+      119    constructor(
+      120      private readonly meetings: RtcMeetingService,
+      121      private readonly streams: RtcStreamService,
+      122 +    private readonly reports: RtcReportService,               
+      123 +    private readonly recordings: RtcRecordingService,         
+      124    ) {}
+      125  
+      126    @Query(() => RtcTierLimits)
+● Now add inviteToMeeting near the other meeting mutations, and the
+  report/recording mutations at the end of the class:
+
+● Update(nest-js-boilerplate/src/rtc/rtc.resolver.ts)
+  ⎿  Added 10 lines
+      176    }
+      177  
+      178    @Mutation(() => Boolean)
+      179 +  async inviteToMeeting(                                      
+      180 +    @CurrentUser() user: JwtUser,                             
+      181 +    @Args('slug') slug: string,                               
+      182 +    @Args('userId') targetUserId: string,                     
+      183 +  ) {                                                         
+      184 +    await this.meetings.inviteToMeeting(user.userId, slug, tar
+          +getUserId);                                                   
+      185 +    return true;                                              
+      186 +  }                                                           
+      187 +                                                              
+      188 +  @Mutation(() => Boolean)                                    
+      189    async leaveMeeting(@CurrentUser() user: JwtUser, @Args('slug
+           ') slug: string) {
+      190      await this.meetings.leaveMeeting(user.userId, slug);
+      191      return true;
+
+● Now append the report + recording mutations before the final viewerCount field
+  resolver:
+
+● Update(nest-js-boilerplate/src/rtc/rtc.resolver.ts)
+  ⎿  Added 92 lines
+      285    async viewerCount(@Parent() stream: LiveStream): Promise<num
+           ber> {
+      286      return this.streams.getViewerCount(stream);
+      287    }
+      288 +                                                              
+      289 +  // ==================== Reporting ====================      
+      290 +  // Minimal, real reporting (Phase 5): persisted rows, no rev
+          +iew UI yet —                                                  
+      291 +  // see RtcReportService's doc comment.                      
+      292 +                                                              
+      293 +  @Mutation(() => RtcReport)                                  
+      294 +  reportMeeting(                                              
+      295 +    @CurrentUser() user: JwtUser,                             
+      296 +    @Args('slug') slug: string,                               
+      297 +    @Args('reason', { type: () => RtcReportReason }) reason: R
+          +tcReportReason,                                               
+      298 +    @Args('details', { nullable: true }) details?: string,    
+      299 +    @Args('reportedUserId', { nullable: true }) reportedUserId
+          +?: string,                                                    
+      300 +  ) {                                                         
+      301 +    return this.reports.reportMeeting(                        
+      302 +      user.userId,                                            
+      303 +      slug,                                                   
+      304 +      reason,                                                 
+      305 +      details,                                                
+      306 +      reportedUserId,                                         
+      307 +    );                                                        
+      308 +  }                                                           
+      309 +                                                              
+      310 +  @Mutation(() => RtcReport)                                  
+      311 +  reportStream(                                               
+      312 +    @CurrentUser() user: JwtUser,                             
+      313 +    @Args('slug') slug: string,                               
+      314 +    @Args('reason', { type: () => RtcReportReason }) reason: R
+          +tcReportReason,                                               
+      315 +    @Args('details', { nullable: true }) details?: string,    
+      316 +    @Args('reportedUserId', { nullable: true }) reportedUserId
+          +?: string,                                                    
+      317 +  ) {                                                         
+      318 +    return this.reports.reportStream(                         
+      319 +      user.userId,                                            
+      320 +      slug,                                                   
+      321 +      reason,                                                 
+      322 +      details,                                                
+      323 +      reportedUserId,                                         
+      324 +    );                                                        
+      325 +  }                                                           
+      326 +                                                              
+      327 +  @Mutation(() => RtcReport)                                  
+      328 +  reportCall(                                                 
+      329 +    @CurrentUser() user: JwtUser,                             
+      330 +    @Args('callId') callId: string,                           
+      331 +    @Args('reason', { type: () => RtcReportReason }) reason: R
+          +tcReportReason,                                               
+      332 +    @Args('details', { nullable: true }) details?: string,    
+      333 +  ) {                                                         
+      334 +    return this.reports.reportCall(user.userId, callId, reason
+          +, details);                                                   
+      335 +  }                                                           
+      336 +                                                              
+      337 +  // ==================== Recording (scaffolding — see RtcReco
+          +rdingService) ====================                            
+      338 +                                                              
+      339 +  @Query(() => RtcRecording, { nullable: true })              
+      340 +  meetingRecording(@Args('slug') slug: string) {              
+      341 +    return this.recordings.recordingForRoom('meeting', slug); 
+      342 +  }                                                           
+      343 +                                                              
+      344 +  @Query(() => RtcRecording, { nullable: true })              
+      345 +  streamRecording(@Args('slug') slug: string) {               
+      346 +    return this.recordings.recordingForRoom('stream', slug);  
+      347 +  }                                                           
+      348 +                                                              
+      349 +  @Mutation(() => RtcRecording)                               
+      350 +  startMeetingRecording(                                      
+      351 +    @CurrentUser() user: JwtUser,                             
+      352 +    @Args('slug') slug: string,                               
+      353 +  ) {                                                         
+      354 +    return this.recordings.startRecording(user.userId, 'meetin
+          +g', slug);                                                    
+      355 +  }                                                           
+      356 +                                                              
+      357 +  @Mutation(() => RtcRecording)                               
+      358 +  stopMeetingRecording(                                       
+      359 +    @CurrentUser() user: JwtUser,                             
+      360 +    @Args('slug') slug: string,                               
+      361 +  ) {                                                         
+      362 +    return this.recordings.stopRecording(user.userId, 'meeting
+          +', slug);                                                     
+      363 +  }                                                           
+      364 +                                                              
+      365 +  @Mutation(() => RtcRecording)                               
+      366 +  startStreamRecording(                                       
+      367 +    @CurrentUser() user: JwtUser,                             
+      368 +    @Args('slug') slug: string,                               
+      369 +  ) {                                                         
+      370 +    return this.recordings.startRecording(user.userId, 'stream
+          +', slug);                                                     
+      371 +  }                                                           
+      372 +                                                              
+      373 +  @Mutation(() => RtcRecording)                               
+      374 +  stopStreamRecording(                                        
+      375 +    @CurrentUser() user: JwtUser,                             
+      376 +    @Args('slug') slug: string,                               
+      377 +  ) {                                                         
+      378 +    return this.recordings.stopRecording(user.userId, 'stream'
+          +, slug);                                                      
+      379 +  }                                                           
+      380  }
+
+● Now update rtc.module.ts to wire everything:
+
+● Update(nest-js-boilerplate/src/rtc/rtc.module.ts)
+  ⎿  Added 8 lines
+       4  import { RealtimeModule } from '../realtime/realtime.module';
+       5  import { RedisModule } from '../redis/redis.module';
+       6  import { WireCryptoModule } from '../wire-crypto/wire-crypto.mo
+          dule';
+       7 +import { NotificationModule } from '../notification/notificatio
+         +n.module';                                                     
+       8 +import { FriendsModule } from '../friends/friends.module';     
+       9  import { LiveKitService } from './livekit.service';
+      10  import { RtcResolver } from './rtc.resolver';
+      11  import { RtcController } from './rtc.controller';
+     ...
+      17  import { RtcStreamService } from './rtc-stream.service';
+      18  import { RtcChatService } from './rtc-chat.service';
+      19  import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
+      20 +import { RtcReportService } from './rtc-report.service';       
+      21 +import { RtcRecordingService } from './rtc-recording.service'; 
+      22  
+      23  @Module({
+      24    imports: [
+     ...
+      27      RealtimeModule,
+      28      RedisModule,
+      29      WireCryptoModule,
+      30 +    NotificationModule,                                        
+      31 +    FriendsModule,                                             
+      32    ],
+      33    controllers: [RtcWebhookController, RtcController],
+      34    providers: [
+     ...
+      41      RtcStreamService,
+      42      RtcChatService,
+      43      RtcChatWsGateway,
+      44 +    RtcReportService,                                          
+      45 +    RtcRecordingService,                                       
+      46    ],
+      47    exports: [
+      48      LiveKitService,
+
+● Now let's typecheck the backend to catch any issues across all these changes:
+
+● Bash(npx tsc --noEmit -p tsconfig.json 2>&1 | head -100)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+     … +251 lines (ctrl+o to expand)
+
+● Bash(grep -n "\"typecheck\"\|\"build\"" package.json && echo "---baseline
+      check: stash and retest just this file---" && git stash && npx tsc
+      --noEmit -p tsconfig.jso…)
+  ⎿  14:    "build": "nest build",
+     ---baseline check: stash and retest just this file---
+     Saved working directory and index state WIP on main: 6a1bd8c0 feat(rtc
+     … +24 lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(npx nest build 2>&1 | tail -80)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+
+● Clean build. Now let's run eslint on the changed/new files:
+
+● Bash(npx eslint src/rtc/rtc-call.service.ts src/rtc/rtc-meeting.service.ts
+      src/rtc/rtc-stream.service.ts src/rtc/rtc-report.service.ts
+      src/rtc/rtc-recording.service.…)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+     … +32 lines (ctrl+o to expand)
+
+● Bash(npx eslint --fix src/rtc/rtc-recording.service.ts
+      src/rtc/rtc-report.service.ts 2>&1 | tail -40)
+  ⎿  npm warn Unknown project config "node-linker". This will stop working
+     in the next major version of npm. See `npm help npmrc` for supported c
+     onfig options.
+     … +8 lines (ctrl+o to expand)
+
+● Good, eslint auto-fixed formatting. Let's fix the remaining nullish-coalescing
+  warning:
+
+  Read 2 files (ctrl+o to expand)
+
+● Let me check one existing BFF route (mutation-with-body) and its server/client
+  wrapper files to replicate the exact pattern:
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-js-
+      boilerplate && find src/app/api/rtc -type f | sort)
+  ⎿  src/app/api/rtc/meetings/route.ts
+     src/app/api/rtc/meetings/[slug]/chat/route.ts
+     src/app/api/rtc/meetings/[slug]/end/route.ts
+     … +11 lines (ctrl+o to expand)
+
+  Searched for 2 patterns, read 5 files (ctrl+o to expand)
+
+● Now let's add the GraphQL operations for Phase 5:
+
+● Update(next-js-boilerplate/src/lib/graphql/rtc.ts)
+  ⎿  Added 38 lines
+       80    }
+       81  `;
+       82  
+       83 +export const INVITE_TO_MEETING_MUTATION = `                   
+       84 +  mutation InviteToMeeting($slug: String!, $userId: String!) {
+       85 +    inviteToMeeting(slug: $slug, userId: $userId)             
+       86 +  }                                                           
+       87 +`;                                                            
+       88 +                                                              
+       89 +const RECORDING_FIELDS = `                                    
+       90 +  id                                                          
+       91 +  status                                                      
+       92 +  fileUrl                                                     
+       93 +  startedAt                                                   
+       94 +  endedAt                                                     
+       95 +`;                                                            
+       96 +                                                              
+       97 +export const MEETING_RECORDING_QUERY = `                      
+       98 +  query MeetingRecording($slug: String!) {                    
+       99 +    meetingRecording(slug: $slug) {                           
+      100 +      ${RECORDING_FIELDS}                                     
+      101 +    }                                                         
+      102 +  }                                                           
+      103 +`;                                                            
+      104 +                                                              
+      105 +export const START_MEETING_RECORDING_MUTATION = `             
+      106 +  mutation StartMeetingRecording($slug: String!) {            
+      107 +    startMeetingRecording(slug: $slug) {                      
+      108 +      ${RECORDING_FIELDS}                                     
+      109 +    }                                                         
+      110 +  }                                                           
+      111 +`;                                                            
+      112 +                                                              
+      113 +export const STOP_MEETING_RECORDING_MUTATION = `              
+      114 +  mutation StopMeetingRecording($slug: String!) {             
+      115 +    stopMeetingRecording(slug: $slug) {                       
+      116 +      ${RECORDING_FIELDS}                                     
+      117 +    }                                                         
+      118 +  }                                                           
+      119 +`;                                                            
+      120 +                                                              
+      121  export const MEETING_CHAT_MESSAGES_QUERY = `
+      122    query MeetingChatMessages($slug: String!, $before: String, $
+           take: Int) {
+      123      meetingChatMessages(slug: $slug, before: $before, take: $t
+           ake) {
+
+● Update(next-js-boilerplate/src/lib/graphql/rtc.ts)
+  ⎿  Added 48 lines
+      224      }
+      225    }
+      226  `;
+      227 +                                                              
+      228 +export const STREAM_RECORDING_QUERY = `                       
+      229 +  query StreamRecording($slug: String!) {                     
+      230 +    streamRecording(slug: $slug) {                            
+      231 +      ${RECORDING_FIELDS}                                     
+      232 +    }                                                         
+      233 +  }                                                           
+      234 +`;                                                            
+      235 +                                                              
+      236 +export const START_STREAM_RECORDING_MUTATION = `              
+      237 +  mutation StartStreamRecording($slug: String!) {             
+      238 +    startStreamRecording(slug: $slug) {                       
+      239 +      ${RECORDING_FIELDS}                                     
+      240 +    }                                                         
+      241 +  }                                                           
+      242 +`;                                                            
+      243 +                                                              
+      244 +export const STOP_STREAM_RECORDING_MUTATION = `               
+      245 +  mutation StopStreamRecording($slug: String!) {              
+      246 +    stopStreamRecording(slug: $slug) {                        
+      247 +      ${RECORDING_FIELDS}                                     
+      248 +    }                                                         
+      249 +  }                                                           
+      250 +`;                                                            
+      251 +                                                              
+      252 +export const REPORT_MEETING_MUTATION = `                      
+      253 +  mutation ReportMeeting($slug: String!, $reason: RtcReportRea
+          +son!, $details: String, $reportedUserId: String) {            
+      254 +    reportMeeting(slug: $slug, reason: $reason, details: $deta
+          +ils, reportedUserId: $reportedUserId) {                       
+      255 +      id                                                      
+      256 +    }                                                         
+      257 +  }                                                           
+      258 +`;                                                            
+      259 +                                                              
+      260 +export const REPORT_STREAM_MUTATION = `                       
+      261 +  mutation ReportStream($slug: String!, $reason: RtcReportReas
+          +on!, $details: String, $reportedUserId: String) {             
+      262 +    reportStream(slug: $slug, reason: $reason, details: $detai
+          +ls, reportedUserId: $reportedUserId) {                        
+      263 +      id                                                      
+      264 +    }                                                         
+      265 +  }                                                           
+      266 +`;                                                            
+      267 +                                                              
+      268 +export const REPORT_CALL_MUTATION = `                         
+      269 +  mutation ReportCall($callId: String!, $reason: RtcReportReas
+          +on!, $details: String) {                                      
+      270 +    reportCall(callId: $callId, reason: $reason, details: $det
+          +ails) {                                                       
+      271 +      id                                                      
+      272 +    }                                                         
+      273 +  }                                                           
+      274 +`;                                                            
+  Read 1 file (ctrl+o to expand)
+
+● Bash(sed -n '125,135p' /home/berkay-server/repos/boilers/nest-next-stack-boile
+      rplate/next-js-boilerplate/src/constants/api/urls.ts)
+  ⎿  export const GQL_BACKEND_PATH = "/graphql" as const;
+     export const VAULT_SECRET_PATH =
+       "secret/data/secret/production/frontend" as const;
+     … +7 lines (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/constants/api/urls.ts)
+  ⎿  Added 1 line
+      127    "secret/data/secret/production/frontend" as const;
+      128  
+      129  export const RTC_CALLS_URL = "/api/rtc/calls" as const;
+      130 +export const RTC_CALLS_PREFIX = "/api/rtc/calls/" as const;   
+      131  export const RTC_ACTIVE_CALL_URL = "/api/rtc/calls/active" as 
+           const;
+      132  export const RTC_MEETINGS_URL = "/api/rtc/meetings" as const;
+      133  export const RTC_MEETINGS_PREFIX = "/api/rtc/meetings/" as con
+           st;
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Now let's create a shared types file and the server-layer functions:
+
+● Write(next-js-boilerplate/src/api/server/rtc/shared-types.ts)
+  ⎿  Wrote 17 lines to
+     next-js-boilerplate/src/api/server/rtc/shared-types.ts
+      1 export type RtcReportReason =
+      2   | "HARASSMENT"
+      3   | "SPAM"
+      4   | "INAPPROPRIATE_CONTENT"
+      5   | "OTHER";
+      6 
+      7 export interface RtcReportView {
+      8   id: string;
+      9 }
+     … +7 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Now let's write the new server-layer files (invite, report x3, recording x2):
+
+● Write(next-js-boilerplate/src/api/server/rtc/meetings/invite.ts)
+  ⎿  Wrote 15 lines to
+     next-js-boilerplate/src/api/server/rtc/meetings/invite.ts
+       1 import { apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_MEETINGS_PREFIX } from "@/constants/api/urls";
+       3 import { POST } from "@/constants/api/methods";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       6 export async function inviteToMeetingServer(
+       7   slug: string,
+       8   userId: string,
+       9 ): Promise<void> {
+      10   await apiFetchJson(`${RTC_MEETINGS_PREFIX}${slug}/invite`, {
+     … +5 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/api/server/rtc/meetings/report.ts)
+  ⎿  Wrote 21 lines to
+     next-js-boilerplate/src/api/server/rtc/meetings/report.ts
+       1 import { apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_MEETINGS_PREFIX } from "@/constants/api/urls";
+       3 import { POST } from "@/constants/api/methods";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       6   RtcReportReason,
+       7   RtcReportView,
+       8 } from "@/api/server/rtc/shared-types";
+       9 
+      10 export async function reportMeetingServer(
+     … +12 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Good, confirms apiFetchJson<T>() returns parsed JSON directly — my usage above
+  is correct. Now the stream/call report files and recording files:
+
+● Write(next-js-boilerplate/src/api/server/rtc/streams/report.ts)
+  ⎿  Wrote 21 lines to
+     next-js-boilerplate/src/api/server/rtc/streams/report.ts
+       1 import { apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_STREAMS_PREFIX } from "@/constants/api/urls";
+       3 import { POST } from "@/constants/api/methods";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       6   RtcReportReason,
+       7   RtcReportView,
+       8 } from "@/api/server/rtc/shared-types";
+       9 
+      10 export async function reportStreamServer(
+     … +12 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/api/server/rtc/calls/report.ts)
+  ⎿  Wrote 20 lines to
+     next-js-boilerplate/src/api/server/rtc/calls/report.ts
+       1 import { apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_CALLS_PREFIX } from "@/constants/api/urls";
+       3 import { POST } from "@/constants/api/methods";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       6   RtcReportReason,
+       7   RtcReportView,
+       8 } from "@/api/server/rtc/shared-types";
+       9 
+      10 export async function reportCallServer(
+     … +11 lines (ctrl+o to expand)
+
+● Now the recording server-layer files (GET status + POST start/stop,
+  action-dispatched):
+
+● Write(next-js-boilerplate/src/api/server/rtc/meetings/recording.ts)
+  ⎿  Wrote 39 lines to
+     next-js-boilerplate/src/api/server/rtc/meetings/recording.ts
+       1 import { apiFetch, apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_MEETINGS_PREFIX } from "@/constants/api/urls";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       5 import type { RtcRecordingView } from "@/api/server/rtc/shared-t
+       6 
+       7 export async function getMeetingRecordingServer(
+       8   slug: string,
+      10   const res = await apiFetch(`${RTC_MEETINGS_PREFIX}${slug}/reco
+         rding`);
+     … +31 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/api/server/rtc/streams/recording.ts)
+  ⎿  Wrote 39 lines to
+     next-js-boilerplate/src/api/server/rtc/streams/recording.ts
+       1 import { apiFetch, apiFetchJson } from "@/lib/api-client";
+       2 import { RTC_STREAMS_PREFIX } from "@/constants/api/urls";
+       4 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/header
+         s";
+       5 import type { RtcRecordingView } from "@/api/server/rtc/shared-t
+       6 
+       7 export async function getStreamRecordingServer(
+       8   slug: string,
+      10   const res = await apiFetch(`${RTC_STREAMS_PREFIX}${slug}/recor
+         ding`);
+     … +31 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/app/api/rtc/meetings/[slug]/invite/route.ts)
+  ⎿  Wrote 49 lines to
+     next-js-boilerplate/src/app/api/rtc/meetings/[slug]/invite/route.ts
+       1 import { NextResponse } from "next/server";
+       2 import { getAccessToken } from "@/store/ssr-cookies";
+       3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from 
+         "@/lib/backend";
+       4 import { INVITE_TO_MEETING_MUTATION } from "@/lib/graphql/rtc";
+       6 export async function POST(
+       7   req: Request,
+       8   { params }: { params: Promise<{ slug: string }> },
+       9 ) {
+      10   const accessToken = await getAccessToken();
+     … +41 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/app/api/rtc/meetings/[slug]/report/route.ts)
+  ⎿  Wrote 52 lines to
+     next-js-boilerplate/src/app/api/rtc/meetings/[slug]/report/route.ts
+       1 import { NextResponse } from "next/server";
+       2 import { getAccessToken } from "@/store/ssr-cookies";
+       3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from 
+       4 import { REPORT_MEETING_MUTATION } from "@/lib/graphql/rtc";
+       5 import type { RtcReportView } from "@/api/server/rtc/shared-type
+         s";
+       6 
+       8   req: Request,
+       9   { params }: { params: Promise<{ slug: string }> },
+      10 ) {
+     … +44 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/app/api/rtc/streams/[slug]/report/route.ts)
+  ⎿  Wrote 52 lines to
+     next-js-boilerplate/src/app/api/rtc/streams/[slug]/report/route.ts
+       1 import { NextResponse } from "next/server";
+       2 import { getAccessToken } from "@/store/ssr-cookies";
+       3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from 
+       4 import { REPORT_STREAM_MUTATION } from "@/lib/graphql/rtc";
+       5 import type { RtcReportView } from "@/api/server/rtc/shared-type
+         s";
+       6 
+       8   req: Request,
+       9   { params }: { params: Promise<{ slug: string }> },
+      10 ) {
+     … +44 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/app/api/rtc/calls/[callId]/report/route.ts)
+  ⎿  Wrote 50 lines to
+     next-js-boilerplate/src/app/api/rtc/calls/[callId]/report/route.ts
+       1 import { NextResponse } from "next/server";
+       2 import { getAccessToken } from "@/store/ssr-cookies";
+       3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from 
+       4 import { REPORT_CALL_MUTATION } from "@/lib/graphql/rtc";
+       5 import type { RtcReportView } from "@/api/server/rtc/shared-type
+         s";
+       6 
+       8   req: Request,
+       9   { params }: { params: Promise<{ callId: string }> },
+      10 ) {
+     … +43 lines (ctrl+o to expand)
+● Now the recording routes (GET status + POST start/stop):
+
+● Write(next-js-boilerplate/src/app/api/rtc/meetings/[slug]/recording/route.ts)
+  ⎿  Wrote 86 lines to
+     next-js-boilerplate/src/app/api/rtc/meetings/[slug]/recording/route.ts
+      1 import { NextResponse } from "next/server";
+      2 import { getAccessToken } from "@/store/ssr-cookies";
+      3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "
+        @/lib/backend";
+      4 import {
+      6   START_MEETING_RECORDING_MUTATION,
+      7   STOP_MEETING_RECORDING_MUTATION,
+      8 } from "@/lib/graphql/rtc";
+      9 import type { RtcRecordingView } from "@/api/server/rtc/shared-ty
+        pes";
+     … +85 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/app/api/rtc/streams/[slug]/recording/route.ts)
+  ⎿  Wrote 86 lines to
+     next-js-boilerplate/src/app/api/rtc/streams/[slug]/recording/route.ts
+      1 import { NextResponse } from "next/server";
+      2 import { getAccessToken } from "@/store/ssr-cookies";
+      3 import { csrfEchoHeaders, graphqlFetch, graphqlErrorBody } from "
+        @/lib/backend";
+      4 import {
+      6   START_STREAM_RECORDING_MUTATION,
+      7   STOP_STREAM_RECORDING_MUTATION,
+      8 } from "@/lib/graphql/rtc";
+      9 import type { RtcRecordingView } from "@/api/server/rtc/shared-ty
+        pes";
+     … +85 lines (ctrl+o to expand)
+
+  Searched for 4 patterns, read 9 files, listed 1 directory (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/components/rtc/RtcReportDialog.tsx)
+  ⎿  Wrote 105 lines to
+     next-js-boilerplate/src/components/rtc/RtcReportDialog.tsx
+       1 "use client";
+       2 
+       3 import { useState, type ReactNode } from "react";
+       4 import {
+       5   Dialog,
+       6   DialogContent,
+       7   DialogHeader,
+       8   DialogTitle,
+       9   DialogFooter,
+      10 } from "@/components/ui/dialog";
+     … +106 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/components/rtc/RtcInviteDialog.tsx)
+  ⎿  Wrote 85 lines to
+     next-js-boilerplate/src/components/rtc/RtcInviteDialog.tsx
+       1 "use client";
+       2 
+       3 import { useState, type ReactNode } from "react";
+       4 import { useQuery } from "@tanstack/react-query";
+       5 import {
+       6   Dialog,
+       7   DialogContent,
+       8   DialogHeader,
+       9   DialogTitle,
+      10   DialogFooter,
+     … +84 lines (ctrl+o to expand)
+
+● Write(next-js-boilerplate/src/components/rtc/RtcRecordingControl.tsx)
+  ⎿  Wrote 54 lines to
+     next-js-boilerplate/src/components/rtc/RtcRecordingControl.tsx
+       1 "use client";
+       2 
+       3 import { useState } from "react";
+       4 import { Button } from "@/components/ui/Button";
+       5 import { useMessages } from "@/lib/i18n/MessagesProvider";
+         ypes";
+       7 
+       8 interface RtcRecordingControlProps {
+       9   recording: RtcRecordingView | null | undefined;
+      10   onStart: () => Promise<unknown>;
+     … +48 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+● Now let's add recording query options and extend the actions files:
+
+● Update(next-js-boilerplate/src/api/client/rtc/meetings-query.ts)
+  ⎿  Added 12 lines
+      34      enabled: Boolean(slug),
+      35    });
+      36  }
+      37 +                                                               
+      38 +export function meetingRecordingQueryOptions(slug: string, enab
+         +led: boolean) {                                                
+      39 +  return queryOptions({                                        
+      40 +    queryKey: ["rtc", "meetings", slug, "recording"],          
+      41 +    queryFn: async () => {                                     
+      42 +      const { getMeetingRecordingServer } =                    
+      43 +        await import("@/api/server/rtc/meetings/recording");   
+      44 +      return getMeetingRecordingServer(slug);                  
+      45 +    },                                                         
+      46 +    enabled: Boolean(slug) && enabled,                         
+      47 +  });                                                          
+      48 +}                                                              
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/api/client/rtc/streams-query.ts)
+  ⎿  Added 12 lines
+      33      enabled: Boolean(slug),
+      34    });
+      35  }
+      36 +                                                               
+      37 +export function streamRecordingQueryOptions(slug: string, enabl
+         +ed: boolean) {                                                 
+      38 +  return queryOptions({                                        
+      39 +    queryKey: ["rtc", "streams", slug, "recording"],           
+      40 +    queryFn: async () => {                                     
+      41 +      const { getStreamRecordingServer } =                     
+      42 +        await import("@/api/server/rtc/streams/recording");    
+      43 +      return getStreamRecordingServer(slug);                   
+      44 +    },                                                         
+      45 +    enabled: Boolean(slug) && enabled,                         
+      46 +  });                                                          
+      47 +}                                                              
+
+● Now extend meetings-actions.ts and streams-actions.ts, plus new
+  calls-actions.ts:
+
+● Update(next-js-boilerplate/src/api/client/rtc/meetings-actions.ts)
+  ⎿  Added 33 lines
+      38      return removeParticipantServer(slug, userId);
+      39    };
+      40  
+      41 +  const inviteToMeeting = async (slug: string, userId: string) 
+         +=> {                                                           
+      42 +    const { inviteToMeetingServer } =                          
+      43 +      await import("@/api/server/rtc/meetings/invite");        
+      44 +    return inviteToMeetingServer(slug, userId);                
+      45 +  };                                                           
+      46 +                                                               
+      47 +  const reportMeeting = async (                                
+      48 +    slug: string,                                              
+      49 +    reason: import("@/api/server/rtc/shared-types").RtcReportRe
+         +ason,                                                          
+      50 +    details?: string,                                          
+      51 +    reportedUserId?: string,                                   
+      52 +  ) => {                                                       
+      53 +    const { reportMeetingServer } =                            
+      54 +      await import("@/api/server/rtc/meetings/report");        
+      55 +    return reportMeetingServer(slug, reason, details, reportedU
+         +serId);                                                        
+      56 +  };                                                           
+      57 +                                                               
+      58 +  const startRecording = async (slug: string) => {             
+      59 +    const { startMeetingRecordingServer } =                    
+      60 +      await import("@/api/server/rtc/meetings/recording");     
+      61 +    return startMeetingRecordingServer(slug);                  
+      62 +  };                                                           
+      63 +                                                               
+      64 +  const stopRecording = async (slug: string) => {              
+      65 +    const { stopMeetingRecordingServer } =                     
+      66 +      await import("@/api/server/rtc/meetings/recording");     
+      67 +    return stopMeetingRecordingServer(slug);                   
+      68 +  };                                                           
+      69 +                                                               
+      70    return {
+      71      createMeeting,
+      72      joinMeeting,
+     ...
+      74      endMeeting,
+      75      muteParticipant,
+      76      removeParticipant,
+      77 +    inviteToMeeting,                                           
+      78 +    reportMeeting,                                             
+      79 +    startRecording,                                            
+      80 +    stopRecording,                                             
+      81    };
+      82  }
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/api/client/rtc/meetings-actions.ts)
+  ⎿  Added 2 lines
+      1 +import type { RtcReportReason } from "@/api/server/rtc/shared-ty
+        +pes";                                                           
+      2 +                                                                
+      3  export function useMeetingActions() {
+      4    const createMeeting = async (title: string) => {
+      5      const { createMeetingServer } =
+
+● Update(next-js-boilerplate/src/api/client/rtc/meetings-actions.ts)  ⎿  Added 1 line, removed 1 line
+      48  
+      49    const reportMeeting = async (
+      50      slug: string,
+      51 -    reason: import("@/api/server/rtc/shared-types").RtcReportRe
+         -ason,                                                          
+      51 +    reason: RtcReportReason,                                   
+      52      details?: string,
+      53      reportedUserId?: string,
+      54    ) => {
+
+● Now streams-actions.ts:
+
+● Update(next-js-boilerplate/src/api/client/rtc/streams-actions.ts)
+  ⎿  Added 2 lines
+      1 +import type { RtcReportReason } from "@/api/server/rtc/shared-ty
+        +pes";                                                           
+      2 +                                                                
+      3  export function useStreamActions() {
+      4    const goLive = async (title: string) => {
+      5      const { goLiveServer } = await import("@/api/server/rtc/stre
+         ams/go-live");
+
+● Update(next-js-boilerplate/src/api/client/rtc/streams-actions.ts)
+  ⎿  Added 32 lines, removed 1 line
+      22      return endStreamServer(slug);
+      23    };
+      24  
+      25 -  return { goLive, joinStream, leaveStream, endStream };       
+      25 +  const reportStream = async (                                 
+      26 +    slug: string,                                              
+      27 +    reason: RtcReportReason,                                   
+      28 +    details?: string,                                          
+      29 +    reportedUserId?: string,                                   
+      30 +  ) => {                                                       
+      31 +    const { reportStreamServer } =                             
+      32 +      await import("@/api/server/rtc/streams/report");         
+      33 +    return reportStreamServer(slug, reason, details, reportedUs
+         +erId);                                                         
+      34 +  };                                                           
+      35 +                                                               
+      36 +  const startRecording = async (slug: string) => {             
+      37 +    const { startStreamRecordingServer } =                     
+      38 +      await import("@/api/server/rtc/streams/recording");      
+      39 +    return startStreamRecordingServer(slug);                   
+      40 +  };                                                           
+      41 +                                                               
+      42 +  const stopRecording = async (slug: string) => {              
+      43 +    const { stopStreamRecordingServer } =                      
+      44 +      await import("@/api/server/rtc/streams/recording");      
+      45 +    return stopStreamRecordingServer(slug);                    
+      46 +  };                                                           
+      47 +                                                               
+      48 +  return {                                                     
+      49 +    goLive,                                                    
+      50 +    joinStream,                                                
+      51 +    leaveStream,                                               
+      52 +    endStream,                                                 
+      53 +    reportStream,                                              
+      54 +    startRecording,                                            
+      55 +    stopRecording,                                             
+      56 +  };                                                           
+      57  }
+
+● Now a new calls-actions.ts for the report-a-call action:
+
+● Write(next-js-boilerplate/src/api/client/rtc/calls-actions.ts)
+  ⎿  Wrote 14 lines to
+     next-js-boilerplate/src/api/client/rtc/calls-actions.ts
+       1 import type { RtcReportReason } from "@/api/server/rtc/shared-ty
+         pes";
+       2 
+       4   const reportCall = async (
+       5     callId: string,
+       6     reason: RtcReportReason,
+       7     details?: string,
+       9     const { reportCallServer } = await import("@/api/server/rtc/
+         calls/report");
+      10     return reportCallServer(callId, reason, details);
+     … +6 lines (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/views/rtc/RtcMeetingRoomView.tsx)
+  ⎿  Added 9 lines, removed 1 line
+      13    IconPhoneOff,
+      14    IconMicrophoneOff as IconMuteAction,
+      15    IconUserX,
+      16 +  IconUserPlus,                                                
+      17 +  IconFlag,                                                    
+      18  } from "@tabler/icons-react";
+      19  import { Button, IconButton } from "@/components/ui/Button";
+      20  import { Input } from "@/components/ui/Input";
+     ...
+      29  import { useMessages } from "@/lib/i18n/MessagesProvider";
+      30  import { useLiveKitMeetingRoom } from "@/hooks/rtc/useLiveKitMe
+          etingRoom";
+      31  import { MeetingParticipantTile } from "@/components/rtc/Meetin
+          gParticipantTile";
+      30 -import { meetingChatQueryOptions } from "@/api/client/rtc/meeti
+         -ngs-query";                                                    
+      32 +import { RtcInviteDialog } from "@/components/rtc/RtcInviteDial
+         +og";                                                           
+      33 +import { RtcReportDialog } from "@/components/rtc/RtcReportDial
+         +og";                                                           
+      34 +import { RtcRecordingControl } from "@/components/rtc/RtcRecord
+         +ingControl";                                                   
+      35 +import {                                                       
+      36 +  meetingChatQueryOptions,                                     
+      37 +  meetingRecordingQueryOptions,                                
+      38 +} from "@/api/client/rtc/meetings-query";                      
+      39  import { useMeetingActions } from "@/api/client/rtc/meetings-ac
+          tions";
+      40  import type { JoinMeetingResult } from "@/api/server/rtc/meetin
+          gs/types";
+      41  
+
+● Update(next-js-boilerplate/src/views/rtc/RtcMeetingRoomView.tsx)
+  ⎿  Added 4 lines
+      63      endMeeting,
+      64      muteParticipant,
+      65      removeParticipant,
+      66 +    inviteToMeeting,                                           
+      67 +    reportMeeting,                                             
+      68 +    startRecording,                                            
+      69 +    stopRecording,                                             
+      70    } = useMeetingActions();
+      71  
+      72    const [phase, setPhase] = useState<
+
+● Update(next-js-boilerplate/src/views/rtc/RtcMeetingRoomView.tsx)
+  ⎿  Added 4 lines
+      180  
+      181    const isHost = join?.role === "HOST";
+      182  
+      183 +  const { data: recording, refetch: refetchRecording } = useQu
+          +ery(                                                          
+      184 +    meetingRecordingQueryOptions(slug, isHost && phase === "ac
+          +tive"),                                                       
+      185 +  );                                                          
+      186 +                                                              
+      187    const handleLeave = () => {
+      188      void leaveMeeting(slug);
+      189      router.push(`/v1/${lang}/rtc/meetings`);
+
+● Now add the invite/report/recording controls into the control bar:
+
+● Update(next-js-boilerplate/src/views/rtc/RtcMeetingRoomView.tsx)
+  ⎿  Added 42 lines
+      271              }
+      272              onClick={livekit.toggleScreenShare}
+      273            />
+      274 +          <RtcInviteDialog                                    
+      275 +            onInvite={(userId) => inviteToMeeting(slug, userId
+          +)}                                                            
+      276 +          >                                                   
+      277 +            {(open) => (                                      
+      278 +              <IconButton                                     
+      279 +                variant="secondary"                           
+      280 +                icon={<IconUserPlus />}                       
+      281 +                label={t.inviteToMeeting}                     
+      282 +                onClick={open}                                
+      283 +              />                                              
+      284 +            )}                                                
+      285 +          </RtcInviteDialog>                                  
+      286 +          <RtcReportDialog                                    
+      287 +            onSubmit={(reason, details) =>                    
+      288 +              reportMeeting(slug, reason, details)            
+      289 +            }                                                 
+      290 +          >                                                   
+      291 +            {(open) => (                                      
+      292 +              <IconButton                                     
+      293 +                variant="secondary"                           
+      294 +                icon={<IconFlag />}                           
+      295 +                label={t.reportTitle}                         
+      296 +                onClick={open}                                
+      297 +              />                                              
+      298 +            )}                                                
+      299 +          </RtcReportDialog>                                  
+      300            {isHost ? (
+      301              <ConfirmDialog
+      302                title={t.endMeeting}
+     ...
+      323              />
+      324            )}
+      325          </div>
+      326 +                                                              
+      327 +        {isHost && (                                          
+      328 +          <div className="flex justify-center">               
+      329 +            <RtcRecordingControl                              
+      330 +              recording={recording}                           
+      331 +              onStart={async () => {                          
+      332 +                await startRecording(slug);                   
+      333 +                await refetchRecording();                     
+      334 +              }}                                              
+      335 +              onStop={async () => {                           
+      336 +                await stopRecording(slug);                    
+      337 +                await refetchRecording();                     
+      338 +              }}                                              
+      339 +            />                                                
+      340 +          </div>                                              
+      341 +        )}                                                    
+      342        </div>
+      343  
+      344        <div className="flex w-full flex-col rounded-lg border l
+           g:w-80">
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/views/rtc/RtcGoLiveView.tsx)
+  ⎿  Added 3 lines
+      2  
+      3  import { useCallback, useEffect, useState } from "react";
+      4  import { useParams, useRouter } from "next/navigation";
+      5 +import { useQuery } from "@tanstack/react-query";               
+      6  import {
+      7    IconMicrophone,
+      8    IconMicrophoneOff,
+     ...
+      25  import { useMessages } from "@/lib/i18n/MessagesProvider";
+      26  import { useLiveKitStreamRoom } from "@/hooks/rtc/useLiveKitStr
+          eamRoom";
+      27  import { StreamPlayer } from "@/components/rtc/StreamPlayer";
+      28 +import { RtcRecordingControl } from "@/components/rtc/RtcRecord
+         +ingControl";                                                   
+      29  import { useStreamActions } from "@/api/client/rtc/streams-acti
+          ons";
+      30 +import { streamRecordingQueryOptions } from "@/api/client/rtc/s
+         +treams-query";                                                 
+      31  import type { LiveStreamJoinResult } from "@/api/server/rtc/str
+          eams/types";
+      32  
+      33  export function RtcGoLiveView() {
+
+● Update(next-js-boilerplate/src/views/rtc/RtcGoLiveView.tsx)
+  ⎿  Added 2 lines, removed 1 line
+      64    const { toast } = useToast();
+      65    const realtime = useRealtime();
+      66    const realtimeStatus = useRealtimeStatus();
+      67 -  const { goLive, endStream } = useStreamActions();            
+      67 +  const { goLive, endStream, startRecording, stopRecording } = 
+      68 +    useStreamActions();                                        
+      69  
+      70    const [title, setTitle] = useState("");
+      71    const [starting, setStarting] = useState(false);
+
+● Update(next-js-boilerplate/src/views/rtc/RtcGoLiveView.tsx)
+  ⎿  Added 4 lines
+       92  
+       93    const slug = live?.stream.slug ?? "";
+       94  
+       95 +  const { data: recording, refetch: refetchRecording } = useQu
+          +ery(                                                          
+       96 +    streamRecordingQueryOptions(slug, Boolean(slug)),         
+       97 +  );                                                          
+       98 +                                                              
+       99    useEffect(() => {
+      100      if (!realtime || realtimeStatus !== "open" || !slug) retur
+           n;
+      101      realtime.send({ type: "rtc:join-room-chat", slug });
+
+● Update(next-js-boilerplate/src/views/rtc/RtcGoLiveView.tsx)
+  ⎿  Added 14 lines
+      232              )}
+      233            </ConfirmDialog>
+      234          </div>
+      235 +                                                              
+      236 +        <div className="flex justify-center">                 
+      237 +          <RtcRecordingControl                                
+      238 +            recording={recording}                             
+      239 +            onStart={async () => {                            
+      240 +              await startRecording(slug);                     
+      241 +              await refetchRecording();                       
+      242 +            }}                                                
+      243 +            onStop={async () => {                             
+      244 +              await stopRecording(slug);                      
+      245 +              await refetchRecording();                       
+      246 +            }}                                                
+      247 +          />                                                  
+      248 +        </div>                                                
+      249        </div>
+      250  
+      251        <div className="flex w-full flex-col rounded-lg border l
+           g:w-80">
+
+● Now RtcLiveViewerView.tsx — add a report button:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(next-js-boilerplate/src/views/rtc/RtcLiveViewerView.tsx)
+  ⎿  Added 3 lines, removed 1 line
+       3  import { useCallback, useEffect, useRef, useState } from "react
+          ";
+       4  import { useParams, useRouter } from "next/navigation";
+       5  import { useQuery } from "@tanstack/react-query";
+       6 -import { Button } from "@/components/ui/Button";               
+       6 +import { IconFlag } from "@tabler/icons-react";                
+       7 +import { Button, IconButton } from "@/components/ui/Button";   
+       8  import { Input } from "@/components/ui/Input";
+       9  import { PulseBlockFallback } from "@/fallbacks";
+      10  import { useToast } from "@/components/ui/Toast";
+     ...
+      16  import { useMessages } from "@/lib/i18n/MessagesProvider";
+      17  import { useLiveKitStreamRoom } from "@/hooks/rtc/useLiveKitStr
+          eamRoom";
+      18  import { StreamPlayer } from "@/components/rtc/StreamPlayer";
+      19 +import { RtcReportDialog } from "@/components/rtc/RtcReportDial
+         +og";                                                           
+      20  import { streamChatQueryOptions } from "@/api/client/rtc/stream
+          s-query";
+      21  import { useStreamActions } from "@/api/client/rtc/streams-acti
+          ons";
+      22  import type { LiveStreamJoinResult } from "@/api/server/rtc/str
+          eams/types";
+
+● Update(next-js-boilerplate/src/views/rtc/RtcLiveViewerView.tsx)
+  ⎿  Added 1 line, removed 1 line
+      39    const { user } = useAuth();
+      40    const realtime = useRealtime();
+      41    const realtimeStatus = useRealtimeStatus();
+      42 -  const { joinStream, leaveStream } = useStreamActions();      
+      42 +  const { joinStream, leaveStream, reportStream } = useStreamAc
+         +tions();                                                       
+      43  
+      44    const [phase, setPhase] = useState<
+      45      "joining" | "active" | "ended" | "not-found" | "own-stream"
+
+● Update(next-js-boilerplate/src/views/rtc/RtcLiveViewerView.tsx)
+  ⎿  Added 20 lines, removed 1 line
+      197            offlineLabel={t.broadcasterOffline}
+      198          />
+      199  
+      200 -        <div className="flex items-center justify-center pt-2"
+          ->                                                             
+      200 +        <div className="flex items-center justify-center gap-3
+          + pt-2">                                                       
+      201 +          <RtcReportDialog                                    
+      202 +            onSubmit={(reason, details) =>                    
+      203 +              reportStream(                                   
+      204 +                slug,                                         
+      205 +                reason,                                       
+      206 +                details,                                      
+      207 +                join?.stream.broadcaster.id,                  
+      208 +              )                                               
+      209 +            }                                                 
+      210 +          >                                                   
+      211 +            {(open) => (                                      
+      212 +              <IconButton                                     
+      213 +                variant="ghost"                               
+      214 +                icon={<IconFlag />}                           
+      215 +                label={t.reportTitle}                         
+      216 +                onClick={open}                                
+      217 +              />                                              
+      218 +            )}                                                
+      219 +          </RtcReportDialog>                                  
+      220            <Button variant="ghost" onClick={handleLeave}>
+      221              {t.leaveStream}
+      222            </Button>
+
+● Update(next-js-boilerplate/src/views/rtc/RtcCallHistoryView.tsx)  ⎿  Added 4 lines, removed 1 line
+       6    IconPhoneOutgoing,
+       7    IconVideo,
+       8    IconPhone,
+       9 +  IconFlag,                                                    
+      10  } from "@tabler/icons-react";
+      11  import { Avatar } from "@/components/ui/Avatar";
+      11 -import { Button } from "@/components/ui/Button";               
+      12 +import { Button, IconButton } from "@/components/ui/Button";   
+      13  import { PulseBlockFallback } from "@/fallbacks";
+      14 +import { RtcReportDialog } from "@/components/rtc/RtcReportDial
+         +og";                                                           
+      15  import { callHistoryQueryOptions } from "@/api/client/rtc/query
+          ";
+      16 +import { useCallActions } from "@/api/client/rtc/calls-actions"
+         +;                                                              
+      17  import type { CallHistoryEntry } from "@/api/server/rtc/call-hi
+          story";
+      18  import { getRelativeTime } from "@/lib/date-time";
+      19  import { useMessages } from "@/lib/i18n/MessagesProvider";
+
+● Update(next-js-boilerplate/src/views/rtc/RtcCallHistoryView.tsx)
+  ⎿  Added 23 lines, removed 2 lines
+      37  function CallRow({ call }: { call: CallHistoryEntry }) {
+      38    const t = useMessages("rtc");
+      39    const { state, startCall } = useRtcCall();
+      40 +  const { reportCall } = useCallActions();                     
+      41    const DirectionIcon =
+      42      call.direction === "incoming" ? IconPhoneIncoming : IconPho
+          neOutgoing;
+      43    const stateKey = STATE_KEY[call.state] ?? "stateEnded";
+      44 +  const isMissed = call.state === "MISSED" && call.direction ==
+         += "incoming";                                                  
+      45  
+      46    return (
+      47      <div className="flex items-center gap-3 border-b px-2 py-3 
+          last:border-b-0">
+     ...
+      51          size="md"
+      52        />
+      53        <div className="min-w-0 flex-1">
+      52 -        <p className="truncate text-sm font-medium">{call.peer.
+         -name}</p>                                                      
+      53 -        <div className="text-fg-muted flex items-center gap-1.5
+         - text-xs">                                                     
+      54 +        <p                                                     
+      55 +          className={`truncate text-sm font-medium ${isMissed ?
+         + "text-error" : ""}`}                                          
+      56 +        >                                                      
+      57 +          {call.peer.name}                                     
+      58 +        </p>                                                   
+      59 +        <div                                                   
+      60 +          className={`flex items-center gap-1.5 text-xs ${isMis
+         +sed ? "text-error" : "text-fg-muted"}`}                        
+      61 +        >                                                      
+      62            <DirectionIcon size={14} aria-hidden />
+      63            {call.hasVideo && <IconVideo size={14} aria-hidden />
+          }
+      64            <span>{t[stateKey]}</span>
+     ...
+      66            <span>{getRelativeTime(call.ringingAt)}</span>
+      67          </div>
+      68        </div>
+      69 +      <RtcReportDialog                                         
+      70 +        onSubmit={(reason, details) => reportCall(call.id, reas
+         +on, details)}                                                  
+      71 +      >                                                        
+      72 +        {(open) => (                                           
+      73 +          <IconButton                                          
+      74 +            size="icon-sm"                                     
+      75 +            variant="ghost"                                    
+      76 +            icon={<IconFlag size={16} />}                      
+      77 +            label={t.reportTitle}                              
+      78 +            onClick={open}                                     
+      79 +          />                                                   
+      80 +        )}                                                     
+      81 +      </RtcReportDialog>                                       
+      82        <Button
+      83          size="icon-sm"
+      84          variant="ghost"
+
+● Now update the web notification target mapping:
+
+● Update(next-js-boilerplate/src/lib/notifications/target.ts)
+  ⎿  Added 10 lines
+      1  export interface NotificationPayload {
+      2    kind?: string;
+      3    postId?: string;
+      4 +  slug?: string;                                                
+      5    [key: string]: unknown;
+      6  }
+      7  
+     ...
+      13    if (payload.kind === "friend-request" || payload.kind === "fr
+          iend-accepted") {
+      14      return `/v1/${lang}/find-friends/requests`;
+      15    }
+      16 +  if (payload.kind === "rtc-missed-call") {                    
+      17 +    return `/v1/${lang}/rtc/calls`;                            
+      18 +  }                                                            
+      19 +  if (payload.kind === "rtc-meeting-invite" && payload.slug) { 
+      20 +    return `/v1/${lang}/rtc/meetings/${payload.slug}`;         
+      21 +  }                                                            
+      22 +  if (payload.kind === "rtc-stream-live" && payload.slug) {    
+      23 +    return `/v1/${lang}/rtc/live/${payload.slug}`;             
+      24 +  }                                                            
+      25    if (payload.postId) {
+      26      return `/v1/${lang}/posts/${payload.postId}`;
+      27    }
+
+  Read 2 files (ctrl+o to expand)
+
+● Update(next-js-boilerplate/messages/en/rtc/messages.json)
+  ⎿  Added 18 lines, removed 1 line
+       93    "leaveStream": "Leave",
+       94    "goLiveUpsellTitle": "Go Live requires an upgrade",
+       95    "goLiveUpsellMessage": "Live streaming is available on the M
+           edium plan and above.",
+       96 -  "upgradeButton": "See plans"                                
+       96 +  "upgradeButton": "See plans",                               
+       97 +  "inviteToMeeting": "Invite",                                
+       98 +  "noFriendsToInvite": "Add some friends to invite them to mee
+          +tings",                                                       
+       99 +  "invite": "Invite",                                         
+      100 +  "invited": "Invited",                                       
+      101 +  "close": "Close",                                           
+      102 +  "reportTitle": "Report",                                    
+      103 +  "reportReasonLabel": "Reason",                              
+      104 +  "reportReasonHarassment": "Harassment or abuse",            
+      105 +  "reportReasonSpam": "Spam",                                 
+      106 +  "reportReasonInappropriate": "Inappropriate content",       
+      107 +  "reportReasonOther": "Other",                               
+      108 +  "reportDetailsPlaceholder": "Add any details that might help
+          + (optional)",                                                 
+      109 +  "reportSubmit": "Submit report",                            
+      110 +  "reportSubmitted": "Thanks — your report has been submitted.
+          +",                                                            
+      111 +  "startRecording": "Start recording",                        
+      112 +  "stopRecording": "Stop recording",                          
+      113 +  "recordingComingSoonNote": "Recording is logged for the host
+          + only — video capture isn't available yet."                   
+      114  }
+
+● Update(next-js-boilerplate/messages/tr/rtc/messages.json)
+  ⎿  Added 18 lines, removed 1 line
+       93    "leaveStream": "Ayrıl",
+       94    "goLiveUpsellTitle": "Canlı yayın için yükseltme gerekiyor",
+       95    "goLiveUpsellMessage": "Canlı yayın, Medium ve üzeri planlar
+           da kullanılabilir.",
+       96 -  "upgradeButton": "Planları görüntüle"                       
+       96 +  "upgradeButton": "Planları görüntüle",                      
+       97 +  "inviteToMeeting": "Davet et",                              
+       98 +  "noFriendsToInvite": "Toplantılara davet etmek için önce ark
+          +adaş ekleyin",                                                
+       99 +  "invite": "Davet et",                                       
+      100 +  "invited": "Davet edildi",                                  
+      101 +  "close": "Kapat",                                           
+      102 +  "reportTitle": "Şikayet et",                                
+      103 +  "reportReasonLabel": "Sebep",                               
+      104 +  "reportReasonHarassment": "Taciz veya kötüye kullanım",     
+      105 +  "reportReasonSpam": "Spam",                                 
+      106 +  "reportReasonInappropriate": "Uygunsuz içerik",             
+      107 +  "reportReasonOther": "Diğer",                               
+      108 +  "reportDetailsPlaceholder": "Yardımcı olabilecek ayrıntılar 
+          +ekleyin (opsiyonel)",                                         
+      109 +  "reportSubmit": "Şikayeti gönder",                          
+      110 +  "reportSubmitted": "Teşekkürler — şikayetiniz iletildi.",   
+      111 +  "startRecording": "Kaydı başlat",                           
+      112 +  "stopRecording": "Kaydı durdur",                            
+      113 +  "recordingComingSoonNote": "Kayıt yalnızca sunucu için kayde
+          +dilir — video kaydı henüz kullanılamıyor."                    
+      114  }
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(pnpm generate-i18n-types 2>&1 | tail -30 && pnpm check-duplicate-messages
+      2>&1 | tail -30)
+  ⎿  $ tsx scripts/generate-i18n-types.ts
+     ✓ Wrote /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/
+     next-js-boilerplate/src/generated/i18n-messages.d.ts
+     … +34 lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate && grep
+      -rln "check-duplicate-messages" next-js-boilerplate/.husky
+      .github/workflows 2>/dev/nul…)
+  ⎿  ./.husky
+     ./.github/workflows
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/next-js-
+      boilerplate && npx tsc --noEmit -p tsconfig.json 2>&1 | tail -80)
+  ⎿  (No output)
+
+● Clean typecheck. Now eslint on the changed/new web files:
+
+● Bash(npx eslint --fix \
+        src/components/rtc/RtcReportDialog.tsx \…)
+  ⎿  (No output)
+
+● All clean. Now let's move to Flutter. First, let's check the current Flutter
+  RTC file structure and the notification kind-switch to mirror the same
+  additions:
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate/flutter-
+      boilerplate && find lib/views/rtc lib/api/server/rtc lib/api/client/rtc
+      lib/types/rtc -…)
+  ⎿  lib/api/client/rtc/meetings_actions.dart
+     lib/api/client/rtc/meetings_chat_live.dart
+     lib/api/client/rtc/meetings_query.dart
+     … +34 lines (ctrl+o to expand)
+
+  Searched for 1 pattern, read 5 files (ctrl+o to expand)
+
+● Now let's write the shared RtcRecording type + server-layer files. First a
+  shared type:
+
+● Write(flutter-boilerplate/lib/types/rtc/recording.dart)
+  ⎿  Wrote 27 lines to flutter-boilerplate/lib/types/rtc/recording.dart
+       1 class RtcRecording {
+       2   final String id;
+       3   final String status;
+       4   final String? fileUrl;
+       5   final DateTime? startedAt;
+       6   final DateTime? endedAt;
+       7 
+       8   RtcRecording({
+       9     required this.id,
+      10     required this.status,
+     … +18 lines (ctrl+o to expand)
+● Write(flutter-boilerplate/lib/api/server/rtc/meetings_invite.dart)
+  ⎿  Wrote 30 lines to
+     flutter-boilerplate/lib/api/server/rtc/meetings_invite.dart
+      1 import 'package:dio/dio.dart';
+      2 import 'package:flutter_boilerplate/lib/api_client.dart';
+      3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+      4 
+      5 final inviteToMeetingServerProvider =
+      6     Provider((ref) => InviteToMeetingServer(ref.read(dioProvider)
+        ));
+      7 
+      8 class InviteToMeetingServer {
+      9   final Dio _dio;
+     … +21 lines (ctrl+o to expand)
+
+● Write(flutter-boilerplate/lib/api/server/rtc/meetings_report.dart)
+  ⎿  Wrote 40 lines to
+     flutter-boilerplate/lib/api/server/rtc/meetings_report.dart
+      1 import 'package:dio/dio.dart';
+      2 import 'package:flutter_boilerplate/lib/api_client.dart';
+      3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+      4 
+      5 final reportMeetingServerProvider =
+      6     Provider((ref) => ReportMeetingServer(ref.read(dioProvider)))
+        ;
+      7 
+      8 class ReportMeetingServer {
+      9   final Dio _dio;
+     … +33 lines (ctrl+o to expand)
+
+● Write(flutter-boilerplate/lib/api/server/rtc/streams_report.dart)
+  ⎿  Wrote 40 lines to
+     flutter-boilerplate/lib/api/server/rtc/streams_report.dart
+      1 import 'package:dio/dio.dart';
+      2 import 'package:flutter_boilerplate/lib/api_client.dart';
+      3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+      4 
+      5 final reportStreamServerProvider =
+      6     Provider((ref) => ReportStreamServer(ref.read(dioProvider)));
+      7 
+      8 class ReportStreamServer {
+      9   final Dio _dio;
+     … +33 lines (ctrl+o to expand)
+
+● Write(flutter-boilerplate/lib/api/server/rtc/calls_report.dart)
+  ⎿  Wrote 30 lines to
+     flutter-boilerplate/lib/api/server/rtc/calls_report.dart
+      1 import 'package:dio/dio.dart';
+      2 import 'package:flutter_boilerplate/lib/api_client.dart';
+      3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+      4 
+      5 final reportCallServerProvider =
+      6     Provider((ref) => ReportCallServer(ref.read(dioProvider)));
+      7 
+      8 class ReportCallServer {
+      9   final Dio _dio;
+     … +24 lines (ctrl+o to expand)
+
+● Now the recording server files for meetings and streams:
+
+● Write(flutter-boilerplate/lib/api/server/rtc/meetings_recording.dart)
+  ⎿  Wrote 62 lines to
+     flutter-boilerplate/lib/api/server/rtc/meetings_recording.dart
+       1 import 'package:dio/dio.dart';
+       2 import 'package:flutter_boilerplate/lib/api_client.dart';
+       3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+       5 import '../../../types/rtc/recording.dart';
+       6 
+       7 const String _recordingFields = 'id status fileUrl startedAt end
+         edAt';
+       9 final meetingRecordingServerProvider =
+      10     Provider((ref) => MeetingRecordingServer(ref.read(dioProvide
+         r)));
+     … +60 lines (ctrl+o to expand)
+
+● Write(flutter-boilerplate/lib/api/server/rtc/streams_recording.dart)
+  ⎿  Wrote 62 lines to
+     flutter-boilerplate/lib/api/server/rtc/streams_recording.dart
+       1 import 'package:dio/dio.dart';
+       2 import 'package:flutter_boilerplate/lib/api_client.dart';
+       3 import 'package:flutter_riverpod/flutter_riverpod.dart';
+       5 import '../../../types/rtc/recording.dart';
+       6 
+       7 const String _recordingFields = 'id status fileUrl startedAt end
+         edAt';
+       9 final streamRecordingServerProvider =
+      10     Provider((ref) => StreamRecordingServer(ref.read(dioProvider
+         )));
+     … +59 lines (ctrl+o to expand)
+
+  Read 3 files (ctrl+o to expand)
+
+● Now let's extend these client files:
+
+● Update(flutter-boilerplate/lib/api/client/rtc/meetings_actions.dart)
+  ⎿  Added 29 lines
+       1  import 'package:flutter_riverpod/flutter_riverpod.dart';
+       2  
+       3  import '../../../types/rtc/meeting.dart';
+       4 +import '../../../types/rtc/recording.dart';                    
+       5  import '../../server/rtc/meetings_create.dart';
+       6  import '../../server/rtc/meetings_end.dart';
+       7 +import '../../server/rtc/meetings_invite.dart';                
+       8  import '../../server/rtc/meetings_join.dart';
+       9  import '../../server/rtc/meetings_leave.dart';
+      10  import '../../server/rtc/meetings_participants.dart';
+      11 +import '../../server/rtc/meetings_recording.dart';             
+      12 +import '../../server/rtc/meetings_report.dart';                
+      13  
+      14  final meetingActionsProvider = Provider((ref) => MeetingActions
+          (ref));
+      15  
+     ...
+      35  
+      36    Future<void> removeParticipant(String slug, String userId) =>
+      37        _ref.read(meetingParticipantsServerProvider).remove(slug,
+           userId);
+      38 +                                                               
+      39 +  Future<void> invite(String slug, String userId) =>           
+      40 +      _ref.read(inviteToMeetingServerProvider).call(slug, userI
+         +d);                                                            
+      41 +                                                               
+      42 +  Future<void> report(                                         
+      43 +    String slug,                                               
+      44 +    String reason, {                                           
+      45 +    String? details,                                           
+      46 +    String? reportedUserId,                                    
+      47 +  }) =>                                                        
+      48 +      _ref.read(reportMeetingServerProvider).call(             
+      49 +            slug,                                              
+      50 +            reason,                                            
+      51 +            details: details,                                  
+      52 +            reportedUserId: reportedUserId,                    
+      53 +          );                                                   
+      54 +                                                               
+      55 +  Future<RtcRecording?> recordingStatus(String slug) =>        
+      56 +      _ref.read(meetingRecordingServerProvider).get(slug);     
+      57 +                                                               
+      58 +  Future<RtcRecording> startRecording(String slug) =>          
+      59 +      _ref.read(meetingRecordingServerProvider).start(slug);   
+      60 +                                                               
+      61 +  Future<RtcRecording> stopRecording(String slug) =>           
+      62 +      _ref.read(meetingRecordingServerProvider).stop(slug);    
+      63  }
+
+● Update(flutter-boilerplate/lib/api/client/rtc/streams_actions.dart)
+  ⎿  Added 25 lines
+       1  import 'package:flutter_riverpod/flutter_riverpod.dart';
+       2  
+       3 +import '../../../types/rtc/recording.dart';                    
+       4  import '../../../types/rtc/stream.dart';
+       5  import '../../server/rtc/streams_end.dart';
+       6  import '../../server/rtc/streams_go_live.dart';
+       7  import '../../server/rtc/streams_join.dart';
+       8  import '../../server/rtc/streams_leave.dart';
+       9 +import '../../server/rtc/streams_recording.dart';              
+      10 +import '../../server/rtc/streams_report.dart';                 
+      11  
+      12  final streamActionsProvider = Provider((ref) => StreamActions(r
+          ef));
+      13  
+     ...
+      27  
+      28    Future<void> end(String slug) =>
+      29        _ref.read(endStreamServerProvider).call(slug);
+      30 +                                                               
+      31 +  Future<void> report(                                         
+      32 +    String slug,                                               
+      33 +    String reason, {                                           
+      34 +    String? details,                                           
+      35 +    String? reportedUserId,                                    
+      36 +  }) =>                                                        
+      37 +      _ref.read(reportStreamServerProvider).call(              
+      38 +            slug,                                              
+      39 +            reason,                                            
+      40 +            details: details,                                  
+      41 +            reportedUserId: reportedUserId,                    
+      42 +          );                                                   
+      43 +                                                               
+      44 +  Future<RtcRecording?> recordingStatus(String slug) =>        
+      45 +      _ref.read(streamRecordingServerProvider).get(slug);      
+      46 +                                                               
+      47 +  Future<RtcRecording> startRecording(String slug) =>          
+      48 +      _ref.read(streamRecordingServerProvider).start(slug);    
+      49 +                                                               
+      50 +  Future<RtcRecording> stopRecording(String slug) =>           
+      51 +      _ref.read(streamRecordingServerProvider).stop(slug);     
+      52  }
+
+● Now a new calls_actions.dart client file:
+
+● Write(flutter-boilerplate/lib/api/client/rtc/calls_actions.dart)
+  ⎿  Wrote 14 lines to
+     flutter-boilerplate/lib/api/client/rtc/calls_actions.dart
+       1 import 'package:flutter_riverpod/flutter_riverpod.dart';
+       2 
+       3 import '../../server/rtc/calls_report.dart';
+       4 
+       5 final callActionsProvider = Provider((ref) => CallActions(ref));
+       6 
+       7 class CallActions {
+       8   final Ref _ref;
+       9 
+      10   CallActions(this._ref);
+     … +6 lines (ctrl+o to expand)
+
+  Searched for 4 patterns, read 4 files (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/l10n/app_en.arb)
+  ⎿  Added 17 lines, removed 1 line
+      2068    "rtcStreamEndedNotice": "The stream has ended",
+      2069    "rtcBackToLive": "Back to live",
+      2070    "rtcBroadcasterOffline": "Waiting for the broadcaster…",
+      2071 -  "rtcLeaveStream": "Leave"                                  
+      2071 +  "rtcLeaveStream": "Leave",                                 
+      2072 +  "rtcInviteToMeeting": "Invite",                            
+      2073 +  "rtcNoFriendsToInvite": "Add some friends to invite them to
+           + meetings",                                                  
+      2074 +  "rtcInvite": "Invite",                                     
+      2075 +  "rtcInvited": "Invited",                                   
+      2076 +  "rtcClose": "Close",                                       
+      2077 +  "rtcReportTitle": "Report",                                
+      2078 +  "rtcReportReasonHarassment": "Harassment or abuse",        
+      2079 +  "rtcReportReasonSpam": "Spam",                             
+      2080 +  "rtcReportReasonInappropriate": "Inappropriate content",   
+      2081 +  "rtcReportReasonOther": "Other",                           
+      2082 +  "rtcReportDetailsPlaceholder": "Add any details that might 
+           +help (optional)",                                            
+      2083 +  "rtcReportSubmit": "Submit report",                        
+      2084 +  "rtcReportSubmitted": "Thanks — your report has been submit
+           +ted.",                                                       
+      2085 +  "rtcStartRecording": "Start recording",                    
+      2086 +  "rtcStopRecording": "Stop recording",                      
+      2087 +  "rtcRecordingComingSoonNote": "Recording is logged for the 
+           +host only — video capture isn't available yet."              
+      2088  }
+      2089   No newline at end of file
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/l10n/app_tr.arb)
+  ⎿  Added 17 lines, removed 1 line
+      2037    "rtcStreamEndedNotice": "Yayın sona erdi",
+      2038    "rtcBackToLive": "Canlı yayına dön",
+      2039    "rtcBroadcasterOffline": "Yayıncı bekleniyor…",
+      2040 -  "rtcLeaveStream": "Ayrıl"                                  
+      2040 +  "rtcLeaveStream": "Ayrıl",                                 
+      2041 +  "rtcInviteToMeeting": "Davet et",                          
+      2042 +  "rtcNoFriendsToInvite": "Toplantılara davet etmek için önce
+           + arkadaş ekleyin",                                           
+      2043 +  "rtcInvite": "Davet et",                                   
+      2044 +  "rtcInvited": "Davet edildi",                              
+      2045 +  "rtcClose": "Kapat",                                       
+      2046 +  "rtcReportTitle": "Şikayet et",                            
+      2047 +  "rtcReportReasonHarassment": "Taciz veya kötüye kullanım", 
+      2048 +  "rtcReportReasonSpam": "Spam",                             
+      2049 +  "rtcReportReasonInappropriate": "Uygunsuz içerik",         
+      2050 +  "rtcReportReasonOther": "Diğer",                           
+      2051 +  "rtcReportDetailsPlaceholder": "Yardımcı olabilecek ayrıntı
+           +lar ekleyin (opsiyonel)",                                    
+      2052 +  "rtcReportSubmit": "Şikayeti gönder",                      
+      2053 +  "rtcReportSubmitted": "Teşekkürler — şikayetiniz iletildi."
+           +,                                                            
+      2054 +  "rtcStartRecording": "Kaydı başlat",                       
+      2055 +  "rtcStopRecording": "Kaydı durdur",                        
+      2056 +  "rtcRecordingComingSoonNote": "Kayıt yalnızca sunucu için k
+           +aydedilir — video kaydı henüz kullanılamıyor."               
+      2057  }
+      2058   No newline at end of file
+
+● Now let's run flutter gen-l10n to regenerate the localization Dart files:
+
+● Bash(flutter gen-l10n 2>&1 | tail -40)
+  ⎿  Because l10n.yaml exists, the options defined there will be used inste
+     ad.
+     To use the command line arguments, delete the l10n.yaml file in the Fl
+     utter project.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Good, generation succeeded. Now let's add the RtcReportReason GraphQL type
+  check — let's verify flutter analyze passes for what we've built so far, then
+  wire the UI into meeting_room_page_view.dart:
+● Bash(flutter analyze lib/api lib/types/rtc/recording.dart 2>&1 | tail -60)
+  ⎿  Analyzing 2 items...
+     No issues found! (ran in 4.0s)
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 2 lines
+       6  import 'package:go_router/go_router.dart';
+       7  import 'package:livekit_client/livekit_client.dart' as lk;
+       8  
+       9 +import '../../api/client/friends/query.dart';                  
+      10  import '../../api/client/rtc/meetings_actions.dart';
+      11  import '../../api/client/rtc/meetings_chat_live.dart';
+      12  import '../../app_config.dart';
+     ...
+      14  import '../../constants/theme.dart';
+      15  import '../../l10n/app_localizations.dart';
+      16  import '../../types/rtc/meeting.dart';
+      17 +import '../../types/rtc/recording.dart';                       
+      18  
+      19  enum _RoomPhase { joining, active, ended, removed, notFound }
+      20  
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 2 lines
+      76    int _lastHandledSignalSeq = 0;
+      77    int _tab = 0;
+      78    final _chatController = TextEditingController();
+      79 +  RtcRecording? _recording;                                    
+      80 +  bool _recordingBusy = false;                                 
+      81  
+      82    @override
+      83    void initState() {
+
+● Now let's add the invite/report/recording methods near _end():
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 31 lines
+      250      if (mounted) context.pop();
+      251    }
+      252  
+      253 +  Future<void> _invite() async {                              
+      254 +    await showModalBottomSheet<void>(                         
+      255 +      context: context,                                       
+      256 +      builder: (context) => _InviteFriendsSheet(slug: widget.s
+          +lug),                                                         
+      257 +    );                                                        
+      258 +  }                                                           
+      259 +                                                              
+      260 +  Future<void> _report() async {                              
+      261 +    await showDialog<void>(                                   
+      262 +      context: context,                                       
+      263 +      builder: (context) => _RtcReportDialog(                 
+      264 +        onSubmit: (reason, details) => ref                    
+      265 +            .read(meetingActionsProvider)                     
+      266 +            .report(widget.slug, reason, details: details),   
+      267 +      ),                                                      
+      268 +    );                                                        
+      269 +  }                                                           
+      270 +                                                              
+      271 +  Future<void> _toggleRecording() async {                     
+      272 +    setState(() => _recordingBusy = true);                    
+      273 +    try {                                                     
+      274 +      final actions = ref.read(meetingActionsProvider);       
+      275 +      final next = _recording?.status == 'RECORDING'          
+      276 +          ? await actions.stopRecording(widget.slug)          
+      277 +          : await actions.startRecording(widget.slug);        
+      278 +      if (mounted) setState(() => _recording = next);         
+      279 +    } finally {                                               
+      280 +      if (mounted) setState(() => _recordingBusy = false);    
+      281 +    }                                                         
+      282 +  }                                                           
+      283 +                                                              
+      284    @override
+      285    void dispose() {
+      286      if (_sentJoinChat) {
+
+● Now wire the AppBar actions and add a recording indicator row, plus the two
+  new helper widgets:
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 42 lines
+      371          title: Text(_join?.meeting.title ?? ''),
+      372          actions: [
+      373            IconButton(
+      374 +            icon: const Icon(Icons.person_add_alt),           
+      375 +            tooltip: t.rtcInviteToMeeting,                    
+      376 +            onPressed: _invite,                               
+      377 +          ),                                                  
+      378 +          IconButton(                                         
+      379 +            icon: const Icon(Icons.flag_outlined),            
+      380 +            tooltip: t.rtcReportTitle,                        
+      381 +            onPressed: _report,                               
+      382 +          ),                                                  
+      383 +          IconButton(                                         
+      384              icon: Icon(isHost ? Icons.call_end : Icons.logout)
+           ,
+      385              tooltip: isHost ? t.rtcEndMeeting : t.rtcLeaveMeet
+           ing,
+      386              onPressed: isHost ? _end : _leave,
+     ...
+      389        ),
+      390        body: Column(
+      391          children: [
+      392 +          if (isHost)                                         
+      393 +            Padding(                                          
+      394 +              padding: const EdgeInsets.symmetric(horizontal: 
+          +12, vertical: 4),                                             
+      395 +              child: Row(                                     
+      396 +                children: [                                   
+      397 +                  TextButton.icon(                            
+      398 +                    onPressed: _recordingBusy ? null : _toggle
+          +Recording,                                                    
+      399 +                    icon: Icon(                               
+      400 +                      _recording?.status == 'RECORDING'       
+      401 +                          ? Icons.stop_circle                 
+      402 +                          : Icons.fiber_manual_record,        
+      403 +                      color: _recording?.status == 'RECORDING'
+      404 +                          ? Colors.red                        
+      405 +                          : null,                             
+      406 +                    ),                                        
+      407 +                    label: Text(                              
+      408 +                      _recording?.status == 'RECORDING'       
+      409 +                          ? t.rtcStopRecording                
+      410 +                          : t.rtcStartRecording,              
+      411 +                    ),                                        
+      412 +                  ),                                          
+      413 +                  if (_recording?.status == 'RECORDING')      
+      414 +                    Expanded(                                 
+      415 +                      child: Text(                            
+      416 +                        t.rtcRecordingComingSoonNote,         
+      417 +                        style: Theme.of(context).textTheme.bod
+          +ySmall,                                                       
+      418 +                        overflow: TextOverflow.ellipsis,      
+      419 +                      ),                                      
+      420 +                    ),                                        
+      421 +                ],                                            
+      422 +              ),                                              
+      423 +            ),                                                
+      424            Expanded(
+      425              child: GridView.builder(
+      426                padding: const EdgeInsets.all(8),
+
+● Now add the two helper widget classes at the end of the file:
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+● Good, lib/components/rtc/ exists. Let's create the shared report dialog widget
+  there:
+
+● Write(flutter-boilerplate/lib/components/rtc/rtc_report_dialog.dart)
+  ⎿  Wrote 105 lines to
+     flutter-boilerplate/lib/components/rtc/rtc_report_dialog.dart
+       1 import 'package:flutter/material.dart';
+       3 import '../../l10n/app_localizations.dart';
+       4 
+       5 /// Minimal report submission — a reason + optional free-text de
+       6 /// persisted server-side. No review UI reads this yet (Phase 5 
+         scope).
+         mirrors
+       8 /// web's RtcReportDialog.tsx.
+       9 class RtcReportDialog extends StatefulWidget {
+         Submit;
+     … +102 lines (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 1 line
+      10  import '../../api/client/rtc/meetings_actions.dart';
+      11  import '../../api/client/rtc/meetings_chat_live.dart';
+      12  import '../../app_config.dart';
+      13 +import '../../components/rtc/rtc_report_dialog.dart';          
+      14  import '../../components/ui/avatar/avatar.dart';
+      15  import '../../constants/theme.dart';
+      16  import '../../l10n/app_localizations.dart';
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 1 line, removed 1 line
+      261    Future<void> _report() async {
+      262      await showDialog<void>(
+      263        context: context,
+      264 -      builder: (context) => _RtcReportDialog(                 
+      264 +      builder: (context) => RtcReportDialog(                  
+      265          onSubmit: (reason, details) => ref
+      266              .read(meetingActionsProvider)
+      267              .report(widget.slug, reason, details: details),
+
+● Now append the _InviteFriendsSheet widget at the end of the file:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 75 lines
+      676      );
+      677    }
+      678  }
+      679 +                                                              
+      680 +/// Friend picker for "invite to meeting" — reuses the existin
+          +g friends list                                                
+      681 +/// (server-side enforces the target actually is a friend).   
+      682 +class _InviteFriendsSheet extends ConsumerStatefulWidget {    
+      683 +  final String slug;                                          
+      684 +                                                              
+      685 +  const _InviteFriendsSheet({required this.slug});            
+      686 +                                                              
+      687 +  @override                                                   
+      688 +  ConsumerState<_InviteFriendsSheet> createState() =>         
+      689 +      _InviteFriendsSheetState();                             
+      690 +}                                                             
+      691 +                                                              
+      692 +class _InviteFriendsSheetState extends ConsumerState<_InviteFr
+          +iendsSheet> {                                                 
+      693 +  final Set<String> _invitedIds = {};                         
+      694 +                                                              
+      695 +  Future<void> _invite(String userId) async {                 
+      696 +    await ref.read(meetingActionsProvider).invite(widget.slug,
+          + userId);                                                     
+      697 +    if (mounted) setState(() => _invitedIds.add(userId));     
+      698 +  }                                                           
+      699 +                                                              
+      700 +  @override                                                   
+      701 +  Widget build(BuildContext context) {                        
+      702 +    final t = AppLocalizations.of(context);                   
+      703 +    final friendsAsync = ref.watch(friendsListProvider);      
+      704 +                                                              
+      705 +    return SafeArea(                                          
+      706 +      child: Padding(                                         
+      707 +        padding: const EdgeInsets.all(16),                    
+      708 +        child: Column(                                        
+      709 +          mainAxisSize: MainAxisSize.min,                     
+      710 +          children: [                                         
+      711 +            Text(                                             
+      712 +              t.rtcInviteToMeeting,                           
+      713 +              style: Theme.of(context).textTheme.titleMedium, 
+      714 +            ),                                                
+      715 +            const SizedBox(height: 12),                       
+      716 +            friendsAsync.when(                                
+      717 +              loading: () => const Padding(                   
+      718 +                padding: EdgeInsets.all(24),                  
+      719 +                child: CircularProgressIndicator(),           
+      720 +              ),                                              
+      721 +              error: (_, _) => Text(t.rtcNoFriendsToInvite),  
+      722 +              data: (friends) => friends.isEmpty              
+      723 +                  ? Padding(                                  
+      724 +                      padding: const EdgeInsets.all(12),      
+      725 +                      child: Text(t.rtcNoFriendsToInvite),    
+      726 +                    )                                         
+      727 +                  : ConstrainedBox(                           
+      728 +                      constraints: const BoxConstraints(maxHei
+          +ght: 320),                                                    
+      729 +                      child: ListView.builder(                
+      730 +                        shrinkWrap: true,                     
+      731 +                        itemCount: friends.length,            
+      732 +                        itemBuilder: (context, index) {       
+      733 +                          final friend = friends[index];      
+      734 +                          final invited = _invitedIds.contains
+          +(friend.id);                                                  
+      735 +                          return ListTile(                    
+      736 +                            leading: Avatar(name: friend.name,
+          + radius: 16),                                                 
+      737 +                            title: Text(friend.name),         
+      738 +                            trailing: TextButton(             
+      739 +                              onPressed:                      
+      740 +                                  invited ? null : () => _invi
+          +te(friend.id),                                                
+      741 +                              child: Text(invited ? t.rtcInvit
+          +ed : t.rtcInvite),                                            
+      742 +                            ),                                
+      743 +                          );                                  
+      744 +                        },                                    
+      745 +                      ),                                      
+      746 +                    ),                                        
+      747 +            ),                                                
+      748 +          ],                                                  
+      749 +        ),                                                    
+      750 +      ),                                                      
+      751 +    );                                                        
+      752 +  }                                                           
+      753 +}                                                             
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 1 line, removed 1 line
+      718                  padding: EdgeInsets.all(24),
+      719                  child: CircularProgressIndicator(),
+      720                ),
+      721 -              error: (_, _) => Text(t.rtcNoFriendsToInvite),  
+      721 +              error: (err, stack) => Text(t.rtcNoFriendsToInvi
+          +te),                                                          
+      722                data: (friends) => friends.isEmpty
+      723                    ? Padding(
+      724                        padding: const EdgeInsets.all(12),
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(sed -n '50,65p' /home/berkay-server/repos/boilers/nest-next-stack-boilerp
+      late/flutter-boilerplate/lib/views/forms/filters/filters_form.dart)
+  ⎿              ),
+                 const SizedBox(height: 12),
+                 FilterSection(
+     … +13 lines (ctrl+o to expand)
+
+● Good, initialValue matches the codebase convention exactly. Now let's wire the
+  invite button to open the sheet using the class I just added:
+● Update(flutter-boilerplate/lib/views/rtc/meeting_room_page_view.dart)
+  ⎿  Added 1 line
+      254    Future<void> _invite() async {
+      255      await showModalBottomSheet<void>(
+      256        context: context,
+      257 +      isScrollControlled: true,                               
+      258        builder: (context) => _InviteFriendsSheet(slug: widget.s
+           lug),
+      259      );
+      260    }
+
+● Now let's run flutter analyze on this file to catch issues:
+
+● Bash(flutter analyze lib/views/rtc/meeting_room_page_view.dart
+      lib/components/rtc/rtc_report_dialog.dart 2>&1 | tail -100)
+  ⎿  Analyzing 2 items...
+     No issues found! (ran in 6.1s)
+
+  Read 1 file (ctrl+o to expand)
+
+● Now let's add recording control to the go-live view:
+
+● Update(flutter-boilerplate/lib/views/rtc/go_live_page_view.dart)
+  ⎿  Added 1 line
+      12  import '../../api/client/rtc/streams_chat_live.dart';
+      13  import '../../app_config.dart';
+      14  import '../../l10n/app_localizations.dart';
+      15 +import '../../types/rtc/recording.dart';                       
+      16  import '../../types/rtc/stream.dart';
+      17  
+      18  /// The broadcaster's own single-page flow (setup form → live),
+           mirroring
+
+● Update(flutter-boilerplate/lib/views/rtc/go_live_page_view.dart)
+  ⎿  Added 2 lines
+      60    bool _localMicEnabled = true;
+      61    bool _localCameraEnabled = true;
+      62    bool _localScreenShareEnabled = false;
+      63 +  RtcRecording? _recording;                                    
+      64 +  bool _recordingBusy = false;                                 
+      65  
+      66    Future<void> _goLive() async {
+      67      final title = _titleController.text.trim();
+
+● Update(flutter-boilerplate/lib/views/rtc/go_live_page_view.dart)
+  ⎿  Added 15 lines
+      196      if (mounted) context.go('/v1/${widget.lang}/rtc/live');
+      197    }
+      198  
+      199 +  Future<void> _toggleRecording() async {                     
+      200 +    final slug = _live?.stream.slug;                          
+      201 +    if (slug == null) return;                                 
+      202 +    setState(() => _recordingBusy = true);                    
+      203 +    try {                                                     
+      204 +      final actions = ref.read(streamActionsProvider);        
+      205 +      final next = _recording?.status == 'RECORDING'          
+      206 +          ? await actions.stopRecording(slug)                 
+      207 +          : await actions.startRecording(slug);               
+      208 +      if (mounted) setState(() => _recording = next);         
+      209 +    } finally {                                               
+      210 +      if (mounted) setState(() => _recordingBusy = false);    
+      211 +    }                                                         
+      212 +  }                                                           
+      213 +                                                              
+      214    @override
+      215    void dispose() {
+      216      final slug = _live?.stream.slug;
+
+● Now add the recording control row + report is not needed here (broadcaster
+  doesn't report their own stream). Let's insert the recording row in the build
+  method:
+
+● Update(flutter-boilerplate/lib/views/rtc/go_live_page_view.dart)
+  ⎿  Added 30 lines
+      315                ),
+      316              ],
+      317            ),
+      318 +          Padding(                                            
+      319 +            padding: const EdgeInsets.symmetric(horizontal: 12
+          +, vertical: 4),                                               
+      320 +            child: Row(                                       
+      321 +              children: [                                     
+      322 +                TextButton.icon(                              
+      323 +                  onPressed: _recordingBusy ? null : _toggleRe
+          +cording,                                                      
+      324 +                  icon: Icon(                                 
+      325 +                    _recording?.status == 'RECORDING'         
+      326 +                        ? Icons.stop_circle                   
+      327 +                        : Icons.fiber_manual_record,          
+      328 +                    color:                                    
+      329 +                        _recording?.status == 'RECORDING' ? Co
+          +lors.red : null,                                              
+      330 +                  ),                                          
+      331 +                  label: Text(                                
+      332 +                    _recording?.status == 'RECORDING'         
+      333 +                        ? t.rtcStopRecording                  
+      334 +                        : t.rtcStartRecording,                
+      335 +                  ),                                          
+      336 +                ),                                            
+      337 +                if (_recording?.status == 'RECORDING')        
+      338 +                  Expanded(                                   
+      339 +                    child: Text(                              
+      340 +                      t.rtcRecordingComingSoonNote,           
+      341 +                      style: Theme.of(context).textTheme.bodyS
+          +mall,                                                         
+      342 +                      overflow: TextOverflow.ellipsis,        
+      343 +                    ),                                        
+      344 +                  ),                                          
+      345 +              ],                                              
+      346 +            ),                                                
+      347 +          ),                                                  
+      348            Expanded(
+      349              child: _StreamChatPanel(
+      350                slug: live.stream.slug,
+
+● Now let's add the report button to live_viewer_page_view.dart:
+
+● Update(flutter-boilerplate/lib/views/rtc/live_viewer_page_view.dart)
+  ⎿  Added 1 line
+       9  import '../../api/client/rtc/streams_actions.dart';
+      10  import '../../api/client/rtc/streams_chat_live.dart';
+      11  import '../../app_config.dart';
+      12 +import '../../components/rtc/rtc_report_dialog.dart';          
+      13  import '../../hooks/use_auth.dart';
+      14  import '../../l10n/app_localizations.dart';
+      15  import '../../types/rtc/stream.dart';
+
+● Update(flutter-boilerplate/lib/views/rtc/live_viewer_page_view.dart)
+  ⎿  Added 14 lines
+      145      if (mounted) context.pop();
+      146    }
+      147  
+      148 +  Future<void> _report() async {                              
+      149 +    await showDialog<void>(                                   
+      150 +      context: context,                                       
+      151 +      builder: (context) => RtcReportDialog(                  
+      152 +        onSubmit: (reason, details) => ref.read(streamActionsP
+          +rovider).report(                                              
+      153 +              widget.slug,                                    
+      154 +              reason,                                         
+      155 +              details: details,                               
+      156 +              reportedUserId: _join?.stream.broadcaster.id,   
+      157 +            ),                                                
+      158 +      ),                                                      
+      159 +    );                                                        
+      160 +  }                                                           
+      161 +                                                              
+      162    @override
+      163    void dispose() {
+      164      if (_sentJoinChat) {
+
+● Update(flutter-boilerplate/lib/views/rtc/live_viewer_page_view.dart)
+  ⎿  Added 5 lines
+      256              child: Center(child: Text(t.rtcViewerCount(_viewer
+           Count))),
+      257            ),
+      258            IconButton(
+      259 +            icon: const Icon(Icons.flag_outlined),            
+      260 +            tooltip: t.rtcReportTitle,                        
+      261 +            onPressed: _report,                               
+      262 +          ),                                                  
+      263 +          IconButton(                                         
+      264              icon: const Icon(Icons.logout),
+      265              tooltip: t.rtcLeaveStream,
+      266              onPressed: _leave,
+
+● Now let's do calls_page_view.dart — add a report button per call row:
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/views/rtc/calls_page_view.dart)
+  ⎿  Added 2 lines
+       4  import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart
+          ';
+       5  import 'package:flutter_riverpod/flutter_riverpod.dart';
+       6  
+       7 +import '../../api/client/rtc/calls_actions.dart';              
+       8  import '../../api/client/rtc/query.dart';
+       9 +import '../../components/rtc/rtc_report_dialog.dart';          
+      10  import '../../components/ui/avatar/avatar.dart';
+      11  import '../../constants/theme.dart';
+      12  import '../../l10n/app_localizations.dart';
+
+● Update(flutter-boilerplate/lib/views/rtc/calls_page_view.dart)
+  ⎿  Added 38 lines, removed 16 lines
+      69        'FAILED' => t.rtcStateFailed,
+      70        _ => call.state,
+      71      };
+      72 +    final isMissed = call.state == 'MISSED' && call.direction =
+         += 'incoming';                                                  
+      73 +    final rowColor = isMissed ? colors.error : colors.fgMuted; 
+      74  
+      75      return ListTile(
+      76        leading: Avatar(imageUrl: call.peer.avatarUrl, name: call
+          .peer.name),
+      75 -      title: Text(call.peer.name),                             
+      77 +      title: Text(                                             
+      78 +        call.peer.name,                                        
+      79 +        style: isMissed ? TextStyle(color: colors.error) : null
+         +,                                                              
+      80 +      ),                                                       
+      81        subtitle: Row(
+      82          children: [
+      83            Icon(
+     ...
+       85                  ? Icons.call_received
+       86                  : Icons.call_made,
+       87              size: 14,
+       83 -            color: colors.fgMuted,                            
+       88 +            color: rowColor,                                  
+       89            ),
+       90            if (call.hasVideo) ...[
+       91              const SizedBox(width: 4),
+       87 -            Icon(Icons.videocam, size: 14, color: colors.fgMut
+          -ed),                                                          
+       92 +            Icon(Icons.videocam, size: 14, color: rowColor),  
+       93            ],
+       94            const SizedBox(width: 6),
+       95            Text(
+       96              '$stateLabel · ${DateTimeHelper.relative(call.ring
+           ingAt)}',
+       92 -            style: TextStyle(color: colors.fgMuted, fontSize: 
+          -12),                                                          
+       97 +            style: TextStyle(color: rowColor, fontSize: 12),  
+       98            ),
+       99          ],
+      100        ),
+       96 -      trailing: IconButton(                                   
+       97 -        icon: Icon(call.hasVideo ? Icons.videocam : Icons.call
+          -),                                                            
+       98 -        onPressed: rtcState.phase == RtcCallPhase.idle        
+       99 -            ? () => ref.read(rtcCallProvider.notifier).startCa
+          -ll(                                                           
+      100 -                  RtcCallPeer(                                
+      101 -                    id: call.peer.id,                         
+      102 -                    name: call.peer.name,                     
+      103 -                    avatarUrl: call.peer.avatarUrl,           
+      104 -                  ),                                          
+      105 -                  call.hasVideo,                              
+      106 -                )                                             
+      107 -            : null,                                           
+      101 +      trailing: Row(                                          
+      102 +        mainAxisSize: MainAxisSize.min,                       
+      103 +        children: [                                           
+      104 +          IconButton(                                         
+      105 +            icon: const Icon(Icons.flag_outlined, size: 20),  
+      106 +            tooltip: t.rtcReportTitle,                        
+      107 +            onPressed: () => showDialog<void>(                
+      108 +              context: context,                               
+      109 +              builder: (context) => RtcReportDialog(          
+      110 +                onSubmit: (reason, details) => ref            
+      111 +                    .read(callActionsProvider)                
+      112 +                    .report(call.id, reason, details: details)
+          +,                                                             
+      113 +              ),                                              
+      114 +            ),                                                
+      115 +          ),                                                  
+      116 +          IconButton(                                         
+      117 +            icon: Icon(call.hasVideo ? Icons.videocam : Icons.
+          +call),                                                        
+      118 +            onPressed: rtcState.phase == RtcCallPhase.idle    
+      119 +                ? () => ref.read(rtcCallProvider.notifier).sta
+          +rtCall(                                                       
+      120 +                      RtcCallPeer(                            
+      121 +                        id: call.peer.id,                     
+      122 +                        name: call.peer.name,                 
+      123 +                        avatarUrl: call.peer.avatarUrl,       
+      124 +                      ),                                      
+      125 +                      call.hasVideo,                          
+      126 +                    )                                         
+      127 +                : null,                                       
+      128 +          ),                                                  
+      129 +        ],                                                    
+      130        ),
+      131      );
+      132    }
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+● Need to fix colors.error → colors.danger (matches web's text-error intent):
+
+● Bash(sed -i 's/colors\.error/colors.danger/g'
+      lib/views/rtc/calls_page_view.dart && grep -n "colors.danger"
+      lib/views/rtc/calls_page_view.dart)
+  ⎿  73:    final rowColor = isMissed ? colors.danger : colors.fgMuted;
+     79:        style: isMissed ? TextStyle(color: colors.danger) : null,
+
+● Now let's run flutter analyze on all changed Flutter files:
+
+● Bash(flutter analyze lib/views/rtc/ lib/components/rtc/ lib/api/client/rtc/
+      lib/api/server/rtc/ lib/types/rtc/ 2>&1 | tail -150)  ⎿  Analyzing 5 items...
+     No issues found! (ran in 15.6s)
+
+  Read 1 file (ctrl+o to expand)
+
+● Update(flutter-boilerplate/lib/views/notification/free_page_view.dart)
+  ⎿  Added 12 lines
+      103                                final payload = item.payload;
+      104                                final kind = payload?['kind'] as
+            String?;
+      105                                final postId = payload?['postId'
+           ] as String?;
+      106 +                              final slug = payload?['slug'] as
+          + String?;                                                     
+      107                                return NotificationItemWidget(
+      108                                  item: item,
+      109                                  lang: lang,
+     ...
+      119                                          kind == 'friend-accept
+           ed') {
+      120                                        return '/v1/$lang/find-f
+           riends/requests';
+      121                                      }
+      122 +                                    if (kind == 'rtc-missed-ca
+          +ll') {                                                        
+      123 +                                      return '/v1/$lang/rtc/ca
+          +lls';                                                         
+      124 +                                    }                         
+      125 +                                    if (kind == 'rtc-meeting-i
+          +nvite' &&                                                     
+      126 +                                        slug != null) {       
+      127 +                                      return '/v1/$lang/rtc/me
+          +etings/$slug';                                                
+      128 +                                    }                         
+      129 +                                    if (kind == 'rtc-stream-li
+          +ve' &&                                                        
+      130 +                                        slug != null) {       
+      131 +                                      return '/v1/$lang/rtc/li
+          +ve/$slug';                                                    
+      132 +                                    }                         
+      133                                      if (postId != null) {
+      134                                        return '/v1/$lang/posts/
+           $postId';
+      135                                      }
+
+● Bash(flutter analyze lib/views/notification/free_page_view.dart 2>&1 | tail
+      -60)
+  ⎿  Analyzing free_page_view.dart...
+     No issues found! (ran in 4.5s)
+
+● Bash(flutter analyze 2>&1 | tail -60)
+  ⎿  Analyzing flutter-boilerplate...
+     No issues found! (ran in 8.3s)
+
+● Bash(dart format --set-exit-if-changed lib/ 2>&1 | tail -30)
+  ⎿  Formatted lib/api/client/rtc/calls_actions.dart
+     Formatted lib/components/rtc/rtc_report_dialog.dart
+     Formatted lib/views/rtc/meeting_room_page_view.dart
+     Formatted 865 files (3 changed) in 2.30 seconds.
+
+● Good, formatting applied cleanly. Let's re-run analyze to confirm still clean
+  after formatting:
+
+● Bash(flutter analyze 2>&1 | tail -30)
+  ⎿  Analyzing flutter-boilerplate...
+     No issues found! (ran in 8.3s)
+
+● Now let's verify everything live. First check docker state and rebuild:
+
+● Bash(cd /home/berkay-server/repos/boilers/nest-next-stack-boilerplate &&
+      docker compose ps --format "table {{.Name}}\t{{.Status}}" 2>&1 | head -30)
+  ⎿  NAME                        STATUS
+     boilers-app-1               Up 3 hours (healthy)
+     boilers-elasticsearch-1     Up 7 hours (healthy)
+     … +7 lines (ctrl+o to expand)
+
+● Backend is running. Let's rebuild and apply the migration:
+
+● Bash(docker compose build app 2>&1 | tail -60)
+  ⎿  #16 3.740 - eslint 9.39.4
+     #16 3.740 - eslint-config-prettier 10.1.8
+     #16 3.740 - eslint-plugin-prettier 5.5.6
+     … +57 lines (ctrl+o to expand)
+  ⎿  (timeout 10m)
+
+● Build succeeded. Now let's apply the migration and restart:
+
+● Bash(docker compose run --rm migrate 2>&1 | tail -40)
+  ⎿   Container boilers-postgres-1 Running
+      Container boilers-vault-init-1 Starting
+      Container boilers-vault-init-1 Started
+     … +15 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+● Bash(docker compose exec -T postgres psql -U postgres -d nest -c "\d
+      \"RtcReport\"" 2>&1 | head -20 && echo "---" && docker compose exec -T
+      postgres psql -U postgres…)
+  ⎿  Error: Exit code 2
+     psql: error: connection to server on socket 
+     "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  role "postgres" does 
+     not exist
+     ---
+     psql: error: connection to server on socket 
+     "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  role "postgres" does 
+     not exist
+     ---enum---
+     psql: error: connection to server on socket 
+     "/var/run/postgresql/.s.PGSQL.5432" failed: FATAL:  role "postgres" does 
+     not exist
+
+● Bash(docker compose exec -T postgres env | grep -i POSTGRES)
+  ⎿  POSTGRES_PASSWORD=nest
+     POSTGRES_USER=nest
+     POSTGRES_DB=nest
+     PGDATA=/var/lib/postgresql/data
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "\d
+      \"RtcReport\"" 2>&1 | head -20 && echo "---" && docker compose exec -T
+      postgres psql -U nest -d nest…)
+  ⎿  Did not find any relation named ""RtcReport"".
+     ---
+     Did not find any relation named ""RtcRecording"".
+     … +13 lines (ctrl+o to expand)
+
+● Bash(sed -n '/^  migrate:/,/^  [a-z]/p' docker-compose.yml | head -30)
+  ⎿    migrate:
+         build:
+           context: ./nest-js-boilerplate
+     … +22 lines (ctrl+o to expand)
+
+● That explains it — the migrate image is stale (different build target, not
+  rebuilt). Let's rebuild it too:
+
+● Bash(docker compose build migrate 2>&1 | tail -30)
+  ⎿  #8 [base 4/4] WORKDIR /app
+     #8 CACHED
+     … +27 lines (ctrl+o to expand)
+  ⎿  (timeout 5m)
+
+● Bash(docker compose run --rm migrate 2>&1 | tail -60)  ⎿   Container boilers-postgres-1 Running
+      Container boilers-vault-init-1 Starting
+      Container boilers-vault-init-1 Started
+     … +16 lines (ctrl+o to expand)
+  ⎿  (timeout 2m)
+
+● Now let's verify the schema actually landed:
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "\d
+      \"RtcReport\"" 2>&1 && echo "---" && docker compose exec -T postgres psql
+      -U nest -d nest -c "\d \"R…)
+  ⎿                                  Table "public.RtcReport"
+          Column     |            Type             | Collation | Nullable |
+           Default
+     … +53 lines (ctrl+o to expand)
+
+● Schema is live. Now let's restart the app container with the new image and run
+  a live GraphQL round-trip:
+
+● Bash(docker compose up -d app 2>&1 | tail -20)
+  ⎿   Container boilers-elasticsearch-1 Healthy
+      Container boilers-es-init-1 Starting
+      Container boilers-migrate-1 Started
+     … +17 lines (ctrl+o to expand)
+  ⎿  (timeout 1m)
+
+● Bash(sleep 6 && docker compose logs app --tail 40 2>&1 | tail -50)
+  ⎿  app-1  | {"level":30,"time":"2026-08-25T02:48:35.265Z","pid":7,"hostna
+     me":"5934b5dda632","context":"RouterExplorer","msg":"Mapped {/api/frie
+     nds/request/:userId, POST} route"}
+     … +93 lines (ctrl+o to expand)
+
+● App booted clean. Now let's do a live GraphQL round-trip: register two users,
+  make them friends, test invite/report/recording/goLive flows.
+
+● Bash(mkdir -p /tmp/p5 && cat > /tmp/p5/register1.json <<'EOF'
+      {"query":"mutation Register($input:
+      RegisterInput!){register(input:$input){accessToken rbacToken userTo…)
+  ⎿  {
+       "data": {
+         "register": {
+     … +26 lines (ctrl+o to expand)
+
+● Bash(cd /tmp/p5
+      python3 -c "…)
+  ⎿  export AT1="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIydWktemtGe
+     TBCX3ZvVHR0QnlLeUN5MUJQTFpoOFBWZFUzTUM3M3BNODhSVE1IZVZaZWhEbVRHbUx1MCI
+     sInJvbGUiOiJVU0VSIiwiaWF0IjoxNzg3NjI2MTI3LCJleHAiOjE3ODc2MjcwMjd9.3wDV
+     … +18 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to 
+     /home/berkay-server/repos/boilers/nest-next-stack-boilerplate
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -t -c "SELECT id,
+      email FROM \"User\" WHERE email IN
+      ('p5user1@example.com','p5user2@example.com');")
+  ⎿   01a036d2-0107-774e-9e74-25548d6ba2bf | p5user1@example.com
+      01a036d2-01fe-76a9-8207-3c9dbf06cc69 | p5user2@example.com
+
+● Now let's set both users ACTIVE+verified, make them friends, and upgrade user1
+  to MEDIUM tier for the go-live test:
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "
+      UPDATE \"User\" SET status='ACTIVE', \"emailVerifiedAt\"=now(),
+      \"subscriptionTier\"='MEDIUM' WHERE id…)
+  ⎿  UPDATE 1
+     UPDATE 1
+     INSERT 0 1
+
+● Bash(source /tmp/p5/env.sh
+      cat > /tmp/p5/login1.json <<'EOF'…)
+  ⎿  {
+       "data": {
+         "login": {
+     … +26 lines (ctrl+o to expand)
+
+● Refreshed the token env with the new session tokens, then create a meeting as
+  user1, invite user2, and confirm a notification lands:
+
+● Bash(cd /tmp/p5
+      python3 -c "…)
+  ⎿  {
+       "data": {
+         "createMeeting": {
+     … +5 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to 
+     /home/berkay-server/repos/boilers/nest-next-stack-boilerplate
+
+● Bash(source /tmp/p5/env.sh
+      SLUG=$(python3 -c "import json;print(json.load(open('/tmp/p5/create_meetin
+      g.out.json'))['data']['createMeeting']['slug'])")…)
+  ⎿  {
+       "data": {
+         "joinMeeting": {
+     … +14 lines (ctrl+o to expand)
+
+● Now let's confirm the notification landed for user2:
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "
+      SELECT type, title, body, payload, \"readAt\" FROM \"Notification\" WHERE
+      \"userId\"='01a036d2-01fe-76…)
+  ⎿        type      |                title                 |         body
+             |                        payload                         | rea
+     dAt
+     … +6 lines (ctrl+o to expand)
+
+● Meeting invite notification confirmed. Now let's test reportMeeting, recording
+  start/stop, and goLive → friends-notified flow:
+
+● Bash(source /tmp/p5/env.sh
+      echo "--- reportMeeting by user1 (host, is a participant) ---"…)
+  ⎿  --- reportMeeting by user1 (host, is a participant) ---
+     {
+       "data": {
+     … +37 lines (ctrl+o to expand)
+
+● Both the success and the authorization-guard rejection paths work correctly.
+  Now let's test recording start/stop and confirm psql state transitions:
+
+● Bash(source /tmp/p5/env.sh
+      echo "--- meetingRecording before start (should be null) ---"…)
+  ⎿  --- meetingRecording before start (should be null) ---
+     {
+       "data": {
+     … +55 lines (ctrl+o to expand)
+
+● All lifecycle states verified correctly, including fileUrl: null confirming
+  the honest scaffolding (no fake video capture claimed). Now let's verify psql
+  state and test goLive → friends notification:
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "
+      SELECT status, \"fileUrl\", \"startedAt\", \"endedAt\" FROM
+      \"RtcRecording\" ORDER BY \"createdAt\" DE…)
+  ⎿   status  | fileUrl |         startedAt          |          endedAt
+
+     ---------+---------+----------------------------+---------------------
+     … +21 lines (ctrl+o to expand)
+
+● Now confirm user2 (user1's friend) got the STREAM_LIVE notification, and test
+  the missed-call notification path via the WS ring-timeout:
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest -c "
+      SELECT type, title, body, payload FROM \"Notification\" WHERE
+      \"userId\"='01a036d2-01fe-76a9-8207-3c9d…)
+  ⎿        type      |                title                 |         body
+             |                        payload
+     ----------------+--------------------------------------+--------------
+     … +6 lines (ctrl+o to expand)
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+● Bash(docker compose exec -T postgres psql -U nest -d nest <<'EOF'
+      DO $$…)
+  ⎿  NOTICE:  callId=b4b501df-945f-478e-8d4d-e25330f3b016
+     DO
+  ⎿  You've hit your monthly spend limit · your weekly limit resets Aug 28, 1am 
+     (Europe/Istanbul)
+     /usage-credits to adjust your monthly spend limit.
+
+✻ Cooked for 37m 19s

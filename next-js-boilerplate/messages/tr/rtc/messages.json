@@ -93,5 +93,22 @@
   "leaveStream": "Ayrıl",
   "goLiveUpsellTitle": "Canlı yayın için yükseltme gerekiyor",
   "goLiveUpsellMessage": "Canlı yayın, Medium ve üzeri planlarda kullanılabilir.",
-  "upgradeButton": "Planları görüntüle"
+  "upgradeButton": "Planları görüntüle",
+  "inviteToMeeting": "Davet et",
+  "noFriendsToInvite": "Toplantılara davet etmek için önce arkadaş ekleyin",
+  "invite": "Davet et",
+  "invited": "Davet edildi",
+  "close": "Kapat",
+  "reportTitle": "Şikayet et",
+  "reportReasonLabel": "Sebep",
+  "reportReasonHarassment": "Taciz veya kötüye kullanım",
+  "reportReasonSpam": "Spam",
+  "reportReasonInappropriate": "Uygunsuz içerik",
+  "reportReasonOther": "Diğer",
+  "reportDetailsPlaceholder": "Yardımcı olabilecek ayrıntılar ekleyin (opsiyonel)",
+  "reportSubmit": "Şikayeti gönder",
+  "reportSubmitted": "Teşekkürler — şikayetiniz iletildi.",
+  "startRecording": "Kaydı başlat",
+  "stopRecording": "Kaydı durdur",
+  "recordingComingSoonNote": "Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor."
 }

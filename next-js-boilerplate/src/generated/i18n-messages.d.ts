@@ -11530,6 +11530,23 @@ export type I18nMessages = {
       "goLiveUpsellTitle": string;
       "goLiveUpsellMessage": string;
       "upgradeButton": string;
+      "inviteToMeeting": string;
+      "noFriendsToInvite": string;
+      "invite": string;
+      "invited": string;
+      "close": string;
+      "reportTitle": string;
+      "reportReasonLabel": string;
+      "reportReasonHarassment": string;
+      "reportReasonSpam": string;
+      "reportReasonInappropriate": string;
+      "reportReasonOther": string;
+      "reportDetailsPlaceholder": string;
+      "reportSubmit": string;
+      "reportSubmitted": string;
+      "startRecording": string;
+      "stopRecording": string;
+      "recordingComingSoonNote": string;
     }
 
   "settings": {

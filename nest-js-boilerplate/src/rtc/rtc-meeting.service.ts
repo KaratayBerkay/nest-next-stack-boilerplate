@@ -19,6 +19,8 @@ import {
   meetingMaxDurationMinutes,
   meetingMaxParticipants,
 } from './rtc-tier-limits.constants';
+import { NotificationService } from '../notification/notification.service';
+import { FriendsService } from '../friends/friends.service';
 
 export type { RtcChatMessageView as MeetingChatMessageView } from './rtc-chat.service';
 
@@ -57,6 +59,8 @@ export class RtcMeetingService {
     private readonly liveKit: LiveKitService,
     private readonly realtime: RealtimeGateway,
     private readonly chat: RtcChatService,
+    private readonly notifications: NotificationService,
+    private readonly friends: FriendsService,
   ) {}
 
   async createMeeting(userId: string, title: string) {
@@ -172,6 +176,39 @@ export class RtcMeetingService {
       role: role as string,
       meeting,
     };
+  }
+
+  /** Invite a friend to an in-progress meeting — the inviter must currently
+   *  be an active participant (host or otherwise) and the target must be a
+   *  friend, matching FRIEND_REQUEST's existing shape rather than letting
+   *  any authenticated user notification-spam an arbitrary userId. */
+  async inviteToMeeting(
+    inviterId: string,
+    slug: string,
+    targetUserId: string,
+  ): Promise<void> {
+    const meeting = await this.activeParticipant(inviterId, slug);
+    if (!meeting) {
+      throw new NotFoundException('Meeting not found or already ended');
+    }
+    if (targetUserId === inviterId) {
+      throw new ForbiddenException('Cannot invite yourself');
+    }
+    if (!(await this.friends.areFriends(inviterId, targetUserId))) {
+      throw new ForbiddenException('You can only invite friends');
+    }
+    const inviter = await this.prisma.user.findUnique({
+      where: { id: inviterId },
+      select: { name: true, email: true },
+    });
+    await this.notifications.create({
+      userId: targetUserId,
+      actorId: inviterId,
+      type: 'MEETING_INVITE',
+      title: `${displayName(inviter ?? { name: null, email: 'Someone' })} invited you to a meeting`,
+      body: meeting.title,
+      payload: { kind: 'rtc-meeting-invite', slug },
+    });
   }
 
   async leaveMeeting(userId: string, slug: string): Promise<void> {

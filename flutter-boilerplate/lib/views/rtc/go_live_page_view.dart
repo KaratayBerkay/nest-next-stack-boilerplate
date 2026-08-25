@@ -12,6 +12,7 @@ import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
 import '../../app_config.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/rtc/recording.dart';
 import '../../types/rtc/stream.dart';
 
 /// The broadcaster's own single-page flow (setup form → live), mirroring
@@ -59,6 +60,8 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
   bool _localMicEnabled = true;
   bool _localCameraEnabled = true;
   bool _localScreenShareEnabled = false;
+  RtcRecording? _recording;
+  bool _recordingBusy = false;
 
   Future<void> _goLive() async {
     final title = _titleController.text.trim();
@@ -193,6 +196,21 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     if (mounted) context.go('/v1/${widget.lang}/rtc/live');
   }
 
+  Future<void> _toggleRecording() async {
+    final slug = _live?.stream.slug;
+    if (slug == null) return;
+    setState(() => _recordingBusy = true);
+    try {
+      final actions = ref.read(streamActionsProvider);
+      final next = _recording?.status == 'RECORDING'
+          ? await actions.stopRecording(slug)
+          : await actions.startRecording(slug);
+      if (mounted) setState(() => _recording = next);
+    } finally {
+      if (mounted) setState(() => _recordingBusy = false);
+    }
+  }
+
   @override
   void dispose() {
     final slug = _live?.stream.slug;
@@ -296,6 +314,36 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
                 onPressed: _toggleScreenShare,
               ),
             ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            child: Row(
+              children: [
+                TextButton.icon(
+                  onPressed: _recordingBusy ? null : _toggleRecording,
+                  icon: Icon(
+                    _recording?.status == 'RECORDING'
+                        ? Icons.stop_circle
+                        : Icons.fiber_manual_record,
+                    color:
+                        _recording?.status == 'RECORDING' ? Colors.red : null,
+                  ),
+                  label: Text(
+                    _recording?.status == 'RECORDING'
+                        ? t.rtcStopRecording
+                        : t.rtcStartRecording,
+                  ),
+                ),
+                if (_recording?.status == 'RECORDING')
+                  Expanded(
+                    child: Text(
+                      t.rtcRecordingComingSoonNote,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
           ),
           Expanded(
             child: _StreamChatPanel(

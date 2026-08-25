@@ -6053,4 +6053,55 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcLeaveStream => 'Leave';
+
+  @override
+  String get rtcInviteToMeeting => 'Invite';
+
+  @override
+  String get rtcNoFriendsToInvite =>
+      'Add some friends to invite them to meetings';
+
+  @override
+  String get rtcInvite => 'Invite';
+
+  @override
+  String get rtcInvited => 'Invited';
+
+  @override
+  String get rtcClose => 'Close';
+
+  @override
+  String get rtcReportTitle => 'Report';
+
+  @override
+  String get rtcReportReasonHarassment => 'Harassment or abuse';
+
+  @override
+  String get rtcReportReasonSpam => 'Spam';
+
+  @override
+  String get rtcReportReasonInappropriate => 'Inappropriate content';
+
+  @override
+  String get rtcReportReasonOther => 'Other';
+
+  @override
+  String get rtcReportDetailsPlaceholder =>
+      'Add any details that might help (optional)';
+
+  @override
+  String get rtcReportSubmit => 'Submit report';
+
+  @override
+  String get rtcReportSubmitted => 'Thanks — your report has been submitted.';
+
+  @override
+  String get rtcStartRecording => 'Start recording';
+
+  @override
+  String get rtcStopRecording => 'Stop recording';
+
+  @override
+  String get rtcRecordingComingSoonNote =>
+      'Recording is logged for the host only — video capture isn\'t available yet.';
 }
