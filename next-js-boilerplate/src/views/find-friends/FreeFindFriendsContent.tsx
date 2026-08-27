@@ -17,13 +17,21 @@ import { cn } from "@/lib/cn";
 import { PaginationBar } from "./PaginationBar";
 import { UserSearchCard } from "./UserSearchCard";
 import { PendingRequestCard } from "./PendingRequestCard";
+import { SuggestedFriendsPanel } from "./SuggestedFriendsPanel";
 import { useFriendSearch } from "./useFriendSearch";
 import { useFriendActions } from "./useFriendActions";
 import { getOutgoingPendingIds } from "./search-utils";
 
+/**
+ * The find-friends page content for every tier — `showSuggestedPanel`
+ * switches to the Medium/Premium two-column layout with the suggested
+ * friends sidebar. MediumFindFriendsContent used to be a full copy of this
+ * file differing only in that wrapper.
+ */
 export function FreeFindFriendsContent({
   user: _user,
   className,
+  showSuggestedPanel = false,
 }: FindFriendsContentProps) {
   const t = useMessages("find-friends");
   const pathname = usePathname();
@@ -49,11 +57,13 @@ export function FreeFindFriendsContent({
 
   const pendingIds = getOutgoingPendingIds(friendRequests);
 
-  return (
-    <div className={cn("flex h-full w-full flex-col gap-6", className)}>
+  const content = (
+    <>
       <div className="flex items-center justify-between">
         <h2 className="text-brand text-sm font-semibold">{t.title}</h2>
-        <PageInfoButton content={findFriendsPageInfo} />
+        {!showSuggestedPanel && (
+          <PageInfoButton content={findFriendsPageInfo} />
+        )}
       </div>
       <Tabs
         defaultValue={pathname?.endsWith("/requests") ? "pending" : "add"}
@@ -66,7 +76,7 @@ export function FreeFindFriendsContent({
           <TabsTrigger value="pending" className="flex-1">
             {t.pendingRequests}
             {friendRequests.length > 0 && (
-              <span className="bg-warning ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold text-white">
+              <span className="bg-warning text-warning-fg ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold">
                 {friendRequests.length}
               </span>
             )}
@@ -164,6 +174,23 @@ export function FreeFindFriendsContent({
           )}
         </TabsContent>
       </Tabs>
+    </>
+  );
+
+  if (!showSuggestedPanel) {
+    return (
+      <div className={cn("flex h-full w-full flex-col gap-6", className)}>
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn("flex min-h-0 flex-1 gap-6", className)}>
+      <div className="flex min-h-0 flex-1 flex-col gap-6">{content}</div>
+      <div className="hidden w-56 shrink-0 md:block">
+        <SuggestedFriendsPanel />
+      </div>
     </div>
   );
 }

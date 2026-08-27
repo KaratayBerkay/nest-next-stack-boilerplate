@@ -5,15 +5,14 @@ import {
   useId,
   useRef,
   type ChangeEvent,
-  type Dispatch,
   type KeyboardEvent,
-  type SetStateAction,
 } from "react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { EmojiPickerButton } from "@/components/ui/EmojiPickerButton";
 import { IconPaperclip, IconSend } from "@tabler/icons-react";
 import { ATTACHMENT_ACCEPT } from "@/constants/upload";
+import { insertEmojiAtCursor } from "@/lib/insert-emoji-at-cursor";
 import { useTypingIndicator } from "@/hooks/messages/useTypingIndicator";
 import type { ChatInputBarProps } from "@/types/messages/ChatInputBar-types";
 
@@ -24,25 +23,6 @@ function handleFileChange(
   const files = Array.from(e.target.files ?? []);
   if (files.length > 0) onAttachFile(files);
   e.target.value = "";
-}
-
-function insertEmojiAtCursor(
-  input: string,
-  setInput: Dispatch<SetStateAction<string>>,
-  inputRef: React.RefObject<HTMLInputElement | null>,
-  emoji: string,
-) {
-  const el = inputRef.current;
-  const start = el?.selectionStart ?? input.length;
-  const end = el?.selectionEnd ?? start;
-  const next = input.slice(0, start) + emoji + input.slice(end);
-  setInput(next);
-  requestAnimationFrame(() => {
-    const node = inputRef.current;
-    if (!node) return;
-    const pos = start + emoji.length;
-    node.setSelectionRange(pos, pos);
-  });
 }
 
 function handleKeyDown(e: KeyboardEvent<HTMLInputElement>, doSend: () => void) {

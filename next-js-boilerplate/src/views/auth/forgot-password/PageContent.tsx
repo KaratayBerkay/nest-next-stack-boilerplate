@@ -53,9 +53,7 @@ export function ForgotPasswordContent() {
         <h2 className="text-brand text-sm font-semibold">
           {t.form.forgotPassword.title}
         </h2>
-        <p className="text-sm text-green-600">
-          {t.form.forgotPassword.success}
-        </p>
+        <p className="text-success text-sm">{t.form.forgotPassword.success}</p>
         <Link href={LOGIN_PATH} className="text-brand text-sm underline">
           {t.form.forgotPassword.loginLink}
         </Link>
@@ -97,12 +95,12 @@ export function ForgotPasswordContent() {
             data-testid="forgot-email"
           />
           {fieldErrors.email && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.email}</p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.email}</p>
           )}
         </div>
 
         {fieldErrors.form && (
-          <p className="text-sm text-red-600" data-testid="forgot-error">
+          <p className="text-error text-sm" data-testid="forgot-error">
             {fieldErrors.form}
           </p>
         )}

@@ -27,7 +27,7 @@ export function AuthStatus() {
         variant="link"
         size="xs"
         onClick={logout}
-        className="text-red-500"
+        className="text-error"
         data-testid="logout-btn"
       >
         Sign Out

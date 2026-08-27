@@ -18,7 +18,7 @@ export function CheckoutSuccessView({
         className,
       )}
     >
-      <p className="text-lg font-medium text-green-600">
+      <p className="text-success text-lg font-medium">
         {message ?? (isDowngrade ? downgradeMsg : upgradeMsg)}
       </p>
       <p className="text-muted text-sm">{redirectingMsg}</p>

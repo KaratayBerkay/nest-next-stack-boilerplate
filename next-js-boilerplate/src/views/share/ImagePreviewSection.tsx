@@ -42,7 +42,7 @@ export function ImagePreviewSection({
       />
       {uploading && (
         <div className="bg-overlay/30 absolute inset-0 flex items-center justify-center rounded-lg">
-          <div className="bg-overlay/60 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs text-white">
+          <div className="bg-overlay/60 text-overlay-fg flex items-center gap-2 rounded-full px-3 py-1.5 text-xs">
             <svg
               className="h-3 w-3 animate-spin"
               viewBox="0 0 24 24"
@@ -70,7 +70,8 @@ export function ImagePreviewSection({
         <button
           type="button"
           onClick={handleRemove}
-          className="bg-overlay/50 absolute top-1 right-1 rounded-full p-1 text-white"
+          className="bg-overlay/50 text-overlay-fg absolute top-1 right-1 rounded-full p-1"
+          aria-label={t.remove}
         >
           <svg
             width="14"

@@ -80,7 +80,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <h2 className="text-brand text-sm font-semibold">
           {t.form.resetPassword.title}
         </h2>
-        <p className="text-sm text-red-600">
+        <p className="text-error text-sm">
           {t.errors.resetPasswordTokenMissing}
         </p>
       </div>
@@ -93,7 +93,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <h2 className="text-brand text-sm font-semibold">
           {t.form.resetPassword.title}
         </h2>
-        <p className="text-sm text-green-600">{t.form.resetPassword.success}</p>
+        <p className="text-success text-sm">{t.form.resetPassword.success}</p>
         <Link href={LOGIN_PATH} className="text-brand text-sm underline">
           {t.form.resetPassword.loginLink}
         </Link>
@@ -139,9 +139,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             data-testid="reset-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">
-              {fieldErrors.password}
-            </p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.password}</p>
           )}
           <PasswordRequirements password={password} />
         </div>
@@ -160,14 +158,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
             data-testid="reset-confirm-password"
           />
           {fieldErrors.confirmPassword && (
-            <p className="mt-0.5 text-xs text-red-600">
+            <p className="text-error mt-0.5 text-xs">
               {fieldErrors.confirmPassword}
             </p>
           )}
         </div>
 
         {fieldErrors.form && (
-          <p className="text-sm text-red-600" data-testid="reset-error">
+          <p className="text-error text-sm" data-testid="reset-error">
             {fieldErrors.form}
           </p>
         )}

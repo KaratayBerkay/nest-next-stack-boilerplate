@@ -35,10 +35,10 @@ export function AccountFormFields({
           <span className="text-muted text-xs">{t.usernameChecking}</span>
         )}
         {availability === "available" && (
-          <span className="text-xs text-green-600">{t.usernameAvailable}</span>
+          <span className="text-success text-xs">{t.usernameAvailable}</span>
         )}
         {availability === "taken" && (
-          <span className="text-xs text-red-600">{t.usernameTaken}</span>
+          <span className="text-error text-xs">{t.usernameTaken}</span>
         )}
       </div>
 

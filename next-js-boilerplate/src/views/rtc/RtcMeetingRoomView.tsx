@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,15 +25,15 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PulseBlockFallback } from "@/fallbacks";
 import { useToast } from "@/components/ui/Toast";
 import { useAuth } from "@/hooks/useAuth";
-import {
-  useRealtime,
-  useRealtimeStatus,
-} from "@/lib/realtime/RealtimeProvider";
+import { useAutoScroll } from "@/hooks/useAutoScroll";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import {
   useLiveKitMeetingRoom,
   type MeetingParticipantView,
 } from "@/hooks/rtc/useLiveKitMeetingRoom";
+import { useRoomChat, type RoomChatMessage } from "@/hooks/rtc/useRoomChat";
 import { MeetingParticipantTile } from "@/components/rtc/MeetingParticipantTile";
 import { RtcInviteDialog } from "@/components/rtc/RtcInviteDialog";
 import { RtcReportDialog } from "@/components/rtc/RtcReportDialog";
@@ -46,13 +46,7 @@ import { useMeetingActions } from "@/api/client/rtc/meetings-actions";
 import type { JoinMeetingResult } from "@/api/server/rtc/meetings/types";
 import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
-interface ChatItem {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  createdAt: string;
-}
+type RtcMessages = I18nMessages["rtc"];
 
 function VideoGrid({
   participants,
@@ -93,17 +87,22 @@ function ChatPanel({
   onSendChat,
   t,
 }: {
-  chat: ChatItem[];
+  chat: RoomChatMessage[];
   chatInput: string;
   onChatInputChange: (v: string) => void;
   onSendChat: () => void;
-  t: Record<string, string>;
+  t: RtcMessages;
 }) {
+  // Keeps the pane pinned to the newest message while the reader is at the
+  // bottom — this panel previously had no auto-scroll at all, so incoming
+  // messages piled up below the fold invisibly.
+  const { bottomRef } = useAutoScroll(chat);
+
   return (
     <>
       <div className="flex-1 space-y-2 overflow-y-auto p-3">
         {chat.length === 0 ? (
-          <p className="text-fg-muted text-sm">{t.noChatMessages}</p>
+          <p className="text-muted text-sm">{t.noChatMessages}</p>
         ) : (
           chat.map((m) => (
             <div key={m.id} className="text-sm">
@@ -112,6 +111,7 @@ function ChatPanel({
             </div>
           ))
         )}
+        <div ref={bottomRef} />
       </div>
       <div className="flex gap-2 border-t p-2">
         <Input
@@ -150,7 +150,7 @@ function PeoplePanel({
     mute: boolean,
   ) => Promise<unknown>;
   removeParticipant: (slug: string, userId: string) => Promise<unknown>;
-  t: Record<string, string>;
+  t: RtcMessages;
 }) {
   return (
     <div className="flex-1 space-y-1 overflow-y-auto p-3">
@@ -215,7 +215,6 @@ export function RtcMeetingRoomView() {
   const { toast } = useToast();
   const { user } = useAuth();
   const realtime = useRealtime();
-  const realtimeStatus = useRealtimeStatus();
   const {
     joinMeeting,
     leaveMeeting,
@@ -232,37 +231,14 @@ export function RtcMeetingRoomView() {
     "joining" | "active" | "ended" | "removed" | "not-found"
   >("joining");
   const [join, setJoin] = useState<JoinMeetingResult | null>(null);
-  const [chat, setChat] = useState<ChatItem[]>([]);
-  const [chatInput, setChatInput] = useState("");
   const [sidebar, setSidebar] = useState<"chat" | "people" | null>(null);
-  const seededChat = useRef(false);
 
   const { data: chatHistory } = useQuery(meetingChatQueryOptions(slug));
-
-  useEffect(() => {
-    if (!chatHistory) return;
-    if (!seededChat.current) {
-      seededChat.current = true;
-      setChat([...chatHistory.messages].reverse());
-      return;
-    }
-    // Re-runs after a reconnect-triggered refetch (resyncAfterConnect
-    // invalidates this query), not just on first load — the one-shot guard
-    // above previously discarded every later fetch, so any chat message
-    // sent during a WS connection gap was silently lost forever even though
-    // the server had it all along. Merge rather than replace: WS-pushed
-    // messages already appended locally (via the rtc:chat-message
-    // subscription below) must survive a refetch that hasn't caught up yet.
-    setChat((prev) => {
-      const known = new Set(prev.map((m) => m.id));
-      const missing = chatHistory.messages.filter((m) => !known.has(m.id));
-      if (missing.length === 0) return prev;
-      return [...prev, ...missing].sort(
-        (a, b) =>
-          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      );
-    });
-  }, [chatHistory]);
+  const { chat, chatInput, setChatInput, sendChat } = useRoomChat(
+    slug,
+    phase === "active",
+    chatHistory,
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -311,21 +287,8 @@ export function RtcMeetingRoomView() {
   }, [slug, leaveMeeting]);
 
   useEffect(() => {
-    if (!realtime || realtimeStatus !== "open" || phase !== "active") return;
-    realtime.send({ type: "rtc:join-room-chat", slug });
-    return () => {
-      realtime.send({ type: "rtc:leave-room-chat", slug });
-    };
-  }, [realtime, realtimeStatus, phase, slug]);
-
-  useEffect(() => {
     if (!realtime) return;
     const unsubscribers = [
-      realtime.subscribe("rtc:chat-message", (data) => {
-        if (data.slug !== slug || !data.message) return;
-        const m = data.message as ChatItem;
-        setChat((prev) => [...prev, m]);
-      }),
       realtime.subscribe("rtc:meeting-participant-joined", (data) => {
         if (data.slug !== slug || data.userId === user?.id) return;
         toast({
@@ -376,13 +339,6 @@ export function RtcMeetingRoomView() {
     join?.roomName,
   );
 
-  const sendChat = useCallback(() => {
-    const text = chatInput.trim();
-    if (!text || !realtime) return;
-    realtime.send({ type: "rtc:chat-message", slug, text });
-    setChatInput("");
-  }, [chatInput, realtime, slug]);
-
   const isHost = join?.role === "HOST";
 
   const { data: recording, refetch: refetchRecording } = useQuery(
@@ -390,16 +346,9 @@ export function RtcMeetingRoomView() {
   );
 
   const handleLeave = () => {
-    void leaveMeeting(slug).catch((error) =>
-      logRtcEvent({
-        event: "meeting.leave_failed",
-        rtcKind: "meeting",
-        rtcId: slug,
-        exceptionType: "CLIENT_REQUEST_ERROR",
-        error,
-        phase: "active",
-      }),
-    );
+    // Navigating away unmounts this view, and the unmount cleanup above
+    // already sends leaveMeeting — calling it here too sent every manual
+    // leave twice.
     router.push(`/v1/${lang}/rtc/meetings`);
   };
 
@@ -431,7 +380,7 @@ export function RtcMeetingRoomView() {
     return (
       <div className="flex h-full items-center justify-center p-6">
         <PulseBlockFallback />
-        <span className="text-fg-muted ml-3">{t.joiningMeeting}</span>
+        <span className="text-muted ml-3">{t.joiningMeeting}</span>
       </div>
     );
   }
@@ -439,7 +388,7 @@ export function RtcMeetingRoomView() {
   if (phase === "not-found" || phase === "ended" || phase === "removed") {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-4 p-6">
-        <p className="text-fg-muted">
+        <p className="text-muted">
           {phase === "not-found"
             ? t.meetingNotFound
             : phase === "removed"
@@ -501,7 +450,7 @@ export function RtcMeetingRoomView() {
               }
               onClick={livekit.toggleScreenShare}
             />
-            <div className="mx-1 h-6 w-px bg-gray-300" />
+            <div className="bg-border mx-1 h-6 w-px" />
             <RtcInviteDialog
               onInvite={(userId) =>
                 inviteToMeeting(slug, userId).catch((error) => {
@@ -562,7 +511,7 @@ export function RtcMeetingRoomView() {
               label={`${t.participantsTitle} (${livekit.participants.length})`}
               onClick={() => toggleSidebar("people")}
             />
-            <div className="mx-1 h-6 w-px bg-gray-300" />
+            <div className="bg-border mx-1 h-6 w-px" />
             {isHost ? (
               <ConfirmDialog
                 title={t.endMeeting}

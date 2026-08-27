@@ -13,7 +13,7 @@ export function CardHeader({
       {...props}
     >
       {upper && (
-        <div className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+        <div className="text-muted text-xs font-medium tracking-wider uppercase">
           {upper}
         </div>
       )}

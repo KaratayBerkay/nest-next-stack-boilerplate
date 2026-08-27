@@ -49,9 +49,7 @@ export function RtcRecordingControl({
         {isRecording ? t.stopRecording : t.startRecording}
       </Button>
       {isRecording && (
-        <span className="text-fg-muted text-xs">
-          {t.recordingComingSoonNote}
-        </span>
+        <span className="text-muted text-xs">{t.recordingComingSoonNote}</span>
       )}
     </div>
   );

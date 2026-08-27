@@ -77,7 +77,7 @@ export function RtcMeetingsListView() {
       {isLoading ? (
         <PulseBlockFallback />
       ) : !meetings || meetings.length === 0 ? (
-        <p className="text-fg-muted text-sm">{t.noMeetings}</p>
+        <p className="text-muted text-sm">{t.noMeetings}</p>
       ) : (
         <div className="rounded-lg border">
           {meetings.map((meeting) => (
@@ -85,13 +85,10 @@ export function RtcMeetingsListView() {
               key={meeting.id}
               className="flex items-center gap-3 border-b px-4 py-3 last:border-b-0"
             >
-              <IconUsers
-                className="text-fg-muted size-5 shrink-0"
-                aria-hidden
-              />
+              <IconUsers className="text-muted size-5 shrink-0" aria-hidden />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{meeting.title}</p>
-                <div className="text-fg-muted flex items-center gap-1.5 text-xs">
+                <div className="text-muted flex items-center gap-1.5 text-xs">
                   <Badge
                     variant={
                       meeting.room.state === "ACTIVE" ? "success" : "secondary"

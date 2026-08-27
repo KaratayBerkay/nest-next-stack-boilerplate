@@ -19,7 +19,7 @@ export function MessageTick({ status, failedLabel }: MessageTickProps) {
         viewBox="0 0 20 11"
         width="12"
         height="7"
-        className="fill-current text-blue-400 drop-shadow-sm"
+        className="text-info fill-current drop-shadow-sm"
         data-testid="tick-read"
       >
         <path d="M5.5 7.5 2.5 4.5l-1 1 4 4 9-9-1-1z" />
@@ -33,7 +33,7 @@ export function MessageTick({ status, failedLabel }: MessageTickProps) {
         viewBox="0 0 20 11"
         width="12"
         height="7"
-        className="fill-current text-white/80"
+        className="text-muted fill-current"
         data-testid="tick-delivered"
       >
         <path d="M5.5 7.5 2.5 4.5l-1 1 4 4 9-9-1-1z" />
@@ -46,7 +46,7 @@ export function MessageTick({ status, failedLabel }: MessageTickProps) {
       viewBox="0 0 12 11"
       width="10"
       height="7"
-      className="fill-current text-white/40"
+      className="text-muted/60 fill-current"
       data-testid="tick-sent"
     >
       <path d="M5.5 8 1.5 4l-1 1 5 5 9-9-1-1z" />

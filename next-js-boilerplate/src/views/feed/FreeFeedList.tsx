@@ -23,8 +23,13 @@ import {
 } from "@/lib/feed/feed-list-actions";
 import { usePostHashScroll } from "@/hooks/usePostHashScroll";
 import { FeedListEmptyState } from "@/components/feed/FeedListEmptyState";
+import { IconCrown } from "@tabler/icons-react";
 
-export function FeedList({ search, initialFeedData }: FeedListProps) {
+export function FeedList({
+  search,
+  initialFeedData,
+  currentUserId,
+}: FeedListProps) {
   const t = useMessages("feed");
   const queryClient = useQueryClient();
   const realtime = useRealtime();
@@ -135,15 +140,21 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
         <FeedListEmptyState />
       ) : (
         posts.map((post) => (
-          <PostCard
-            key={post.id}
-            post={post}
-            isExpanded={expandedPostId === post.id}
-            onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
-            onDelete={(postId) =>
-              handleDeletePost(postId, setExtraPosts, setExpandedPostId)
-            }
-          />
+          <div key={post.id} className="relative">
+            {currentUserId != null && post.author.id === currentUserId && (
+              <span className="bg-brand text-brand-fg absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full">
+                <IconCrown size={12} stroke={2} />
+              </span>
+            )}
+            <PostCard
+              post={post}
+              isExpanded={expandedPostId === post.id}
+              onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
+              onDelete={(postId) =>
+                handleDeletePost(postId, setExtraPosts, setExpandedPostId)
+              }
+            />
+          </div>
         ))
       )}
 

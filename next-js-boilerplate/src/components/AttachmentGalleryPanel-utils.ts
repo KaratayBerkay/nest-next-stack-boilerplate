@@ -1,17 +1,20 @@
 import { isSameDay, isToday } from "@/lib/date-time";
-import type { ConversationAttachment } from "@/api/server/messages/conversation-attachments";
-import type { AttachmentDayGroup } from "@/types/messages/AttachmentGallerySheet-types";
+import type {
+  GalleryAttachment,
+  GalleryDayGroup,
+} from "@/types/components/AttachmentGalleryPanel-types";
 
 /**
  * Buckets attachments into day groups. Input is already newest-first with no
- * gaps re-sorted in between days (see conversationAttachmentsQueryOptions),
- * so a single adjacent-merge pass is equivalent to a true group-by and
- * avoids re-scanning the whole list per item.
+ * gaps re-sorted in between days (see conversationAttachmentsQueryOptions /
+ * roomAttachmentsQueryOptions), so a single adjacent-merge pass is
+ * equivalent to a true group-by and avoids re-scanning the whole list per
+ * item.
  */
 export function groupAttachmentsByDay(
-  attachments: ConversationAttachment[],
-): AttachmentDayGroup[] {
-  const groups: AttachmentDayGroup[] = [];
+  attachments: GalleryAttachment[],
+): GalleryDayGroup[] {
+  const groups: GalleryDayGroup[] = [];
   for (const att of attachments) {
     const last = groups[groups.length - 1];
     if (last && isSameDay(att.createdAt, last.createdAt)) {

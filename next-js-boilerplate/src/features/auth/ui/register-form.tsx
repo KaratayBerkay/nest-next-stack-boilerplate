@@ -132,7 +132,7 @@ export function RegisterForm() {
             data-testid="reg-email"
           />
           {fieldErrors.email && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.email}</p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.email}</p>
           )}
         </div>
 
@@ -151,15 +151,13 @@ export function RegisterForm() {
             data-testid="reg-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">
-              {fieldErrors.password}
-            </p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.password}</p>
           )}
           <PasswordRequirements password={password} />
         </div>
 
         {fieldErrors.form && (
-          <p className="text-sm text-red-600" data-testid="reg-error">
+          <p className="text-error text-sm" data-testid="reg-error">
             {fieldErrors.form}
           </p>
         )}

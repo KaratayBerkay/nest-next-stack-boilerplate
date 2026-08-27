@@ -2,6 +2,7 @@
 
 import { usePageNavigation } from "@/hooks/usePageNavigation";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useCallback, useEffect } from "react";
 import Image from "next/image";
 
@@ -22,6 +23,7 @@ function getFingerImage(progress: number): string {
 }
 
 export function NavigationOverlay() {
+  const t = useMessages("v1-shell");
   const {
     suggestion,
     suggestNavigation,
@@ -80,9 +82,8 @@ export function NavigationOverlay() {
       }`}
     >
       <div
-        className="flex flex-col items-center gap-3 rounded-2xl px-8 py-6 shadow-2xl backdrop-blur-md"
+        className="bg-overlay/70 text-overlay-fg flex flex-col items-center gap-3 rounded-2xl px-8 py-6 shadow-2xl backdrop-blur-md"
         style={{
-          background: "rgba(0,0,0,0.7)",
           transform:
             suggestion?.direction === "back"
               ? `translateX(${-20 - (1 - (suggestion?.progress ?? 0)) * 80}px)`
@@ -109,23 +110,29 @@ export function NavigationOverlay() {
 
         {targetPage && (
           <div className="flex flex-col items-center gap-1">
-            <span className="text-muted text-sm">
-              {suggestion?.direction === "back" ? "← Back to" : "Forward to →"}
+            {/* overlay-fg, not text-muted: the card is always a dark scrim,
+                and light-theme muted (a dark gray) was unreadable on it. */}
+            <span className="text-overlay-fg/70 text-sm">
+              {suggestion?.direction === "back" ? t.navBackTo : t.navForwardTo}
             </span>
-            <span className="text-lg font-semibold text-white">
+            <span className="text-overlay-fg text-lg font-semibold">
               {targetPage.title}
             </span>
           </div>
         )}
 
         {!targetPage && isSwiping && !suggestion && (
-          <span className="text-muted text-sm">Release to navigate</span>
+          <span className="text-overlay-fg/70 text-sm">
+            {t.releaseToNavigate}
+          </span>
         )}
 
         {suggestion && suggestion.progress >= 1 && suggestion.direction && (
           <div className="mt-1 flex flex-col items-center gap-2">
-            <div className="h-1 w-20 animate-pulse overflow-hidden rounded-full bg-white" />
-            <span className="text-muted text-xs">Click to cancel</span>
+            <div className="bg-overlay-fg h-1 w-20 animate-pulse overflow-hidden rounded-full" />
+            <span className="text-overlay-fg/70 text-xs">
+              {t.clickToCancel}
+            </span>
           </div>
         )}
       </div>

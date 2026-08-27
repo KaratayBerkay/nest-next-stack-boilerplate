@@ -57,7 +57,7 @@ function CallRow({ call }: { call: CallHistoryEntry }) {
           {call.peer.name}
         </p>
         <div
-          className={`flex items-center gap-1.5 text-xs ${isMissed ? "text-error" : "text-fg-muted"}`}
+          className={`flex items-center gap-1.5 text-xs ${isMissed ? "text-error" : "text-muted"}`}
         >
           <DirectionIcon size={14} aria-hidden />
           {call.hasVideo && <IconVideo size={14} aria-hidden />}
@@ -106,7 +106,7 @@ export function RtcCallHistoryView() {
       {isLoading ? (
         <PulseBlockFallback />
       ) : calls.length === 0 ? (
-        <p className="text-fg-muted text-sm">{t.noCallHistory}</p>
+        <p className="text-muted text-sm">{t.noCallHistory}</p>
       ) : (
         <div className="rounded-lg border">
           {calls.map((call) => (

@@ -63,5 +63,6 @@
   "cancelReply": "Yanıtı iptal et",
   "newMessage": "Yeni mesaj",
   "noFriendsToChat": "Henüz mesaj gönderebileceğiniz bir arkadaşınız yok",
-  "startChatting": "Sohbete başlamak için merhaba de"
+  "startChatting": "Sohbete başlamak için merhaba de",
+  "attachmentLimitReached": "Tek seferde en fazla {count} ek gönderilebilir"
 }

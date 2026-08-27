@@ -52,7 +52,7 @@ export default function PageContent({ className }: ClassNameProps) {
 
       {newKeyResult && (
         <div className="surface border-brand/30 rounded-lg border p-4">
-          <p className="mb-1 text-sm font-semibold text-green-600">
+          <p className="text-success mb-1 text-sm font-semibold">
             {t.apiKeysCreated}
           </p>
           <code className="bg-surface-hover block w-full rounded px-3 py-2 font-mono text-sm break-all">

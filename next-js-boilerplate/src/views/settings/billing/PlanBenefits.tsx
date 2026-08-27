@@ -16,7 +16,7 @@ import {
 function CheckIcon({ className }: ClassNameProps) {
   return (
     <svg
-      className={cn("h-5 w-5 shrink-0 text-green-500", className)}
+      className={cn("text-success h-5 w-5 shrink-0", className)}
       fill="none"
       viewBox="0 0 24 24"
       strokeWidth={2}

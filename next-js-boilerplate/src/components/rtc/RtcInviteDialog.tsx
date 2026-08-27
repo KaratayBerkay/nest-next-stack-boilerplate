@@ -58,7 +58,7 @@ export function RtcInviteDialog({ onInvite, children }: RtcInviteDialogProps) {
         {isLoading ? (
           <PulseBlockFallback />
         ) : !friends || friends.length === 0 ? (
-          <p className="text-fg-muted text-sm">{t.noFriendsToInvite}</p>
+          <p className="text-muted text-sm">{t.noFriendsToInvite}</p>
         ) : (
           <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
             {friends.map((friend) => (

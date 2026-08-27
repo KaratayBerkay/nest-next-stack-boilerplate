@@ -120,13 +120,7 @@ export function ChatMessageBubble({
                 {msg.body}
               </span>
             ) : decryptionFailed ? (
-              <span
-                className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                  isMe
-                    ? "bg-warning/10 text-warning-foreground"
-                    : "bg-warning/10 text-warning-foreground"
-                }`}
-              >
+              <span className="bg-warning/10 text-warning inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed">
                 <span className="inline-flex items-center gap-1.5 text-xs italic">
                   <span>{"🔒"}</span>
                   <span>{t.decryptionFailed}</span>

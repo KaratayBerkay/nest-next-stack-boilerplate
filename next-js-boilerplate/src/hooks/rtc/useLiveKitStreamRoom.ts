@@ -10,6 +10,8 @@ import {
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
 import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
+import { useWakeLock } from "@/hooks/rtc/useWakeLock";
+import { useMediaSessionActive } from "@/hooks/rtc/useMediaSessionActive";
 
 export interface UseLiveKitStreamRoomResult {
   connected: boolean;
@@ -187,6 +189,10 @@ export function useLiveKitStreamRoom(
               mediaType: "audio",
               phase: "connected",
             });
+            // Keep the control bar honest: the optimistic `true` initial
+            // state would otherwise show an unmuted mic that never actually
+            // enabled (permission denied / no device).
+            setLocalMicEnabled(false);
           }
           try {
             await room.localParticipant.setCameraEnabled(true);
@@ -197,6 +203,7 @@ export function useLiveKitStreamRoom(
               mediaType: "video",
               phase: "connected",
             });
+            setLocalCameraEnabled(false);
           }
         }
         rebuildBroadcasterTracks();
@@ -222,60 +229,10 @@ export function useLiveKitStreamRoom(
     };
   }, [isLocalBroadcaster, rebuildBroadcasterTracks, roomName, streamId, token]);
 
-  // ---- Wake Lock: prevent OS from sleeping the screen during a stream ----
-  // Ported from useLiveKitRoom (1:1 calls) — this had only ever been wired
-  // up for calls, so backgrounding a live stream (broadcasting or viewing)
-  // got none of the same throttling protection.
-  useEffect(() => {
-    if (!connected) return;
-
-    const wakeLockRef: { current: WakeLockSentinel | null } = { current: null };
-
-    const acquire = async () => {
-      try {
-        if (!("wakeLock" in navigator)) return;
-        if (wakeLockRef.current) return;
-        const sentinel = await navigator.wakeLock.request("screen");
-        wakeLockRef.current = sentinel;
-        sentinel.addEventListener("release", () => {
-          wakeLockRef.current = null;
-        });
-      } catch {
-        // Wake Lock denied (permission policy, headless browser, etc.) —
-        // non-fatal, the stream still works without it.
-      }
-    };
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") acquire();
-    };
-
-    void acquire();
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      void wakeLockRef.current?.release();
-      wakeLockRef.current = null;
-    };
-  }, [connected]);
-
-  // ---- Media Session: tell the OS this is active media, not an idle tab ----
-  useEffect(() => {
-    if (!connected || !("mediaSession" in navigator)) return;
-
-    navigator.mediaSession.metadata = new MediaMetadata({
-      title: roomName || "Live Stream",
-      artist: "Live Stream",
-      artwork: [],
-    });
-    navigator.mediaSession.playbackState = "playing";
-
-    return () => {
-      navigator.mediaSession.metadata = null;
-      navigator.mediaSession.playbackState = "none";
-    };
-  }, [connected, roomName]);
+  // Prevent OS sleep/throttling while the stream is up (broadcasting or
+  // viewing), and mark the tab as active media for the lock screen.
+  useWakeLock(connected);
+  useMediaSessionActive(connected, roomName || "Live Stream", "Live Stream");
 
   const toggleMic = useCallback(() => {
     const room = roomRef.current;

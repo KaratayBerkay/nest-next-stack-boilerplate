@@ -6,7 +6,7 @@ import type { UploadItem } from "@/types/messages/AttachmentModal-types";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
 import type { UploadScope } from "@/types/messages/UploadScope-types";
 
-const MAX_UPLOADS = 10;
+export const MAX_UPLOADS = 10;
 
 function applyItemUpdate(
   items: UploadItem[],
@@ -16,6 +16,13 @@ function applyItemUpdate(
   return items.map((it) => (it.id === id ? update(it) : it));
 }
 
+export interface StartUploadsResult {
+  /** Names of files rejected because an identical file is already staged. */
+  duplicates: string[];
+  /** How many (non-duplicate) files were dropped by the MAX_UPLOADS cap. */
+  overflow: number;
+}
+
 /**
  * Multi-file upload state shared by the chat room and DM composers.
  * Files upload in parallel over the streaming endpoint; each one reports
@@ -23,8 +30,9 @@ function applyItemUpdate(
  * per-file cancellation (abort) and removal work independently.
  *
  * `startUploads` rejects files that match an already-staged item's name+size
- * (regardless of that item's status) and returns their names so the caller
- * can surface feedback — it never silently re-uploads the same file twice.
+ * (regardless of that item's status) and reports them — plus how many files
+ * fell off the MAX_UPLOADS cap — so the caller can surface feedback; it
+ * never silently re-uploads the same file twice or drops an overflow.
  */
 export function useAttachmentUploads() {
   const { uploadAttachment } = useMessageUpload();
@@ -36,8 +44,8 @@ export function useAttachmentUploads() {
   }, [items]);
 
   const startUploads = useCallback(
-    (files: File[], scope?: UploadScope): string[] => {
-      if (files.length === 0) return [];
+    (files: File[], scope?: UploadScope): StartUploadsResult => {
+      if (files.length === 0) return { duplicates: [], overflow: 0 };
 
       // A file already staged (uploading, done, or errored) can't be added
       // again — matched on name+size, the same identity a user judges "the
@@ -60,7 +68,8 @@ export function useAttachmentUploads() {
 
       const slots = Math.max(MAX_UPLOADS - itemsRef.current.length, 0);
       const accepted = deduped.slice(0, slots);
-      if (accepted.length === 0) return duplicates;
+      const overflow = deduped.length - accepted.length;
+      if (accepted.length === 0) return { duplicates, overflow };
 
       const newItems: UploadItem[] = accepted.map((file) => ({
         id: crypto.randomUUID(),
@@ -110,7 +119,7 @@ export function useAttachmentUploads() {
           });
       }
 
-      return duplicates;
+      return { duplicates, overflow };
     },
     [uploadAttachment],
   );

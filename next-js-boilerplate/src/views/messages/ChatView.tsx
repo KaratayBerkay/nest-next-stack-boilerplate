@@ -16,7 +16,10 @@ import type {
   ReplyPreview,
 } from "@/types/messages/ChatView-types";
 import { useMessageActions } from "@/api/client/messages/actions";
-import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
+import {
+  MAX_UPLOADS,
+  useAttachmentUploads,
+} from "@/hooks/messages/useAttachmentUploads";
 import { useTypingUsers } from "@/hooks/useTypingUsers";
 import {
   chatViewHandleSend,
@@ -159,13 +162,22 @@ export function ChatView({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!selectedUser) return;
-      const duplicates = startUploads(files, {
+      const { duplicates, overflow } = startUploads(files, {
         kind: "messages",
         id: selectedUser.id,
       });
       for (const name of duplicates) {
         toast({
           title: t.duplicateAttachment.replace("{name}", name),
+          variant: "warning",
+        });
+      }
+      if (overflow > 0) {
+        toast({
+          title: t.attachmentLimitReached.replace(
+            "{count}",
+            String(MAX_UPLOADS),
+          ),
           variant: "warning",
         });
       }

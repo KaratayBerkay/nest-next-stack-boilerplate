@@ -31,5 +31,10 @@
   "skipToContent": "İçeriğe atla",
   "decryptionFailed": "Deşifre edilemedi. Çıkış yapıp tekrar giriş yapın.",
   "attachmentPreview": "Ek",
-  "navPages": "Sayfalar"
+  "navPages": "Sayfalar",
+  "deletedMessage": "Bu mesaj silindi",
+  "navBackTo": "← Geri dön",
+  "navForwardTo": "İleri git →",
+  "releaseToNavigate": "Gezinmek için bırakın",
+  "clickToCancel": "İptal etmek için tıklayın"
 }

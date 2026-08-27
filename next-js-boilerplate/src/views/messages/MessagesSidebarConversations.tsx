@@ -4,6 +4,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/cn";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { conversationPreviewText } from "@/lib/messages/conversation-preview";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { formatDateByPreference } from "@/lib/date-time";
 import { SkeletonConversationSidebar } from "@/components/ui/skeleton-shapes";
@@ -43,7 +44,7 @@ export function MessagesSidebarConversations({
       )}
       {conversations.length > 0 && (
         <div className="flex flex-col">
-          {[...conversations].map((c, i) => (
+          {conversations.map((c, i) => (
             <div
               key={c.user.id}
               role="button"
@@ -110,19 +111,14 @@ export function MessagesSidebarConversations({
                   <p className="text-muted min-w-0 truncate text-sm">
                     {c.noHistory
                       ? t.startChatting
-                      : typeof c.lastMessage === "string"
-                        ? c.lastMessage === "[Deleted]"
-                          ? t.deletedMessage
-                          : c.lastMessage !== "" &&
-                              c.lastMessage !== "[Encrypted]"
-                            ? c.lastMessage
-                            : c.hasAttachments
-                              ? "\uD83D\uDCCE " + t.attachmentPreview
-                              : "\uD83D\uDD12 " + t.decryptionFailed
-                        : "\uD83D\uDD12 " + t.decryptionFailed}
+                      : conversationPreviewText(
+                          c.lastMessage,
+                          c.hasAttachments,
+                          t,
+                        )}
                   </p>
                   {c.unread > 0 && (
-                    <span className="bg-error flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold text-white">
+                    <span className="bg-error text-error-fg flex h-5 min-w-[20px] items-center justify-center rounded-full px-1 text-[10px] font-bold">
                       {c.unread > 99 ? "99+" : c.unread}
                     </span>
                   )}

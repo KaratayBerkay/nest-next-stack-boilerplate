@@ -65,15 +65,22 @@ function getMediaErrorMessage(
   return null;
 }
 
+/** Speaker preference keyed by call — a toggle from an earlier call must
+ *  never leak into the next one (the overlay stays mounted across calls). */
+interface SpeakerState {
+  callId: string | null;
+  enabled: boolean;
+}
+
 function toggleSpeaker(
   remoteAudioRef: React.RefObject<HTMLAudioElement | null>,
-  setSpeakerEnabled: React.Dispatch<React.SetStateAction<boolean>>,
+  setSpeakerState: React.Dispatch<React.SetStateAction<SpeakerState>>,
+  callId: string | null,
+  currentEnabled: boolean,
 ): void {
-  setSpeakerEnabled((enabled) => {
-    const next = !enabled;
-    if (remoteAudioRef.current) remoteAudioRef.current.muted = !next;
-    return next;
-  });
+  const next = !currentEnabled;
+  if (remoteAudioRef.current) remoteAudioRef.current.muted = !next;
+  setSpeakerState({ callId, enabled: next });
 }
 
 function PulsingAvatar({ avatarUrl, name }: PulsingAvatarProps) {
@@ -119,8 +126,17 @@ function IncomingCallOverlay({
         <PulsingAvatar avatarUrl={peerAvatarUrl} name={peerName} />
         <div className="relative text-center">
           <p className="text-overlay-fg text-2xl font-semibold">{peerName}</p>
-          <p className="text-success mt-2 text-sm font-medium">
-            {t.connectingTitle}
+          <p
+            className="text-success mt-2 text-sm font-medium"
+            aria-live="polite"
+          >
+            {/* Nothing is connecting while the call is still ringing — show
+                the call type until Accept is pressed. */}
+            {accepting
+              ? t.connectingTitle
+              : hasVideo
+                ? t.videoCallLabel
+                : t.voiceCallLabel}
           </p>
         </div>
 
@@ -217,12 +233,17 @@ function ActiveCallOverlay({
             />
             <p className="text-overlay-fg/70 text-sm">{statusText}</p>
           </div>
+          {/* No background on the video element: while the remote camera
+              track hasn't attached yet (peer still joining, camera off), the
+              element must stay transparent so the avatar/status placeholder
+              behind it shows through — an opaque bg painted over it made
+              that placeholder dead weight. */}
           {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live P2P call video, no caption track exists */}
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="bg-bg absolute inset-0 h-full w-full object-cover"
+            className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="from-overlay/40 to-overlay/60 pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent" />
 
@@ -235,12 +256,14 @@ function ActiveCallOverlay({
                 <p className="text-overlay-fg truncate text-base font-semibold drop-shadow-lg">
                   {peerName}
                 </p>
-                <p className="text-overlay-fg/70 text-xs" aria-live="polite">
-                  {statusText}
-                </p>
               </div>
             </div>
-            <span className="bg-overlay/45 border-overlay-fg/20 text-overlay-fg shrink-0 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur-md">
+            {/* Single status/duration readout — it was previously rendered
+                twice side by side (under the name AND in this pill). */}
+            <span
+              className="bg-overlay/45 border-overlay-fg/20 text-overlay-fg shrink-0 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur-md"
+              aria-live="polite"
+            >
               {statusText}
             </span>
           </div>
@@ -401,7 +424,14 @@ export function RtcCallOverlay() {
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const remoteAudioRef = useRef<HTMLAudioElement>(null);
-  const [speakerEnabled, setSpeakerEnabled] = useState(true);
+  const [speakerState, setSpeakerState] = useState<SpeakerState>({
+    callId: null,
+    enabled: true,
+  });
+  // Derived, not reset via effect: a toggle only applies to the call it was
+  // made in; any other call starts with the speaker on.
+  const speakerEnabled =
+    speakerState.callId === state.callId ? speakerState.enabled : true;
   const livekit = useLiveKitRoom(
     isConnected ? (state.livekit?.token ?? null) : null,
     state.hasVideo,
@@ -411,6 +441,9 @@ export function RtcCallOverlay() {
   );
 
   useEffect(() => {
+    // Re-arm the element on every phase change so a new call's audio always
+    // starts unmuted (the state side is handled by the call-keyed
+    // speakerState derivation above).
     if (remoteAudioRef.current) remoteAudioRef.current.muted = false;
   }, [state.phase]);
 
@@ -425,7 +458,12 @@ export function RtcCallOverlay() {
   }, [dismissError, state.lastError, t, toast]);
 
   const handleToggleSpeaker = () =>
-    toggleSpeaker(remoteAudioRef, setSpeakerEnabled);
+    toggleSpeaker(
+      remoteAudioRef,
+      setSpeakerState,
+      state.callId,
+      speakerEnabled,
+    );
 
   if (state.phase === "idle") return null;
 

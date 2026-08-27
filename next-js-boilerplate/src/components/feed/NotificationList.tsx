@@ -86,7 +86,7 @@ export function NotificationList({
                 </p>
               </div>
               {!n.readAt && (
-                <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                <span className="bg-info mt-1.5 h-2 w-2 shrink-0 rounded-full" />
               )}
             </button>
           ))}

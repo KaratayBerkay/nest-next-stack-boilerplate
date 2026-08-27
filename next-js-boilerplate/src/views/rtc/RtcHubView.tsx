@@ -28,7 +28,7 @@ export function RtcHubView() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-6">
       <div>
         <h1 className="text-2xl font-semibold">{t.title}</h1>
-        <p className="text-fg-muted mt-1">{t.subtitle}</p>
+        <p className="text-muted mt-1">{t.subtitle}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -40,7 +40,7 @@ export function RtcHubView() {
               }
             >
               <CardHeader>
-                <Icon className="text-fg-muted size-6" aria-hidden />
+                <Icon className="text-muted size-6" aria-hidden />
                 <CardTitle>{t[`${key}Title` as const]}</CardTitle>
                 <CardDescription>
                   {t[`${key}Description` as const]}

@@ -53,7 +53,7 @@ export const ChatRoomMessageList = forwardRef<
         </div>
       )}
       {!msgsLoading && !msgsError && hasDecryptionFailure && (
-        <div className="bg-warning/10 border-warning/30 text-warning-foreground rounded-lg border px-3 py-2 text-center text-xs">
+        <div className="bg-warning/10 border-warning/30 text-warning rounded-lg border px-3 py-2 text-center text-xs">
           {t.decryptionFailed}
         </div>
       )}
@@ -108,7 +108,7 @@ export const ChatRoomMessageList = forwardRef<
                   {msg.body}
                 </span>
               ) : decryptionFailed ? (
-                <span className="bg-warning/10 text-warning-foreground inline-block rounded-xl px-3 py-1.5 text-sm">
+                <span className="bg-warning/10 text-warning inline-block rounded-xl px-3 py-1.5 text-sm">
                   <span className="inline-flex items-center gap-1.5 text-xs italic">
                     <span>{"\uD83D\uDD12"}</span>
                     <span>{t.decryptionFailed}</span>

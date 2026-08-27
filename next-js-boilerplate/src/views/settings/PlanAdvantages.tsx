@@ -17,7 +17,7 @@ export default function PlanAdvantages({
               variant="surface"
               className="flex items-center gap-2 p-3 text-sm"
             >
-              <span className="text-brand flex size-5 items-center justify-center rounded-full bg-green-100 text-xs font-bold">
+              <span className="text-success bg-success/15 flex size-5 items-center justify-center rounded-full text-xs font-bold">
                 ✓
               </span>
               {f}

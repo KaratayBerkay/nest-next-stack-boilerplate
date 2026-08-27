@@ -128,7 +128,7 @@ export function LoginCredentialsForm({
             data-testid="login-email"
           />
           {fieldErrors.email && (
-            <p className="mt-0.5 text-xs text-red-600">{fieldErrors.email}</p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.email}</p>
           )}
         </div>
 
@@ -146,9 +146,7 @@ export function LoginCredentialsForm({
             data-testid="login-password"
           />
           {fieldErrors.password && (
-            <p className="mt-0.5 text-xs text-red-600">
-              {fieldErrors.password}
-            </p>
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.password}</p>
           )}
         </div>
 
@@ -160,7 +158,7 @@ export function LoginCredentialsForm({
         </Link>
 
         {fieldErrors.form && (
-          <p className="text-sm text-red-600" data-testid="login-error">
+          <p className="text-error text-sm" data-testid="login-error">
             {fieldErrors.form}
           </p>
         )}

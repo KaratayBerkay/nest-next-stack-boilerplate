@@ -42,7 +42,7 @@ export function ChatMessageList({
         </div>
       )}
       {!msgsError && hasDecryptionFailure && (
-        <div className="bg-warning/10 border-warning/30 text-warning-foreground rounded-lg border px-3 py-2 text-center text-xs">
+        <div className="bg-warning/10 border-warning/30 text-warning rounded-lg border px-3 py-2 text-center text-xs">
           {t.decryptionFailed}
         </div>
       )}

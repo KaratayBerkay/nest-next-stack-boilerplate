@@ -120,9 +120,7 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
         <DialogHeader>
           <DialogTitle>{t.addPaymentMethod}</DialogTitle>
         </DialogHeader>
-        {addCardError && (
-          <p className="text-destructive text-sm">{addCardError}</p>
-        )}
+        {addCardError && <p className="text-error text-sm">{addCardError}</p>}
         <AddPaymentMethodForm
           onSuccess={() => {
             setShowAddCard(false);

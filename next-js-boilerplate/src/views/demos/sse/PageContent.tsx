@@ -29,7 +29,7 @@ export default function SsePage() {
         data-testid="sse-events"
       >
         {events.length === 0 && (
-          <span className="text-zinc-400">Waiting for events...</span>
+          <span className="text-muted">Waiting for events...</span>
         )}
         {events.map((ev, i) => (
           <span key={ev.time}>

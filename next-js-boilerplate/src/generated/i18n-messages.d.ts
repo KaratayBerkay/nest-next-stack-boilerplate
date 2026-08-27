@@ -297,6 +297,7 @@ export type I18nMessages = {
       "allUploadsNoResults": string;
       "allUploadsClearFilters": string;
       "loadMore": string;
+      "attachmentLimitReached": string;
     }
 
   "checkout": {
@@ -1301,6 +1302,7 @@ export type I18nMessages = {
       "newMessage": string;
       "noFriendsToChat": string;
       "startChatting": string;
+      "attachmentLimitReached": string;
     }
 
   "notification": {
@@ -11657,6 +11659,8 @@ export type I18nMessages = {
       "recordingComingSoonNote": string;
       "speakerOn": string;
       "speakerOff": string;
+      "streamChatTitle": string;
+      "liveBadge": string;
     }
 
   "settings": {
@@ -12108,5 +12112,10 @@ export type I18nMessages = {
       "decryptionFailed": string;
       "attachmentPreview": string;
       "navPages": string;
+      "deletedMessage": string;
+      "navBackTo": string;
+      "navForwardTo": string;
+      "releaseToNavigate": string;
+      "clickToCancel": string;
     }
 };

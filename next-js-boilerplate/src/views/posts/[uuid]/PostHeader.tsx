@@ -67,7 +67,7 @@ export function PostHeader({
                   icon={<IconTrash size={14} stroke={1.5} />}
                   label={t.deletePost}
                   onClick={open}
-                  className="hover:text-red-500"
+                  className="hover:text-error"
                 />
               )}
             </ConfirmDialog>

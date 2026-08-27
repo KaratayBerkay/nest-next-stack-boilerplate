@@ -31,5 +31,10 @@
   "skipToContent": "Skip to content",
   "decryptionFailed": "Could not decrypt. Sign out and back in.",
   "attachmentPreview": "Attachment",
-  "navPages": "Pages"
+  "navPages": "Pages",
+  "deletedMessage": "This message was deleted",
+  "navBackTo": "← Back to",
+  "navForwardTo": "Forward to →",
+  "releaseToNavigate": "Release to navigate",
+  "clickToCancel": "Click to cancel"
 }

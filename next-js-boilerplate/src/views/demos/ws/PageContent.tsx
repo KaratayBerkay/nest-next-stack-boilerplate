@@ -85,7 +85,7 @@ export default function WsPage() {
         <button
           onClick={handleSend}
           disabled={realtime.status !== "open"}
-          className="bg-brand rounded px-3 py-1 text-xs text-brand-fg disabled:opacity-50"
+          className="bg-brand text-brand-fg rounded px-3 py-1 text-xs disabled:opacity-50"
           data-testid="ws-send"
         >
           Send
@@ -96,7 +96,7 @@ export default function WsPage() {
         data-testid="ws-messages"
       >
         {msgs.length === 0 && (
-          <span className="text-zinc-400">No messages yet.</span>
+          <span className="text-muted">No messages yet.</span>
         )}
         {msgs.map((msg, i) => (
           <span key={i}>{msg}</span>

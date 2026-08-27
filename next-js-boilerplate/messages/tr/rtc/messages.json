@@ -132,5 +132,7 @@
   "recordingActionFailed": "Kayıt güncellenemedi. Lütfen tekrar deneyin.",
   "recordingComingSoonNote": "Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor.",
   "speakerOn": "Hoparlör açık",
-  "speakerOff": "Hoparlör kapalı"
+  "speakerOff": "Hoparlör kapalı",
+  "streamChatTitle": "Yayın Sohbeti",
+  "liveBadge": "Canlı"
 }

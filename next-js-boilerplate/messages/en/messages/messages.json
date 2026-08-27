@@ -63,5 +63,6 @@
   "cancelReply": "Cancel reply",
   "newMessage": "New message",
   "noFriendsToChat": "No friends to message yet",
-  "startChatting": "Say hi to start chatting"
+  "startChatting": "Say hi to start chatting",
+  "attachmentLimitReached": "Only {count} attachments can be sent at once"
 }

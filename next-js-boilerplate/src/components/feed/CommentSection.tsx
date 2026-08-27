@@ -118,11 +118,10 @@ async function handleDeleteComment(
   setLocalDeletes((prev) => new Set(prev).add(comment.id));
   try {
     await deleteComment(comment.id);
-    setLocalDeletes((prev) => {
-      const next = new Set(prev);
-      next.delete(comment.id);
-      return next;
-    });
+    // Keep the local-delete marker on success — clearing it here made the
+    // deleted comment flash back until the refetch triggered by
+    // onCommentAdded actually landed. A stale marker for an id the server
+    // no longer returns is harmless (mirrors how localEdits persists).
     onCommentAdded?.();
   } catch {
     setLocalDeletes((prev) => {

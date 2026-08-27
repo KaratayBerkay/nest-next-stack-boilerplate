@@ -82,7 +82,7 @@ export function DowngradeSection({
   return (
     <div className="space-y-3">
       {error && (
-        <p className="text-sm text-red-600" data-testid="checkout-error">
+        <p className="text-error text-sm" data-testid="checkout-error">
           {error}
         </p>
       )}

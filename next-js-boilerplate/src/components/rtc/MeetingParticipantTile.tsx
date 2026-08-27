@@ -1,23 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
 import { IconMicrophoneOff, IconScreenShare } from "@tabler/icons-react";
-import type { Track } from "livekit-client";
 import { Avatar } from "@/components/ui/Avatar";
+import { useTrackAttach } from "@/hooks/rtc/useTrackAttach";
 import type { MeetingParticipantTileProps } from "@/types/rtc/MeetingParticipantTile-types";
-
-function useTrackAttach(track: Track | null, kind: "video" | "audio") {
-  const ref = useRef<HTMLVideoElement & HTMLAudioElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (!track || !el) return;
-    track.attach(el);
-    return () => {
-      track.detach(el);
-    };
-  }, [track, kind]);
-  return ref;
-}
 
 export function MeetingParticipantTile({
   participant,
@@ -36,7 +22,7 @@ export function MeetingParticipantTile({
     <div
       className={`bg-surface relative flex aspect-video items-center justify-center overflow-hidden rounded-lg transition-shadow ${
         participant.isSpeaking
-          ? "shadow-[0_0_12px_rgba(52,211,153,0.4)] ring-2 ring-emerald-400"
+          ? "ring-success shadow-md ring-2"
           : "ring-1 ring-transparent"
       }`}
     >
@@ -55,11 +41,7 @@ export function MeetingParticipantTile({
       {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live meeting audio, no caption track exists */}
       <audio ref={audioRef} autoPlay />
 
-      {participant.isSpeaking && (
-        <div className="pointer-events-none absolute inset-0 rounded-lg ring-2 ring-emerald-400" />
-      )}
-
-      <div className="bg-overlay/60 text-bg absolute right-2 bottom-2 left-2 flex items-center justify-between rounded px-2 py-1 text-xs">
+      <div className="bg-overlay/60 text-overlay-fg absolute right-2 bottom-2 left-2 flex items-center justify-between rounded px-2 py-1 text-xs">
         <span className="truncate">
           {participant.isLocal ? youLabel : participant.name}
         </span>

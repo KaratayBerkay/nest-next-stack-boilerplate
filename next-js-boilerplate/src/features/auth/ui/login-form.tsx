@@ -19,7 +19,7 @@ export function LoginForm() {
   if (user) {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-green-600">
+        <p className="text-success text-sm">
           {t.signedInAs.replace("{email}", user.email)}
         </p>
         <p className="text-muted text-xs">

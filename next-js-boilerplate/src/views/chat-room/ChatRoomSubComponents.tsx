@@ -142,7 +142,12 @@ export function AttachButton({
       <label
         htmlFor={inputId}
         aria-label={label}
-        className="text-muted hover:bg-surface-hover flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors disabled:pointer-events-none disabled:opacity-50"
+        className={cn(
+          "text-muted hover:bg-surface-hover flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors",
+          // A <label> never matches :disabled (it's not a form control) —
+          // mirror the hidden input's disabled state with plain classes.
+          disabled && "pointer-events-none opacity-50",
+        )}
       >
         <IconPaperclip size={18} />
       </label>

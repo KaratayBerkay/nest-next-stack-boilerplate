@@ -70,7 +70,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
     string | null
   >(null);
 
-  const currentRank = TIER_ORDER[user!.tier as Tier] ?? 0;
+  const currentRank = TIER_ORDER[user?.tier as Tier] ?? 0;
   const targetRank = TIER_ORDER[targetTier as Tier] ?? 0;
   const isDowngrade = targetRank < currentRank;
   const isCurrent = targetRank === currentRank;
@@ -148,7 +148,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
       )}
 
       {changeType === "immediate" && error && (
-        <p className="text-sm text-red-600" data-testid="checkout-error">
+        <p className="text-error text-sm" data-testid="checkout-error">
           {error}
         </p>
       )}

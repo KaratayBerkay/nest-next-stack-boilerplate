@@ -63,7 +63,7 @@ export function RtcReportDialog({ onSubmit, children }: RtcReportDialogProps) {
           <DialogTitle>{t.reportTitle}</DialogTitle>
         </DialogHeader>
         {done ? (
-          <p className="text-fg-muted text-sm">{t.reportSubmitted}</p>
+          <p className="text-muted text-sm">{t.reportSubmitted}</p>
         ) : (
           <div className="flex flex-col gap-3">
             <NativeSelect

@@ -1,6 +1,6 @@
 "use client";
 
-import type { FeedListPremiumProps } from "@/types/feed/FeedList-types";
+import type { FeedListProps } from "@/types/feed/FeedList-types";
 import { useAuth } from "@/hooks/useAuth";
 import { FeedBaseView } from "@/views/feed/FeedBaseView";
 import { FeedList } from "@/views/feed/PremiumFeedList";
@@ -8,7 +8,7 @@ import { FeedList } from "@/views/feed/PremiumFeedList";
 export function PremiumPageView({
   initialFeedData: _initialFeedData,
 }: {
-  initialFeedData?: FeedListPremiumProps["initialFeedData"];
+  initialFeedData?: FeedListProps["initialFeedData"];
 }) {
   const { user } = useAuth();
   return (

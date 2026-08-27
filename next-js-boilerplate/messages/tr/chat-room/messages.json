@@ -37,5 +37,6 @@
   "allUploadsSearchPlaceholder": "Dosya adına göre ara...",
   "allUploadsNoResults": "Filtrelerinize uyan yükleme yok",
   "allUploadsClearFilters": "Filtreleri temizle",
-  "loadMore": "Daha fazla yükle"
+  "loadMore": "Daha fazla yükle",
+  "attachmentLimitReached": "Tek seferde en fazla {count} ek gönderilebilir"
 }

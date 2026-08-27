@@ -13,7 +13,7 @@ export default function UpgradeActions({ tier, t, lang }: UpgradeActionsProps) {
         <Card variant="surface" className="flex justify-center p-3">
           <Link
             href={`/v1/${lang}/settings/billing`}
-            className="text-muted hover:text-foreground text-sm underline underline-offset-2"
+            className="text-muted hover:text-fg text-sm underline underline-offset-2"
           >
             {t.navBilling}
           </Link>

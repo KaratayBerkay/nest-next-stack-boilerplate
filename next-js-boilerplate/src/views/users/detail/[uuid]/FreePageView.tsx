@@ -31,7 +31,7 @@ export async function FreePageView({
   if (!user) {
     return (
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-red-500">{t.userNotFound}</p>
+        <p className="text-error text-sm">{t.userNotFound}</p>
         <Link
           href={`/v1/${lang}/users/list`}
           className="text-brand text-sm underline"

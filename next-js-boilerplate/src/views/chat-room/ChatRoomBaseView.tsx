@@ -20,7 +20,10 @@ import {
   selectChatRoom,
 } from "@/views/chat-room/ChatRoomHandlers";
 import { useChatRoomRealtime } from "@/views/chat-room/useChatRoomRealtime";
-import { useAttachmentUploads } from "@/hooks/messages/useAttachmentUploads";
+import {
+  MAX_UPLOADS,
+  useAttachmentUploads,
+} from "@/hooks/messages/useAttachmentUploads";
 import { useToast } from "@/components/ui/Toast";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
@@ -151,10 +154,22 @@ function ChatRoomContent({
   const handleAttachFiles = useCallback(
     (files: File[]) => {
       if (!user) return;
-      const duplicates = startUploads(files, { kind: "chat-room", id: room });
+      const { duplicates, overflow } = startUploads(files, {
+        kind: "chat-room",
+        id: room,
+      });
       for (const name of duplicates) {
         toast({
           title: t.duplicateAttachment.replace("{name}", name),
+          variant: "warning",
+        });
+      }
+      if (overflow > 0) {
+        toast({
+          title: t.attachmentLimitReached.replace(
+            "{count}",
+            String(MAX_UPLOADS),
+          ),
           variant: "warning",
         });
       }

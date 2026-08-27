@@ -37,5 +37,6 @@
   "allUploadsSearchPlaceholder": "Search by file name...",
   "allUploadsNoResults": "No uploads match your filters",
   "allUploadsClearFilters": "Clear filters",
-  "loadMore": "Load more"
+  "loadMore": "Load more",
+  "attachmentLimitReached": "Only {count} attachments can be sent at once"
 }

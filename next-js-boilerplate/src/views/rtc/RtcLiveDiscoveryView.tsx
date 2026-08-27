@@ -33,7 +33,7 @@ export function RtcLiveDiscoveryView() {
       {isLoading ? (
         <PulseBlockFallback />
       ) : !streams || streams.length === 0 ? (
-        <p className="text-fg-muted text-sm">{t.noLiveStreams}</p>
+        <p className="text-muted text-sm">{t.noLiveStreams}</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {streams.map((stream) => (
@@ -43,7 +43,7 @@ export function RtcLiveDiscoveryView() {
               className="hover:border-brand/50 flex flex-col gap-2 rounded-lg border p-3 transition-colors"
             >
               <div className="bg-surface flex aspect-video items-center justify-center rounded">
-                <IconBroadcast className="text-fg-muted size-8" aria-hidden />
+                <IconBroadcast className="text-muted size-8" aria-hidden />
               </div>
               <p className="truncate text-sm font-medium">{stream.title}</p>
               <div className="flex items-center justify-between">
@@ -53,7 +53,7 @@ export function RtcLiveDiscoveryView() {
                     fallback={stream.broadcaster.name || "?"}
                     size="xs"
                   />
-                  <span className="text-fg-muted truncate text-xs">
+                  <span className="text-muted truncate text-xs">
                     {stream.broadcaster.name}
                   </span>
                 </div>
