@@ -92,7 +92,8 @@ class SettingsSessionsPageContent extends ConsumerWidget {
           Expanded(
             child: sessionsAsync.when(
               loading: () => const Center(child: SettingsLoadingFallback()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) =>
+                  Center(child: Text(t.settingsSessionsLoadFailed)),
               data: (sessions) {
                 if (sessions.isEmpty) {
                   return const EmptySessions();

@@ -175,7 +175,7 @@ void _showSettingsInfo(BuildContext context) {
     context: context,
     builder: (ctx) => AlertDialog(
       title: Text(AppLocalizations.of(ctx).settingsSettingsSectionLabel),
-      content: const Text('Manage your account settings and preferences.'),
+      content: Text(AppLocalizations.of(ctx).settingsPageInfoDescription),
       actions: [
         TextButton(
           onPressed: () => Navigator.of(ctx).pop(),

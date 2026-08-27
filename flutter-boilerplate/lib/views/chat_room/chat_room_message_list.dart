@@ -36,10 +36,10 @@ class ChatRoomMessageList extends StatelessWidget {
     final colors = AppColors.of(context);
 
     if (msgsError) {
-      return const Center(
+      return Center(
         child: Text(
-          'Failed to load messages',
-          style: TextStyle(color: Colors.red, fontSize: 12),
+          AppLocalizations.of(context).messagesFailedToLoad,
+          style: TextStyle(color: colors.danger, fontSize: 12),
         ),
       );
     }

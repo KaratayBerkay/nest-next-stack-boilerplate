@@ -27,7 +27,7 @@ class MediumPostDetailPage extends ConsumerWidget {
       ),
       error: (e, _) => Scaffold(
         appBar: AppBar(title: Text(t.postsDetail)),
-        body: Center(child: Text('Error: $e')),
+        body: Center(child: Text(t.postsFailedToLoadPost)),
       ),
       data: (post) => PostDetailBaseView(
         post: post,

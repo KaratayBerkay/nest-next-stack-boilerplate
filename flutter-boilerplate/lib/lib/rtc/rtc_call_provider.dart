@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
 
 import '../../types/rtc/active_call_snapshot.dart';
@@ -20,9 +22,52 @@ final rtcCallProvider =
 class RtcCallNotifier extends StateNotifier<RtcCallState> {
   final Ref _ref;
 
+  /// A cancel tapped before the rtc:ringing frame delivered the callId —
+  /// the invite and its callId travel on separate frames, so keep the call
+  /// alive just long enough to cancel it as soon as the id arrives.
+  bool _cancelRequested = false;
+
+  /// Bounds the wait for an ack frame after accept/cancel — a dropped
+  /// rtc:accepted/rtc:cancelled/rtc:error frame would otherwise leave the
+  /// overlay permanently non-interactive (the pending action disables its
+  /// controls) with no way out. Same 10s bound as the web provider.
+  Timer? _actionTimer;
+
   RtcCallNotifier(this._ref) : super(RtcCallState.idle);
 
+  @override
+  void dispose() {
+    _actionTimer?.cancel();
+    super.dispose();
+  }
+
+  void _setActionPending(RtcCallAction action) {
+    state = state.copyWith(actionPending: action);
+    _actionTimer?.cancel();
+    final pendingCallId = state.callId;
+    final pendingPhase = state.phase;
+    _actionTimer = Timer(const Duration(seconds: 10), () {
+      if (!mounted || state.actionPending != action) return;
+      logRtcEvent(
+        event: 'call.action_timeout',
+        rtcKind: 'call',
+        rtcId: pendingCallId,
+        phase: pendingPhase.name,
+        exceptionType: 'CLIENT_ERROR',
+        error: '${action.name}_ack_timeout',
+      );
+      _cancelRequested = false;
+      state = const RtcCallState(lastError: 'action_timeout');
+    });
+  }
+
+  void _clearActionTimer() {
+    _actionTimer?.cancel();
+    _actionTimer = null;
+  }
+
   void startCall(RtcCallPeer peer, bool hasVideo) {
+    if (state.phase != RtcCallPhase.idle) return;
     if (_ref.read(realtimeStatusProvider) != RealtimeStatus.open) {
       logRtcEvent(
         event: 'call.invite_failed',
@@ -31,9 +76,12 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
         phase: 'idle',
         exceptionType: 'CLIENT_ERROR',
         error: 'realtime_unavailable',
+        metadata: {'peerId': peer.id},
       );
+      state = const RtcCallState(lastError: 'realtime_unavailable');
       return;
     }
+    _cancelRequested = false;
     state = RtcCallState(
       phase: RtcCallPhase.outgoingRinging,
       peer: peer,
@@ -55,7 +103,24 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
 
   void acceptCall() {
     final callId = state.callId;
-    if (callId == null) return;
+    if (callId == null ||
+        state.phase != RtcCallPhase.incomingRinging ||
+        state.actionPending != null) {
+      return;
+    }
+    if (_ref.read(realtimeStatusProvider) != RealtimeStatus.open) {
+      logRtcEvent(
+        event: 'call.accept_failed',
+        rtcKind: 'call',
+        rtcId: callId,
+        phase: 'incoming-ringing',
+        exceptionType: 'CLIENT_ERROR',
+        error: 'realtime_unavailable',
+      );
+      state = const RtcCallState(lastError: 'realtime_unavailable');
+      return;
+    }
+    _setActionPending(RtcCallAction.accept);
     logRtcEvent(
       event: 'call.accept_sent',
       rtcKind: 'call',
@@ -71,7 +136,11 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
 
   void rejectCall() {
     final callId = state.callId;
-    if (callId == null) return;
+    if (callId == null ||
+        state.phase != RtcCallPhase.incomingRinging ||
+        state.actionPending != null) {
+      return;
+    }
     logRtcEvent(
       event: 'call.reject_sent',
       rtcKind: 'call',
@@ -83,12 +152,30 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       'type': 'rtc:reject',
       'callId': callId,
     });
+    _clearActionTimer();
     state = RtcCallState.idle;
   }
 
   void cancelCall() {
+    if (state.phase != RtcCallPhase.outgoingRinging ||
+        state.actionPending != null) {
+      return;
+    }
     final callId = state.callId;
-    if (callId == null) return;
+    if (callId == null) {
+      // The invite and its callId travel on separate frames. Keep the call
+      // alive just long enough to cancel it as soon as the id arrives
+      // (onRinging below consumes this flag).
+      _cancelRequested = true;
+      logRtcEvent(
+        event: 'call.cancel_requested',
+        rtcKind: 'call',
+        mediaType: state.hasVideo ? 'video' : 'audio',
+        phase: 'outgoing-ringing',
+      );
+      _setActionPending(RtcCallAction.cancel);
+      return;
+    }
     logRtcEvent(
       event: 'call.cancel_sent',
       rtcKind: 'call',
@@ -100,12 +187,13 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       'type': 'rtc:cancel',
       'callId': callId,
     });
+    _clearActionTimer();
     state = RtcCallState.idle;
   }
 
   void hangupCall() {
     final callId = state.callId;
-    if (callId == null) return;
+    if (callId == null || state.phase != RtcCallPhase.connected) return;
     logRtcEvent(
       event: 'call.hangup_sent',
       rtcKind: 'call',
@@ -117,6 +205,13 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       'type': 'rtc:hangup',
       'callId': callId,
     });
+    _clearActionTimer();
+    state = RtcCallState.idle;
+  }
+
+  /// Clears a surfaced [RtcCallState.lastError] once the UI has shown it.
+  void dismissError() {
+    if (state.lastError == null) return;
     state = RtcCallState.idle;
   }
 
@@ -124,6 +219,24 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
 
   void onRinging(String callId) {
     if (state.phase != RtcCallPhase.outgoingRinging || state.callId != null) {
+      return;
+    }
+    if (_cancelRequested) {
+      // Cancel was tapped before the callId existed — finish it now.
+      _cancelRequested = false;
+      _ref.read(realtimeProvider).send({
+        'type': 'rtc:cancel',
+        'callId': callId,
+      });
+      logRtcEvent(
+        event: 'call.cancel_sent',
+        rtcKind: 'call',
+        rtcId: callId,
+        phase: 'outgoing-ringing',
+        metadata: {'reason': 'cancel_before_call_id'},
+      );
+      _clearActionTimer();
+      state = RtcCallState.idle;
       return;
     }
     state = state.copyWith(callId: callId);
@@ -164,6 +277,7 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
     if (!validPhase || (state.callId != null && state.callId != callId)) {
       return;
     }
+    _clearActionTimer();
     state = state.copyWith(
       phase: RtcCallPhase.connected,
       callId: callId,
@@ -173,6 +287,7 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
         roomName: roomName,
         maxDurationMinutes: maxDurationMinutes,
       ),
+      actionPending: null,
     );
     logRtcEvent(
       event: 'call.accepted_received',
@@ -205,6 +320,8 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       phase: state.phase.name,
       metadata: {'reason': reason},
     );
+    _cancelRequested = false;
+    _clearActionTimer();
     state = RtcCallState.idle;
   }
 
@@ -222,6 +339,8 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       error: reason,
       phase: state.phase.name,
     );
+    _cancelRequested = false;
+    _clearActionTimer();
     state = RtcCallState(lastError: reason);
   }
 

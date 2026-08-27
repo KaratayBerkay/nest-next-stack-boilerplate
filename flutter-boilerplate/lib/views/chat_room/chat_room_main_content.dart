@@ -1,5 +1,6 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/insert_emoji.dart';
 
 import '../../components/ui/scroll_to_bottom_button/scroll_to_bottom_button.dart';
 import '../../constants/theme.dart';
@@ -59,16 +60,8 @@ class ChatRoomMainContent extends StatelessWidget {
     this.onToggleEmoji,
   });
 
-  void _insertEmojiAtCursor(Emoji emoji) {
-    final text = messageController.text;
-    final selection = messageController.selection;
-    final start = selection.isValid ? selection.start : text.length;
-    final end = selection.isValid ? selection.end : text.length;
-    final updated = text.replaceRange(start, end, emoji.emoji);
-    messageController.value = TextEditingValue(
-      text: updated,
-      selection: TextSelection.collapsed(offset: start + emoji.emoji.length),
-    );
+  void _insertEmoji(Emoji emoji) {
+    insertEmojiAtCursor(messageController, emoji);
     onToggleEmoji?.call();
   }
 
@@ -136,7 +129,9 @@ class ChatRoomMainContent extends StatelessWidget {
                   children: [
                     HamburgerButton(
                       room: room,
-                      countLabel: _placeholder(t),
+                      // "{count} online", like the web header — this used to
+                      // show the composer's input placeholder here.
+                      countLabel: t.chatRoomCountOnline(roomCounts[room] ?? 0),
                       onClick: () => onSetSidebarOpen(true),
                     ),
                   ],
@@ -167,8 +162,7 @@ class ChatRoomMainContent extends StatelessWidget {
                       SizedBox(
                         height: 260,
                         child: EmojiPicker(
-                          onEmojiSelected: (_, emoji) =>
-                              _insertEmojiAtCursor(emoji),
+                          onEmojiSelected: (_, emoji) => _insertEmoji(emoji),
                         ),
                       ),
                     if (pendingAttachment != null)

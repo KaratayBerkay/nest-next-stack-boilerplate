@@ -43,12 +43,18 @@ class FreeNotificationPage extends ConsumerWidget {
                     ref.invalidate(notificationsProvider);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('All marked as read')),
+                        SnackBar(
+                          content: Text(
+                            AppLocalizations.of(context)
+                                .notificationAllMarkedRead,
+                          ),
+                        ),
                       );
                     }
                   } catch (_) {}
                 },
-                child: const Text('Mark all read'),
+                child:
+                    Text(AppLocalizations.of(context).notificationMarkAllRead),
               ),
             ],
           ),

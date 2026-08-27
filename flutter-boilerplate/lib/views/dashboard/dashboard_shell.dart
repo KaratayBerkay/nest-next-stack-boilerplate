@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
 class DashboardShell extends StatelessWidget {
@@ -71,14 +72,14 @@ class TeamPanel extends StatelessWidget {
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
-        _buildMember('Alice', 'Developer'),
-        _buildMember('Bob', 'Designer'),
-        _buildMember('Charlie', 'PM'),
+        _buildMember(context, 'Alice', 'Developer'),
+        _buildMember(context, 'Bob', 'Designer'),
+        _buildMember(context, 'Charlie', 'PM'),
       ],
     );
   }
 
-  Widget _buildMember(String name, String role) {
+  Widget _buildMember(BuildContext context, String name, String role) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
@@ -91,7 +92,10 @@ class TeamPanel extends StatelessWidget {
               Text(name, style: const TextStyle(fontWeight: FontWeight.w500)),
               Text(
                 role,
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.of(context).fgMuted,
+                ),
               ),
             ],
           ),

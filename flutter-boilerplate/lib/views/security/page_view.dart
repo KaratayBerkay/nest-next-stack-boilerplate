@@ -183,7 +183,7 @@ class _MfaTile extends ConsumerWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(e.message ?? t.securityMfaDisableFailed),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.of(context).danger,
             ),
           );
         }

@@ -35,6 +35,25 @@ void main() {
       expect(result.params, isNull);
     });
 
+    test('rtc routes claim no page — the backend rejects rtc claims', () {
+      // Web's route-mapping emits rtc-meeting/rtc-stream claims, but the
+      // server's PAGE_ALLOWLIST doesn't know them and answers with an error
+      // frame (which this app surfaces as a snackbar). RTC rooms handle
+      // their own reconnect catch-up locally instead.
+      expect(
+        routeToPageClaim(Uri.parse('/v1/en/rtc/meetings/abc-123')).page,
+        isNull,
+      );
+      expect(
+        routeToPageClaim(Uri.parse('/v1/en/rtc/live/xyz-789')).page,
+        isNull,
+      );
+      expect(
+        routeToPageClaim(Uri.parse('/v1/en/rtc/live/go-live')).page,
+        isNull,
+      );
+    });
+
     test('notification route returns notification page', () {
       final result = routeToPageClaim(Uri.parse('/v1/en/notification'));
       expect(result.page, 'notification');

@@ -38,5 +38,11 @@ PageClaim routeToPageClaim(Uri uri) {
     final room = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : 'general';
     return (page: 'chat-room', params: {'room': room});
   }
+  // Web's route-mapping.ts also produces `rtc-meeting`/`rtc-stream` claims
+  // here, but the backend's PAGE_ALLOWLIST doesn't know those pages and
+  // rejects them with an error frame — which this app surfaces as a snackbar
+  // (web silently drops error frames). RTC room pages handle their own
+  // reconnect catch-up locally instead (see their realtimeStatusProvider
+  // listeners), so no rtc claims are emitted from here.
   return (page: null, params: null);
 }

@@ -202,6 +202,7 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
   }
 
   Widget _postList(List<Post> posts, bool isLoadingMore, bool hasMore) {
+    final colors = AppColors.of(context);
     return RefreshIndicator(
       onRefresh: () => ref.read(paginatedFeedProvider.notifier).refresh(),
       child: ListView.builder(
@@ -227,12 +228,12 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.amber.shade100,
+                          color: colors.warning.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Text(
-                          '👑 Your Post',
-                          style: TextStyle(
+                        child: Text(
+                          AppLocalizations.of(context).feedYourPostBadge,
+                          style: const TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w500,
                           ),

@@ -1,5 +1,10 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
+    show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
@@ -8,10 +13,13 @@ import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
 import '../../app_config.dart';
+import '../../components/rtc/rtc_chat_panel.dart';
+import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/recording.dart';
 import '../../types/rtc/stream.dart';
@@ -75,6 +83,9 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         _live = result;
         _viewerCount = result.stream.viewerCount;
       });
+      // Keep the screen awake while broadcasting — the Flutter twin of the
+      // web's Wake Lock fix (without it the display times out mid-stream).
+      unawaited(WakelockPlus.enable());
       ref.read(realtimeProvider).send({
         'type': 'rtc:join-room-chat',
         'slug': result.stream.slug,
@@ -91,9 +102,12 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         phase: 'starting',
       );
       if (mounted) {
+        final message = e is DioException && (e.message?.isNotEmpty ?? false)
+            ? e.message!
+            : widget.t.rtcGoLiveFailed;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _starting = false);
@@ -379,8 +393,12 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         phase: 'active',
       );
       if (mounted) {
+        final message =
+            error is DioException && (error.message?.isNotEmpty ?? false)
+                ? error.message!
+                : t.rtcEndStreamFailed;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(content: Text(message)),
         );
       }
     }
@@ -407,8 +425,12 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         phase: 'active',
       );
       if (mounted) {
+        final message =
+            error is DioException && (error.message?.isNotEmpty ?? false)
+                ? error.message!
+                : error.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
@@ -418,6 +440,7 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     final slug = _live?.stream.slug;
     if (_sentJoinChat && slug != null) {
       ref
@@ -468,6 +491,22 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
       _lastHandledSignalSeq = next.seq;
       if (next.viewerCount != null) {
         setState(() => _viewerCount = next.viewerCount!);
+      }
+    });
+
+    // Chat-room membership (and the viewer-count pushes that ride on it) is
+    // per-WS-connection server-side — a reconnect silently drops it. Re-join
+    // and refetch the chat backlog whenever the socket comes back, mirroring
+    // the web view's [realtimeStatus] effect.
+    ref.listen<RealtimeStatus>(realtimeStatusProvider, (prev, next) {
+      if (next == RealtimeStatus.open &&
+          prev != RealtimeStatus.open &&
+          _sentJoinChat) {
+        ref.read(realtimeProvider).send({
+          'type': 'rtc:join-room-chat',
+          'slug': live.stream.slug,
+        });
+        ref.invalidate(streamChatProvider(live.stream.slug));
       }
     });
 
@@ -530,8 +569,9 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
                     _recording?.status == 'RECORDING'
                         ? Icons.stop_circle
                         : Icons.fiber_manual_record,
-                    color:
-                        _recording?.status == 'RECORDING' ? Colors.red : null,
+                    color: _recording?.status == 'RECORDING'
+                        ? AppColors.of(context).danger
+                        : null,
                   ),
                   label: Text(
                     _recording?.status == 'RECORDING'
@@ -576,59 +616,16 @@ class _StreamChatPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
     final PaginatedListState<StreamChatMessage> state = ref.watch(
       streamChatProvider(slug),
     );
 
-    return Column(
-      children: [
-        Expanded(
-          child: state.items.isEmpty
-              ? Center(child: Text(t.rtcNoChatMessages))
-              : ListView.builder(
-                  itemCount: state.items.length,
-                  itemBuilder: (context, index) {
-                    final m = state.items[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      child: RichText(
-                        text: TextSpan(
-                          style: DefaultTextStyle.of(context).style,
-                          children: [
-                            TextSpan(
-                              text: '${m.senderName}: ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            TextSpan(text: m.text),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(hintText: t.rtcChatPlaceholder),
-                  onSubmitted: (_) => onSend(),
-                ),
-              ),
-              IconButton(icon: const Icon(Icons.send), onPressed: onSend),
-            ],
-          ),
-        ),
+    return RtcChatPanel(
+      messages: [
+        for (final m in state.items) (senderName: m.senderName, text: m.text),
       ],
+      controller: controller,
+      onSend: onSend,
     );
   }
 }

@@ -43,7 +43,19 @@ class _CommentSectionState extends State<CommentSection> {
   String? _editingId;
 
   @override
+  void initState() {
+    super.initState();
+    // The submit button's disabled state reads the controller's text at
+    // build time — without a rebuild per keystroke it stayed disabled no
+    // matter what was typed (only the keyboard's submit action worked).
+    _bodyController.addListener(_onBodyChanged);
+  }
+
+  void _onBodyChanged() => setState(() {});
+
+  @override
   void dispose() {
+    _bodyController.removeListener(_onBodyChanged);
     _bodyController.dispose();
     _editController.dispose();
     super.dispose();

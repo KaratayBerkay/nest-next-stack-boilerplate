@@ -101,9 +101,10 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
       // losing them.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to export backup codes'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context).securityMfaExportCodesFailed),
+            backgroundColor: AppColors.of(context).danger,
           ),
         );
       }
@@ -122,9 +123,10 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to complete setup'),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content:
+                Text(AppLocalizations.of(context).securityMfaCompleteFailed),
+            backgroundColor: AppColors.of(context).danger,
           ),
         );
       }

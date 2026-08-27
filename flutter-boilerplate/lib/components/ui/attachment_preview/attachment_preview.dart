@@ -51,8 +51,13 @@ class AttachmentPreview extends ConsumerWidget {
         options: Options(responseType: ResponseType.bytes),
       );
       final dir = await getTemporaryDirectory();
-      final fileName = (name?.isNotEmpty ?? false) ? name! : 'attachment';
-      final file = File('${dir.path}/$fileName');
+      // The display name comes from the sender's upload metadata — strip any
+      // path separators so a crafted name can't escape the temp directory.
+      final rawName = (name?.isNotEmpty ?? false) ? name! : 'attachment';
+      final fileName = rawName.split(RegExp(r'[/\\]')).last;
+      final file = File(
+        '${dir.path}/${fileName.isNotEmpty ? fileName : 'attachment'}',
+      );
       await file.writeAsBytes(response.data!);
       await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
     } catch (_) {
@@ -158,7 +163,9 @@ class _FileChip extends StatelessWidget {
               const SizedBox(width: 6),
               Flexible(
                 child: Text(
-                  (name?.isNotEmpty ?? false) ? name! : 'Attachment',
+                  (name?.isNotEmpty ?? false)
+                      ? name!
+                      : AppLocalizations.of(context).messagesAttachmentLabel,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(fontSize: 12, color: colors.fg),

@@ -1670,6 +1670,90 @@ abstract class AppLocalizations {
   /// **'Try again'**
   String get errorTryAgain;
 
+  /// No description provided for @settingsSelectTimezone.
+  ///
+  /// In en, this message translates to:
+  /// **'Select timezone'**
+  String get settingsSelectTimezone;
+
+  /// No description provided for @settingsPageInfoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your account settings and preferences.'**
+  String get settingsPageInfoDescription;
+
+  /// No description provided for @sharePickImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Image'**
+  String get sharePickImage;
+
+  /// No description provided for @securityMfaExportCodesFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to export backup codes'**
+  String get securityMfaExportCodesFailed;
+
+  /// No description provided for @securityMfaCompleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to complete setup'**
+  String get securityMfaCompleteFailed;
+
+  /// No description provided for @notificationAllMarkedRead.
+  ///
+  /// In en, this message translates to:
+  /// **'All marked as read'**
+  String get notificationAllMarkedRead;
+
+  /// No description provided for @adminUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update'**
+  String get adminUpdateFailed;
+
+  /// No description provided for @feedYourPostBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'👑 Your Post'**
+  String get feedYourPostBadge;
+
+  /// No description provided for @authResendCodeFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to resend code'**
+  String get authResendCodeFailed;
+
+  /// No description provided for @postsFailedToLoadPost.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load post'**
+  String get postsFailedToLoadPost;
+
+  /// No description provided for @premiumStatsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load stats'**
+  String get premiumStatsLoadFailed;
+
+  /// No description provided for @settingsSessionsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load sessions.'**
+  String get settingsSessionsLoadFailed;
+
+  /// No description provided for @usersFailedToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load users'**
+  String get usersFailedToLoad;
+
+  /// No description provided for @findFriendsFailedToLoadRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load friend requests'**
+  String get findFriendsFailedToLoadRequests;
+
   /// No description provided for @errorFailedToLoad.
   ///
   /// In en, this message translates to:
@@ -6320,6 +6404,12 @@ abstract class AppLocalizations {
   /// **'Failed to upload attachment'**
   String get messagesAttachmentUploadFailed;
 
+  /// No description provided for @messagesSendMessageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send message. Try again.'**
+  String get messagesSendMessageFailed;
+
   /// No description provided for @messagesAttachmentOpenFailed.
   ///
   /// In en, this message translates to:
@@ -9008,6 +9098,12 @@ abstract class AppLocalizations {
   /// **'Disconnected. Reconnecting...'**
   String get chatRoomReconnecting;
 
+  /// No description provided for @chatRoomPageInfoDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Real-time chat rooms with multiple topics.'**
+  String get chatRoomPageInfoDescription;
+
   /// No description provided for @postsFailedToUpdateComment.
   ///
   /// In en, this message translates to:
@@ -11347,6 +11443,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You cannot call yourself'**
   String get rtcCannotCallSelf;
+
+  /// No description provided for @rtcCallUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This call is no longer available.'**
+  String get rtcCallUnavailable;
+
+  /// No description provided for @rtcConnectionUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection lost. Check your network and try again.'**
+  String get rtcConnectionUnavailable;
+
+  /// No description provided for @rtcCallErrorDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The call could not be completed. Please try again.'**
+  String get rtcCallErrorDescription;
+
+  /// No description provided for @rtcWaitingForPeer.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for {name} to join…'**
+  String rtcWaitingForPeer(Object name);
+
+  /// No description provided for @rtcCancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling…'**
+  String get rtcCancelling;
+
+  /// No description provided for @rtcSpeakerOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker on'**
+  String get rtcSpeakerOn;
+
+  /// No description provided for @rtcSpeakerOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Speaker off'**
+  String get rtcSpeakerOff;
+
+  /// No description provided for @rtcParticipantJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} joined'**
+  String rtcParticipantJoined(Object name);
+
+  /// No description provided for @rtcSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get rtcSomeone;
+
+  /// No description provided for @rtcJoinMeetingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to join meeting. Please try again.'**
+  String get rtcJoinMeetingFailed;
+
+  /// No description provided for @rtcEndMeetingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end meeting. Please try again.'**
+  String get rtcEndMeetingFailed;
+
+  /// No description provided for @rtcGoLiveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to go live. Please try again.'**
+  String get rtcGoLiveFailed;
+
+  /// No description provided for @rtcCreateMeetingFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create meeting. Please try again.'**
+  String get rtcCreateMeetingFailed;
+
+  /// No description provided for @rtcReportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report. Please try again.'**
+  String get rtcReportFailed;
+
+  /// No description provided for @tierUpgradeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Upgrade to access this feature'**
+  String get tierUpgradeTitle;
+
+  /// No description provided for @tierUpgradeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your current tier ({tier}) does not have access.'**
+  String tierUpgradeSubtitle(Object tier);
+
+  /// No description provided for @rtcEndStreamFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to end stream. Please try again.'**
+  String get rtcEndStreamFailed;
 
   /// No description provided for @rtcMyMeetingsTitle.
   ///

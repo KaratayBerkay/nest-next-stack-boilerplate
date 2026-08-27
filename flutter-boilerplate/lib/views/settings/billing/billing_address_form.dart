@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../constants/theme.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BillingAddressForm extends StatefulWidget {
   final Map<String, dynamic>? initialData;
@@ -65,18 +66,19 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         TextField(
           controller: _nameCtrl,
-          decoration: const InputDecoration(labelText: 'Full name'),
+          decoration: InputDecoration(labelText: t.settingsName),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _streetCtrl,
-          decoration: const InputDecoration(labelText: 'Street address'),
+          decoration: InputDecoration(labelText: t.settingsStreet),
         ),
         const SizedBox(height: 12),
         Row(
@@ -84,14 +86,14 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
             Expanded(
               child: TextField(
                 controller: _cityCtrl,
-                decoration: const InputDecoration(labelText: 'City'),
+                decoration: InputDecoration(labelText: t.settingsCity),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
                 controller: _stateCtrl,
-                decoration: const InputDecoration(labelText: 'State'),
+                decoration: InputDecoration(labelText: t.settingsState),
               ),
             ),
           ],
@@ -102,14 +104,14 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
             Expanded(
               child: TextField(
                 controller: _zipCtrl,
-                decoration: const InputDecoration(labelText: 'ZIP code'),
+                decoration: InputDecoration(labelText: t.settingsZipCode),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
                 controller: _countryCtrl,
-                decoration: const InputDecoration(labelText: 'Country'),
+                decoration: InputDecoration(labelText: t.settingsCountry),
               ),
             ),
           ],
@@ -117,7 +119,7 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
         const SizedBox(height: 12),
         TextField(
           controller: _vatCtrl,
-          decoration: const InputDecoration(labelText: 'VAT number'),
+          decoration: InputDecoration(labelText: t.settingsVatNumber),
         ),
         const SizedBox(height: 16),
         FilledButton(
@@ -125,7 +127,7 @@ class _BillingAddressFormState extends State<BillingAddressForm> {
           style: FilledButton.styleFrom(
             backgroundColor: colors.brand,
           ),
-          child: const Text('Save Address'),
+          child: Text(t.settingsSaveAddress),
         ),
       ],
     );

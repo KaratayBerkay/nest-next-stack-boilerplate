@@ -51,7 +51,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
               ? friendsAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => Center(child: Text(t.usersFailedToLoad)),
                   data: (friends) {
                     if (friends.isEmpty) {
                       return EmptyWidget(
@@ -101,7 +101,7 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
               : searchAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (e, _) => Center(child: Text('Error: $e')),
+                  error: (e, _) => Center(child: Text(t.usersFailedToLoad)),
                   data: (users) => ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: users.length,

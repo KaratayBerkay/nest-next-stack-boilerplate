@@ -261,7 +261,10 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: widget.provider == 'google' ? colors.fg : style.fg,
+            // Always the provider style's fg: the button background is a
+            // fixed brand color (Google's stays white even in dark mode),
+            // so theme-dependent `colors.fg` went near-white-on-white there.
+            color: style.fg,
           ),
         ),
         style: OutlinedButton.styleFrom(

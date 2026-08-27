@@ -14,8 +14,10 @@ import '../../api/server/messages/room_messages.dart';
 import '../../app/router.dart';
 import '../../app_config.dart';
 import '../../constants/chat.dart';
+import '../../constants/theme.dart';
 import '../../hooks/use_auth.dart';
 import '../../hooks/use_messages_page.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
 import '../../types/notification/notification_item.dart';
 import '../../types/rtc/meeting.dart';
@@ -257,10 +259,11 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
     case 'rtc:missed':
       final callId = frame['callId'] as String?;
       if (callId != null) {
-        ref.read(rtcCallProvider.notifier).onEnded(
-              callId,
-              reason: frame['type'] as String? ?? 'ended',
-            );
+        // 'rejected'/'cancelled'/… — same reason vocabulary the web
+        // provider logs, not the raw 'rtc:'-prefixed frame type.
+        final reason =
+            (frame['type'] as String? ?? 'ended').replaceFirst('rtc:', '');
+        ref.read(rtcCallProvider.notifier).onEnded(callId, reason: reason);
       }
     case 'rtc:call-limit-warning':
       final callId = frame['callId'] as String?;
@@ -553,8 +556,9 @@ void _showRealtimeError(Ref ref, String? text) {
   if (context == null || !context.mounted) return;
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(text ?? 'Something went wrong'),
-      backgroundColor: Colors.red,
+      content:
+          Text(text ?? AppLocalizations.of(context).errorSomethingWentWrong),
+      backgroundColor: AppColors.of(context).danger,
     ),
   );
 }

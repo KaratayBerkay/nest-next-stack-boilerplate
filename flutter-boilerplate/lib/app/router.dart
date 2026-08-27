@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import '../features/statics/index.dart';
 
 import '../hooks/use_auth.dart';
+import '../hooks/use_locale.dart';
 import '../views/about/page_content.dart';
 import '../views/admin/audit_logs/page_view.dart';
 import '../views/admin/page_view.dart';
@@ -185,13 +186,16 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isRootRoute = state.matchedLocation == '/';
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
       final isV1Route = state.matchedLocation.startsWith('/v1');
+      // The active locale, not a hardcoded 'en' — a Turkish user logging in
+      // used to get bounced into the English shell.
+      final lang = ref.read(localeProvider);
 
-      if (isRootRoute) return isLoggedIn ? '/v1/en/feed' : '/auth/login';
+      if (isRootRoute) return isLoggedIn ? '/v1/$lang/feed' : '/auth/login';
       if (!isLoggedIn && isV1Route) return '/auth/login';
       if (isLoggedIn &&
           isAuthRoute &&
           !state.matchedLocation.startsWith('/auth/verify-email')) {
-        return '/v1/en/feed';
+        return '/v1/$lang/feed';
       }
       return null;
     },

@@ -1,6 +1,9 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/bottom_anchored_scroll.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
+    show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -34,12 +37,11 @@ class ChatRoomBaseView extends ConsumerStatefulWidget {
   ConsumerState<ChatRoomBaseView> createState() => ChatRoomBaseViewState();
 }
 
-class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
+class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
+    with BottomAnchoredScroll {
   late String _room;
   bool _sidebarOpen = false;
   final _messageController = TextEditingController();
-  final _scrollController = ScrollController();
-  bool _isAtBottom = true;
   String? _lastMessageLastId;
   MessageAttachment? _pendingAttachment;
   bool _attaching = false;
@@ -47,7 +49,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
 
   List<String> get vipRooms => const [];
   bool get showSelfCrown => false;
-  String get _connectionState => 'online';
 
   /// `ChatRoomBaseView` is reused by the legacy `/v1/:lang/chat/:conversationId`
   /// route for 1:1 DM threads, where `_room` is actually a peer's user id, not
@@ -64,7 +65,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   void initState() {
     super.initState();
     _room = widget.initialRoom;
-    _scrollController.addListener(_onScroll);
     // SendButton's `disabled` is computed from messageController.text at
     // build time (mirrors the web's `disabled={!text.trim()}`, which
     // re-renders on every keystroke via controlled-input state) — without
@@ -79,21 +79,10 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   void dispose() {
     _messageController.removeListener(_onMessageTextChanged);
     _messageController.dispose();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     super.dispose();
   }
 
   void _onMessageTextChanged() => setState(() {});
-
-  void _onScroll() {
-    final maxScroll = _scrollController.position.maxScrollExtent;
-    final currentScroll = _scrollController.position.pixels;
-    final atBottom = (maxScroll - currentScroll) < 50;
-    if (atBottom != _isAtBottom) {
-      setState(() => _isAtBottom = atBottom);
-    }
-  }
 
   void _setupRealtime() {
     // Joining the room itself is handled by the route-driven page claim
@@ -152,24 +141,13 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       _pendingAttachment = null;
       _emojiOpen = false;
     });
-    _scrollToBottom();
+    scrollToBottom();
   }
 
   Future<void> _pickAttachment() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const [
-        'jpg',
-        'jpeg',
-        'png',
-        'webp',
-        'gif',
-        'avif',
-        'pdf',
-        'doc',
-        'docx',
-        'txt',
-      ],
+      allowedExtensions: ChatConstants.attachmentExtensions,
     );
     if (result == null || result.files.isEmpty) return;
     if (!mounted) return;
@@ -205,41 +183,23 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
     }
   }
 
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _settleToBottom());
-  }
-
-  /// `maxScrollExtent` is only an estimate until every item between the
-  /// current viewport and the end has actually been built — `ListView`
-  /// only lays out items near what's visible. For a long room, a single
-  /// jump/animate to that estimate undershoots, because scrolling through
-  /// is what makes Flutter build (and correct the estimate for) the rest.
-  /// Keep jumping to the newest estimate, one frame at a time, until it
-  /// stops growing, then finish with one smooth animation.
-  void _settleToBottom([int attempt = 0]) {
-    if (!_scrollController.hasClients) return;
-    final before = _scrollController.position.maxScrollExtent;
-    _scrollController.jumpTo(before);
-    if (attempt >= 8) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
-      final after = _scrollController.position.maxScrollExtent;
-      if (after > before) {
-        _settleToBottom(attempt + 1);
-      } else {
-        _scrollController.animateTo(
-          after,
-          duration: const Duration(milliseconds: 150),
-          curve: Curves.easeOut,
-        );
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = ref.watch(currentUserProvider);
-    final connected = ref.watch(realtimeConnectedProvider);
+    final realtimeStatus = ref.watch(realtimeStatusProvider);
+    final connected = realtimeStatus == RealtimeStatus.open;
+    // The composer's disabled state and placeholder mirror the web's
+    // connectionState prop — this used to be a constant 'online', which
+    // left the input claiming to be connected while the socket was down.
+    final connectionState = switch (realtimeStatus) {
+      RealtimeStatus.open => 'online',
+      RealtimeStatus.connecting ||
+      RealtimeStatus.authenticating ||
+      RealtimeStatus.backoff =>
+        'connecting',
+      _ => 'disconnected',
+    };
+    final onlineUserIds = ref.watch(onlineUsersProvider);
     final PaginatedListState<ChatMessage> messagesState;
     final VoidCallback onLoadMore;
     if (_isNamedRoom) {
@@ -285,8 +245,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       // (mirrors the web's `useAutoScroll`, whose `lastIdRef` starts null
       // too) and is what makes a freshly-opened room land at the bottom
       // instead of wherever ListView happens to initialize.
-      if (newLastId != _lastMessageLastId && _isAtBottom) {
-        _scrollToBottom();
+      if (newLastId != _lastMessageLastId && isAtBottom) {
+        scrollToBottom();
       }
       _lastMessageLastId = newLastId;
     }
@@ -330,15 +290,16 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       messagesContent = ChatRoomMainContent(
         room: _room,
         roomCounts: roomCounts,
-        connectionState: _connectionState,
+        connectionState: connectionState,
+        onlineUserIds: onlineUserIds,
         messages: messagesState.items,
         hasMore: messagesState.hasMore,
         isLoadingMore: messagesState.isLoadingMore,
         onLoadMore: onLoadMore,
         userId: user.id,
         messageController: _messageController,
-        scrollController: _scrollController,
-        isAtBottom: _isAtBottom,
+        scrollController: scrollController,
+        isAtBottom: isAtBottom,
         attaching: _attaching,
         emojiOpen: _emojiOpen,
         pendingAttachment: _pendingAttachment,
@@ -368,9 +329,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
                     context: context,
                     builder: (_) => AlertDialog(
                       title: Text(t.chatRoomTitle),
-                      content: const Text(
-                        'Real-time chat rooms with multiple topics.',
-                      ),
+                      content: Text(t.chatRoomPageInfoDescription),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.of(context).pop(),

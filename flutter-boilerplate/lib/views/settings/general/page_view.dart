@@ -194,9 +194,11 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
               ),
               const Divider(height: 1),
               ListTile(
-                title: const Text('Timezone'),
+                title: Text(t.settingsTimezone),
                 subtitle: Text(
-                  _stagedTimezone.isEmpty ? 'Select timezone' : _stagedTimezone,
+                  _stagedTimezone.isEmpty
+                      ? t.settingsSelectTimezone
+                      : _stagedTimezone,
                   style: TextStyle(color: colors.fgMuted, fontSize: 12),
                 ),
                 trailing: DropdownButton<String>(
@@ -221,7 +223,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
               ),
               const Divider(height: 1),
               ListTile(
-                title: const Text('Currency'),
+                title: Text(t.settingsCurrency),
                 subtitle: Text(
                   _stagedCurrency,
                   style: TextStyle(color: colors.fgMuted, fontSize: 12),
@@ -249,7 +251,7 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
               ),
               const Divider(height: 1),
               ListTile(
-                title: const Text('Date display'),
+                title: Text(t.settingsDateDisplay),
                 subtitle: Text(
                   _previewDate(_stagedDateDisplay),
                   style: TextStyle(color: colors.fgMuted, fontSize: 12),

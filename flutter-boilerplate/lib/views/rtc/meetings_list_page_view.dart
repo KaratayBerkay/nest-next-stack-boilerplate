@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../api/client/rtc/meetings_actions.dart';
 import '../../api/client/rtc/meetings_query.dart';
+import '../../app_config.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/meeting.dart';
@@ -38,6 +40,7 @@ class RtcMeetingsListPageContent extends ConsumerWidget {
         ],
       ),
     );
+    controller.dispose();
     if (title == null || title.trim().isEmpty || !context.mounted) return;
 
     try {
@@ -49,9 +52,12 @@ class RtcMeetingsListPageContent extends ConsumerWidget {
       }
     } catch (e) {
       if (context.mounted) {
+        final message = e is DioException && (e.message?.isNotEmpty ?? false)
+            ? e.message!
+            : t.rtcCreateMeetingFailed;
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        ).showSnackBar(SnackBar(content: Text(message)));
       }
     }
   }
@@ -73,72 +79,89 @@ class RtcMeetingsListPageContent extends ConsumerWidget {
           ),
         ],
       ),
-      body: meetings.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text(e.toString())),
-        data: (list) => list.isEmpty
-            ? Center(child: Text(t.rtcNoMeetings))
-            : ListView.builder(
-                itemCount: list.length,
-                itemBuilder: (context, index) {
-                  final meeting = list[index];
-                  final isActive = meeting.room.state == 'ACTIVE';
-                  return ListTile(
-                    leading: const Icon(Icons.groups_outlined),
-                    title: Text(meeting.title),
-                    subtitle: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? colors.success.withValues(alpha: 0.15)
-                                : colors.fgMuted.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            isActive
-                                ? t.rtcMeetingActiveLabel
-                                : t.rtcMeetingEndedLabel,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: isActive ? colors.success : colors.fgMuted,
+      body: RefreshIndicator(
+        onRefresh: () => ref.refresh(myMeetingsProvider.future),
+        child: meetings.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text(t.errorSomethingWentWrong)),
+          data: (list) => list.isEmpty
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    SizedBox(
+                      height: 320,
+                      child: Center(child: Text(t.rtcNoMeetings)),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  itemCount: list.length,
+                  itemBuilder: (context, index) {
+                    final meeting = list[index];
+                    final isActive = meeting.room.state == 'ACTIVE';
+                    return ListTile(
+                      leading: const Icon(Icons.groups_outlined),
+                      title: Text(meeting.title),
+                      subtitle: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? colors.success.withValues(alpha: 0.15)
+                                  : colors.fgMuted.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isActive
+                                  ? t.rtcMeetingActiveLabel
+                                  : t.rtcMeetingEndedLabel,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color:
+                                    isActive ? colors.success : colors.fgMuted,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.copy_outlined, size: 20),
-                          tooltip: t.rtcCopyLink,
-                          onPressed: () => _copyLink(context, meeting),
-                        ),
-                        if (isActive)
-                          TextButton(
-                            onPressed: () => context.push(
-                              '/v1/$lang/rtc/meetings/${meeting.slug}',
-                            ),
-                            child: Text(t.rtcJoin),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.copy_outlined, size: 20),
+                            tooltip: t.rtcCopyLink,
+                            onPressed: () => _copyLink(context, meeting),
                           ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+                          if (isActive)
+                            TextButton(
+                              onPressed: () => context.push(
+                                '/v1/$lang/rtc/meetings/${meeting.slug}',
+                              ),
+                              child: Text(t.rtcJoin),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+        ),
       ),
     );
   }
 
   void _copyLink(BuildContext context, Meeting meeting) {
     final t = AppLocalizations.of(context);
+    // An absolute web-app URL — a bare in-app path is useless to the invitee
+    // (web copies `${window.location.origin}/…` for the same reason).
     Clipboard.setData(
-      ClipboardData(text: '/v1/$lang/rtc/meetings/${meeting.slug}'),
+      ClipboardData(
+        text: '${AppConfig.webBaseUrl}/v1/$lang/rtc/meetings/${meeting.slug}',
+      ),
     );
     ScaffoldMessenger.of(
       context,

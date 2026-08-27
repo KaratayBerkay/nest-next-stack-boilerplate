@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/query.dart';
 import '../../app_config.dart';
@@ -11,6 +14,27 @@ import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/active_call_snapshot.dart';
 import '../ui/avatar/avatar.dart';
+
+/// Maps the stable, snake_case `reason` codes RtcCallService.sendError()
+/// sends over the wire to localized copy — same table as the web overlay's
+/// getCallErrorMessage (RtcCallOverlay.tsx).
+String callErrorMessage(String reason, AppLocalizations t) {
+  switch (reason) {
+    case 'callee_offline':
+      return t.rtcUserOffline;
+    case 'busy':
+      return t.rtcUserBusy;
+    case 'self_call':
+      return t.rtcCannotCallSelf;
+    case 'call_unavailable':
+      return t.rtcCallUnavailable;
+    case 'realtime_unavailable':
+    case 'action_timeout':
+      return t.rtcConnectionUnavailable;
+    default:
+      return t.rtcCallErrorDescription;
+  }
+}
 
 /// Global overlay for the whole 1:1-call lifecycle — incoming-ring sheet,
 /// outgoing-ring/connecting screen, and the in-call video/audio + controls.
@@ -37,6 +61,7 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
   bool _remoteConnected = false;
   bool _micEnabled = true;
   bool _cameraEnabled = true;
+  bool _speakerEnabled = true;
 
   @override
   void dispose() {
@@ -60,6 +85,7 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
         _remoteConnected = false;
         _micEnabled = true;
         _cameraEnabled = true;
+        _speakerEnabled = true;
       });
     }
   }
@@ -183,6 +209,16 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
         mediaType: state.hasVideo ? 'video' : 'audio',
         phase: 'connected',
       );
+      // Phone-call routing convention: video calls open on loudspeaker,
+      // voice calls on the earpiece — and keep the toggle in sync with the
+      // route actually applied.
+      final speakerOn = state.hasVideo;
+      if (mounted) setState(() => _speakerEnabled = speakerOn);
+      try {
+        await lk.AudioManager.instance.setSpeakerOutputPreferred(speakerOn);
+      } catch (_) {
+        // Desktop/web targets have no speakerphone route — ignore.
+      }
       try {
         await room.localParticipant?.setMicrophoneEnabled(true);
       } catch (error, stackTrace) {
@@ -296,6 +332,28 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
     );
   }
 
+  void _toggleSpeaker() {
+    if (_room == null) return;
+    final next = !_speakerEnabled;
+    setState(() => _speakerEnabled = next);
+    lk.AudioManager.instance.setSpeakerOutputPreferred(next).then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'call.media.speaker_toggle_failed',
+          rtcKind: 'call',
+          rtcId: _connectedForCallId,
+          mediaType: ref.read(rtcCallProvider).hasVideo ? 'video' : 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        if (mounted) setState(() => _speakerEnabled = !next);
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -308,6 +366,29 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
         _connectRoom(next);
       } else if (next.phase != RtcCallPhase.connected && _room != null) {
         _teardownRoom();
+      }
+      // Keep the screen awake for the whole call lifecycle (ringing
+      // included) — the Flutter twin of the web's Wake Lock fix: without
+      // it the display times out mid-call and Android suspends the app.
+      if (next.phase != RtcCallPhase.idle && prev?.phase == RtcCallPhase.idle) {
+        unawaited(WakelockPlus.enable());
+      } else if (next.phase == RtcCallPhase.idle &&
+          prev?.phase != RtcCallPhase.idle) {
+        unawaited(WakelockPlus.disable());
+      }
+      // rtc:error resets the call state, so without this the overlay just
+      // vanishes with zero feedback (calling an offline/busy user looked
+      // like nothing happened) — mirror the web overlay's error toast.
+      final error = next.lastError;
+      if (error != null && error != prev?.lastError) {
+        final messenger = ScaffoldMessenger.maybeOf(context);
+        messenger?.showSnackBar(
+          SnackBar(
+            content: Text(callErrorMessage(error, t)),
+            backgroundColor: colors.danger,
+          ),
+        );
+        notifier.dismissError();
       }
     });
 
@@ -336,10 +417,12 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
           remoteConnected: _remoteConnected,
           micEnabled: _micEnabled,
           cameraEnabled: _cameraEnabled,
+          speakerEnabled: _speakerEnabled,
           localVideoTrack: _localVideoTrack,
           remoteVideoTrack: _remoteVideoTrack,
           onToggleMic: _toggleMic,
           onToggleCamera: _toggleCamera,
+          onToggleSpeaker: _toggleSpeaker,
           onEnd: state.phase == RtcCallPhase.connected
               ? notifier.hangupCall
               : notifier.cancelCall,
@@ -363,6 +446,7 @@ class _IncomingCallSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
+    final accepting = state.actionPending == RtcCallAction.accept;
 
     return Material(
       color: colors.surface.withValues(alpha: 0.98),
@@ -400,13 +484,16 @@ class _IncomingCallSheet extends StatelessWidget {
                     color: colors.danger,
                     label: t.rtcDecline,
                     onPressed: onDecline,
+                    disabled: accepting,
                   ),
                   const SizedBox(width: 32),
                   _CallActionButton(
                     icon: Icons.call,
                     color: colors.success,
-                    label: t.rtcAccept,
+                    label: accepting ? t.rtcConnectingTitle : t.rtcAccept,
                     onPressed: onAccept,
+                    disabled: accepting,
+                    loading: accepting,
                   ),
                 ],
               ),
@@ -418,7 +505,7 @@ class _IncomingCallSheet extends StatelessWidget {
   }
 }
 
-class _ActiveCallScreen extends StatelessWidget {
+class _ActiveCallScreen extends StatefulWidget {
   final RtcCallState state;
   final AppColors colors;
   final AppLocalizations t;
@@ -426,10 +513,12 @@ class _ActiveCallScreen extends StatelessWidget {
   final bool remoteConnected;
   final bool micEnabled;
   final bool cameraEnabled;
+  final bool speakerEnabled;
   final lk.VideoTrack? localVideoTrack;
   final lk.VideoTrack? remoteVideoTrack;
   final VoidCallback onToggleMic;
   final VoidCallback onToggleCamera;
+  final VoidCallback onToggleSpeaker;
   final VoidCallback onEnd;
 
   const _ActiveCallScreen({
@@ -440,17 +529,92 @@ class _ActiveCallScreen extends StatelessWidget {
     required this.remoteConnected,
     required this.micEnabled,
     required this.cameraEnabled,
+    required this.speakerEnabled,
     required this.localVideoTrack,
     required this.remoteVideoTrack,
     required this.onToggleMic,
     required this.onToggleCamera,
+    required this.onToggleSpeaker,
     required this.onEnd,
   });
 
   @override
+  State<_ActiveCallScreen> createState() => _ActiveCallScreenState();
+}
+
+class _ActiveCallScreenState extends State<_ActiveCallScreen> {
+  Timer? _durationTimer;
+  DateTime? _callStart;
+  int _durationSeconds = 0;
+
+  @override
+  void didUpdateWidget(covariant _ActiveCallScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _syncTimer();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _syncTimer();
+  }
+
+  void _syncTimer() {
+    final isConnected = widget.state.phase == RtcCallPhase.connected;
+    if (isConnected && _durationTimer == null) {
+      _callStart = DateTime.now();
+      _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (!mounted) return;
+        setState(() {
+          _durationSeconds = DateTime.now().difference(_callStart!).inSeconds;
+        });
+      });
+    } else if (!isConnected && _durationTimer != null) {
+      _durationTimer?.cancel();
+      _durationTimer = null;
+      _callStart = null;
+      _durationSeconds = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _durationTimer?.cancel();
+    super.dispose();
+  }
+
+  static String _formatDuration(int totalSeconds) {
+    final mins = totalSeconds ~/ 60;
+    final secs = totalSeconds % 60;
+    return '$mins:${secs.toString().padLeft(2, '0')}';
+  }
+
+  /// Same status ladder as the web overlay: cancelling → calling → connecting
+  /// → waiting for peer → running duration.
+  String _statusText() {
+    final state = widget.state;
+    final t = widget.t;
+    if (state.phase == RtcCallPhase.outgoingRinging) {
+      return state.actionPending == RtcCallAction.cancel
+          ? t.rtcCancelling
+          : t.rtcCallingTitle(state.peer?.name ?? '');
+    }
+    if (!widget.connected) return t.rtcConnectingTitle;
+    if (!widget.remoteConnected) {
+      return t.rtcWaitingForPeer(state.peer?.name ?? '');
+    }
+    return _formatDuration(_durationSeconds);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final state = widget.state;
+    final colors = widget.colors;
+    final t = widget.t;
     final isConnected = state.phase == RtcCallPhase.connected;
-    final showVideo = isConnected && state.hasVideo && remoteVideoTrack != null;
+    final showVideo =
+        isConnected && state.hasVideo && widget.remoteVideoTrack != null;
+    final actionPending = state.actionPending != null;
 
     return Material(
       color: Colors.black,
@@ -459,7 +623,7 @@ class _ActiveCallScreen extends StatelessWidget {
           children: [
             if (showVideo)
               Positioned.fill(
-                child: lk.VideoTrackRenderer(remoteVideoTrack!),
+                child: lk.VideoTrackRenderer(widget.remoteVideoTrack!),
               )
             else
               Center(
@@ -469,7 +633,7 @@ class _ActiveCallScreen extends StatelessWidget {
                   radius: 48,
                 ),
               ),
-            if (isConnected && state.hasVideo && localVideoTrack != null)
+            if (isConnected && state.hasVideo && widget.localVideoTrack != null)
               Positioned(
                 right: 16,
                 top: 16,
@@ -478,7 +642,7 @@ class _ActiveCallScreen extends StatelessWidget {
                   height: 150,
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: lk.VideoTrackRenderer(localVideoTrack!),
+                    child: lk.VideoTrackRenderer(widget.localVideoTrack!),
                   ),
                 ),
               ),
@@ -497,9 +661,7 @@ class _ActiveCallScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    state.phase == RtcCallPhase.outgoingRinging
-                        ? t.rtcCallingTitle(state.peer?.name ?? '')
-                        : (!connected ? t.rtcConnectingTitle : ''),
+                    _statusText(),
                     style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                   if (state.warningSecondsRemaining != null)
@@ -522,19 +684,33 @@ class _ActiveCallScreen extends StatelessWidget {
                 children: [
                   if (isConnected) ...[
                     _CallActionButton(
-                      icon: micEnabled ? Icons.mic : Icons.mic_off,
+                      icon: widget.micEnabled ? Icons.mic : Icons.mic_off,
                       color: Colors.white24,
-                      label: micEnabled ? t.rtcMute : t.rtcUnmute,
-                      onPressed: onToggleMic,
+                      label: widget.micEnabled ? t.rtcMute : t.rtcUnmute,
+                      onPressed: widget.onToggleMic,
+                    ),
+                    const SizedBox(width: 20),
+                    _CallActionButton(
+                      icon: widget.speakerEnabled
+                          ? Icons.volume_up
+                          : Icons.volume_off,
+                      color: Colors.white24,
+                      label: widget.speakerEnabled
+                          ? t.rtcSpeakerOn
+                          : t.rtcSpeakerOff,
+                      onPressed: widget.onToggleSpeaker,
                     ),
                     const SizedBox(width: 20),
                     if (state.hasVideo)
                       _CallActionButton(
-                        icon:
-                            cameraEnabled ? Icons.videocam : Icons.videocam_off,
+                        icon: widget.cameraEnabled
+                            ? Icons.videocam
+                            : Icons.videocam_off,
                         color: Colors.white24,
-                        label: cameraEnabled ? t.rtcCameraOff : t.rtcCameraOn,
-                        onPressed: onToggleCamera,
+                        label: widget.cameraEnabled
+                            ? t.rtcCameraOff
+                            : t.rtcCameraOn,
+                        onPressed: widget.onToggleCamera,
                       ),
                     const SizedBox(width: 20),
                   ],
@@ -542,7 +718,8 @@ class _ActiveCallScreen extends StatelessWidget {
                     icon: Icons.call_end,
                     color: colors.danger,
                     label: isConnected ? t.rtcHangup : t.rtcCancel,
-                    onPressed: onEnd,
+                    onPressed: widget.onEnd,
+                    disabled: actionPending,
                   ),
                 ],
               ),
@@ -559,12 +736,16 @@ class _CallActionButton extends StatelessWidget {
   final Color color;
   final String label;
   final VoidCallback onPressed;
+  final bool disabled;
+  final bool loading;
 
   const _CallActionButton({
     required this.icon,
     required this.color,
     required this.label,
     required this.onPressed,
+    this.disabled = false,
+    this.loading = false,
   });
 
   @override
@@ -572,13 +753,27 @@ class _CallActionButton extends StatelessWidget {
     return Tooltip(
       message: label,
       child: InkWell(
-        onTap: onPressed,
+        onTap: disabled ? null : onPressed,
         customBorder: const CircleBorder(),
         child: Container(
           width: 56,
           height: 56,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: Icon(icon, color: Colors.white),
+          decoration: BoxDecoration(
+            color: disabled ? color.withValues(alpha: 0.4) : color,
+            shape: BoxShape.circle,
+          ),
+          child: loading
+              ? const Center(
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  ),
+                )
+              : Icon(icon, color: Colors.white),
         ),
       ),
     );

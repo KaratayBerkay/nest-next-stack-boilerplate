@@ -32,7 +32,7 @@ class CheckoutSuccessView extends StatelessWidget {
             Icon(
               isDowngrade ? Icons.arrow_downward : Icons.check_circle,
               size: 48,
-              color: isDowngrade ? colors.warning : Colors.green,
+              color: isDowngrade ? colors.warning : colors.success,
             ),
             const SizedBox(height: 16),
             Text(
@@ -40,7 +40,7 @@ class CheckoutSuccessView extends StatelessWidget {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,
-                color: isDowngrade ? colors.warning : Colors.green,
+                color: isDowngrade ? colors.warning : colors.success,
               ),
               textAlign: TextAlign.center,
             ),

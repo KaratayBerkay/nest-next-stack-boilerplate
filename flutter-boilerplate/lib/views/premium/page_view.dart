@@ -108,7 +108,10 @@ class _BasicPremiumViewState extends ConsumerState<_BasicPremiumView> {
       child: statsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(
-          child: Text('Error: $e', style: TextStyle(color: colors.danger)),
+          child: Text(
+            AppLocalizations.of(context).premiumStatsLoadFailed,
+            style: TextStyle(color: colors.danger),
+          ),
         ),
         data: (stats) => _StatsGrid(stats: stats),
       ),
@@ -152,8 +155,10 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) =>
-                Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) => Text(
+              AppLocalizations.of(context).premiumStatsLoadFailed,
+              style: TextStyle(color: colors.danger),
+            ),
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
@@ -164,8 +169,10 @@ class _MediumPremiumViewState extends ConsumerState<_MediumPremiumView> {
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) =>
-                Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) => Text(
+              AppLocalizations.of(context).premiumStatsLoadFailed,
+              style: TextStyle(color: colors.danger),
+            ),
             data: (growth) => _GrowthStatsGrid(growth: growth),
           ),
         ],
@@ -249,8 +256,10 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
           const SizedBox(height: 12),
           statsAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) =>
-                Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) => Text(
+              AppLocalizations.of(context).premiumStatsLoadFailed,
+              style: TextStyle(color: colors.danger),
+            ),
             data: (stats) => _StatsGrid(stats: stats),
           ),
           const SizedBox(height: 24),
@@ -261,8 +270,10 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
           const SizedBox(height: 12),
           growthAsync.when(
             loading: () => const _StatsLoadingRow(),
-            error: (e, _) =>
-                Text('Error: $e', style: TextStyle(color: colors.danger)),
+            error: (e, _) => Text(
+              AppLocalizations.of(context).premiumStatsLoadFailed,
+              style: TextStyle(color: colors.danger),
+            ),
             data: (growth) => _GrowthStatsGrid(growth: growth),
           ),
         ],

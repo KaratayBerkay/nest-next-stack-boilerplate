@@ -130,8 +130,10 @@ class _VerifyEmailPageContentState
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(e.message ?? 'Failed to resend code'),
-            backgroundColor: Colors.red,
+            content: Text(
+              e.message ?? AppLocalizations.of(context).authResendCodeFailed,
+            ),
+            backgroundColor: AppColors.of(context).danger,
           ),
         );
       }

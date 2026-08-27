@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/insert_emoji.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,6 +41,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   bool _isTyping = false;
   MessageAttachment? _pendingAttachment;
   bool _attaching = false;
+  bool _sending = false;
   bool _emojiOpen = false;
 
   @override
@@ -51,6 +53,11 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   }
 
   void _onTextChanged(String text) {
+    // `canSend` in build() reads the controller's text — without a rebuild
+    // per keystroke the send button stayed disabled no matter what was
+    // typed (only the keyboard's submit action worked).
+    setState(() {});
+
     if (text.trim().isNotEmpty && !_isTyping) {
       _isTyping = true;
       _sendTypingStart();
@@ -86,18 +93,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
   Future<void> _pickAttachment() async {
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
-      allowedExtensions: const [
-        'jpg',
-        'jpeg',
-        'png',
-        'webp',
-        'gif',
-        'avif',
-        'pdf',
-        'doc',
-        'docx',
-        'txt',
-      ],
+      allowedExtensions: ChatConstants.attachmentExtensions,
     );
     if (result == null || result.files.isEmpty) return;
     if (!mounted) return;
@@ -129,39 +125,42 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     }
   }
 
-  void _insertEmoji(Emoji emoji) {
-    final text = _controller.text;
-    final selection = _controller.selection;
-    final start = selection.isValid ? selection.start : text.length;
-    final end = selection.isValid ? selection.end : text.length;
-    final updated = text.replaceRange(start, end, emoji.emoji);
-    _controller.value = TextEditingValue(
-      text: updated,
-      selection: TextSelection.collapsed(offset: start + emoji.emoji.length),
-    );
-  }
-
   Future<void> _sendMessage() async {
     // Block send while the attachment upload is in flight — sending early
     // silently drops the attachment. This also covers the keyboard/IME
     // submit path, which bypasses the button-level disabled state (F35).
-    if (_attaching) return;
+    // `_sending` blocks the double-tap/double-submit path the same way.
+    if (_attaching || _sending) return;
     final text = _controller.text.trim();
     if (text.isEmpty && _pendingAttachment == null) return;
 
     _sendTypingStop();
 
-    await ref.read(messageActionsProvider).sendMessage(
-          widget.conversationId,
-          text,
-          attachment: _pendingAttachment,
-          replyToId: widget.replyTarget?.id,
-        );
-    if (!mounted) return;
-    _controller.clear();
-    setState(() => _pendingAttachment = null);
-    widget.onCancelReply?.call();
-    widget.onSent?.call();
+    setState(() => _sending = true);
+    try {
+      await ref.read(messageActionsProvider).sendMessage(
+            widget.conversationId,
+            text,
+            attachment: _pendingAttachment,
+            replyToId: widget.replyTarget?.id,
+          );
+      if (!mounted) return;
+      _controller.clear();
+      setState(() => _pendingAttachment = null);
+      widget.onCancelReply?.call();
+      widget.onSent?.call();
+    } catch (_) {
+      // Keep the draft (text/attachment/reply) so the user can retry —
+      // before this, a failed send died as an unhandled async error with
+      // zero feedback.
+      if (!mounted) return;
+      showToast(
+        context,
+        AppLocalizations.of(context).messagesSendMessageFailed,
+      );
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
   }
 
   @override
@@ -169,6 +168,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final canSend = !_attaching &&
+        !_sending &&
         (_controller.text.trim().isNotEmpty || _pendingAttachment != null);
 
     return Container(
@@ -233,7 +233,7 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
               child: EmojiPicker(
                 onEmojiSelected: (_, emoji) {
                   setState(() {
-                    _insertEmoji(emoji);
+                    insertEmojiAtCursor(_controller, emoji);
                     _emojiOpen = false;
                   });
                 },

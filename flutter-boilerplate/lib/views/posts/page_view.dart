@@ -90,7 +90,7 @@ class _PostsView extends ConsumerWidget {
         Expanded(
           child: postsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('Error: $e')),
+            error: (e, _) => Center(child: Text(t.feedFailedToLoadPosts)),
             data: (posts) => ListView.builder(
               padding: const EdgeInsets.all(8),
               itemCount: posts.length,

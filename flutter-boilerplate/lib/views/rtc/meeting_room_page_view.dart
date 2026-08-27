@@ -1,16 +1,24 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
+    show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/meeting_signal.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/friends/query.dart';
 import '../../api/client/rtc/meetings_actions.dart';
 import '../../api/client/rtc/meetings_chat_live.dart';
+import '../../api/server/rtc/meetings_recording.dart';
 import '../../app_config.dart';
+import '../../components/rtc/rtc_chat_panel.dart';
 import '../../components/rtc/rtc_report_dialog.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
@@ -84,6 +92,9 @@ class _RtcMeetingRoomPageContentState
   @override
   void initState() {
     super.initState();
+    // Keep the screen awake while in the meeting — the Flutter twin of the
+    // web's Wake Lock fix (without it the display times out mid-meeting).
+    unawaited(WakelockPlus.enable());
     _joinMeeting();
   }
 
@@ -99,6 +110,7 @@ class _RtcMeetingRoomPageContentState
           .read(realtimeProvider)
           .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
       _sentJoinChat = true;
+      if (result.role == 'HOST') unawaited(_fetchRecording());
       await _connectRoom(result.token, result.roomName);
     } catch (error, stackTrace) {
       logRtcEvent(
@@ -110,7 +122,42 @@ class _RtcMeetingRoomPageContentState
         stackTrace: stackTrace,
         phase: 'joining',
       );
-      if (mounted) setState(() => _phase = _RoomPhase.notFound);
+      if (!mounted) return;
+      // 404 means the slug doesn't exist; anything else (already ended,
+      // tier rejection, network) reads better as "ended" — same split the
+      // web view makes off the error's statusCode.
+      final status = error is DioException ? error.response?.statusCode : null;
+      setState(
+        () => _phase = status == 404 ? _RoomPhase.notFound : _RoomPhase.ended,
+      );
+      final message =
+          error is DioException && (error.message?.isNotEmpty ?? false)
+              ? error.message!
+              : AppLocalizations.of(context).rtcJoinMeetingFailed;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    }
+  }
+
+  /// Seeds the host's recording control with the meeting's current
+  /// recording, so re-entering an ongoing meeting doesn't show "Start
+  /// recording" while one is already running — the web view keeps this
+  /// fresh with a query; a one-shot fetch on join covers the same gap here.
+  Future<void> _fetchRecording() async {
+    try {
+      final current =
+          await ref.read(meetingRecordingServerProvider).get(widget.slug);
+      if (mounted && current != null) setState(() => _recording = current);
+    } catch (error) {
+      logRtcEvent(
+        event: 'meeting.recording_fetch_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        phase: 'joining',
+      );
     }
   }
 
@@ -380,21 +427,25 @@ class _RtcMeetingRoomPageContentState
     _chatController.clear();
   }
 
-  Future<void> _leave() async {
-    try {
-      await ref.read(meetingActionsProvider).leave(widget.slug);
-      if (mounted) context.pop();
-    } catch (error, stackTrace) {
+  void _leave() {
+    // Fire-and-forget like the web's handleLeave: navigation must not hang
+    // on the REST call — if the network just died (the common reason the
+    // LiveKit room dropped), awaiting it left the user stuck on a frozen
+    // grid with a Leave button that did nothing visible.
+    ref
+        .read(meetingActionsProvider)
+        .leave(widget.slug)
+        .catchError((Object error) {
       logRtcEvent(
         event: 'meeting.leave_failed',
         rtcKind: 'meeting',
         rtcId: widget.slug,
         exceptionType: 'CLIENT_REQUEST_ERROR',
         error: error,
-        stackTrace: stackTrace,
         phase: 'active',
       );
-    }
+    });
+    if (mounted) context.go('/v1/${widget.lang}/rtc/meetings');
   }
 
   Future<void> _end() async {
@@ -419,7 +470,7 @@ class _RtcMeetingRoomPageContentState
     if (confirmed != true) return;
     try {
       await ref.read(meetingActionsProvider).end(widget.slug);
-      if (mounted) context.pop();
+      if (mounted) context.go('/v1/${widget.lang}/rtc/meetings');
     } catch (error, stackTrace) {
       logRtcEvent(
         event: 'meeting.end_failed',
@@ -431,8 +482,12 @@ class _RtcMeetingRoomPageContentState
         phase: 'active',
       );
       if (mounted) {
+        final message =
+            error is DioException && (error.message?.isNotEmpty ?? false)
+                ? error.message!
+                : t.rtcEndMeetingFailed;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(content: Text(message)),
         );
       }
     }
@@ -450,9 +505,23 @@ class _RtcMeetingRoomPageContentState
     await showDialog<void>(
       context: context,
       builder: (context) => RtcReportDialog(
-        onSubmit: (reason, details) => ref
-            .read(meetingActionsProvider)
-            .report(widget.slug, reason, details: details),
+        onSubmit: (reason, details) async {
+          try {
+            await ref
+                .read(meetingActionsProvider)
+                .report(widget.slug, reason, details: details);
+          } catch (error) {
+            logRtcEvent(
+              event: 'meeting.report_failed',
+              rtcKind: 'meeting',
+              rtcId: widget.slug,
+              exceptionType: 'CLIENT_REQUEST_ERROR',
+              error: error,
+              metadata: {'reason': reason},
+            );
+            rethrow;
+          }
+        },
       ),
     );
   }
@@ -476,8 +545,12 @@ class _RtcMeetingRoomPageContentState
         phase: 'active',
       );
       if (mounted) {
+        final message =
+            error is DioException && (error.message?.isNotEmpty ?? false)
+                ? error.message!
+                : error.toString();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.toString())),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
@@ -487,6 +560,7 @@ class _RtcMeetingRoomPageContentState
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     if (_sentJoinChat) {
       ref
           .read(realtimeProvider)
@@ -527,9 +601,11 @@ class _RtcMeetingRoomPageContentState
         // only ever torn down from dispose() — a remote end/removal left it
         // connected indefinitely until the user happened to navigate away.
         _teardownRoom();
+        unawaited(WakelockPlus.disable());
       } else if (next.removed) {
         setState(() => _phase = _RoomPhase.removed);
         _teardownRoom();
+        unawaited(WakelockPlus.disable());
       } else if (next.forceMuted && _localMicEnabled) {
         _toggleMic();
       } else if (next.warningSecondsRemaining != null) {
@@ -541,9 +617,28 @@ class _RtcMeetingRoomPageContentState
           ),
         );
       } else if (next.joinedName != null) {
+        final name =
+            next.joinedName!.isNotEmpty ? next.joinedName! : t.rtcSomeone;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${next.joinedName} joined')),
+          SnackBar(content: Text(t.rtcParticipantJoined(name))),
         );
+      }
+    });
+
+    // Chat-room membership (and every meeting lifecycle push that rides on
+    // it: chat, ended/removed, force-mute, limit warnings) is per-WS-
+    // connection server-side — a reconnect silently drops it. Re-join and
+    // refetch the chat backlog whenever the socket comes back, the way the
+    // web view's [realtimeStatus] effect + resync invalidation do.
+    ref.listen<RealtimeStatus>(realtimeStatusProvider, (prev, next) {
+      if (next == RealtimeStatus.open &&
+          prev != RealtimeStatus.open &&
+          _phase == _RoomPhase.active &&
+          _sentJoinChat) {
+        ref
+            .read(realtimeProvider)
+            .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
+        ref.invalidate(meetingChatProvider(widget.slug));
       }
     });
 
@@ -621,8 +716,9 @@ class _RtcMeetingRoomPageContentState
                       _recording?.status == 'RECORDING'
                           ? Icons.stop_circle
                           : Icons.fiber_manual_record,
-                      color:
-                          _recording?.status == 'RECORDING' ? Colors.red : null,
+                      color: _recording?.status == 'RECORDING'
+                          ? colors.danger
+                          : null,
                     ),
                     label: Text(
                       _recording?.status == 'RECORDING'
@@ -740,7 +836,12 @@ class _ParticipantTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final track = participant.screenShareTrack ?? participant.videoTrack;
-    final showVideo = track != null && participant.cameraEnabled;
+    // A screen share renders regardless of the camera toggle — gating it on
+    // cameraEnabled hid an active share behind the avatar the moment the
+    // sharer turned their camera off. Only the camera feed follows the
+    // camera toggle.
+    final showVideo = participant.screenShareTrack != null ||
+        (participant.videoTrack != null && participant.cameraEnabled);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
@@ -748,7 +849,7 @@ class _ParticipantTile extends StatelessWidget {
         color: Colors.black87,
         child: Stack(
           children: [
-            if (showVideo)
+            if (showVideo && track != null)
               Positioned.fill(child: lk.VideoTrackRenderer(track))
             else
               Center(child: Avatar(name: participant.name, radius: 28)),
@@ -765,6 +866,15 @@ class _ParticipantTile extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  if (participant.screenShareTrack != null)
+                    const Padding(
+                      padding: EdgeInsets.only(right: 4),
+                      child: Icon(
+                        Icons.screen_share,
+                        color: Colors.white,
+                        size: 14,
+                      ),
+                    ),
                   if (!participant.micEnabled)
                     const Icon(Icons.mic_off, color: Colors.white, size: 14),
                 ],
@@ -790,59 +900,16 @@ class _ChatPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
     final PaginatedListState<MeetingChatMessage> state = ref.watch(
       meetingChatProvider(slug),
     );
 
-    return Column(
-      children: [
-        Expanded(
-          child: state.items.isEmpty
-              ? Center(child: Text(t.rtcNoChatMessages))
-              : ListView.builder(
-                  itemCount: state.items.length,
-                  itemBuilder: (context, index) {
-                    final m = state.items[index];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      child: RichText(
-                        text: TextSpan(
-                          style: DefaultTextStyle.of(context).style,
-                          children: [
-                            TextSpan(
-                              text: '${m.senderName}: ',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                            TextSpan(text: m.text),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: controller,
-                  decoration: InputDecoration(hintText: t.rtcChatPlaceholder),
-                  onSubmitted: (_) => onSend(),
-                ),
-              ),
-              IconButton(icon: const Icon(Icons.send), onPressed: onSend),
-            ],
-          ),
-        ),
+    return RtcChatPanel(
+      messages: [
+        for (final m in state.items) (senderName: m.senderName, text: m.text),
       ],
+      controller: controller,
+      onSend: onSend,
     );
   }
 }

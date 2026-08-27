@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../constants/theme.dart';
 import '../hooks/use_auth.dart';
+import '../l10n/app_localizations.dart';
 
 class TierGate extends ConsumerWidget {
   final Widget freeWidget;
@@ -50,6 +51,7 @@ class _UpgradePrompt extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Center(
       child: Padding(
@@ -60,12 +62,12 @@ class _UpgradePrompt extends StatelessWidget {
             Icon(Icons.lock_outline, size: 48, color: colors.fgMuted),
             const SizedBox(height: 16),
             Text(
-              'Upgrade to access this feature',
+              t.tierUpgradeTitle,
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
             Text(
-              'Your current tier ($tier) does not have access.',
+              t.tierUpgradeSubtitle(tier),
               style: TextStyle(color: colors.fgMuted),
             ),
           ],

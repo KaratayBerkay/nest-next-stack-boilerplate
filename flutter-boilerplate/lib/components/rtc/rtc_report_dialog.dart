@@ -27,6 +27,15 @@ class _RtcReportDialogState extends State<RtcReportDialog> {
       final details = _detailsController.text.trim();
       await widget.onSubmit(_reason, details.isEmpty ? null : details);
       if (mounted) setState(() => _done = true);
+    } catch (_) {
+      // Same as web's handleSubmit catch: surface the failure and keep the
+      // dialog open for a retry — otherwise a failed submit either bubbled
+      // as an unhandled async error or silently looked successful.
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context).rtcReportFailed)),
+        );
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

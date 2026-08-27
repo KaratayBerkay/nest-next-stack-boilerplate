@@ -61,7 +61,10 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(AppLocalizations.of(context).adminUpdateFailed),
+            backgroundColor: AppColors.of(context).danger,
+          ),
         );
       }
     }

@@ -4,6 +4,11 @@
 /// rtc_call_provider.dart for the notifier).
 enum RtcCallPhase { idle, outgoingRinging, incomingRinging, connected }
 
+/// A user action whose ack frame (rtc:accepted / rtc:cancelled / rtc:error)
+/// hasn't arrived yet — while set, the overlay disables the triggering
+/// controls so a double-tap can't send duplicate frames.
+enum RtcCallAction { accept, cancel, hangup }
+
 class RtcCallPeer {
   final String id;
   final String name;
@@ -32,6 +37,7 @@ class RtcCallState {
   final RtcLiveKitInfo? livekit;
   final int? warningSecondsRemaining;
   final String? lastError;
+  final RtcCallAction? actionPending;
 
   const RtcCallState({
     this.phase = RtcCallPhase.idle,
@@ -41,9 +47,12 @@ class RtcCallState {
     this.livekit,
     this.warningSecondsRemaining,
     this.lastError,
+    this.actionPending,
   });
 
   static const idle = RtcCallState();
+
+  static const Object _unset = Object();
 
   RtcCallState copyWith({
     RtcCallPhase? phase,
@@ -53,6 +62,9 @@ class RtcCallState {
     RtcLiveKitInfo? livekit,
     int? warningSecondsRemaining,
     String? lastError,
+    // Sentinel default so callers can clear the pending action with an
+    // explicit `actionPending: null` (the `??` pattern can't express that).
+    Object? actionPending = _unset,
   }) {
     return RtcCallState(
       phase: phase ?? this.phase,
@@ -63,6 +75,9 @@ class RtcCallState {
       warningSecondsRemaining:
           warningSecondsRemaining ?? this.warningSecondsRemaining,
       lastError: lastError ?? this.lastError,
+      actionPending: identical(actionPending, _unset)
+          ? this.actionPending
+          : actionPending as RtcCallAction?,
     );
   }
 }

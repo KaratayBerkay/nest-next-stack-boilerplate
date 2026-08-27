@@ -860,6 +860,50 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorTryAgain => 'Try again';
 
   @override
+  String get settingsSelectTimezone => 'Select timezone';
+
+  @override
+  String get settingsPageInfoDescription =>
+      'Manage your account settings and preferences.';
+
+  @override
+  String get sharePickImage => 'Pick Image';
+
+  @override
+  String get securityMfaExportCodesFailed => 'Failed to export backup codes';
+
+  @override
+  String get securityMfaCompleteFailed => 'Failed to complete setup';
+
+  @override
+  String get notificationAllMarkedRead => 'All marked as read';
+
+  @override
+  String get adminUpdateFailed => 'Failed to update';
+
+  @override
+  String get feedYourPostBadge => '👑 Your Post';
+
+  @override
+  String get authResendCodeFailed => 'Failed to resend code';
+
+  @override
+  String get postsFailedToLoadPost => 'Failed to load post';
+
+  @override
+  String get premiumStatsLoadFailed => 'Failed to load stats';
+
+  @override
+  String get settingsSessionsLoadFailed => 'Failed to load sessions.';
+
+  @override
+  String get usersFailedToLoad => 'Failed to load users';
+
+  @override
+  String get findFriendsFailedToLoadRequests =>
+      'Failed to load friend requests';
+
+  @override
   String get errorFailedToLoad => 'Failed to load messages';
 
   @override
@@ -3344,6 +3388,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesAttachmentUploadFailed => 'Failed to upload attachment';
 
   @override
+  String get messagesSendMessageFailed => 'Failed to send message. Try again.';
+
+  @override
   String get messagesAttachmentOpenFailed => 'Could not open attachment';
 
   @override
@@ -4747,6 +4794,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatRoomReconnecting => 'Disconnected. Reconnecting...';
 
   @override
+  String get chatRoomPageInfoDescription =>
+      'Real-time chat rooms with multiple topics.';
+
+  @override
   String get postsFailedToUpdateComment => 'Failed to update comment';
 
   @override
@@ -6008,6 +6059,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcCannotCallSelf => 'You cannot call yourself';
+
+  @override
+  String get rtcCallUnavailable => 'This call is no longer available.';
+
+  @override
+  String get rtcConnectionUnavailable =>
+      'Connection lost. Check your network and try again.';
+
+  @override
+  String get rtcCallErrorDescription =>
+      'The call could not be completed. Please try again.';
+
+  @override
+  String rtcWaitingForPeer(Object name) {
+    return 'Waiting for $name to join…';
+  }
+
+  @override
+  String get rtcCancelling => 'Cancelling…';
+
+  @override
+  String get rtcSpeakerOn => 'Speaker on';
+
+  @override
+  String get rtcSpeakerOff => 'Speaker off';
+
+  @override
+  String rtcParticipantJoined(Object name) {
+    return '$name joined';
+  }
+
+  @override
+  String get rtcSomeone => 'Someone';
+
+  @override
+  String get rtcJoinMeetingFailed =>
+      'Failed to join meeting. Please try again.';
+
+  @override
+  String get rtcEndMeetingFailed => 'Failed to end meeting. Please try again.';
+
+  @override
+  String get rtcGoLiveFailed => 'Failed to go live. Please try again.';
+
+  @override
+  String get rtcCreateMeetingFailed =>
+      'Failed to create meeting. Please try again.';
+
+  @override
+  String get rtcReportFailed => 'Failed to submit report. Please try again.';
+
+  @override
+  String get tierUpgradeTitle => 'Upgrade to access this feature';
+
+  @override
+  String tierUpgradeSubtitle(Object tier) {
+    return 'Your current tier ($tier) does not have access.';
+  }
+
+  @override
+  String get rtcEndStreamFailed => 'Failed to end stream. Please try again.';
 
   @override
   String get rtcMyMeetingsTitle => 'My meetings';

@@ -298,9 +298,9 @@ class _AccountFormState extends State<_AccountForm> {
                     ),
                   )
                 : _usernameAvailable == true
-                    ? const Icon(Icons.check_circle, color: Colors.green)
+                    ? Icon(Icons.check_circle, color: colors.success)
                     : _usernameAvailable == false
-                        ? const Icon(Icons.cancel, color: Colors.red)
+                        ? Icon(Icons.cancel, color: colors.danger)
                         : null,
             helperText: _usernameChecking
                 ? t.settingsUsernameChecking

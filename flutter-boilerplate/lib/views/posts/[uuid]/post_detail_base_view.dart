@@ -154,7 +154,7 @@ class _CommentSection extends ConsumerWidget {
             padding: EdgeInsets.all(16),
             child: Center(child: CircularProgressIndicator()),
           ),
-          error: (e, _) => Text('Error: $e'),
+          error: (e, _) => Text(t.postsFailedToLoadPost),
           data: (comments) => comments.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(16),

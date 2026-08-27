@@ -4,6 +4,22 @@ class ChatConstants {
   static const int maxMessageLength = 5000;
   static const int maxAttachmentSize = 10 * 1024 * 1024; // 10MB
   static const int pageSize = 50;
+
+  /// Accepted attachment extensions — the Flutter twin of the web's
+  /// ATTACHMENT_ACCEPT (constants/upload.ts), shared by the DM and
+  /// chat-room composers instead of each keeping its own copy.
+  static const List<String> attachmentExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'gif',
+    'avif',
+    'pdf',
+    'doc',
+    'docx',
+    'txt',
+  ];
   static const Duration typingTimeout = Duration(seconds: 3);
   // Mirrors the backend's DELETE_FOR_EVERYONE_WINDOW_MS
   // (nest-js-boilerplate/src/messaging/messaging.types.ts) — UI-only gate,

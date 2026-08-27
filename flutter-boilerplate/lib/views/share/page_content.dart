@@ -192,7 +192,7 @@ class _SharePageContentState extends ConsumerState<SharePageContent> {
                 TextButton.icon(
                   onPressed: _submitting ? null : _pickImage,
                   icon: const Icon(Icons.image, size: 18),
-                  label: const Text('Pick Image'),
+                  label: Text(t.sharePickImage),
                 ),
             ],
           ),

@@ -1,15 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_boilerplate/lib/pagination_state.dart';
+import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
+    show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
 import '../../app_config.dart';
+import '../../components/rtc/rtc_chat_panel.dart';
 import '../../components/rtc/rtc_report_dialog.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
@@ -69,6 +74,9 @@ class _RtcLiveViewerPageContentState
         _viewerCount = result.stream.viewerCount;
         _phase = _ViewerPhase.active;
       });
+      // Keep the screen awake while watching — the Flutter twin of the
+      // web's Wake Lock fix (without it the display times out mid-stream).
+      unawaited(WakelockPlus.enable());
       ref
           .read(realtimeProvider)
           .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
@@ -223,15 +231,24 @@ class _RtcLiveViewerPageContentState
       });
       return;
     }
-    lk.VideoTrack? video;
+    // Prefer an active screen share over the camera feed (web's
+    // StreamPlayer renders screenShareTrack ?? videoTrack) — iterating
+    // publications and keeping whichever came last made the choice
+    // arbitrary when both were live.
+    lk.VideoTrack? camera;
+    lk.VideoTrack? screenShare;
     for (final pub in broadcaster.videoTrackPublications) {
-      if (pub.track is lk.VideoTrack) {
-        video = pub.track as lk.VideoTrack;
+      final track = pub.track;
+      if (track is! lk.VideoTrack) continue;
+      if (pub.source == lk.TrackSource.screenShareVideo) {
+        screenShare = track;
+      } else {
+        camera = track;
       }
     }
     setState(() {
       _broadcasterOnline = true;
-      _videoTrack = video;
+      _videoTrack = screenShare ?? camera;
     });
   }
 
@@ -255,51 +272,60 @@ class _RtcLiveViewerPageContentState
     await room?.disconnect();
   }
 
-  Future<void> _leave() async {
-    try {
-      await ref.read(streamActionsProvider).leave(widget.slug);
-      if (mounted) context.pop();
-    } catch (error, stackTrace) {
+  void _leave() {
+    // Fire-and-forget like the web's handleLeave: navigation must not hang
+    // on the REST call — if the network just died (the common reason the
+    // LiveKit room dropped), awaiting it left the viewer stuck on a frozen
+    // frame with a Leave button that did nothing visible.
+    ref
+        .read(streamActionsProvider)
+        .leave(widget.slug)
+        .catchError((Object error) {
       logRtcEvent(
         event: 'stream.leave_failed',
         rtcKind: 'stream',
         rtcId: widget.slug,
         exceptionType: 'CLIENT_REQUEST_ERROR',
         error: error,
-        stackTrace: stackTrace,
         phase: 'active',
       );
-    }
+    });
+    if (mounted) context.go('/v1/${widget.lang}/rtc/live');
   }
 
   Future<void> _report() async {
     await showDialog<void>(
       context: context,
       builder: (context) => RtcReportDialog(
-        onSubmit: (reason, details) => ref
-            .read(streamActionsProvider)
-            .report(
-              widget.slug,
-              reason,
-              details: details,
-              reportedUserId: _join?.stream.broadcaster.id,
-            )
-            .catchError((Object error) {
-          logRtcEvent(
-            event: 'stream.report_failed',
-            rtcKind: 'stream',
-            rtcId: widget.slug,
-            exceptionType: 'CLIENT_REQUEST_ERROR',
-            error: error,
-            metadata: {'reason': reason},
-          );
-        }),
+        // Log-and-rethrow (web does the same): swallowing the error here
+        // made the dialog report success for a submit that never landed.
+        onSubmit: (reason, details) async {
+          try {
+            await ref.read(streamActionsProvider).report(
+                  widget.slug,
+                  reason,
+                  details: details,
+                  reportedUserId: _join?.stream.broadcaster.id,
+                );
+          } catch (error) {
+            logRtcEvent(
+              event: 'stream.report_failed',
+              rtcKind: 'stream',
+              rtcId: widget.slug,
+              exceptionType: 'CLIENT_REQUEST_ERROR',
+              error: error,
+              metadata: {'reason': reason},
+            );
+            rethrow;
+          }
+        },
       ),
     );
   }
 
   @override
   void dispose() {
+    unawaited(WakelockPlus.disable());
     if (_sentJoinChat) {
       ref
           .read(realtimeProvider)
@@ -340,8 +366,25 @@ class _RtcLiveViewerPageContentState
           // signal left the viewer's LiveKit connection open indefinitely
           // until the user happened to navigate away.
           _teardownRoom();
+          unawaited(WakelockPlus.disable());
         } else if (next.viewerCount != null) {
           setState(() => _viewerCount = next.viewerCount!);
+        }
+      });
+
+      // Chat-room membership (and every stream push that rides on it:
+      // chat, ended, viewer counts) is per-WS-connection server-side — a
+      // reconnect silently drops it. Re-join and refetch the chat backlog
+      // whenever the socket comes back, the way the web view's
+      // [realtimeStatus] effect + resync invalidation do.
+      ref.listen<RealtimeStatus>(realtimeStatusProvider, (prev, next) {
+        if (next == RealtimeStatus.open &&
+            prev != RealtimeStatus.open &&
+            _sentJoinChat) {
+          ref
+              .read(realtimeProvider)
+              .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
+          ref.invalidate(streamChatProvider(widget.slug));
         }
       });
     }
@@ -438,73 +481,18 @@ class _RtcLiveViewerPageContentState
             ),
           ),
           Expanded(
-            child: Column(
-              children: [
-                Expanded(
-                  child:
-                      ref.watch(streamChatProvider(widget.slug)).items.isEmpty
-                          ? Center(child: Text(t.rtcNoChatMessages))
-                          : _StreamChatList(slug: widget.slug),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _chatController,
-                          decoration: InputDecoration(
-                            hintText: t.rtcChatPlaceholder,
-                          ),
-                          onSubmitted: (_) => _sendChat(),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.send),
-                        onPressed: _sendChat,
-                      ),
-                    ],
-                  ),
-                ),
+            child: RtcChatPanel(
+              messages: [
+                for (final m
+                    in ref.watch(streamChatProvider(widget.slug)).items)
+                  (senderName: m.senderName, text: m.text),
               ],
+              controller: _chatController,
+              onSend: _sendChat,
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _StreamChatList extends ConsumerWidget {
-  final String slug;
-
-  const _StreamChatList({required this.slug});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final PaginatedListState<StreamChatMessage> state = ref.watch(
-      streamChatProvider(slug),
-    );
-    return ListView.builder(
-      itemCount: state.items.length,
-      itemBuilder: (context, index) {
-        final m = state.items[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-          child: RichText(
-            text: TextSpan(
-              style: DefaultTextStyle.of(context).style,
-              children: [
-                TextSpan(
-                  text: '${m.senderName}: ',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                ),
-                TextSpan(text: m.text),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }

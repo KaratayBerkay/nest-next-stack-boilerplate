@@ -56,7 +56,7 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
           Expanded(
             child: keysAsync.when(
               loading: () => const Center(child: SettingsLoadingFallback()),
-              error: (e, _) => Center(child: Text('Error: $e')),
+              error: (e, _) => Center(child: Text(t.settingsApiKeysLoadFailed)),
               data: (keys) {
                 if (keys.isEmpty) {
                   return Center(
@@ -285,15 +285,17 @@ class SettingsApiKeysPageContent extends ConsumerWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Make sure to copy your API key now. You won\'t be able to see it again.',
-              style: TextStyle(fontSize: 13),
+            Text(
+              AppLocalizations.of(context).settingsApiKeysCreated,
+              style: const TextStyle(fontSize: 13),
             ),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey.shade100,
+                // Token, not grey.shade100 — the hardcoded light box made
+                // the key unreadable in dark mode (light bg + light text).
+                color: AppColors.of(context).surfaceAlt,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SelectableText(

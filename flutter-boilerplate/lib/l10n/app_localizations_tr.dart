@@ -862,6 +862,50 @@ class AppLocalizationsTr extends AppLocalizations {
   String get errorTryAgain => 'Tekrar Dene';
 
   @override
+  String get settingsSelectTimezone => 'Saat dilimi seçin';
+
+  @override
+  String get settingsPageInfoDescription =>
+      'Hesap ayarlarınızı ve tercihlerinizi yönetin.';
+
+  @override
+  String get sharePickImage => 'Görsel Seç';
+
+  @override
+  String get securityMfaExportCodesFailed => 'Yedek kodlar dışa aktarılamadı';
+
+  @override
+  String get securityMfaCompleteFailed => 'Kurulum tamamlanamadı';
+
+  @override
+  String get notificationAllMarkedRead => 'Tümü okundu olarak işaretlendi';
+
+  @override
+  String get adminUpdateFailed => 'Güncellenemedi';
+
+  @override
+  String get feedYourPostBadge => '👑 Gönderiniz';
+
+  @override
+  String get authResendCodeFailed => 'Kod tekrar gönderilemedi';
+
+  @override
+  String get postsFailedToLoadPost => 'Gönderi yüklenemedi';
+
+  @override
+  String get premiumStatsLoadFailed => 'İstatistikler yüklenemedi';
+
+  @override
+  String get settingsSessionsLoadFailed => 'Oturumlar yüklenemedi.';
+
+  @override
+  String get usersFailedToLoad => 'Kullanıcılar yüklenemedi';
+
+  @override
+  String get findFriendsFailedToLoadRequests =>
+      'Arkadaşlık istekleri yüklenemedi';
+
+  @override
   String get errorFailedToLoad => 'Mesajlar yüklenemedi';
 
   @override
@@ -3349,6 +3393,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesAttachmentUploadFailed => 'Ek yüklenemedi';
 
   @override
+  String get messagesSendMessageFailed =>
+      'Mesaj gönderilemedi. Tekrar deneyin.';
+
+  @override
   String get messagesAttachmentOpenFailed => 'Ek açılamadı';
 
   @override
@@ -4758,6 +4806,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bağlantı kesildi. Yeniden bağlanılıyor...';
 
   @override
+  String get chatRoomPageInfoDescription =>
+      'Birden çok konulu gerçek zamanlı sohbet odaları.';
+
+  @override
   String get postsFailedToUpdateComment => 'Yorum güncellenemedi';
 
   @override
@@ -6021,6 +6073,70 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcCannotCallSelf => 'Kendinizi arayamazsınız';
+
+  @override
+  String get rtcCallUnavailable => 'Bu arama artık kullanılamıyor.';
+
+  @override
+  String get rtcConnectionUnavailable =>
+      'Bağlantı koptu. Ağınızı kontrol edip tekrar deneyin.';
+
+  @override
+  String get rtcCallErrorDescription =>
+      'Arama tamamlanamadı. Lütfen tekrar deneyin.';
+
+  @override
+  String rtcWaitingForPeer(Object name) {
+    return '$name katılmayı bekliyor…';
+  }
+
+  @override
+  String get rtcCancelling => 'İptal ediliyor…';
+
+  @override
+  String get rtcSpeakerOn => 'Hoparlör açık';
+
+  @override
+  String get rtcSpeakerOff => 'Hoparlör kapalı';
+
+  @override
+  String rtcParticipantJoined(Object name) {
+    return '$name katıldı';
+  }
+
+  @override
+  String get rtcSomeone => 'Biri';
+
+  @override
+  String get rtcJoinMeetingFailed =>
+      'Toplantıya katılınamadı. Lütfen tekrar deneyin.';
+
+  @override
+  String get rtcEndMeetingFailed =>
+      'Toplantı sonlandırılamadı. Lütfen tekrar deneyin.';
+
+  @override
+  String get rtcGoLiveFailed =>
+      'Canlı yayına geçilemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get rtcCreateMeetingFailed =>
+      'Toplantı oluşturulamadı. Lütfen tekrar deneyin.';
+
+  @override
+  String get rtcReportFailed => 'Şikayet gönderilemedi. Lütfen tekrar deneyin.';
+
+  @override
+  String get tierUpgradeTitle => 'Bu özelliğe erişmek için planınızı yükseltin';
+
+  @override
+  String tierUpgradeSubtitle(Object tier) {
+    return 'Mevcut planınızın ($tier) bu özelliğe erişimi yok.';
+  }
+
+  @override
+  String get rtcEndStreamFailed =>
+      'Yayın sonlandırılamadı. Lütfen tekrar deneyin.';
 
   @override
   String get rtcMyMeetingsTitle => 'Toplantılarım';
