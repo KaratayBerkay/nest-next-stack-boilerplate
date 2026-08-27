@@ -3,22 +3,21 @@ import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GrowthStats {
-  final int newUsersThisMonth;
-  final int newSubscriptionsThisMonth;
-  final double growthRate;
+  final int newUsersLast7Days;
+  final int totalPosts;
+  final int totalFriendships;
 
   const GrowthStats({
-    required this.newUsersThisMonth,
-    required this.newSubscriptionsThisMonth,
-    required this.growthRate,
+    required this.newUsersLast7Days,
+    required this.totalPosts,
+    required this.totalFriendships,
   });
 
   factory GrowthStats.fromJson(Map<String, dynamic> json) {
     return GrowthStats(
-      newUsersThisMonth:
-          json['newUsersLast7Days'] as int? ?? json['newUsersThisMonth'] as int,
-      newSubscriptionsThisMonth: json['newSubscriptionsThisMonth'] as int? ?? 0,
-      growthRate: (json['growthRate'] as num?)?.toDouble() ?? 0.0,
+      newUsersLast7Days: json['newUsersLast7Days'] as int,
+      totalPosts: json['totalPosts'] as int,
+      totalFriendships: json['totalFriendships'] as int,
     );
   }
 }

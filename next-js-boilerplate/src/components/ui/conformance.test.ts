@@ -14,12 +14,30 @@ const typesDir = join(srcDir, "types/ui");
 const galleryPath = join(srcDir, "constants/ui-gallery.ts");
 const demoBase = join(srcDir, "app/v1/[lang]/ui");
 
-// Component folders (directories inside src/components/ui/)
+// Component folders (directories inside src/components/ui/). A leading
+// underscore (e.g. `_shared`) marks an internal helper folder, not a
+// standalone showcased component — it isn't expected to have its own
+// barrel/shim/registry entry/demo route.
 function getComponentFolders(): string[] {
   return readdirSync(uiDir, { withFileTypes: true })
-    .filter((e) => e.isDirectory())
+    .filter((e) => e.isDirectory() && !e.name.startsWith("_"))
     .map((e) => e.name)
     .sort();
+}
+
+// Named exports from a folder's barrel (`export { Foo, Bar } from "./x"`).
+function getBarrelExportNames(folderPath: string): string[] {
+  const barrelPath = join(folderPath, "index.ts");
+  if (!existsSync(barrelPath)) return [];
+  const content = readFileSync(barrelPath, "utf-8");
+  const names: string[] = [];
+  for (const m of content.matchAll(/export\s*\{([^}]+)\}/g)) {
+    for (const part of m[1].split(",")) {
+      const name = part.split(" as ")[0].trim();
+      if (name) names.push(name);
+    }
+  }
+  return names;
 }
 
 // Get registry slugs from ui-gallery.ts
@@ -53,8 +71,22 @@ describe("UI component conformance", () => {
       });
 
       it("has a PascalCase shim at ui root", () => {
-        const shimName = `${toPascalCase(folder)}.tsx`;
-        expect(existsSync(join(uiDir, shimName))).toBe(true);
+        // Usually the shim is named after the naive kebab-case→PascalCase
+        // conversion of the folder name, but a folder's primary export can
+        // legitimately differ from its folder name (e.g. `emoji-picker`
+        // exports `EmojiPickerButton`, `input-otp` exports an acronym-cased
+        // `InputOTP`) — so accept a shim matching any of the barrel's named
+        // exports too, not just the naive conversion.
+        const candidates = [
+          toPascalCase(folder),
+          ...getBarrelExportNames(folderPath),
+        ];
+        const hasShim = candidates.some((name) =>
+          existsSync(join(uiDir, `${name}.tsx`)),
+        );
+        expect(hasShim, `no shim found — tried: ${candidates.join(", ")}`).toBe(
+          true,
+        );
       });
 
       it("has a types file in src/types/ui/", () => {

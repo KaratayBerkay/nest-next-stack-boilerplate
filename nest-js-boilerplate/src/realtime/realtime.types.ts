@@ -29,6 +29,16 @@ export type AuthWs = WebSocket & {
     string,
     { page: string | null; params?: Record<string, string> }
   >;
+  /**
+   * Per-connection processing chain — each inbound frame's handleMessage()
+   * call is appended after the previous one instead of firing independently.
+   * `ws`'s `'message'` event fires in wire order, but handleMessage is async
+   * (wire-crypto decrypt, DB writes), so without this, two frames sent back
+   * to back on the same socket could finish (and broadcast/persist) out of
+   * the order the client actually sent them in. Different sockets still run
+   * fully concurrently — this only serializes one connection's own frames.
+   */
+  _processingChain?: Promise<void>;
 };
 
 /**

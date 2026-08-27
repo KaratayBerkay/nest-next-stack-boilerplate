@@ -9,5 +9,13 @@ export function useApiKeyActions() {
     await revokeApiKeyServer(id);
   };
 
-  return { createApiKey, revokeApiKey };
+  const updateApiKey = async (
+    id: string,
+    changes: { name?: string; enabled?: boolean },
+  ) => {
+    const { updateApiKeyServer } = await import("@/api/server/api-keys/update");
+    return updateApiKeyServer(id, changes);
+  };
+
+  return { createApiKey, revokeApiKey, updateApiKey };
 }

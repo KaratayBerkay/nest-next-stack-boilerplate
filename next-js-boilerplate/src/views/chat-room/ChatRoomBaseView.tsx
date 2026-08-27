@@ -45,6 +45,7 @@ function ChatRoomContent({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [input, setInput] = useState("");
+  const [messageError, setMessageError] = useState<string | null>(null);
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
     {
@@ -79,6 +80,21 @@ function ChatRoomContent({
     anyUploading,
   } = useAttachmentUploads();
 
+  // Unlike ChatView (remounted per-peer via a `key`), this component owns
+  // `room` state itself, so switching rooms doesn't remount it — without
+  // this, a draft and any staged/uploading attachments would silently carry
+  // over and get sent to whichever room is selected when Send is clicked.
+  // Reset during render (React's recommended adjust-state-on-prop-change
+  // pattern) rather than in an effect, since an unconditional setState in an
+  // effect causes an extra render pass.
+  const [draftRoom, setDraftRoom] = useState(room);
+  if (room !== draftRoom) {
+    setDraftRoom(room);
+    setInput("");
+    setMessageError(null);
+    cancelUploads();
+  }
+
   const handleSend = useCallback(() => {
     // Block send while attachments are pending — WhatsApp-style, the modal's
     // Send is the only path that ships them together.
@@ -91,6 +107,8 @@ function ChatRoomContent({
       user,
       setInput,
       scrollToBottom,
+      setMessageError,
+      t.messageTooLong,
     );
   }, [
     input,
@@ -101,6 +119,7 @@ function ChatRoomContent({
     scrollToBottom,
     anyUploading,
     uploadItems.length,
+    t.messageTooLong,
   ]);
 
   const handleSendAttachments = useCallback(() => {
@@ -112,6 +131,8 @@ function ChatRoomContent({
       user,
       setInput,
       scrollToBottom,
+      setMessageError,
+      t.messageTooLong,
       doneAttachments(),
     );
     clearUploads();
@@ -124,6 +145,7 @@ function ChatRoomContent({
     scrollToBottom,
     doneAttachments,
     clearUploads,
+    t.messageTooLong,
   ]);
 
   const handleAttachFiles = useCallback(
@@ -209,6 +231,7 @@ function ChatRoomContent({
           hasNextPage={!!hasNextPage}
           onFetchNextPage={() => void fetchNextPage()}
           input={input}
+          messageError={messageError}
           attaching={anyUploading}
           uploadItems={uploadItems}
           bottomRef={bottomRef}

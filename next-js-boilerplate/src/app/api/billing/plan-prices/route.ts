@@ -14,17 +14,12 @@ const PLAN_PRICES_QUERY = `
 `;
 
 export async function GET(request: NextRequest) {
+  // Deliberately no auth gate: the backend's `planPrices` query is
+  // `@Public()` (plan prices are the same for every viewer), and this route
+  // is the guest-facing marketing pricing page's data source in addition to
+  // the authenticated Plans/checkout pages — `graphqlFetch` already handles
+  // an absent bearer token cleanly by just omitting the Authorization header.
   const accessToken = (await cookies()).get(ACCESS_TOKEN_COOKIE)?.value;
-  if (!accessToken) {
-    return NextResponse.json(
-      {
-        statusCode: 401,
-        exc: "EX_AUTH_INVALID_CREDENTIALS",
-        msg: "Unauthorized",
-      },
-      { status: 401 },
-    );
-  }
 
   const currency = request.nextUrl.searchParams.get("currency") ?? undefined;
 

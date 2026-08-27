@@ -7,6 +7,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { initials } from "@/lib/initials";
 import { fetchSuggestedFriendsServer } from "@/api/server/friends/suggested";
+import { useFriendActions } from "@/api/client/friends/actions";
 import type { SuggestedUser } from "@/types/find-friends/SuggestedFriendsPanel-types";
 
 async function loadSuggested(
@@ -35,8 +36,30 @@ async function loadSuggested(
 export function SuggestedFriendsPanel() {
   const t = useMessages("find-friends");
   const { toast } = useToast();
+  const { sendRequest } = useFriendActions();
   const [suggested, setSuggested] = useState<SuggestedUser[]>([]);
   const [loading, setLoading] = useState(false);
+  const [sendingId, setSendingId] = useState<string | null>(null);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+
+  const onAddFriend = async (userId: string) => {
+    setSendingId(userId);
+    try {
+      const ok = await sendRequest(userId);
+      if (ok) {
+        setSentIds((prev) => new Set(prev).add(userId));
+      } else {
+        toast({ description: t.failedToSendRequest, variant: "destructive" });
+      }
+    } catch (err) {
+      toast({
+        description: err instanceof Error ? err.message : t.failedToSendRequest,
+        variant: "destructive",
+      });
+    } finally {
+      setSendingId(null);
+    }
+  };
 
   return (
     <div className="border-border rounded-xl border p-4">
@@ -66,6 +89,7 @@ export function SuggestedFriendsPanel() {
           {suggested.map((s) => (
             <div key={s.id} className="flex items-center gap-2">
               <Avatar
+                src={s.avatarUrl}
                 fallback={initials(s.name ?? "?")}
                 className="bg-brand text-brand-fg h-8 w-8 shrink-0 text-[10px]"
               />
@@ -77,6 +101,15 @@ export function SuggestedFriendsPanel() {
                   {t.mutualFriends.replace("{count}", String(s.mutualFriends))}
                 </p>
               </div>
+              <Button
+                variant={sentIds.has(s.id) ? "soft" : "outline"}
+                size="xs"
+                disabled={sentIds.has(s.id) || sendingId === s.id}
+                loading={sendingId === s.id}
+                onClick={() => onAddFriend(s.id)}
+              >
+                {sentIds.has(s.id) ? t.requestSent : t.addFriend}
+              </Button>
             </div>
           ))}
         </div>

@@ -15,6 +15,12 @@ export function BillingSummary({ price, t }: BillingSummaryProps) {
           </span>
         </div>
       )}
+      {price.couponAmount > 0 && (
+        <div className="text-success flex justify-between">
+          <span>{t.couponDiscount}</span>
+          <span>-${price.couponAmount}</span>
+        </div>
+      )}
       <div className="flex justify-between font-semibold">
         <span>{t.total}</span>
         <span>${price.total}</span>

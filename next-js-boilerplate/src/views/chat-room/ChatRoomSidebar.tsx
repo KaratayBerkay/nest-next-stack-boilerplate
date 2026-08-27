@@ -32,14 +32,17 @@ export function ChatRoomSidebar({
       } border-border bg-bg flex max-h-full flex-col gap-4 rounded-xl border p-3 md:p-4`}
     >
       <div className="flex items-center justify-between pb-3 md:hidden">
-        <p className="text-muted text-xs font-semibold uppercase">Rooms</p>
-        <SidebarCloseButton onClick={() => onSetSidebarOpen(false)} />
+        <p className="text-muted text-xs font-semibold uppercase">{t.rooms}</p>
+        <SidebarCloseButton
+          onClick={() => onSetSidebarOpen(false)}
+          label={t.closeSidebar}
+        />
       </div>
 
       <Tabs defaultValue="rooms" className="flex flex-1 flex-col">
         <TabsList className="w-full">
           <TabsTrigger value="rooms" className="flex-1">
-            Rooms
+            {t.rooms}
           </TabsTrigger>
           <TabsTrigger value="online" className="flex-1">
             {t.online.replace("{count}", String(roomCounts[room] ?? 0))}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import type { RtcRecordingView } from "@/api/server/rtc/shared-types";
 
 interface RtcRecordingControlProps {
@@ -21,6 +22,7 @@ export function RtcRecordingControl({
   onStop,
 }: RtcRecordingControlProps) {
   const t = useMessages("rtc");
+  const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   const isRecording = recording?.status === "RECORDING";
 
@@ -29,6 +31,8 @@ export function RtcRecordingControl({
     try {
       if (isRecording) await onStop();
       else await onStart();
+    } catch {
+      toast({ title: t.recordingActionFailed, variant: "destructive" });
     } finally {
       setBusy(false);
     }

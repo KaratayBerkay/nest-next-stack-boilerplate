@@ -189,13 +189,17 @@ export class OAuthService {
   }
 
   async retrieveProfile(state: string): Promise<OAuthProfileResult> {
-    const raw = await this.redis.get(`${OAUTH_PROFILE_PREFIX}${state}`);
+    // GETDEL, not GET+DEL — this key is meant to be consumed exactly once.
+    // Two concurrent pickups for the same state (a retried BFF request, a
+    // double-loaded callback page) previously could both GET the profile
+    // before either DEL'd it, so both would proceed to log in/create a user
+    // from the same completed OAuth handshake instead of the second one
+    // correctly seeing it as already consumed.
+    const raw = await this.redis.getdel(`${OAUTH_PROFILE_PREFIX}${state}`);
     if (!raw) {
       throw new UnauthorizedException('OAuth profile expired or not found');
     }
-    const profile = JSON.parse(raw) as OAuthProfileResult;
-    await this.redis.del(`${OAUTH_PROFILE_PREFIX}${state}`);
-    return profile;
+    return JSON.parse(raw) as OAuthProfileResult;
   }
 
   private async fetchProfile(

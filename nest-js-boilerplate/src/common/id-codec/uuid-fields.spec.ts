@@ -51,11 +51,38 @@ describe('uuid-fields: schema-parse classification', () => {
     expect(fieldsByModel.get('RoomParticipant')?.has('roomId')).toBe(true);
     // ...but RoomMessage.roomId targets Room.slug, not Room.id.
     expect(fieldsByModel.get('RoomMessage')?.has('roomId')).toBe(false);
-    // The flat global set has no per-model context, so a name meaning
-    // different things in different models has to be dropped entirely
-    // rather than risk corrupting RoomMessage.roomId (a real routing slug)
-    // wherever it appears in a REST/WS payload.
-    expect(globalSafeNames.has('roomId')).toBe(false);
+    // RoomMessage.roomId isn't @db.Uuid — it's a plain-text FK to a slug
+    // column, not a rival uuid field — so it doesn't get a vote on the
+    // shared name at all. RoomParticipant.roomId's genuine qualification
+    // stands unopposed, and the global set can safely include it.
+    expect(globalSafeNames.has('roomId')).toBe(true);
+  });
+
+  it('still drops a name from the global set when two @db.Uuid-typed FKs genuinely disagree on target field', () => {
+    const { fieldsByModel, globalSafeNames } = _classifyForTests(`
+      model User {
+        id String @id @default(uuid(7)) @db.Uuid
+        email String @unique
+      }
+      model Post {
+        id String @id @default(uuid(7)) @db.Uuid
+        authorId String @db.Uuid
+        author User @relation(fields: [authorId], references: [id])
+      }
+      model Weird {
+        id String @id @default(uuid(7)) @db.Uuid
+        authorId String @db.Uuid
+        author User @relation(fields: [authorId], references: [email])
+      }
+    `);
+    // Post.authorId genuinely targets User.id...
+    expect(fieldsByModel.get('Post')?.has('authorId')).toBe(true);
+    // ...but Weird.authorId is ALSO @db.Uuid and targets a different
+    // (non-@id) field — a real ambiguity between two uuid-shaped columns,
+    // not a name coincidence with a non-uuid column. Must still be dropped
+    // from the flat global set.
+    expect(fieldsByModel.get('Weird')?.has('authorId')).toBe(false);
+    expect(globalSafeNames.has('authorId')).toBe(false);
   });
 
   it('does not include a plain non-relation string field', () => {
@@ -96,12 +123,19 @@ describe('uuid-fields: against the real schema.prisma', () => {
     expect(fieldsByModel.get('FavoriteConversation')?.has('peerId')).toBe(true);
     expect(fieldsByModel.get('MessageAttachment')?.has('messageId')).toBe(true);
 
-    // The roomId ambiguity, for real this time.
+    // The roomId ambiguity, for real this time: RoomMessage.roomId (a
+    // plain-text FK to Room.slug, no @db.Uuid) doesn't get a vote, so
+    // RoomParticipant.roomId's genuine qualification — and every RTC model's
+    // (CallSession/Meeting/LiveStream/RtcReport/RtcRecording/RtcChatMessage,
+    // all real @db.Uuid FKs to RtcRoom.id) — makes it into the global set.
     expect(fieldsByModel.get('RoomParticipant')?.has('roomId')).toBe(true);
     expect(fieldsByModel.get('RoomMessage')?.has('roomId')).toBe(false);
+    expect(fieldsByModel.get('CallSession')?.has('roomId')).toBe(true);
+    expect(fieldsByModel.get('Meeting')?.has('roomId')).toBe(true);
+    expect(fieldsByModel.get('LiveStream')?.has('roomId')).toBe(true);
 
     expect(globalSafeNames.has('authorId')).toBe(true);
-    expect(globalSafeNames.has('roomId')).toBe(false);
+    expect(globalSafeNames.has('roomId')).toBe(true);
     expect(globalSafeNames.has('cursor')).toBe(true);
     expect(globalSafeNames.has('readerId')).toBe(true);
 

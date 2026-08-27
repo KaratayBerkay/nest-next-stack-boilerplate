@@ -18,10 +18,14 @@ function readCurrency(): CurrencyCode {
 }
 
 export function useCurrencyCookie() {
-  const [currency, setCurrency] = useState<CurrencyCode>(() => {
-    if (typeof document === "undefined") return DEFAULT_CURRENCY;
-    return readCurrency();
-  });
+  // Always start at the default rather than eager-reading document.cookie:
+  // several consumers (pricing, plans, checkout) paint real server-priced
+  // amounts on the very first render, so an eager read here would mismatch
+  // the server render for anyone who has already chosen a non-default
+  // currency, producing a hydration mismatch. The effect below corrects to
+  // the real value immediately post-mount instead — same fix already
+  // applied to the sibling useDateDisplayCookie hook.
+  const [currency, setCurrency] = useState<CurrencyCode>(DEFAULT_CURRENCY);
 
   useEffect(() => {
     const check = () => setCurrency(readCurrency());

@@ -11,12 +11,15 @@ import { PageInfoButton } from "@/components/ui/page-info";
 import { settingsSessionsPageInfo } from "@/constants/page-info";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useSessionActions } from "@/api/client/sessions/actions";
+import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { eventLogger } from "@/lib/event-logger";
 import type { SessionInfo } from "@/types/settings/SessionInfo-types";
 import { SessionCard } from "./SessionCard";
 import { SessionSkeleton } from "./SessionSkeleton";
 import { EmptySessions } from "./EmptySessions";
+
+type ToastFn = ReturnType<typeof useToast>["toast"];
 
 async function loadSessions(
   setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
@@ -49,27 +52,40 @@ async function handleRevokeSessionModule(
   sessionId: string,
   revokeSession: (sessionId: string) => Promise<void>,
   setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
+  toast: ToastFn,
+  failedMessage: string,
 ) {
   try {
     await revokeSession(sessionId);
     setSessions((prev) => prev.filter((s) => s.sessionId !== sessionId));
-  } catch {}
+  } catch {
+    toast({ title: failedMessage, variant: "destructive" });
+  }
 }
 
 async function handleRevokeAllOtherSessionsModule(
   revokeOtherSessions: () => Promise<void>,
   currentSessionId: string | undefined,
   setSessions: React.Dispatch<React.SetStateAction<SessionInfo[]>>,
+  toast: ToastFn,
+  failedMessage: string,
 ) {
   try {
     await revokeOtherSessions();
     setSessions((prev) => prev.filter((s) => s.sessionId === currentSessionId));
-  } catch {}
+  } catch {
+    // Previously this silently did nothing — apiFetch (used before the
+    // sibling apiFetchJson fix) never threw on a non-2xx response, so this
+    // catch never even ran and the session list was optimistically cleared
+    // regardless of whether the backend actually revoked anything.
+    toast({ title: failedMessage, variant: "destructive" });
+  }
 }
 
 export function FreePageView({ className }: { className?: string }) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
+  const { toast } = useToast();
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(true);
   const [sessionsError, setSessionsError] = useState(false);
@@ -88,8 +104,14 @@ export function FreePageView({ className }: { className?: string }) {
 
   const handleRevokeSession = useCallback(
     (sessionId: string) =>
-      handleRevokeSessionModule(sessionId, revokeSession, setSessions),
-    [revokeSession],
+      handleRevokeSessionModule(
+        sessionId,
+        revokeSession,
+        setSessions,
+        toast,
+        t.revokeSessionFailed,
+      ),
+    [revokeSession, toast, t.revokeSessionFailed],
   );
 
   const handleRevokeAllOtherSessions = useCallback(
@@ -98,8 +120,15 @@ export function FreePageView({ className }: { className?: string }) {
         revokeOtherSessions,
         user?.sessionId,
         setSessions,
+        toast,
+        t.revokeAllOtherSessionsFailed,
       ),
-    [revokeOtherSessions, user?.sessionId],
+    [
+      revokeOtherSessions,
+      user?.sessionId,
+      toast,
+      t.revokeAllOtherSessionsFailed,
+    ],
   );
 
   if (loading) return <LoadingAuth />;

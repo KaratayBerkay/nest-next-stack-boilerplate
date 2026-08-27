@@ -7,36 +7,19 @@ import '../../../types/messages/conversation.dart';
 final conversationsServerProvider =
     Provider((ref) => ConversationsServer(ref.read(dioProvider)));
 
-const _query = '''
-  query Conversations {
-    conversations {
-      user { id name avatarUrl }
-      lastMessage
-      lastTime
-      unread
-    }
-  }
-''';
-
 class ConversationsServer {
   final Dio _dio;
 
   ConversationsServer(this._dio);
 
+  // Backend-native REST (`@Controller('api')` + `@Get('conversations')` on
+  // messaging.controller.ts, i.e. `/api/conversations` — NOT the unused,
+  // wrongly-pathed `ApiUrls.conversations` constant), not the GraphQL
+  // `conversations` query — the GraphQL `Conversation` ObjectType never
+  // declares a `favorite` field, only the REST response actually carries it.
   Future<List<Conversation>> call() async {
-    final response = await _dio.post<dynamic>(
-      '/graphql',
-      data: {'query': _query},
-    );
-    final body = response.data as Map<String, dynamic>;
-    if (body['errors'] != null) {
-      throw DioException(
-        requestOptions: response.requestOptions,
-        message: 'Failed to fetch conversations',
-      );
-    }
-    final list =
-        (body['data'] as Map<String, dynamic>)['conversations'] as List;
+    final response = await _dio.get<dynamic>('/api/conversations');
+    final list = response.data as List;
     return list
         .map((e) => _mapConversation(e as Map<String, dynamic>))
         .toList();
@@ -54,6 +37,7 @@ class ConversationsServer {
           ? DateTime.tryParse(json['lastTime'] as String)
           : null,
       unreadCount: (json['unread'] as num?)?.toInt() ?? 0,
+      isFavorite: json['favorite'] as bool? ?? false,
     );
   }
 }

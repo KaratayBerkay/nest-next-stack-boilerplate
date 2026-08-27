@@ -1,4 +1,5 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -77,8 +78,9 @@ export class UsageService {
     userId: string,
     additionalBytes: number,
     tier: SubscriptionTier,
+    tx?: Prisma.TransactionClient,
   ): Promise<void> {
-    const usage = await this.getUploadStorageUsage(userId, tier);
+    const usage = await this.getUploadStorageUsage(userId, tier, tx);
     if (usage.bytes + additionalBytes > usage.limitBytes) {
       this.logger.warn({
         category: 'usage',
@@ -106,8 +108,10 @@ export class UsageService {
   async getUploadStorageUsage(
     userId: string,
     tier: SubscriptionTier,
+    tx?: Prisma.TransactionClient,
   ): Promise<UploadStorageUsageResult> {
-    const agg = await this.prisma.pendingUpload.aggregate({
+    const client = tx ?? this.prisma;
+    const agg = await client.pendingUpload.aggregate({
       _sum: { size: true },
       _count: { _all: true },
       where: { uploadedBy: userId },

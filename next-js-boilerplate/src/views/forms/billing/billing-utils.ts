@@ -1,13 +1,32 @@
-import { PLANS } from "./billing-constants";
+import { PLANS, VALID_COUPONS } from "./billing-constants";
+
+export function resolveCouponPercent(code: string): number {
+  return VALID_COUPONS[code.toUpperCase()]?.pct ?? 0;
+}
 
 export function calcPrice(
   plan: string,
   period: string,
-): { subtotal: number; discountPercent: number | null; total: number } {
+  couponPct = 0,
+): {
+  subtotal: number;
+  discountPercent: number | null;
+  couponAmount: number;
+  total: number;
+} {
   const p = PLANS.find((x) => x.value === plan) ?? PLANS[0];
   const subtotal = period === "yearly" ? p.yearly : p.monthly;
   const discountPercent = period === "yearly" && p.monthly > 0 ? 20 : null;
-  return { subtotal, discountPercent, total: subtotal };
+  // Previously computed and displayed (see CouponStatus) but never actually
+  // deducted anywhere — the summary's Total stayed equal to the subtotal
+  // even with a valid coupon applied.
+  const couponAmount = Math.round(subtotal * (couponPct / 100));
+  return {
+    subtotal,
+    discountPercent,
+    couponAmount,
+    total: subtotal - couponAmount,
+  };
 }
 
 export function validateTaxId(

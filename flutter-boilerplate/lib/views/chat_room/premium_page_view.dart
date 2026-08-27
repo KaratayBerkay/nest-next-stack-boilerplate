@@ -20,8 +20,5 @@ class _PremiumPageViewState extends ChatRoomBaseViewState {
   List<String> get vipRooms => ChatConstants.vipRooms;
 
   @override
-  bool get useNativeControls => true;
-
-  @override
   bool get showSelfCrown => true;
 }

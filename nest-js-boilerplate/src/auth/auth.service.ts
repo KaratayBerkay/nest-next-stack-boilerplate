@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Inject,
   Injectable,
   Logger,
@@ -131,12 +132,28 @@ export class AuthService {
 
   async resendLoginCode(mfaToken: string): Promise<string> {
     const tokenHash = this.crypto.sha256(mfaToken);
-    const challenge = await this.tokenStore.consumeMfaChallenge(tokenHash);
+    // Peek (non-destructive) rather than consume: the previous version
+    // deleted the challenge up front, so a failed resend below (e.g. the
+    // 60s cooldown in EmailOtpService.resend, triggered by the very first
+    // send that started the challenge) permanently dead-ended the login —
+    // the old token was already gone and no new one had been written yet,
+    // forcing the user to restart the entire login flow from scratch.
+    const challenge = await this.tokenStore.peekMfaChallenge(tokenHash);
     if (!challenge) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_MFA_EXPIRED',
         msg: 'MFA challenge expired',
         key: 'auth.errors.mfaChallengeExpired',
+      });
+    }
+    if (challenge.mfaMethod === 'TOTP') {
+      // A TOTP code comes from the user's own authenticator app — there's
+      // nothing on our side to resend. Previously this fell through and
+      // sent a spurious "verification code" email regardless of method.
+      throw new BadRequestException({
+        exc: 'EX_AUTH_MFA_METHOD_NOT_RESENDABLE',
+        msg: 'This verification method cannot be resent',
+        key: 'auth.errors.mfaMethodNotResendable',
       });
     }
 
@@ -153,11 +170,15 @@ export class AuthService {
 
     await this.emailOtp.resend(user.id, user.email, 'LOGIN');
 
+    // Only rotate to a new challenge (and drop the old one) once the resend
+    // has actually gone out — if resend threw above, the original mfaToken
+    // is still fully valid and retryable.
     const newMfaToken = this.crypto.randomToken();
     const newTokenHash = this.crypto.sha256(newMfaToken);
     await this.tokenStore.writeMfaChallenge(newTokenHash, {
       ...challenge,
     });
+    await this.tokenStore.deleteMfaChallenge(tokenHash);
 
     return newMfaToken;
   }
@@ -184,7 +205,26 @@ export class AuthService {
   }
 
   async resendEmailCode(userId: string, email: string): Promise<boolean> {
-    await this.emailOtp.resend(userId, email, 'REGISTRATION');
+    // The client-supplied `email` is deliberately never trusted as the send
+    // target — this mutation is unauthenticated (it runs before a session
+    // exists, mid-registration), so trusting it let anyone who learned a
+    // pending user's id redirect that user's verification code to an
+    // attacker-controlled address, deleting the victim's real in-flight
+    // code as a side effect (EmailOtpService.resend does exactly that) and
+    // then completing the victim's registration themselves via
+    // verifyEmailCode. The real destination always comes from the account's
+    // own record, matching every other OTP-send path in this codebase.
+    void email;
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+    if (!user) {
+      // Same outcome as a real send — never reveal whether a userId exists
+      // to an unauthenticated caller.
+      return true;
+    }
+    await this.emailOtp.resend(userId, user.email, 'REGISTRATION');
     return true;
   }
 
@@ -222,9 +262,7 @@ export class AuthService {
     // own token to expire.
     if (sessionId) {
       const entries = await this.tokenStore.listSessionsWithKeys(userId);
-      const toRevoke = entries.filter(
-        (e) => e.session.sessionId !== sessionId,
-      );
+      const toRevoke = entries.filter((e) => e.session.sessionId !== sessionId);
       await Promise.all(toRevoke.map((e) => this.tokenStore.revoke(e.key)));
       for (const { session } of toRevoke) {
         this.realtime.closeSocketsForSession(userId, session.sessionId);

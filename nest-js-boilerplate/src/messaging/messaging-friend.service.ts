@@ -8,6 +8,14 @@ import { CacheAsideService } from '../caching/cache-aside.service';
 import { displayName } from '../common/utils/display-name';
 import { initials } from './messaging.types';
 
+/** Canonical (order-independent) lock key for a pair of users — send,
+ *  accept, and decline for the SAME two people all serialize against each
+ *  other, regardless of which direction (requester/addressee) is involved. */
+function friendshipLockKey(userId1: string, userId2: string): string {
+  const [a, b] = [userId1, userId2].sort();
+  return `friendship:${a}:${b}`;
+}
+
 export class MessagingFriendService {
   private readonly logger = new Logger(MessagingFriendService.name);
 
@@ -62,7 +70,10 @@ export class MessagingFriendService {
       );
   }
 
-  async getUsers(currentUserId: string, search?: string) {
+  private async buildUserSearchWhere(
+    currentUserId: string,
+    search?: string,
+  ): Promise<Prisma.UserWhereInput> {
     const existing = await this.prisma.friendship.findMany({
       where: {
         OR: [{ requesterId: currentUserId }, { addresseeId: currentUserId }],
@@ -84,6 +95,11 @@ export class MessagingFriendService {
         { name: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
       ];
+    return where;
+  }
+
+  async getUsers(currentUserId: string, search?: string) {
+    const where = await this.buildUserSearchWhere(currentUserId, search);
     const users = await this.prisma.user.findMany({
       where,
       orderBy: { name: 'asc' },
@@ -94,6 +110,12 @@ export class MessagingFriendService {
       name: displayName(u),
       avatar: initials(displayName(u)),
     }));
+  }
+
+  // getUsers hard-caps at 50 rows — this reports the true match count so callers don't mistake the cap for the total.
+  async getUsersCount(currentUserId: string, search?: string): Promise<number> {
+    const where = await this.buildUserSearchWhere(currentUserId, search);
+    return this.prisma.user.count({ where });
   }
 
   async getFriendIds(userId: string): Promise<string[]> {
@@ -214,102 +236,126 @@ export class MessagingFriendService {
         key: 'friends.errors.cannotFriendYourself',
       });
 
-    const existing = await this.prisma.friendship.findFirst({
-      where: {
-        OR: [
-          { requesterId, addresseeId },
-          { requesterId: addresseeId, addresseeId: requesterId },
-        ],
-      },
-    });
-    if (existing) {
-      if (existing.status === 'ACCEPTED')
-        throw new ForbiddenException({
-          exc: 'EX_CONFLICT_DUPLICATE',
-          msg: 'Already friends',
-          key: 'friends.errors.alreadyFriends',
-        });
-      if (existing.status === 'PENDING') {
-        if (existing.requesterId === requesterId)
+    // The findFirst-then-create/update below is a TOCTOU race: two
+    // concurrent sendFriendRequest calls for the same (requesterId,
+    // addresseeId) — a double-clicked "Add Friend" — could both see no
+    // existing row and both attempt create(); @@unique([requesterId,
+    // addresseeId]) backs it, but the loser's P2002 was never caught, so it
+    // surfaced as a raw 500 instead of the same friendly conflict the
+    // slower request would've seen. The advisory lock is keyed by the
+    // unordered pair so it also serializes against accept/decline for the
+    // same two people (which touch this same relationship from the other
+    // side).
+    const outcome = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${friendshipLockKey(requesterId, addresseeId)}))`;
+
+      const existing = await tx.friendship.findFirst({
+        where: {
+          OR: [
+            { requesterId, addresseeId },
+            { requesterId: addresseeId, addresseeId: requesterId },
+          ],
+        },
+      });
+      if (existing) {
+        if (existing.status === 'ACCEPTED')
           throw new ForbiddenException({
             exc: 'EX_CONFLICT_DUPLICATE',
-            msg: 'Friend request already sent',
-            key: 'friends.errors.requestAlreadySent',
+            msg: 'Already friends',
+            key: 'friends.errors.alreadyFriends',
           });
-        await this.prisma.friendship.update({
+        if (existing.status === 'PENDING') {
+          if (existing.requesterId === requesterId)
+            throw new ForbiddenException({
+              exc: 'EX_CONFLICT_DUPLICATE',
+              msg: 'Friend request already sent',
+              key: 'friends.errors.requestAlreadySent',
+            });
+          await tx.friendship.update({
+            where: { id: existing.id },
+            data: { status: 'ACCEPTED' },
+          });
+          return 'auto-accepted' as const;
+        }
+        if (existing.status === 'BLOCKED')
+          throw new ForbiddenException({
+            exc: 'EX_FORBIDDEN',
+            msg: 'Cannot send friend request',
+            key: 'friends.errors.blocked',
+          });
+        await tx.friendship.update({
           where: { id: existing.id },
-          data: { status: 'ACCEPTED' },
+          data: { status: 'PENDING' },
         });
-        void this.refreshFriendIds(requesterId);
-        void this.refreshFriendIds(addresseeId);
-        void this.cache.del(`friends:${requesterId}:`);
-        void this.cache.del(`friends:${addresseeId}:`);
-        void this.cache.del(`conversations:${requesterId}`);
-        void this.cache.del(`conversations:${addresseeId}`);
-        this.notifyFriendEvent(
-          addresseeId,
-          requesterId,
-          'accepted your friend request',
-          { kind: 'friend-accepted' },
-        );
-        return { success: true };
+        return 'requested' as const;
       }
-      if (existing.status === 'BLOCKED')
-        throw new ForbiddenException({
-          exc: 'EX_FORBIDDEN',
-          msg: 'Cannot send friend request',
-          key: 'friends.errors.blocked',
-        });
-      await this.prisma.friendship.update({
-        where: { id: existing.id },
-        data: { status: 'PENDING' },
+
+      await tx.friendship.create({
+        data: { requesterId, addresseeId, status: 'PENDING' },
       });
+      return 'requested' as const;
+    });
+
+    if (outcome === 'auto-accepted') {
+      void this.refreshFriendIds(requesterId);
+      void this.refreshFriendIds(addresseeId);
+      void this.cache.del(`friends:${requesterId}:`);
+      void this.cache.del(`friends:${addresseeId}:`);
+      void this.cache.del(`conversations:${requesterId}`);
+      void this.cache.del(`conversations:${addresseeId}`);
+      this.notifyFriendEvent(
+        addresseeId,
+        requesterId,
+        'accepted your friend request',
+        { kind: 'friend-accepted' },
+      );
+    } else {
       this.notifyFriendEvent(
         addresseeId,
         requesterId,
         'sent you a friend request',
         { kind: 'friend-request' },
       );
-      return { success: true };
     }
-
-    await this.prisma.friendship.create({
-      data: { requesterId, addresseeId, status: 'PENDING' },
-    });
-    this.notifyFriendEvent(
-      addresseeId,
-      requesterId,
-      'sent you a friend request',
-      { kind: 'friend-request' },
-    );
     return { success: true };
   }
 
   async acceptFriendRequest(userId: string, requesterId: string) {
-    const req = await this.prisma.friendship.findUnique({
-      where: { requesterId_addresseeId: { requesterId, addresseeId: userId } },
-    });
-    if (!req) throw new NotFoundException('Friend request not found');
-    if (req.status !== 'PENDING')
-      throw new ForbiddenException('Friend request is not pending');
+    // Same advisory lock key as sendFriendRequest/declineFriendRequest for
+    // this pair — otherwise this read-then-write (and the reverseReq
+    // read-then-write right after it) could race a concurrent call for the
+    // same two people (e.g. accept racing a simultaneous decline, or two
+    // accept clicks) into an inconsistent status pair.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${friendshipLockKey(userId, requesterId)}))`;
 
-    await this.prisma.friendship.update({
-      where: { id: req.id },
-      data: { status: 'ACCEPTED' },
-    });
-    const reverseReq = await this.prisma.friendship.findUnique({
-      where: {
-        requesterId_addresseeId: {
-          requesterId: userId,
-          addresseeId: requesterId,
+      const req = await tx.friendship.findUnique({
+        where: {
+          requesterId_addresseeId: { requesterId, addresseeId: userId },
         },
-      },
-    });
-    if (reverseReq?.status === 'PENDING')
-      await this.prisma.friendship.update({
-        where: { id: reverseReq.id },
+      });
+      if (!req) throw new NotFoundException('Friend request not found');
+      if (req.status !== 'PENDING')
+        throw new ForbiddenException('Friend request is not pending');
+
+      await tx.friendship.update({
+        where: { id: req.id },
         data: { status: 'ACCEPTED' },
       });
+      const reverseReq = await tx.friendship.findUnique({
+        where: {
+          requesterId_addresseeId: {
+            requesterId: userId,
+            addresseeId: requesterId,
+          },
+        },
+      });
+      if (reverseReq?.status === 'PENDING')
+        await tx.friendship.update({
+          where: { id: reverseReq.id },
+          data: { status: 'ACCEPTED' },
+        });
+    });
 
     void this.refreshFriendIds(requesterId);
     void this.refreshFriendIds(userId);
@@ -327,29 +373,36 @@ export class MessagingFriendService {
   }
 
   async declineFriendRequest(userId: string, requesterId: string) {
-    const req = await this.prisma.friendship.findUnique({
-      where: { requesterId_addresseeId: { requesterId, addresseeId: userId } },
-    });
-    if (!req) throw new NotFoundException('Friend request not found');
-    if (req.status !== 'PENDING')
-      throw new ForbiddenException('Friend request is not pending');
-    await this.prisma.friendship.update({
-      where: { id: req.id },
-      data: { status: 'DECLINED' },
-    });
-    const reverseReq = await this.prisma.friendship.findUnique({
-      where: {
-        requesterId_addresseeId: {
-          requesterId: userId,
-          addresseeId: requesterId,
+    // See acceptFriendRequest's comment — same pair-scoped advisory lock.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${friendshipLockKey(userId, requesterId)}))`;
+
+      const req = await tx.friendship.findUnique({
+        where: {
+          requesterId_addresseeId: { requesterId, addresseeId: userId },
         },
-      },
-    });
-    if (reverseReq?.status === 'PENDING')
-      await this.prisma.friendship.update({
-        where: { id: reverseReq.id },
+      });
+      if (!req) throw new NotFoundException('Friend request not found');
+      if (req.status !== 'PENDING')
+        throw new ForbiddenException('Friend request is not pending');
+      await tx.friendship.update({
+        where: { id: req.id },
         data: { status: 'DECLINED' },
       });
+      const reverseReq = await tx.friendship.findUnique({
+        where: {
+          requesterId_addresseeId: {
+            requesterId: userId,
+            addresseeId: requesterId,
+          },
+        },
+      });
+      if (reverseReq?.status === 'PENDING')
+        await tx.friendship.update({
+          where: { id: reverseReq.id },
+          data: { status: 'DECLINED' },
+        });
+    });
     return { success: true };
   }
 }

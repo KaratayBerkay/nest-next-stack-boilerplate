@@ -150,7 +150,7 @@ class PushNotificationService {
     if (kind == 'direct-message' && senderId != null) {
       navigateTo?.call('/v1/$lang/messages?user=$senderId');
     } else if (kind == 'friend-request' || kind == 'friend-accepted') {
-      navigateTo?.call('/v1/$lang/find-friends');
+      navigateTo?.call('/v1/$lang/find-friends/requests');
     } else if (postId != null) {
       navigateTo?.call('/v1/$lang/posts/$postId');
     } else {

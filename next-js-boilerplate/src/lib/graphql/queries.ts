@@ -100,6 +100,15 @@ export const POST_QUERY = `
           name
         }
       }
+      reactionBreakdown {
+        type
+        count
+      }
+      whoReacted {
+        userId
+        name
+        type
+      }
       _count {
         comments
         reactions

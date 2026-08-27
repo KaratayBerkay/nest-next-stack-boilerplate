@@ -1,6 +1,8 @@
+import { useState } from "react";
 import type { UserSearchCardProps } from "@/types/find-friends/UserSearchCard-types";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { initials } from "@/lib/initials";
 
 export function UserSearchCard({
@@ -10,7 +12,30 @@ export function UserSearchCard({
   onSendRequest,
   pendingLabel,
   addFriendLabel,
+  sendFailedMessage,
 }: UserSearchCardProps) {
+  const { toast } = useToast();
+  // Regression: this previously had no busy state at all and no failure
+  // feedback — a failed request (network blip, already-friends race) left
+  // the button clickable with no explanation, and a fast double-click could
+  // fire two concurrent send-request mutations.
+  const [sending, setSending] = useState(false);
+
+  async function handleSendRequest() {
+    if (sending) return;
+    setSending(true);
+    try {
+      const ok = await onSendRequest();
+      if (!ok) {
+        toast({ title: sendFailedMessage, variant: "destructive" });
+      }
+    } catch {
+      toast({ title: sendFailedMessage, variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  }
+
   return (
     <div className="flex items-center gap-3 rounded-lg border p-3">
       <Avatar
@@ -23,7 +48,12 @@ export function UserSearchCard({
           {pendingLabel}
         </span>
       ) : (
-        <Button size="sm" onClick={onSendRequest}>
+        <Button
+          size="sm"
+          disabled={sending}
+          loading={sending}
+          onClick={handleSendRequest}
+        >
           {addFriendLabel}
         </Button>
       )}

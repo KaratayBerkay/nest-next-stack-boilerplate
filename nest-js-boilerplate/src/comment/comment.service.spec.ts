@@ -10,10 +10,13 @@ interface MockPrisma {
     findMany: jest.Mock;
   };
   post: { findUnique: jest.Mock };
+  $executeRaw: jest.Mock;
+  $transaction: jest.Mock;
 }
 
 function mockPrisma(): MockPrisma {
-  return {
+  const prisma = {} as MockPrisma;
+  Object.assign(prisma, {
     comment: {
       findFirst: jest.fn(),
       create: jest.fn(),
@@ -22,7 +25,14 @@ function mockPrisma(): MockPrisma {
       findMany: jest.fn(),
     },
     post: { findUnique: jest.fn() },
-  };
+    $executeRaw: jest.fn().mockResolvedValue(undefined),
+    // Interactive $transaction: run the callback with `tx` === this same
+    // mock, matching this repo's established Prisma-mock convention (see
+    // billing.service.spec.ts) — good enough to prove call sequencing
+    // without a real Postgres instance.
+    $transaction: jest.fn((cb: (tx: MockPrisma) => unknown) => cb(prisma)),
+  });
+  return prisma;
 }
 
 describe('CommentService', () => {
@@ -135,6 +145,15 @@ describe('CommentService', () => {
     });
 
     it('rejects a second reply to the same parent comment by the same author', async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        authorId: 'post-author',
+        title: 'My Post',
+        deletedAt: null,
+      });
+      prisma.comment.findUnique.mockResolvedValue({
+        postId: 'p1',
+        deletedAt: null,
+      });
       prisma.comment.findFirst.mockResolvedValue({
         id: 'existing-reply',
         authorId: 'u1',
@@ -158,6 +177,10 @@ describe('CommentService', () => {
 
     it('allows the reply when no existing (non-deleted) reply exists', async () => {
       prisma.comment.findFirst.mockResolvedValue(null);
+      prisma.comment.findUnique.mockResolvedValue({
+        postId: 'p1',
+        deletedAt: null,
+      });
       prisma.comment.create.mockResolvedValue({
         id: 'c2',
         body: 'First reply',
@@ -177,6 +200,70 @@ describe('CommentService', () => {
           body: 'First reply',
         }),
       ).resolves.toMatchObject({ id: 'c2' });
+    });
+
+    it('rejects a comment on a soft-deleted post', async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        authorId: 'post-author',
+        title: 'My Post',
+        deletedAt: new Date(),
+      });
+
+      await expect(
+        service.create('u1', { postId: 'p1', body: 'Too late' }),
+      ).rejects.toThrow(NotFoundException);
+      expect(prisma.comment.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a reply whose parent belongs to a different post than data.postId", async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        authorId: 'post-author',
+        title: 'My Post',
+        deletedAt: null,
+      });
+      prisma.comment.findUnique.mockResolvedValue({
+        postId: 'a-different-post',
+        deletedAt: null,
+      });
+
+      await expect(
+        service.create('u1', {
+          postId: 'p1',
+          parentId: 'parent-1',
+          body: 'Mismatched reply',
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(prisma.comment.create).not.toHaveBeenCalled();
+    });
+
+    it('does not fail the mutation when the (already-committed) comment notification fails to send', async () => {
+      prisma.post.findUnique.mockResolvedValue({
+        authorId: 'post-author',
+        title: 'My Post',
+        deletedAt: null,
+      });
+      prisma.comment.create.mockResolvedValue({
+        id: 'c1',
+        body: 'Hi',
+        postId: 'p1',
+        authorId: 'u1',
+      });
+      mockNotifications.create.mockRejectedValueOnce(new Error('down'));
+
+      const result = await service.create('u1', {
+        postId: 'p1',
+        body: 'Hi',
+      });
+
+      expect(result.id).toBe('c1');
+      // Cache/realtime invalidation must still run despite the notification
+      // failure — previously an unguarded notification call skipped these
+      // entirely on failure.
+      expect(mockCache.invalidate).toHaveBeenCalledWith('cache:post:p1');
+      expect(mockRealtime.emitToTopic).toHaveBeenCalledWith(
+        'feed',
+        expect.any(Object),
+      );
     });
   });
 

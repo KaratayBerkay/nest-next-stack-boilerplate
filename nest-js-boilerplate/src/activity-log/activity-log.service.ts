@@ -48,6 +48,13 @@ export class ActivityLogService {
         page: event.page ?? null,
         durationMs: event.durationMs ?? null,
         exceptionType: event.exceptionType ?? null,
+        rtcKind: event.rtcKind ?? null,
+        rtcId: event.rtcId ?? null,
+        roomName: event.roomName ?? null,
+        mediaType: event.mediaType ?? null,
+        phase: event.phase ?? null,
+        errorMessage: event.errorMessage ?? null,
+        stack: event.stack ?? null,
         metadata: event.metadata ?? null,
       });
     }

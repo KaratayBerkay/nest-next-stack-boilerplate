@@ -48,7 +48,7 @@ export function RtcMeetingsListView() {
       window.location.href = `/v1/${lang}/rtc/meetings/${meeting.slug}`;
     } catch (err) {
       toast({
-        title: err instanceof Error ? err.message : "Failed to create meeting",
+        title: err instanceof Error ? err.message : t.createMeetingFailed,
         variant: "destructive",
       });
     } finally {
@@ -58,8 +58,10 @@ export function RtcMeetingsListView() {
 
   const copyLink = (slug: string) => {
     const url = `${window.location.origin}/v1/${lang}/rtc/meetings/${slug}`;
-    navigator.clipboard.writeText(url);
-    toast({ title: t.linkCopied });
+    navigator.clipboard
+      .writeText(url)
+      .then(() => toast({ title: t.linkCopied }))
+      .catch(() => toast({ title: t.linkCopyFailed, variant: "destructive" }));
   };
 
   return (

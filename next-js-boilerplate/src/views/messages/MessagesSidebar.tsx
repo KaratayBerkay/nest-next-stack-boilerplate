@@ -87,7 +87,7 @@ export function MessagesSidebar({
         <h2 className="text-fg text-lg font-bold">{t.title}</h2>
         <IconButton
           icon={<IconX size={18} />}
-          label="Close sidebar"
+          label={t.closeSidebar}
           variant="ghost"
           size="icon-sm"
           onClick={() => setSidebarOpen(false)}

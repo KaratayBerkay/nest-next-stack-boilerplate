@@ -52,7 +52,7 @@ export function ChatMessageList({
           <div className="flex justify-center py-2">
             <span className="bg-surface text-muted rounded-full px-3 py-1 text-[10px]">
               {group.date === new Date().toLocaleDateString()
-                ? "Today"
+                ? t.today
                 : group.date}
             </span>
           </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { CommentCard } from "./CommentCard";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { Comment } from "@/types/feed/CommentSection-types";
 import type { CommentListProps } from "@/types/feed/CommentList-types";
 
@@ -19,6 +20,7 @@ export function CommentList({
   onCommentAdded,
   dateDisplay,
 }: CommentListProps) {
+  const t = useMessages("posts");
   const topLevel = comments.filter((c) => !c.parentId);
   const replies = (parentId: string) =>
     comments.filter((c) => c.parentId === parentId);
@@ -45,7 +47,7 @@ export function CommentList({
   return (
     <div className="flex flex-col gap-1.5">
       {topLevel.length === 0 && (
-        <p className="text-muted px-1 text-xs">No comments yet.</p>
+        <p className="text-muted px-1 text-xs">{t.noCommentsYet}</p>
       )}
       {topLevel.map((comment) => (
         <div key={comment.id} className="flex flex-col gap-1">

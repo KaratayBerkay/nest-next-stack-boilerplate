@@ -24,6 +24,7 @@ import { notificationTarget } from "@/lib/notifications/target";
 import { Badge } from "@/components/feed/Badge";
 import { NotificationList } from "@/components/feed/NotificationList";
 import { useNotificationActions } from "@/api/client/notifications/actions";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 function handleToggle(setOpen: Dispatch<SetStateAction<boolean>>) {
   setOpen((prev) => !prev);
@@ -48,6 +49,7 @@ function handleNavigate(
 export function NotificationDropdown({
   lang = "en",
 }: NotificationDropdownProps) {
+  const t = useMessages("notification");
   const { data: notifData } = useNotifications();
   const { data: unreadCount = 0 } = useUnreadNotificationCount();
   const notifications = useMemo(
@@ -94,7 +96,11 @@ export function NotificationDropdown({
             <Badge count={unreadCount} />
           </>
         }
-        label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
+        label={
+          unreadCount > 0
+            ? t.notificationsWithUnread.replace("{count}", String(unreadCount))
+            : t.title
+        }
         onClick={() => handleToggle(setOpen)}
       />
 
@@ -118,11 +124,11 @@ export function NotificationDropdown({
             />
             <div className="bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4">
               <div className="flex items-center justify-between pb-3">
-                <span className="text-sm font-semibold">Notifications</span>
+                <span className="text-sm font-semibold">{t.title}</span>
                 <button
                   onClick={() => setOpen(false)}
                   className="text-muted hover:bg-surface-hover rounded-lg p-1"
-                  aria-label="Close"
+                  aria-label={t.close}
                 >
                   <svg
                     width="20"

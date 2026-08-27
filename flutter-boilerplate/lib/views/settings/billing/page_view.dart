@@ -465,6 +465,7 @@ class _BillingAddressSectionState
                             state: _address!['state'] as String?,
                             zip: _address!['zipCode'] as String?,
                             country: _address!['country'] as String?,
+                            vatNumber: _address!['vatNumber'] as String?,
                           )
                         : Text(
                             t.settingsBillingAddressEmpty,
@@ -721,7 +722,7 @@ class _InvoiceHistorySectionState
                         ),
                         trailing: Badge(
                           text: inv.status,
-                          variant: inv.status == 'paid'
+                          variant: inv.status == 'COMPLETED'
                               ? BadgeVariant.success
                               : BadgeVariant.warning,
                         ),

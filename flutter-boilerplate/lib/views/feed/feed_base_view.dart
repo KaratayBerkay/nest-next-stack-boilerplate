@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../api/client/posts/query.dart';
+import '../../api/server/posts/stats.dart';
 import '../../components/feed/feed_list_empty_state.dart';
 import '../../components/feed/post_stats_sidebar.dart';
 import '../../components/ui/page_info/page_info.dart';
@@ -153,8 +154,12 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
           ),
         ),
         Expanded(
-          child:
-              widget.showSidebar ? _SidebarLayout(content: content) : content,
+          child: widget.showSidebar
+              ? _SidebarLayout(
+                  content: content,
+                  onLoadStats: () => ref.read(postStatsServerProvider).call(),
+                )
+              : content,
         ),
       ],
     );
@@ -307,8 +312,9 @@ class _FeedBaseViewState extends ConsumerState<FeedBaseView> {
 
 class _SidebarLayout extends StatelessWidget {
   final Widget content;
+  final Future<PostStats> Function() onLoadStats;
 
-  const _SidebarLayout({required this.content});
+  const _SidebarLayout({required this.content, required this.onLoadStats});
 
   @override
   Widget build(BuildContext context) {
@@ -321,9 +327,11 @@ class _SidebarLayout extends StatelessWidget {
         children: [
           Expanded(child: content),
           const SizedBox(width: 16),
-          const SizedBox(
+          SizedBox(
             width: 224,
-            child: PostStatsSidebar(),
+            child: PostStatsSidebar(
+              onLoadStats: onLoadStats,
+            ),
           ),
         ],
       );
@@ -333,9 +341,11 @@ class _SidebarLayout extends StatelessWidget {
       children: [
         Expanded(child: content),
         const SizedBox(height: 16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 16),
-          child: PostStatsSidebar(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: PostStatsSidebar(
+            onLoadStats: onLoadStats,
+          ),
         ),
       ],
     );

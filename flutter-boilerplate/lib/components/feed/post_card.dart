@@ -39,6 +39,12 @@ class PostCard extends ConsumerWidget {
             onToggleReaction: (String type) => ref
                 .read(postActionsProvider)
                 .toggleReaction(post.id, type: type),
+            // No inline edit form on the feed card — the post detail page
+            // (wired up in MOB-008) has the real edit toggle, so route there.
+            onEditStart: () => context.push('/v1/$lang/posts/${post.id}'),
+            onDeleteConfirm: () =>
+                ref.read(postActionsProvider).delete(post.id),
+            onRefresh: () => ref.invalidate(paginatedFeedProvider),
           ),
           PostContent(postData: post),
           PostActions(

@@ -1,6 +1,52 @@
 import { createHash } from 'node:crypto';
-import { RealtimeGateway } from './realtime.gateway';
+import { RealtimeGateway, chainAfter } from './realtime.gateway';
 import { RealtimePresenceService } from './realtime-presence.service';
+
+describe('chainAfter', () => {
+  it('runs the next task only after the previous one settles, even when the previous one resolves later — regression: WS frames were dispatched via a bare fire-and-forget handleMessage().catch(...), so two frames sent back to back on the same connection could finish (and broadcast/persist) out of the order the client actually sent them in', async () => {
+    const order: string[] = [];
+    let resolveFirst!: () => void;
+    const first = () =>
+      new Promise<void>((resolve) => {
+        resolveFirst = () => {
+          order.push('first');
+          resolve();
+        };
+      });
+    const second = () => {
+      order.push('second');
+      return Promise.resolve();
+    };
+
+    const chain1 = chainAfter(undefined, first, () => {});
+    const chain2 = chainAfter(chain1, second, () => {});
+
+    // `second` must not have run yet — `first` hasn't resolved.
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(order).toEqual([]);
+
+    resolveFirst();
+    await chain2;
+
+    expect(order).toEqual(['first', 'second']);
+  });
+
+  it('reports a failure via onError without leaving the chain rejected — one bad frame must not jam every frame queued after it on the same connection', async () => {
+    const onError = jest.fn();
+    const chain1 = chainAfter(
+      undefined,
+      () => Promise.reject(new Error('boom')),
+      onError,
+    );
+    await chain1;
+    expect(onError).toHaveBeenCalledWith(new Error('boom'));
+
+    const second = jest.fn().mockResolvedValue(undefined);
+    await chainAfter(chain1, second, () => {});
+    expect(second).toHaveBeenCalled();
+  });
+});
 
 function mockCryptoService() {
   return {
@@ -370,5 +416,79 @@ describe('RealtimeGateway — public methods', () => {
       expect(internal().replaceDeviceSocket(ws)).toBeUndefined();
       expect(ws.close).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe('emitToUserEncrypted / emitToRoomEncrypted — cross-replica republish', () => {
+  let gateway: RealtimeGateway;
+  let redis: ReturnType<typeof mockRedisClient>;
+  let wireCrypto: { encryptForSession: jest.Mock };
+
+  beforeEach(() => {
+    redis = mockRedisClient();
+    wireCrypto = {
+      encryptForSession: jest
+        .fn()
+        .mockResolvedValue({ v: 2, nonce: 'n', ct: 'c' }),
+    };
+    gateway = new RealtimeGateway(
+      {} as never,
+      mockCryptoService() as never,
+      mockPresenceService(),
+      { get: jest.fn().mockReturnValue(5) } as never,
+      redis as never,
+      {} as never,
+      {} as never,
+      wireCrypto as never,
+    );
+  });
+
+  it('emitToUserEncrypted republishes to Redis by default (a genuine local-originated send)', async () => {
+    const ws = makeWs({ sessionId: 'sess-1' });
+    (
+      gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+    ).userSockets.set('u1', new Set([ws]));
+
+    await gateway.emitToUserEncrypted('u1', { type: 'test' });
+
+    expect(redis.publish).toHaveBeenCalled();
+  });
+
+  it("does NOT republish when fromRedis=true — regression: the Redis subscriber sets forwardingFromRedis=true, calls this method with `void` (fire-and-forget), then resets the flag to false in its own synchronous finally before this method's post-await continuation resumes. Reading that shared flag here (instead of an argument captured at call time) meant every cross-replica encrypted message got wrongly republished with a fresh eid the other replica had never seen — duplicating delivery and able to ping-pong indefinitely between replicas", async () => {
+    const ws = makeWs({ sessionId: 'sess-1' });
+    (
+      gateway as unknown as { userSockets: Map<string, Set<unknown>> }
+    ).userSockets.set('u1', new Set([ws]));
+
+    await gateway.emitToUserEncrypted('u1', { type: 'test' }, true);
+
+    expect(redis.publish).not.toHaveBeenCalled();
+    // Local delivery must still happen — only the republish is suppressed.
+    expect(ws.send).toHaveBeenCalled();
+  });
+
+  it('emitToRoomEncrypted republishes to Redis by default', async () => {
+    const ws = makeWs({ sessionId: 'sess-1' });
+    const roomMap = new Map([['sock-1', ws]]);
+    (
+      gateway as unknown as { roomSockets: Map<string, Map<string, unknown>> }
+    ).roomSockets.set('general', roomMap);
+
+    await gateway.emitToRoomEncrypted('general', { type: 'test' });
+
+    expect(redis.publish).toHaveBeenCalled();
+  });
+
+  it('emitToRoomEncrypted does NOT republish when fromRedis=true — same regression as emitToUserEncrypted', async () => {
+    const ws = makeWs({ sessionId: 'sess-1' });
+    const roomMap = new Map([['sock-1', ws]]);
+    (
+      gateway as unknown as { roomSockets: Map<string, Map<string, unknown>> }
+    ).roomSockets.set('general', roomMap);
+
+    await gateway.emitToRoomEncrypted('general', { type: 'test' }, true);
+
+    expect(redis.publish).not.toHaveBeenCalled();
+    expect(ws.send).toHaveBeenCalled();
   });
 });

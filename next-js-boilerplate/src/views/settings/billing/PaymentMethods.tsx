@@ -1,11 +1,26 @@
 "use client";
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { paymentMethodsQueryOptions } from "@/api/client/billing/payment-methods";
+import {
+  paymentMethodsQueryOptions,
+  useSetDefaultPaymentMethod,
+  useRemovePaymentMethod,
+} from "@/api/client/billing/payment-methods";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/Dialog";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { AddPaymentMethodForm } from "@/features/billing/ui/AddPaymentMethodForm";
 import type { PaymentMethodsProps } from "@/types/billing/PaymentMethods-types";
 import type { CardIconProps } from "@/types/billing/CardIcon-types";
 
@@ -44,18 +59,88 @@ function CardIcon({ brand }: CardIconProps) {
   );
 }
 
+function mutationErrorMessage(err: unknown, fallback: string): string {
+  const exception = (err as Error & { exception?: { msg?: string } })
+    ?.exception;
+  return exception?.msg ?? fallback;
+}
+
 export function PaymentMethods({ className }: PaymentMethodsProps) {
   const t = useMessages("settings");
+  const { toast } = useToast();
   const { data: paymentMethods, isLoading } = useQuery({
     ...paymentMethodsQueryOptions(),
     enabled: true,
   });
+  const setDefault = useSetDefaultPaymentMethod();
+  const removeMethod = useRemovePaymentMethod();
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [addCardError, setAddCardError] = useState<string | null>(null);
+
+  const handleSetDefault = (id: string) => {
+    setDefault.mutate(id, {
+      onSuccess: () => toast({ title: t.paymentMethodDefaultUpdated }),
+      onError: (err) =>
+        toast({
+          title: mutationErrorMessage(err, t.paymentMethodUpdateFailed),
+          variant: "destructive",
+        }),
+    });
+  };
+
+  const handleRemove = (id: string) => {
+    removeMethod.mutate(id, {
+      onSuccess: () => toast({ title: t.paymentMethodRemoved }),
+      onError: (err) =>
+        toast({
+          title: mutationErrorMessage(err, t.paymentMethodRemoveFailed),
+          variant: "destructive",
+        }),
+    });
+  };
+
+  const header = (
+    <div className="flex items-center justify-between">
+      <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+      <Button variant="outline" size="sm" onClick={() => setShowAddCard(true)}>
+        {t.addPaymentMethod}
+      </Button>
+    </div>
+  );
+
+  const addCardDialog = (
+    <Dialog
+      open={showAddCard}
+      onOpenChange={(open) => {
+        setShowAddCard(open);
+        if (!open) setAddCardError(null);
+      }}
+    >
+      <DialogContent size="sm">
+        <DialogHeader>
+          <DialogTitle>{t.addPaymentMethod}</DialogTitle>
+        </DialogHeader>
+        {addCardError && (
+          <p className="text-destructive text-sm">{addCardError}</p>
+        )}
+        <AddPaymentMethodForm
+          onSuccess={() => {
+            setShowAddCard(false);
+            setAddCardError(null);
+            toast({ title: t.paymentMethodAdded });
+          }}
+          onError={setAddCardError}
+        />
+      </DialogContent>
+    </Dialog>
+  );
 
   if (isLoading) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+        {header}
         <p className="text-muted text-sm">{t.loading}</p>
+        {addCardDialog}
       </div>
     );
   }
@@ -65,42 +150,78 @@ export function PaymentMethods({ className }: PaymentMethodsProps) {
   if (methods.length === 0) {
     return (
       <div className={cn("flex flex-col gap-3", className)}>
-        <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+        {header}
         <p className="text-muted text-sm">{t.noPaymentMethods}</p>
+        {addCardDialog}
       </div>
     );
   }
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
-      <h3 className="text-sm font-medium">{t.paymentMethods}</h3>
+      {header}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {methods.map((method) => (
           <Card
             key={method.id}
             variant="surface"
-            className="flex items-center gap-3 p-3"
+            className="flex flex-col gap-3 p-3"
           >
-            <CardIcon brand={method.brand} />
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-medium capitalize">{method.brand}</p>
-                {method.isDefault && (
-                  <Badge variant="success" pill>
-                    {t.makeDefault}
-                  </Badge>
-                )}
+            <div className="flex items-center gap-3">
+              <CardIcon brand={method.brand} />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium capitalize">
+                    {method.brand}
+                  </p>
+                  {method.isDefault && (
+                    <Badge variant="success" pill>
+                      {t.paymentMethodDefault}
+                    </Badge>
+                  )}
+                </div>
+                <p className="text-muted text-xs">
+                  **** **** **** {method.last4}
+                </p>
+                <p className="text-muted text-xs">
+                  {t.expires || "Expires"} {method.expMonth}/{method.expYear}
+                </p>
               </div>
-              <p className="text-muted text-xs">
-                **** **** **** {method.last4}
-              </p>
-              <p className="text-muted text-xs">
-                {t.expires || "Expires"} {method.expMonth}/{method.expYear}
-              </p>
+            </div>
+            <div className="flex gap-2">
+              {!method.isDefault && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={setDefault.isPending}
+                  onClick={() => handleSetDefault(method.id)}
+                >
+                  {t.makeDefault}
+                </Button>
+              )}
+              <ConfirmDialog
+                title={t.removePaymentMethod}
+                description={t.removePaymentMethodConfirm}
+                confirmLabel={t.removePaymentMethod}
+                cancelLabel={t.cancel}
+                onConfirm={() => handleRemove(method.id)}
+              >
+                {(open) => (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={removeMethod.isPending}
+                    onClick={open}
+                  >
+                    {t.removePaymentMethod}
+                  </Button>
+                )}
+              </ConfirmDialog>
             </div>
           </Card>
         ))}
       </div>
+      {addCardDialog}
     </div>
   );
 }

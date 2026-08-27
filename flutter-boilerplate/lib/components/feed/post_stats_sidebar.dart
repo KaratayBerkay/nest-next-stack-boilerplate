@@ -1,19 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../api/server/posts/stats.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
-
-class PostStats {
-  final int totalPosts;
-  final int totalReactions;
-  final double avgReactionsPerPost;
-
-  const PostStats({
-    required this.totalPosts,
-    required this.totalReactions,
-    required this.avgReactionsPerPost,
-  });
-}
 
 class PostStatsSidebar extends StatefulWidget {
   final Future<PostStats> Function()? onLoadStats;

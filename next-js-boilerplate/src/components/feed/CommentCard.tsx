@@ -6,6 +6,7 @@ import { ReactionInline } from "./ReactionButtons";
 import { formatDateByPreference } from "@/lib/date-time";
 import { IconButton } from "@/components/ui/button/icon-button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { CommentCardProps } from "@/types/feed/CommentCard-types";
 
 function handleEditKeyDown(
@@ -33,6 +34,7 @@ export function CommentCard({
   onCommentAdded,
   dateDisplay,
 }: CommentCardProps) {
+  const t = useMessages("posts");
   return (
     <div
       className={`border-border ${
@@ -61,26 +63,26 @@ export function CommentCard({
               onClick={onToggleReply}
               className="text-muted hover:text-fg px-1 text-[10px] font-medium transition-colors"
             >
-              Reply
+              {t.reply}
             </button>
           )}
           {isOwn && !editing && (
             <>
               <IconButton
                 icon={<IconPencil size={12} />}
-                label={isReply ? "Edit reply" : "Edit comment"}
+                label={isReply ? t.editReply : t.editComment}
                 size="icon-xs"
                 onClick={onStartEdit}
               />
               <ConfirmDialog
-                title={isReply ? "Delete reply" : "Delete comment"}
-                description="Are you sure you want to delete this comment?"
+                title={isReply ? t.deleteReply : t.deleteComment}
+                description={t.deleteCommentConfirm}
                 onConfirm={onDelete}
               >
                 {(open) => (
                   <IconButton
                     icon={<IconTrash size={12} />}
-                    label={isReply ? "Delete reply" : "Delete comment"}
+                    label={isReply ? t.deleteReply : t.deleteComment}
                     size="icon-xs"
                     onClick={open}
                   />
@@ -107,14 +109,14 @@ export function CommentCard({
             onClick={onSaveEdit}
             className="bg-brand text-brand-fg rounded-lg px-3 py-1.5 text-xs font-medium"
           >
-            Save
+            {t.save}
           </button>
           <button
             type="button"
             onClick={onCancelEdit}
             className="text-muted hover:text-fg text-xs underline transition-colors"
           >
-            Cancel
+            {t.cancel}
           </button>
         </div>
       ) : (

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const SETUP_INTENT_MUTATION = `
   mutation CreateBillingSetupIntent {
@@ -24,9 +24,10 @@ export async function POST() {
     );
   }
 
+  const extraHeaders = await csrfEchoHeaders();
   const { data, errors } = await graphqlFetch<{
     createBillingSetupIntent: { clientSecret: string };
-  }>(SETUP_INTENT_MUTATION, {}, accessToken);
+  }>(SETUP_INTENT_MUTATION, {}, accessToken, extraHeaders ?? undefined);
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to create setup intent");

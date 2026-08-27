@@ -13,7 +13,10 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { TextOrAttachmentConstraint } from './text-or-attachment.constraint';
+import {
+  OptionalMessageTextConstraint,
+  TextOrAttachmentConstraint,
+} from './text-or-attachment.constraint';
 import { EnvelopeSizeConstraint } from './envelope-size.constraint';
 
 @InputType()
@@ -73,8 +76,7 @@ export class SendMessageInput {
   recipientId!: string;
 
   @Field({ nullable: true })
-  @IsString()
-  @MaxLength(5000)
+  @Validate(OptionalMessageTextConstraint)
   @Validate(TextOrAttachmentConstraint)
   @ApiProperty({
     description:
@@ -111,7 +113,8 @@ export class SendMessageInput {
   @IsUUID()
   @IsOptional()
   @ApiProperty({
-    description: 'ID of the message this one is replying to (same conversation only)',
+    description:
+      'ID of the message this one is replying to (same conversation only)',
     required: false,
   })
   replyToId?: string;

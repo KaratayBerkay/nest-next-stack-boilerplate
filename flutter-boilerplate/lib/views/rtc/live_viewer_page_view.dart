@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -72,17 +73,43 @@ class _RtcLiveViewerPageContentState
           .read(realtimeProvider)
           .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
       _sentJoinChat = true;
-      await _connectRoom(result.token, result.stream.broadcaster.id);
-    } catch (_) {
+      await _connectRoom(
+        result.token,
+        result.stream.broadcaster.id,
+        result.roomName,
+      );
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.join_failed',
+        rtcKind: 'stream',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'joining',
+      );
       if (mounted) setState(() => _phase = _ViewerPhase.notFound);
     }
   }
 
-  Future<void> _connectRoom(String token, String broadcasterId) async {
+  Future<void> _connectRoom(
+    String token,
+    String broadcasterId,
+    String roomName,
+  ) async {
     final room = lk.Room();
     _room = room;
     final listener = room.createListener();
     _listener = listener;
+
+    logRtcEvent(
+      event: 'stream.livekit.connecting',
+      rtcKind: 'stream',
+      rtcId: widget.slug,
+      roomName: roomName,
+      phase: 'connecting',
+      metadata: {'role': 'viewer'},
+    );
 
     void rebuild() => _rebuildBroadcasterTrack(broadcasterId);
 
@@ -92,11 +119,64 @@ class _RtcLiveViewerPageContentState
       ..on<lk.TrackSubscribedEvent>((_) => rebuild())
       ..on<lk.TrackUnsubscribedEvent>((_) => rebuild())
       ..on<lk.RoomReconnectingEvent>((_) {
-        debugPrint('[LiveViewer] Reconnecting…');
+        logRtcEvent(
+          event: 'stream.livekit.reconnecting',
+          rtcKind: 'stream',
+          rtcId: widget.slug,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'role': 'viewer'},
+        );
       })
       ..on<lk.RoomReconnectedEvent>((_) {
-        debugPrint('[LiveViewer] Reconnected');
+        logRtcEvent(
+          event: 'stream.livekit.reconnected',
+          rtcKind: 'stream',
+          rtcId: widget.slug,
+          roomName: roomName,
+          phase: 'connected',
+          metadata: {'role': 'viewer'},
+        );
         rebuild();
+      })
+      ..on<lk.RoomDisconnectedEvent>((event) {
+        logRtcEvent(
+          event: 'stream.livekit.disconnected',
+          rtcKind: 'stream',
+          rtcId: widget.slug,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'reason': event.reason?.name, 'role': 'viewer'},
+        );
+        // clientInitiated means our own teardown called disconnect() —
+        // already an intentional exit. Any other reason is an involuntary
+        // death (LiveKit's own reconnect gave up) nothing else recovers
+        // from client-side — without this the viewer is stuck on a frozen
+        // frame with no indication the connection is dead. Treat it the
+        // same as the user tapping Leave.
+        if (mounted &&
+            event.reason != null &&
+            event.reason != lk.DisconnectReason.clientInitiated) {
+          _leave();
+        }
+      })
+      ..on<lk.ParticipantConnectionQualityUpdatedEvent>((event) {
+        if (event.connectionQuality == lk.ConnectionQuality.poor) {
+          logRtcEvent(
+            event: 'stream.livekit.connection_quality_poor',
+            rtcKind: 'stream',
+            rtcId: widget.slug,
+            roomName: roomName,
+            exceptionType: 'CLIENT_ERROR',
+            phase: 'connected',
+            metadata: {
+              'participantId': event.participant.identity,
+              'role': 'viewer',
+            },
+          );
+        }
       });
 
     try {
@@ -105,8 +185,27 @@ class _RtcLiveViewerPageContentState
         await room.disconnect();
         return;
       }
+      logRtcEvent(
+        event: 'stream.livekit.connected',
+        rtcKind: 'stream',
+        rtcId: widget.slug,
+        roomName: roomName,
+        phase: 'connected',
+        metadata: {'role': 'viewer'},
+      );
       rebuild();
-    } catch (_) {
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.livekit.connection_failed',
+        rtcKind: 'stream',
+        rtcId: widget.slug,
+        roomName: roomName,
+        exceptionType: 'CLIENT_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'connecting',
+        metadata: {'role': 'viewer'},
+      );
       // Connection failed — the page's own leave control lets the user bail.
     }
   }
@@ -147,21 +246,54 @@ class _RtcLiveViewerPageContentState
     _chatController.clear();
   }
 
+  Future<void> _teardownRoom() async {
+    final listener = _listener;
+    final room = _room;
+    _listener = null;
+    _room = null;
+    await listener?.dispose();
+    await room?.disconnect();
+  }
+
   Future<void> _leave() async {
-    await ref.read(streamActionsProvider).leave(widget.slug);
-    if (mounted) context.pop();
+    try {
+      await ref.read(streamActionsProvider).leave(widget.slug);
+      if (mounted) context.pop();
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.leave_failed',
+        rtcKind: 'stream',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+    }
   }
 
   Future<void> _report() async {
     await showDialog<void>(
       context: context,
       builder: (context) => RtcReportDialog(
-        onSubmit: (reason, details) => ref.read(streamActionsProvider).report(
+        onSubmit: (reason, details) => ref
+            .read(streamActionsProvider)
+            .report(
               widget.slug,
               reason,
               details: details,
               reportedUserId: _join?.stream.broadcaster.id,
-            ),
+            )
+            .catchError((Object error) {
+          logRtcEvent(
+            event: 'stream.report_failed',
+            rtcKind: 'stream',
+            rtcId: widget.slug,
+            exceptionType: 'CLIENT_REQUEST_ERROR',
+            error: error,
+            metadata: {'reason': reason},
+          );
+        }),
       ),
     );
   }
@@ -173,9 +305,20 @@ class _RtcLiveViewerPageContentState
           .read(realtimeProvider)
           .send({'type': 'rtc:leave-room-chat', 'slug': widget.slug});
     }
-    ref.read(streamActionsProvider).leave(widget.slug);
-    _listener?.dispose();
-    _room?.disconnect();
+    ref
+        .read(streamActionsProvider)
+        .leave(widget.slug)
+        .catchError((Object error) {
+      logRtcEvent(
+        event: 'stream.leave_failed',
+        rtcKind: 'stream',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        phase: 'dispose',
+      );
+    });
+    _teardownRoom();
     _chatController.dispose();
     super.dispose();
   }
@@ -193,6 +336,10 @@ class _RtcLiveViewerPageContentState
         _lastHandledSignalSeq = next.seq;
         if (next.ended) {
           setState(() => _phase = _ViewerPhase.ended);
+          // Was only ever torn down from dispose() — a remote stream-ended
+          // signal left the viewer's LiveKit connection open indefinitely
+          // until the user happened to navigate away.
+          _teardownRoom();
         } else if (next.viewerCount != null) {
           setState(() => _viewerCount = next.viewerCount!);
         }

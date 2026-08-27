@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { UnauthorizedException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { hash } from '@node-rs/argon2';
 import { verify as verifyTotp } from 'otplib';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -30,10 +31,12 @@ const mockPrisma = {
   verificationToken: {
     findUnique: jest.fn(),
     update: jest.fn(),
+    create: jest.fn(),
   },
   user: {
     findUnique: jest.fn(),
     update: jest.fn(),
+    create: jest.fn(),
   },
   mfaFactor: {
     findFirst: jest.fn(),
@@ -42,6 +45,11 @@ const mockPrisma = {
   mfaBackupCode: {
     findFirst: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+  },
+  account: {
+    findUnique: jest.fn(),
+    create: jest.fn(),
   },
   $transaction: jest.fn(),
 };
@@ -309,9 +317,9 @@ describe('AuthService', () => {
 
       expect(result).toBeDefined();
       expect(result.mfaRequired).toBeFalsy();
-      expect(mockPrisma.mfaBackupCode.update).toHaveBeenCalledWith(
+      expect(mockPrisma.mfaBackupCode.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: 'bc1' },
+          where: { id: 'bc1', usedAt: null },
           data: { usedAt: expect.any(Date) as never },
         }),
       );
@@ -324,11 +332,6 @@ describe('AuthService', () => {
         codeHash: `sha256(${code})`,
         usedAt: null,
       });
-      mockPrisma.mfaBackupCode.update.mockResolvedValueOnce({
-        id: 'bc1',
-        codeHash: `sha256(${code})`,
-        usedAt: new Date(),
-      });
 
       // First use succeeds
       await service.verifyLoginMfa('valid-token', code);
@@ -339,6 +342,51 @@ describe('AuthService', () => {
       await expect(
         service.verifyLoginMfa('another-token', code),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('rejects when the atomic claim loses a race — two concurrent verifies both reading the code as unused before either commits must not both succeed', async () => {
+      mockPrisma.mfaFactor.findFirst.mockResolvedValue(null);
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValue({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: null,
+      });
+      // Simulates the loser: another request's updateMany already flipped
+      // usedAt between this findFirst and this updateMany, so the WHERE
+      // clause (id + usedAt: null) matches zero rows.
+      mockPrisma.mfaBackupCode.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      await expect(service.verifyLoginMfa('valid-token', code)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('resets failedLoginCount/lockedUntil and audits the login on a successful MFA verification — regression: this path never reset the counter at all, so a user who mistyped their password a few times before completing MFA kept carrying that count forever, and MFA-gated logins were invisible to the audit log (only the non-MFA and OAuth paths emitted auth.login)', async () => {
+      mockPrisma.mfaFactor.findFirst.mockResolvedValue(null);
+      mockPrisma.mfaBackupCode.findFirst.mockResolvedValue({
+        id: 'bc1',
+        codeHash: `sha256(${code})`,
+        usedAt: null,
+      });
+
+      await service.verifyLoginMfa('valid-token', code);
+
+      expect(mockPrisma.$transaction).toHaveBeenCalled();
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: '01890a5d-ac96-774b-bcce-b302099a8060' },
+        data: {
+          failedLoginCount: 0,
+          lockedUntil: null,
+          lastLoginAt: expect.any(Date) as never,
+        },
+      });
+      expect(mockOutbox.emit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          eventType: 'auth.login',
+          aggregateId: '01890a5d-ac96-774b-bcce-b302099a8060',
+        }),
+        mockPrisma,
+      );
     });
   });
 
@@ -546,6 +594,147 @@ describe('AuthService', () => {
       expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
       expect(mockTokenStore.write).not.toHaveBeenCalled();
     });
+
+    it('fires the new-device notification even when the login goes on to require MFA — regression: resolveForLogin() persists a Device row on first call, so a second resolveForLogin() call from the follow-up verifyLoginMfa() request always sees changed:false for the same device; deferring the notification until after the (still-pending) MFA branch silently dropped it for every MFA-gated login', async () => {
+      const realHash = await hash('pass123');
+      const mockCtx = {
+        req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
+      } as unknown as RequestContext;
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
+        DeviceService,
+      );
+      deviceService.resolveForLogin.mockResolvedValue({
+        deviceId: 'dev-new',
+        deviceToken: 'new-token',
+        changed: true,
+        ip: '127.0.0.1',
+        userAgent: 'test-agent',
+        trusted: false,
+      });
+      const realtime = module.get<{ emitToUser: jest.Mock }>(RealtimeGateway);
+
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: '01890a5d-ac96-774b-bcce-b302099a8065',
+        email: 'newdevice@example.com',
+        passwordHash: realHash,
+        status: 'ACTIVE',
+        mfaEnabled: true,
+        lockedUntil: null,
+        failedLoginCount: 0,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+      mockTokenStore.writeMfaChallenge.mockResolvedValue(undefined);
+
+      const result = await service.login(
+        { email: 'newdevice@example.com', password: 'pass123' },
+        mockCtx,
+      );
+
+      expect(result.mfaRequired).toBe(true);
+      expect(mockOutbox.emit).toHaveBeenCalledWith(
+        expect.objectContaining({ eventType: 'auth.device.new' }),
+      );
+      expect(realtime.emitToUser).toHaveBeenCalledWith(
+        '01890a5d-ac96-774b-bcce-b302099a8065',
+        expect.objectContaining({ type: 'device-logged-in' }),
+      );
+    });
+
+    it('commits the login-state reset and its audit event as one transaction — regression for a bug where emitting the outbox event outside the transaction meant a crash in between left the reset silently unaudited', async () => {
+      const realHash = await hash('pass123');
+      const mockCtx = {
+        req: { cookies: {}, headers: {}, res: { cookie: jest.fn() } },
+      } as unknown as RequestContext;
+      const deviceService = module.get<{ resolveForLogin: jest.Mock }>(
+        DeviceService,
+      );
+      deviceService.resolveForLogin.mockResolvedValue({
+        deviceId: 'dev-trusted',
+        deviceToken: 'trusted-token',
+        changed: false,
+        ip: '127.0.0.1',
+        userAgent: 'test-agent',
+        trusted: true,
+      });
+      const userId = '01890a5d-ac96-774b-bcce-b302099a8063';
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: userId,
+        email: 'ok@example.com',
+        passwordHash: realHash,
+        status: 'ACTIVE',
+        mfaEnabled: false,
+        lockedUntil: null,
+        failedLoginCount: 3,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+      mockPrisma.user.update.mockResolvedValue({ id: userId });
+      mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
+
+      await service.login(
+        { email: 'ok@example.com', password: 'pass123' },
+        mockCtx,
+      );
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: userId } }),
+      );
+      const updateCall = mockPrisma.user.update.mock.calls[0] as [
+        { data: { failedLoginCount: number } },
+      ];
+      expect(updateCall[0].data).toMatchObject({ failedLoginCount: 0 });
+      expect(mockOutbox.emit).toHaveBeenCalledWith(
+        expect.objectContaining({ eventType: 'auth.login' }),
+        mockPrisma,
+      );
+    });
+
+    it('locks the account and audits the failed attempt inside one transaction once MAX_FAILED_LOGINS is reached — regression for a bug where the increment and the lockout write were separate top-level calls, so a crash in between could leave a past-threshold account permanently unlocked', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u8',
+        email: 'baduser@example.com',
+        passwordHash: await hash('correct-password'),
+        status: 'ACTIVE',
+        mfaEnabled: false,
+        lockedUntil: null,
+        failedLoginCount: 4,
+        role: 'USER',
+        subscriptionTier: 'FREE',
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'u8',
+        failedLoginCount: 5,
+      });
+
+      await expect(
+        service.login({
+          email: 'baduser@example.com',
+          password: 'wrong-password',
+        }),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.user.update).toHaveBeenNthCalledWith(1, {
+        where: { id: 'u8' },
+        data: { failedLoginCount: { increment: 1 } },
+      });
+      const secondUpdateCall = mockPrisma.user.update.mock.calls[1] as [
+        { where: { id: string }; data: { lockedUntil: Date } },
+      ];
+      expect(secondUpdateCall[0]).toMatchObject({ where: { id: 'u8' } });
+      expect(secondUpdateCall[0].data.lockedUntil).toBeInstanceOf(Date);
+      expect(mockOutbox.emit).toHaveBeenCalledWith(
+        expect.objectContaining({ eventType: 'auth.login.failed' }),
+        mockPrisma,
+      );
+      const emitCall = mockOutbox.emit.mock.calls[0] as [
+        { summary: string },
+        unknown,
+      ];
+      expect(emitCall[0].summary).toContain('locked');
+    });
   });
 
   describe('loginWithOAuth', () => {
@@ -567,6 +756,145 @@ describe('AuthService', () => {
       // An unverified state must never reach account lookup/creation — this
       // is the account-takeover fix's core guarantee.
       expect(mockPrisma.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('retries with a freshly generated username after losing a concurrent username race — regression: UsernameService.generate() only checks-then-suggests (it cannot reserve the name), so two concurrent signups deriving the same base username could both pass the check and only one would win the DB @unique constraint; the loser must retry, not dead-end with a raw 500', async () => {
+      mockOAuthService.retrieveProfile.mockResolvedValueOnce({
+        type: 'oauth',
+        provider: 'google',
+        providerAccountId: 'g-race-1',
+        email: 'racer@example.com',
+        name: 'Racer',
+      });
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue(null); // brand-new email both attempts
+      const usernameService = module.get<{ generate: jest.Mock }>(
+        UsernameService,
+      );
+      usernameService.generate
+        .mockResolvedValueOnce('racer')
+        .mockResolvedValueOnce('racer_x1a2b3');
+
+      const raceError = new Prisma.PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`username`)',
+        {
+          code: 'P2002',
+          clientVersion: '7.0.0',
+          meta: { target: 'User_username_key' },
+        },
+      );
+      mockPrisma.user.create
+        .mockRejectedValueOnce(raceError)
+        .mockResolvedValueOnce({
+          id: '01890a5d-ac96-774b-bcce-b302099a8064',
+          email: 'racer@example.com',
+          username: 'racer_x1a2b3',
+          name: 'Racer',
+        });
+      mockPrisma.account.create.mockResolvedValue({});
+      mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
+
+      await service.loginWithOAuth('race-state');
+
+      expect(usernameService.generate).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.user.create).toHaveBeenCalledTimes(2);
+      const secondCreateCall = mockPrisma.user.create.mock.calls[1] as [
+        { data: { username: string } },
+      ];
+      expect(secondCreateCall[0].data).toMatchObject({
+        username: 'racer_x1a2b3',
+      });
+    });
+  });
+
+  describe('resendEmailCode', () => {
+    it("ignores the caller-supplied email and sends to the account's real address on file — this mutation is unauthenticated (mid-registration, no session yet), so trusting a client-supplied destination would let anyone who learned a pending user's id redirect that user's verification code to an attacker-controlled inbox", async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        email: 'real-owner@example.com',
+      });
+
+      await service.resendEmailCode('user-1', 'attacker@evil.com');
+
+      const emailOtp = module.get<{ resend: jest.Mock }>(EmailOtpService);
+      expect(emailOtp.resend).toHaveBeenCalledWith(
+        'user-1',
+        'real-owner@example.com',
+        'REGISTRATION',
+      );
+    });
+
+    it('returns true without revealing whether the userId exists when the user is not found', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+
+      const result = await service.resendEmailCode(
+        'nonexistent',
+        'attacker@evil.com',
+      );
+
+      expect(result).toBe(true);
+      const emailOtp = module.get<{ resend: jest.Mock }>(EmailOtpService);
+      expect(emailOtp.resend).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('resendLoginCode', () => {
+    it('does not destroy the original MFA challenge before the resend succeeds — regression for a bug where consuming (deleting) the challenge up front meant a failed resend (e.g. the 60s cooldown from the original send) permanently dead-ended the login with no way to recover except starting over', async () => {
+      mockTokenStore.peekMfaChallenge.mockResolvedValue({
+        userId: 'user-1',
+        email: 'u@example.com',
+        role: 'USER',
+        tier: 'FREE',
+        mfaMethod: 'EMAIL',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'u@example.com',
+      });
+      const emailOtp = module.get<{ resend: jest.Mock }>(EmailOtpService);
+      emailOtp.resend.mockRejectedValueOnce(new Error('cooldown'));
+
+      await expect(service.resendLoginCode('mfa-token')).rejects.toThrow(
+        'cooldown',
+      );
+
+      expect(mockTokenStore.consumeMfaChallenge).not.toHaveBeenCalled();
+      expect(mockTokenStore.deleteMfaChallenge).not.toHaveBeenCalled();
+      expect(mockTokenStore.writeMfaChallenge).not.toHaveBeenCalled();
+    });
+
+    it('rotates to a new challenge and removes the old one only after a successful resend', async () => {
+      mockTokenStore.peekMfaChallenge.mockResolvedValue({
+        userId: 'user-1',
+        email: 'u@example.com',
+        role: 'USER',
+        tier: 'FREE',
+        mfaMethod: 'EMAIL',
+      });
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'user-1',
+        email: 'u@example.com',
+      });
+
+      const newToken = await service.resendLoginCode('mfa-token');
+
+      expect(newToken).toBeTruthy();
+      expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
+      expect(mockTokenStore.deleteMfaChallenge).toHaveBeenCalled();
+    });
+
+    it('rejects resend for a TOTP challenge instead of sending a spurious email', async () => {
+      mockTokenStore.peekMfaChallenge.mockResolvedValue({
+        userId: 'user-1',
+        email: 'u@example.com',
+        role: 'USER',
+        tier: 'FREE',
+        mfaMethod: 'TOTP',
+      });
+
+      await expect(service.resendLoginCode('mfa-token')).rejects.toThrow();
+
+      const emailOtp = module.get<{ resend: jest.Mock }>(EmailOtpService);
+      expect(emailOtp.resend).not.toHaveBeenCalled();
     });
   });
 });

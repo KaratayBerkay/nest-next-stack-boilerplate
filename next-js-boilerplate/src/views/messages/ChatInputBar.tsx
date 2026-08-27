@@ -60,6 +60,9 @@ export function ChatInputBar({
   connectionState,
   inputPlaceholder,
   connectingLabel,
+  attachFileLabel,
+  insertEmojiLabel,
+  sendLabel,
   recipientId,
   onTypingStart,
   onTypingStop,
@@ -108,7 +111,7 @@ export function ChatInputBar({
         />
         <label
           htmlFor={attachInputId}
-          aria-label="Attach file"
+          aria-label={attachFileLabel}
           className={`text-muted hover:bg-surface-hover flex size-9 cursor-pointer items-center justify-center rounded-md transition-colors ${
             !online || attaching ? "pointer-events-none opacity-50" : ""
           }`}
@@ -116,7 +119,7 @@ export function ChatInputBar({
           <IconPaperclip size={20} />
         </label>
         <EmojiPickerButton
-          label="Insert emoji"
+          label={insertEmojiLabel}
           disabled={!online}
           onEmojiSelect={(emoji) =>
             insertEmojiAtCursor(input, setInput, inputRef, emoji)
@@ -147,7 +150,7 @@ export function ChatInputBar({
         }
         className="flex shrink-0 items-center gap-2 rounded-lg px-4 py-3"
       >
-        <span className="hidden sm:inline">Send</span>
+        <span className="hidden sm:inline">{sendLabel}</span>
         <IconSend size={16} />
       </Button>
     </div>

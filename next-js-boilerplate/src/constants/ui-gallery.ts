@@ -127,6 +127,12 @@ export const UI_COMPONENTS = [
     description: "Clickable action button",
   },
   {
+    name: "Calendar",
+    slug: "calendar",
+    category: "Forms",
+    description: "Standalone calendar grid",
+  },
+  {
     name: "Checkbox",
     slug: "checkbox",
     category: "Forms",
@@ -149,6 +155,12 @@ export const UI_COMPONENTS = [
     slug: "date-picker",
     category: "Forms",
     description: "Calendar date selector",
+  },
+  {
+    name: "Date Range Picker",
+    slug: "date-range-picker",
+    category: "Forms",
+    description: "Calendar date-range selector",
   },
   {
     name: "Field Info Button",

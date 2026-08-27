@@ -23,6 +23,7 @@ export type FileUploadLabels = {
   acceptedTypesText?: (accept: string) => string;
   maxSizeLabel?: (max: string) => string;
   invalidTypeTitle?: string;
+  maxFilesExceeded?: (max: number) => string;
 };
 
 export interface FileUploadProps {
@@ -39,4 +40,6 @@ export interface FileUploadProps {
   className?: string;
   disabled?: boolean;
   labels?: FileUploadLabels;
+  // Suppresses the built-in name/size/progress row list, for consumers that render their own per-file preview (e.g. ImageUpload's grid).
+  hideFileList?: boolean;
 }

@@ -7,6 +7,7 @@ type ApiKey = ApiKeyInfo;
 type ToastFn = ReturnType<typeof useToast>["toast"];
 type CreateApiKey = ReturnType<typeof useApiKeyActions>["createApiKey"];
 type RevokeApiKey = ReturnType<typeof useApiKeyActions>["revokeApiKey"];
+type UpdateApiKey = ReturnType<typeof useApiKeyActions>["updateApiKey"];
 
 export async function handleCreateApiKey(
   newName: string,
@@ -83,6 +84,55 @@ export async function handleRevokeApiKey(
       .exception;
     toast({
       title: exception?.msg ?? revokeFailedMessage,
+      variant: "destructive",
+    });
+  }
+}
+
+export async function handleToggleApiKey(
+  id: string,
+  enabled: boolean,
+  toast: ToastFn,
+  loadKeys: () => Promise<void>,
+  updateApiKey: UpdateApiKey,
+  enabledMessage: string,
+  updateFailedMessage: string,
+) {
+  try {
+    await updateApiKey(id, { enabled: !enabled });
+    toast({ title: enabledMessage });
+    await loadKeys();
+  } catch (err) {
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    toast({
+      title: exception?.msg ?? updateFailedMessage,
+      variant: "destructive",
+    });
+  }
+}
+
+export async function handleRenameApiKey(
+  id: string,
+  currentName: string,
+  toast: ToastFn,
+  loadKeys: () => Promise<void>,
+  updateApiKey: UpdateApiKey,
+  renamePromptMessage: string,
+  renamedMessage: string,
+  updateFailedMessage: string,
+) {
+  const nextName = prompt(renamePromptMessage, currentName);
+  if (!nextName || !nextName.trim() || nextName.trim() === currentName) return;
+  try {
+    await updateApiKey(id, { name: nextName.trim() });
+    toast({ title: renamedMessage });
+    await loadKeys();
+  } catch (err) {
+    const exception = (err as Error & { exception?: { msg?: string } })
+      .exception;
+    toast({
+      title: exception?.msg ?? updateFailedMessage,
       variant: "destructive",
     });
   }

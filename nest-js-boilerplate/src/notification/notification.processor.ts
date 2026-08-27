@@ -30,7 +30,13 @@ export class NotificationProcessor extends WorkerHost {
     switch (job.data.type) {
       case 'FRIEND_POST': {
         const { authorId, userIds, title, postId } = job.data;
-        await Promise.all(
+        // Promise.all would reject on the first failure, leaving BullMQ's
+        // retry re-run the FULL original userIds list — every recipient who
+        // already got their Notification row on this attempt would get a
+        // second, duplicate one on the retry. allSettled + shrinking the job
+        // data to only the still-failing recipients makes a retry resume
+        // instead of redo.
+        const results = await Promise.allSettled(
           userIds.map((userId) =>
             this.notifications.create({
               userId,
@@ -42,6 +48,20 @@ export class NotificationProcessor extends WorkerHost {
             }),
           ),
         );
+        const stillPending = userIds.filter(
+          (_, i) => results[i]?.status === 'rejected',
+        );
+        if (stillPending.length > 0) {
+          await job.updateData({ ...job.data, userIds: stillPending });
+          const firstFailure = results.find(
+            (r): r is PromiseRejectedResult => r.status === 'rejected',
+          );
+          throw firstFailure?.reason instanceof Error
+            ? firstFailure.reason
+            : new Error(
+                `${stillPending.length}/${userIds.length} friend-post notifications failed to create`,
+              );
+        }
         this.realtime.emitToTopic('feed', {
           renew: 'Feed',
           type: 'New',

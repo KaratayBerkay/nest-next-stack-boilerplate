@@ -199,6 +199,10 @@ export class MessagingService {
     return this.friends.getUsers(currentUserId, search);
   }
 
+  getUsersCount(currentUserId: string, search?: string) {
+    return this.friends.getUsersCount(currentUserId, search);
+  }
+
   getFriendIds(userId: string) {
     return this.friends.getFriendIds(userId);
   }

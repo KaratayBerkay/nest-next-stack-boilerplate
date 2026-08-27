@@ -4,6 +4,7 @@ import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
 export interface UserSearchResult {
   items: Array<{ id: string; name: string; email: string }>;
   total: number;
+  truncated: boolean;
 }
 
 export async function searchUsersServer(

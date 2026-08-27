@@ -12,12 +12,16 @@ import {
 } from "@tabler/icons-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
+import { Spinner } from "@/components/ui/Spinner";
+import { useToast } from "@/components/ui/Toast";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useRtcCall } from "@/lib/rtc/RtcCallProvider";
 import { useLiveKitRoom } from "@/hooks/rtc/useLiveKitRoom";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import type {
   IncomingCallOverlayProps,
   ActiveCallOverlayProps,
+  PulsingAvatarProps,
 } from "@/types/rtc/RtcCallOverlay-types";
 
 function formatDuration(totalSeconds: number): string {
@@ -26,23 +30,63 @@ function formatDuration(totalSeconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function PulsingAvatar({
-  avatarUrl,
-  name,
-}: {
-  avatarUrl: string | null;
-  name: string;
-}) {
+type RtcMessages = I18nMessages["rtc"];
+
+// Matches the stable, snake_case `reason` codes RtcCallService.sendError()
+// sends over the wire (see nest-js-boilerplate/src/rtc/rtc-call.service.ts).
+// These used to be full English sentences ('That user is offline', 'Busy',
+// 'You cannot call yourself', 'Call is no longer available') string-matched
+// verbatim — any future wording tweak on either side would have silently
+// fallen through to the generic default with no visible failure.
+function getCallErrorMessage(reason: string, t: RtcMessages): string {
+  switch (reason) {
+    case "callee_offline":
+      return t.userOffline;
+    case "busy":
+      return t.userBusy;
+    case "self_call":
+      return t.cannotCallSelf;
+    case "call_unavailable":
+      return t.callUnavailable;
+    case "realtime_unavailable":
+      return t.connectionUnavailable;
+    default:
+      return t.callErrorDescription;
+  }
+}
+
+function getMediaErrorMessage(
+  error: ActiveCallOverlayProps["livekitError"],
+  t: RtcMessages,
+): string | null {
+  if (error === "connection") return t.connectionUnavailable;
+  if (error === "microphone") return t.microphoneUnavailable;
+  if (error === "camera") return t.cameraUnavailable;
+  return null;
+}
+
+function toggleSpeaker(
+  remoteAudioRef: React.RefObject<HTMLAudioElement | null>,
+  setSpeakerEnabled: React.Dispatch<React.SetStateAction<boolean>>,
+): void {
+  setSpeakerEnabled((enabled) => {
+    const next = !enabled;
+    if (remoteAudioRef.current) remoteAudioRef.current.muted = !next;
+    return next;
+  });
+}
+
+function PulsingAvatar({ avatarUrl, name }: PulsingAvatarProps) {
   return (
     <div className="relative flex items-center justify-center">
-      <span className="bg-success/30 absolute size-36 animate-ping rounded-full" />
-      <span className="bg-success/20 absolute size-32 animate-ping rounded-full [animation-delay:0.2s]" />
+      <span className="bg-success/20 absolute size-36 animate-ping rounded-full" />
+      <span className="bg-success/15 absolute size-32 animate-ping rounded-full [animation-delay:0.2s]" />
       <span className="bg-success/10 absolute size-28 animate-ping rounded-full [animation-delay:0.4s]" />
       <Avatar
         src={avatarUrl ?? undefined}
         fallback={name || "?"}
         size="xl"
-        className="bg-brand/80 text-brand-fg ring-success/40 relative size-24 ring-4"
+        className="bg-brand text-brand-fg ring-success/40 relative size-24 shadow-xl ring-4"
       />
     </div>
   );
@@ -52,45 +96,58 @@ function IncomingCallOverlay({
   peerName,
   peerAvatarUrl,
   hasVideo,
+  accepting,
   onAccept,
   onDecline,
 }: IncomingCallOverlayProps) {
   const t = useMessages("rtc");
 
   return (
-    <div className="animate-fade-in fixed inset-0 z-[100] flex flex-col items-center justify-center gap-8 bg-gradient-to-b from-gray-900 via-gray-950 to-black">
-      <div className="flex flex-col items-center gap-5">
-        <PulsingAvatar avatarUrl={peerAvatarUrl} name={peerName} />
-        <div className="text-center">
-          <p className="text-success mb-1 text-sm font-medium">
+    <div className="animate-fade-in bg-overlay text-overlay-fg fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-hidden p-4">
+      <div className="bg-bg/90 border-border/70 relative flex w-full max-w-md flex-col items-center gap-8 rounded-2xl border p-8 shadow-xl backdrop-blur-xl sm:p-10">
+        <div className="bg-brand/10 pointer-events-none absolute -top-24 size-48 rounded-full blur-3xl" />
+        <div className="relative flex items-center gap-2 text-xs font-medium tracking-wide uppercase opacity-70">
+          {hasVideo ? (
+            <IconVideo size={15} aria-hidden />
+          ) : (
+            <IconPhone size={15} aria-hidden />
+          )}
+          <span>
             {hasVideo ? t.incomingVideoCallTitle : t.incomingCallTitle}
-          </p>
-          <p className="text-2xl font-semibold text-white">{peerName}</p>
+          </span>
         </div>
-      </div>
+        <PulsingAvatar avatarUrl={peerAvatarUrl} name={peerName} />
+        <div className="relative text-center">
+          <p className="text-overlay-fg text-2xl font-semibold">{peerName}</p>
+          <p className="text-success mt-2 text-sm font-medium">
+            {t.connectingTitle}
+          </p>
+        </div>
 
-      <div className="flex items-center gap-10">
-        <div className="flex flex-col items-center gap-2">
+        <div className="relative flex w-full items-center justify-center gap-8">
           <button
             type="button"
             onClick={onDecline}
-            className="bg-error hover:bg-error/80 flex size-16 items-center justify-center rounded-full shadow-lg transition-all active:scale-95"
+            disabled={accepting}
+            aria-label={t.decline}
+            className="bg-error text-error-fg hover:bg-error/85 focus-visible:ring-brand flex size-16 items-center justify-center rounded-full shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50"
           >
-            <IconPhoneOff className="text-white" size={28} />
+            <IconPhoneOff size={28} />
           </button>
-          <span className="text-error-fg text-xs font-medium">{t.decline}</span>
-        </div>
-        <div className="flex flex-col items-center gap-2">
           <button
             type="button"
             onClick={onAccept}
-            className="bg-success hover:bg-success/80 flex size-16 items-center justify-center rounded-full shadow-lg transition-all active:scale-95"
+            disabled={accepting}
+            aria-busy={accepting || undefined}
+            aria-label={accepting ? t.connectingTitle : t.accept}
+            className="bg-success text-success-fg hover:bg-success/85 focus-visible:ring-brand flex size-16 items-center justify-center rounded-full shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-80"
           >
-            <IconPhone className="text-white" size={28} />
+            {accepting ? <Spinner size="md" /> : <IconPhone size={28} />}
           </button>
-          <span className="text-success-fg text-xs font-medium">
-            {t.accept}
-          </span>
+        </div>
+        <div className="relative flex w-full justify-between px-3 text-xs font-medium opacity-70">
+          <span>{t.decline}</span>
+          <span>{accepting ? t.connectingTitle : t.accept}</span>
         </div>
       </div>
     </div>
@@ -105,7 +162,10 @@ function ActiveCallOverlay({
   micEnabled,
   cameraEnabled,
   speakerEnabled,
+  actionPending,
   livekitConnected,
+  livekitError,
+  remoteConnected,
   warningSecondsRemaining,
   remoteVideoRef,
   localVideoRef,
@@ -130,42 +190,69 @@ function ActiveCallOverlay({
 
   const isRinging = phase === "outgoing-ringing";
   const showVideo = phase === "connected" && hasVideo;
+  const mediaError = getMediaErrorMessage(livekitError, t);
 
   const statusText = isRinging
-    ? t.callingTitle.replace("{name}", peerName)
-    : !livekitConnected
-      ? t.connectingTitle
-      : formatDuration(duration);
+    ? actionPending
+      ? t.cancelling
+      : t.callingTitle.replace("{name}", peerName)
+    : mediaError
+      ? mediaError
+      : !livekitConnected
+        ? t.connectingTitle
+        : !remoteConnected
+          ? t.waitingForPeer.replace("{name}", peerName)
+          : formatDuration(duration);
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col bg-gradient-to-b from-gray-900 via-gray-950 to-black">
+    <div className="bg-overlay text-overlay-fg fixed inset-0 z-[100] flex min-h-dvh flex-col overflow-hidden">
       {showVideo ? (
         <div className="relative flex-1">
+          <div className="bg-bg absolute inset-0 flex flex-col items-center justify-center gap-4">
+            <Avatar
+              src={peerAvatarUrl ?? undefined}
+              fallback={peerName || "?"}
+              size="xl"
+              className="bg-brand text-brand-fg ring-brand/20 size-28 ring-4"
+            />
+            <p className="text-overlay-fg/70 text-sm">{statusText}</p>
+          </div>
           {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live P2P call video, no caption track exists */}
           <video
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            className="absolute inset-0 h-full w-full object-cover"
+            className="bg-bg absolute inset-0 h-full w-full object-cover"
           />
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+          <div className="from-overlay/40 to-overlay/60 pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent" />
 
-          <div className="absolute top-0 right-0 left-0 flex items-center justify-between px-5 pt-4 pb-8">
-            <p className="text-base font-semibold text-white drop-shadow-lg">
-              {peerName}
-            </p>
-            <span className="rounded-full bg-black/40 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+          <div className="absolute top-0 right-0 left-0 flex items-start justify-between gap-4 px-4 pt-4 pb-8 sm:px-6">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="bg-overlay/45 border-overlay-fg/20 flex size-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md">
+                <IconVideo size={17} aria-hidden />
+              </span>
+              <div className="min-w-0">
+                <p className="text-overlay-fg truncate text-base font-semibold drop-shadow-lg">
+                  {peerName}
+                </p>
+                <p className="text-overlay-fg/70 text-xs" aria-live="polite">
+                  {statusText}
+                </p>
+              </div>
+            </div>
+            <span className="bg-overlay/45 border-overlay-fg/20 text-overlay-fg shrink-0 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur-md">
               {statusText}
             </span>
           </div>
 
-          <div className="absolute right-4 bottom-24">
+          <div className="absolute right-4 bottom-24 sm:right-6">
             <video
               ref={localVideoRef}
               autoPlay
               playsInline
               muted
-              className="h-36 w-24 rounded-xl border-2 border-white/20 object-cover shadow-xl"
+              aria-label={t.youLabel}
+              className="bg-surface border-overlay-fg/25 h-28 w-44 rounded-xl border-2 object-cover shadow-xl sm:h-36 sm:w-56"
             />
           </div>
         </div>
@@ -178,22 +265,37 @@ function ActiveCallOverlay({
               src={peerAvatarUrl ?? undefined}
               fallback={peerName || "?"}
               size="xl"
-              className="bg-brand/80 text-brand-fg size-28 ring-4 ring-white/10"
+              className="bg-brand text-brand-fg ring-brand/20 size-28 shadow-xl ring-4"
             />
           )}
           <div className="text-center">
-            <p className="text-xl font-semibold text-white">{peerName}</p>
-            <p className="mt-1 text-sm text-white/60">{statusText}</p>
+            <p className="text-overlay-fg text-xl font-semibold">{peerName}</p>
+            <p className="text-overlay-fg/65 mt-1 text-sm" aria-live="polite">
+              {statusText}
+            </p>
           </div>
         </div>
       )}
 
       {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live P2P call audio, no caption track exists */}
-      <audio ref={remoteAudioRef} autoPlay />
+      <audio
+        ref={remoteAudioRef}
+        autoPlay
+        aria-label={t.voiceCallLabel}
+        className="sr-only"
+      />
+
+      {mediaError && (
+        <div className="mx-4 mb-2 sm:mx-auto sm:w-full sm:max-w-lg">
+          <div className="bg-error/15 border-error/30 text-error rounded-lg border px-4 py-2 text-center text-sm">
+            {mediaError}
+          </div>
+        </div>
+      )}
 
       {warningSecondsRemaining != null && (
-        <div className="mx-4 mb-2">
-          <div className="bg-warning/15 border-warning/30 text-warning rounded-lg border px-4 py-2 text-center text-sm">
+        <div className="mx-4 mb-2 sm:mx-auto sm:w-full sm:max-w-lg">
+          <div className="bg-warning/15 border-warning/30 text-warning rounded-lg border px-4 py-2 text-center text-sm shadow-xs">
             {t.callLimitWarning.replace(
               "{seconds}",
               String(warningSecondsRemaining),
@@ -202,25 +304,27 @@ function ActiveCallOverlay({
         </div>
       )}
 
-      <div className="bg-black/60 px-6 pt-4 pb-8 backdrop-blur-xl">
-        <div className="flex items-center justify-center gap-6">
+      <div className="bg-overlay/75 border-overlay-fg/10 px-4 pt-4 pb-[max(2rem,env(safe-area-inset-bottom))] backdrop-blur-xl sm:px-6">
+        <div className="flex items-end justify-center gap-3 sm:gap-6">
           {phase === "connected" && (
             <>
               <div className="flex flex-col items-center gap-1.5">
                 <IconButton
-                  variant={micEnabled ? "secondary" : "ghost"}
+                  variant="secondary"
+                  size="icon"
                   icon={micEnabled ? <IconMicrophone /> : <IconMicrophoneOff />}
                   label={micEnabled ? t.mute : t.unmute}
                   onClick={onToggleMic}
-                  className={`size-12 rounded-full ${micEnabled ? "bg-white/15 text-white hover:bg-white/25" : "bg-error/80 hover:bg-error text-white"}`}
+                  className={`size-12 rounded-full ${micEnabled ? "bg-overlay/45 text-overlay-fg hover:bg-overlay/65" : "bg-error text-error-fg hover:bg-error/85"}`}
                 />
-                <span className="text-[10px] text-white/60">
+                <span className="text-overlay-fg/60 text-[10px]">
                   {micEnabled ? t.mute : t.unmute}
                 </span>
               </div>
               <div className="flex flex-col items-center gap-1.5">
                 <IconButton
                   variant="secondary"
+                  size="icon"
                   icon={
                     speakerEnabled ? (
                       <IconSpeakerphone />
@@ -230,9 +334,9 @@ function ActiveCallOverlay({
                   }
                   label={speakerEnabled ? t.speakerOn : t.speakerOff}
                   onClick={onToggleSpeaker}
-                  className={`size-12 rounded-full ${speakerEnabled ? "bg-white/15 text-white hover:bg-white/25" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
+                  className={`size-12 rounded-full ${speakerEnabled ? "bg-overlay/45 text-overlay-fg hover:bg-overlay/65" : "bg-overlay/30 text-overlay-fg/50 hover:bg-overlay/50"}`}
                 />
-                <span className="text-[10px] text-white/60">
+                <span className="text-overlay-fg/60 text-[10px]">
                   {speakerEnabled ? t.speakerOn : t.speakerOff}
                 </span>
               </div>
@@ -240,12 +344,13 @@ function ActiveCallOverlay({
                 <div className="flex flex-col items-center gap-1.5">
                   <IconButton
                     variant="secondary"
+                    size="icon"
                     icon={cameraEnabled ? <IconVideo /> : <IconVideoOff />}
                     label={cameraEnabled ? t.cameraOff : t.cameraOn}
                     onClick={onToggleCamera}
-                    className={`size-12 rounded-full ${cameraEnabled ? "bg-white/15 text-white hover:bg-white/25" : "bg-error/80 hover:bg-error text-white"}`}
+                    className={`size-12 rounded-full ${cameraEnabled ? "bg-overlay/45 text-overlay-fg hover:bg-overlay/65" : "bg-error text-error-fg hover:bg-error/85"}`}
                   />
-                  <span className="text-[10px] text-white/60">
+                  <span className="text-overlay-fg/60 text-[10px]">
                     {cameraEnabled ? t.cameraOff : t.cameraOn}
                   </span>
                 </div>
@@ -256,11 +361,14 @@ function ActiveCallOverlay({
             <button
               type="button"
               onClick={onHangup}
-              className="bg-error hover:bg-error/80 flex size-14 items-center justify-center rounded-full shadow-lg transition-all active:scale-95"
+              disabled={actionPending}
+              aria-busy={actionPending || undefined}
+              aria-label={phase === "connected" ? t.hangup : t.cancel}
+              className="bg-error text-error-fg hover:bg-error/85 focus-visible:ring-brand flex size-14 items-center justify-center rounded-full shadow-lg transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none active:scale-95 disabled:pointer-events-none disabled:opacity-50"
             >
-              <IconPhoneOff className="text-white" size={24} />
+              <IconPhoneOff size={24} />
             </button>
-            <span className="text-[10px] text-white/60">
+            <span className="text-overlay-fg/60 text-[10px]">
               {phase === "connected" ? t.hangup : t.cancel}
             </span>
           </div>
@@ -279,8 +387,16 @@ function ActiveCallOverlay({
  * state rather than a page-scoped subscription.
  */
 export function RtcCallOverlay() {
-  const { state, acceptCall, rejectCall, cancelCall, hangupCall } =
-    useRtcCall();
+  const {
+    state,
+    acceptCall,
+    rejectCall,
+    cancelCall,
+    hangupCall,
+    dismissError,
+  } = useRtcCall();
+  const t = useMessages("rtc");
+  const { toast } = useToast();
   const isConnected = state.phase === "connected";
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -290,9 +406,26 @@ export function RtcCallOverlay() {
     isConnected ? (state.livekit?.token ?? null) : null,
     state.hasVideo,
     { localVideoRef, remoteVideoRef, remoteAudioRef },
+    state.callId,
+    state.livekit?.roomName,
   );
 
-  const handleToggleSpeaker = () => setSpeakerEnabled((s) => !s);
+  useEffect(() => {
+    if (remoteAudioRef.current) remoteAudioRef.current.muted = false;
+  }, [state.phase]);
+
+  useEffect(() => {
+    if (!state.lastError) return;
+    toast({
+      title: t.callErrorTitle,
+      description: getCallErrorMessage(state.lastError, t),
+      variant: "destructive",
+    });
+    dismissError();
+  }, [dismissError, state.lastError, t, toast]);
+
+  const handleToggleSpeaker = () =>
+    toggleSpeaker(remoteAudioRef, setSpeakerEnabled);
 
   if (state.phase === "idle") return null;
 
@@ -302,6 +435,7 @@ export function RtcCallOverlay() {
         peerName={state.peer?.name || "?"}
         peerAvatarUrl={state.peer?.avatarUrl ?? null}
         hasVideo={state.hasVideo}
+        accepting={state.actionPending === "accept"}
         onAccept={acceptCall}
         onDecline={rejectCall}
       />
@@ -317,8 +451,10 @@ export function RtcCallOverlay() {
       micEnabled={livekit.micEnabled}
       cameraEnabled={livekit.cameraEnabled}
       speakerEnabled={speakerEnabled}
+      actionPending={state.actionPending !== null}
       remoteConnected={livekit.remoteConnected}
       livekitConnected={livekit.connected}
+      livekitError={livekit.livekitError}
       warningSecondsRemaining={state.warningSecondsRemaining}
       remoteVideoRef={remoteVideoRef}
       localVideoRef={localVideoRef}

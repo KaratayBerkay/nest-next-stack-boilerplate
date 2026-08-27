@@ -22,13 +22,13 @@ class FreeMessagesPage extends ConsumerWidget {
       // (mirrors web's `hidden`/`flex md:hidden` pair, just as separate
       // widgets instead of CSS breakpoints).
       return selectedUserId == null
-          ? const MessagesSidebar()
+          ? MessagesSidebar(lang: lang)
           : ChatView(conversationId: selectedUserId, lang: lang);
     }
 
     return Row(
       children: [
-        const MessagesSidebar(),
+        MessagesSidebar(lang: lang),
         Expanded(
           child: selectedUserId == null
               ? const EmptyChatState()

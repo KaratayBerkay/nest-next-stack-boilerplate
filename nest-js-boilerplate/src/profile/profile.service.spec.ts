@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { ProfileService } from './profile.service';
 
 describe('ProfileService', () => {
@@ -62,6 +63,33 @@ describe('ProfileService', () => {
       mockPrisma.user.update.mockResolvedValue({ id: 'u1' });
       await service.updateProfile('u1', { bio: 'hello' });
       expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+    });
+
+    it('maps a race-lost unique-constraint violation on username to the same friendly conflict — regression: the findUnique pre-check is a TOCTOU race (the DB @unique constraint is what actually prevents the collision), and previously the resulting P2002 from user.update was never caught, surfacing as a raw 500 instead of EX_PROFILE_USERNAME_TAKEN', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue(null);
+      mockPrisma.user.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+          code: 'P2002',
+          clientVersion: '7.0.0',
+        }),
+      );
+
+      await expect(
+        service.updateProfile('u1', { username: 'racedname' }),
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_PROFILE_USERNAME_TAKEN' },
+      });
+    });
+
+    it('still returns the updated user when the Redis session fan-out fails — a committed profile update must not be reported to the caller as a failure', async () => {
+      mockPrisma.user.update.mockResolvedValue({ id: 'u1', username: 'alice' });
+      mockTokenStore.rewriteFieldsForUser.mockRejectedValue(
+        new Error('ECONNRESET'),
+      );
+
+      await expect(
+        service.updateProfile('u1', { name: 'Alice' }),
+      ).resolves.toEqual({ id: 'u1', username: 'alice' });
     });
   });
 

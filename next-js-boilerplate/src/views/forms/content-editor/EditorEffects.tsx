@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { EditorEffectsProps } from "@/types/views/forms/EditorEffects-types";
 import { deriveSlug, saveDraft, clearDraft } from "./draft-utils";
 
@@ -35,20 +35,31 @@ export function EditorEffects({
     return () => window.removeEventListener("auth:logout", handler);
   }, [draftKey]);
 
+  // `values` changes on every keystroke — depending on it here meant the
+  // interval was torn down and restarted before it ever reached 30s, so
+  // autosave only ever fired after 30s of uninterrupted idle. The interval
+  // is now set up once per draftKey; valuesRef gets it the latest content
+  // without resetting the timer.
+  const valuesRef = useRef(values);
+  useEffect(() => {
+    valuesRef.current = values;
+  }, [values]);
+
   useEffect(() => {
     const handler = () => {
-      if (draftKey && values.title) {
+      const current = valuesRef.current;
+      if (draftKey && current.title) {
         saveDraft(draftKey, {
-          title: values.title,
-          slug: values.slug,
-          tags: values.tags,
-          body: values.body,
+          title: current.title,
+          slug: current.slug,
+          tags: current.tags,
+          body: current.body,
         });
       }
     };
     const interval = setInterval(handler, 30000);
     return () => clearInterval(interval);
-  }, [draftKey, values]);
+  }, [draftKey]);
 
   return null;
 }

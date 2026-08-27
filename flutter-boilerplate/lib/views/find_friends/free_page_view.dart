@@ -1,38 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../api/client/friends/query.dart';
-import '../../components/ui/empty/empty.dart';
-import '../../components/ui/spinner/spinner.dart';
-import '../../l10n/app_localizations.dart';
 import 'free_find_friends_content.dart';
 
-class FreeFindFriendsPage extends ConsumerWidget {
+class FreeFindFriendsPage extends StatelessWidget {
   final String lang;
 
   const FreeFindFriendsPage({super.key, required this.lang});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final suggestedAsync = ref.watch(suggestedFriendsProvider);
-
-    return suggestedAsync.when(
-      loading: () => const Column(
-        children: [
-          SizedBox(height: 16),
-          Spinner(),
-        ],
-      ),
-      error: (err, _) => EmptyWidget(
-        title: t.findFriendsFailedToLoadSuggestions,
-        description: err.toString(),
-        icon: Icons.error_outline,
-      ),
-      data: (suggested) => FreeFindFriendsContent(
-        lang: lang,
-        suggestedAsync: AsyncData(suggested),
-      ),
-    );
+  Widget build(BuildContext context) {
+    return FreeFindFriendsContent(lang: lang);
   }
 }

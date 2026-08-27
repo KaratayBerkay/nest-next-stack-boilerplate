@@ -6,6 +6,8 @@ import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/query.dart';
+import '../../api/server/messages/conversation_attachments.dart';
+import '../../components/ui/attachment_preview/attachment_gallery_sheet.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_messages_page.dart';
@@ -95,6 +97,16 @@ class ChatViewHeader extends ConsumerWidget {
                       ),
                     ),
                   ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.folder_outlined),
+                tooltip: t.allUploadsTitle,
+                onPressed: () => AttachmentGallerySheet.show(
+                  context,
+                  fetchPage: ({before, take = 30}) => ref
+                      .read(conversationAttachmentsServerProvider)
+                      .call(conversationId, before: before, take: take),
                 ),
               ),
               IconButton(

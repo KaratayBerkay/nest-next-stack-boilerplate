@@ -8,6 +8,7 @@ import {
   type SyntheticEvent,
 } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { toISOString } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { usePostActions } from "@/api/client/posts/actions";
@@ -39,6 +40,8 @@ async function handleSubmitComment(
     body: string,
     replyTo?: string | null,
   ) => Promise<unknown>,
+  youLabel: string,
+  createCommentFailedMessage: string,
 ) {
   e.preventDefault();
   if (!body.trim() || submitting) return;
@@ -50,7 +53,7 @@ async function handleSubmitComment(
     id: `opt-${tempIdCounter.current}`,
     body: trimmedBody,
     createdAt: toISOString(),
-    author: { id: currentUserId ?? "", name: "You", email: "" },
+    author: { id: currentUserId ?? "", name: youLabel, email: "" },
     parentId: replyTo,
   };
   setPendingComments((prev) => [...prev, temp]);
@@ -63,7 +66,7 @@ async function handleSubmitComment(
     onCommentAdded?.();
   } catch {
     setPendingComments((prev) => prev.filter((c) => c.id !== temp.id));
-    toast({ title: "Network error", variant: "destructive" });
+    toast({ title: createCommentFailedMessage, variant: "destructive" });
     setBody(trimmedBody);
     setReplyTo(prevReplyTo);
   } finally {
@@ -81,6 +84,8 @@ async function handleSaveEdit(
     commentId: string,
     body: string,
   ) => Promise<{ id: string; body: string }>,
+  toast: Toast,
+  failedMessage: string,
 ) {
   const trimmed = editingBody.trim();
   if (!trimmed) return;
@@ -98,6 +103,7 @@ async function handleSaveEdit(
       delete next[comment.id];
       return next;
     });
+    toast({ title: failedMessage, variant: "destructive" });
   }
 }
 
@@ -106,6 +112,8 @@ async function handleDeleteComment(
   setLocalDeletes: Dispatch<SetStateAction<Set<string>>>,
   onCommentAdded: (() => void) | undefined,
   deleteComment: (commentId: string) => Promise<void>,
+  toast: Toast,
+  failedMessage: string,
 ) {
   setLocalDeletes((prev) => new Set(prev).add(comment.id));
   try {
@@ -122,6 +130,7 @@ async function handleDeleteComment(
       next.delete(comment.id);
       return next;
     });
+    toast({ title: failedMessage, variant: "destructive" });
   }
 }
 
@@ -142,6 +151,7 @@ export function CommentSection({
   const tempIdCounter = useRef(0);
   const dateDisplay = useDateDisplayCookie();
   const { toast } = useToast();
+  const t = useMessages("posts");
   const { createComment, updateComment, deleteComment } = usePostActions();
 
   const allComments = [
@@ -185,6 +195,8 @@ export function CommentSection({
             onCommentAdded,
             toast,
             createComment,
+            t.you,
+            t.createCommentFailed,
           )
         }
       />
@@ -205,6 +217,8 @@ export function CommentSection({
             setEditingId,
             onCommentAdded,
             updateComment,
+            toast,
+            t.editCommentFailed,
           )
         }
         onCancelEdit={cancelEdit}
@@ -214,6 +228,8 @@ export function CommentSection({
             setLocalDeletes,
             onCommentAdded,
             deleteComment,
+            toast,
+            t.deleteCommentFailed,
           )
         }
         currentUserId={currentUserId}

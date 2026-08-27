@@ -3,6 +3,10 @@ import { cookies } from "next/headers";
 import { backendFormFetch } from "@/lib/backend";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { POST as POST_METHOD } from "@/constants/api/methods";
+import {
+  UPLOAD_SCOPE_ID_HEADER,
+  UPLOAD_SCOPE_KIND_HEADER,
+} from "@/constants/api/headers";
 import { MAX_ATTACHMENT_SIZE } from "@/constants/upload";
 import { logger } from "@/lib/logger";
 
@@ -49,10 +53,19 @@ export async function POST(request: Request) {
     const backendFormData = new FormData();
     backendFormData.set("file", file);
 
+    const scopeKind = request.headers.get(UPLOAD_SCOPE_KIND_HEADER);
+    const scopeId = request.headers.get(UPLOAD_SCOPE_ID_HEADER);
+
     const backend = await backendFormFetch(
       "/upload/attachment",
       backendFormData,
-      { method: POST_METHOD },
+      {
+        method: POST_METHOD,
+        headers: {
+          ...(scopeKind ? { [UPLOAD_SCOPE_KIND_HEADER]: scopeKind } : {}),
+          ...(scopeId ? { [UPLOAD_SCOPE_ID_HEADER]: scopeId } : {}),
+        },
+      },
       accessToken,
     );
 

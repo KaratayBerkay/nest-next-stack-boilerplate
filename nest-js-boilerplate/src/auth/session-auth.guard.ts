@@ -9,9 +9,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import type { Request } from 'express';
 import { accessCookieName } from './access-cookie';
+import { IS_PUBLIC_KEY } from './public.decorator';
 import { JwtUser, SessionUser } from './auth.types';
 import { hashSessionId } from '../common/crypto/crypto.service';
 import { decryptTokenOrNull } from '../common/token-codec/token-codec';
@@ -65,9 +67,16 @@ export class SessionAuthGuard implements CanActivate {
     private readonly config: ConfigService,
     private readonly tokenStore: TokenStoreService,
     private readonly validator: SessionValidatorService,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (isPublic) return true;
+
     const req = GqlExecutionContext.create(context).getContext<{
       req: AuthedRequest;
     }>().req;

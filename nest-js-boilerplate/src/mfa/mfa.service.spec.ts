@@ -84,6 +84,12 @@ describe('MfaService', () => {
       expect(result.otpauthUrl).toContain('otphttp://');
       expect(mockCrypto.encrypt).toHaveBeenCalledWith('BASE32SECRETXXXX');
 
+      // Regression: the cleanup + insert must be one atomic unit — previously
+      // these were two top-level calls, so a crash in between (or two
+      // concurrent enroll() calls) could leave either zero or two pending
+      // factors for the same user.
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+
       // Old pending factor removed before the new one is created (order matters:
       // otherwise the fresh insert could be immediately wiped by the cleanup).
       const deleteOrder =

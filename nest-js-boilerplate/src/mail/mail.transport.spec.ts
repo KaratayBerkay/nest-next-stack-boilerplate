@@ -187,6 +187,21 @@ describe('MailTransport', () => {
       );
     });
 
+    it('connects to mailpit on plaintext 1025, not 465/TLS', async () => {
+      mockSendMail.mockResolvedValue({ messageId: 'smtp_msg_mailpit' });
+
+      const transport = new MailTransport(makeConfig({ SMTP_HOST: 'mailpit' }));
+      await transport.send({ to: 'b@c.com', subject: 'Test' });
+
+      expect(nodemailerCreateTransport).toHaveBeenCalledWith(
+        expect.objectContaining({
+          host: 'mailpit',
+          port: 1025,
+          secure: false,
+        }),
+      );
+    });
+
     it('throws when SMTP sendMail fails', async () => {
       mockSendMail.mockRejectedValue(new Error('connection refused'));
 

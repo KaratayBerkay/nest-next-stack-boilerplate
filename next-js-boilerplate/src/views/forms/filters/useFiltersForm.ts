@@ -11,6 +11,18 @@ import {
   ALLOWED_STATUSES,
 } from "./constants";
 
+const BLANK_VALUES = {
+  search: "",
+  tags: [],
+  sortBy: "relevance",
+  sortOrder: "desc",
+  status: "",
+  pageSize: "25",
+  category: [],
+  dateFrom: "",
+  dateTo: "",
+} satisfies z.input<typeof filtersSchema>;
+
 export function useFiltersForm(
   initialSearchParams: Record<string, string | string[] | undefined>,
   pathname: string,
@@ -90,7 +102,10 @@ export function useFiltersForm(
   }));
 
   const handleReset = useCallback(() => {
-    form.reset();
+    // form.reset() alone restores defaultValues, which is derived from the
+    // URL params the page happened to load with — not blank. A page loaded
+    // with filters already in the URL "reset" right back to those filters.
+    form.reset(BLANK_VALUES);
     window.history.replaceState(null, "", pathname);
   }, [form, pathname]);
 

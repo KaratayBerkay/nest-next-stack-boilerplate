@@ -393,6 +393,7 @@ model User {
   notifications      Notification[]         @relation("NotificationRecipient")
   triggered          Notification[]         @relation("NotificationActor")
   pushSubscriptions  PushSubscription[]
+  fcmTokens          FcmToken[]
 
   // rtc (calls, meetings, streams)
   rtcRoomsCreated        RtcRoom[]        @relation("RtcRoomCreator")
@@ -476,6 +477,20 @@ model PushSubscription {
   p256dh    String
   auth      String
   userAgent String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([userId])
+}
+
+// FCM device token for mobile push — separate from PushSubscription (W3C Web
+// Push shape: endpoint/p256dh/auth) since an FCM token has no equivalent
+// keys and is sent through the Firebase Admin SDK, not the `web-push` library.
+model FcmToken {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String?
   createdAt DateTime @default(now()) @db.Timestamptz(6)
 
   @@index([userId])

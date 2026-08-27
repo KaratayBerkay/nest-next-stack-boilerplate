@@ -1,6 +1,6 @@
 import type { Dispatch, SetStateAction } from "react";
 import type { useToast } from "@/components/ui/Toast";
-import { MAX_UPLOAD_SIZE } from "@/constants/upload";
+import { ALLOWED_IMAGE_TYPES, MAX_UPLOAD_SIZE } from "@/constants/upload";
 
 export async function uploadAvatarFile(
   file: File,
@@ -9,8 +9,7 @@ export async function uploadAvatarFile(
   setAvatarUrl: Dispatch<SetStateAction<string>>,
   uploadAvatar: (file: File) => Promise<{ urls: { full: string } }>,
 ) {
-  const allowed = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-  if (!allowed.includes(file.type)) {
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
     toast({ title: t.invalidFileType, variant: "destructive" });
     return;
   }

@@ -1,6 +1,6 @@
 import { Logger, UnauthorizedException } from '@nestjs/common';
 import { verify } from '@node-rs/argon2';
-import { User } from '@prisma/client';
+import { Prisma, User } from '@prisma/client';
 import { verify as verifyTotp } from 'otplib';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -21,6 +21,16 @@ import type { OAuthProfile } from './auth.service';
 
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
+const MAX_USERNAME_RACE_ATTEMPTS = 3;
+
+// Postgres reports a P2002's `meta.target` as either the constraint name
+// (a string) or a column-name array, depending on Prisma version — checked
+// explicitly (not a blind `String(target)`) since `target` is `unknown`.
+function isConstraintOn(target: unknown, column: string): boolean {
+  if (typeof target === 'string') return target.includes(column);
+  if (Array.isArray(target)) return target.includes(column);
+  return false;
+}
 
 export class AuthLoginService {
   private readonly logger = new Logger(AuthLoginService.name);
@@ -95,6 +105,15 @@ export class AuthLoginService {
     const device = ctx
       ? await this.devices.resolveForLogin(user.id, ctx)
       : undefined;
+    // Must fire here, right after the device is resolved — not after the MFA
+    // branch below. resolveForLogin() persists its "is this device known"
+    // state (a Device row keyed by the device-token cookie), so a second
+    // call from verifyLoginMfa() a moment later would find the very row this
+    // call just created/claimed and report `changed: false`. Deferring this
+    // past the MFA gate meant the signal was silently lost on every MFA-
+    // gated login — exactly the accounts most likely to care about a "new
+    // device" security notification never got one.
+    if (device?.changed) await this.emitNewDevice(user.id, device);
 
     if (user.mfaEnabled && !device?.trusted) {
       const factor = await this.prisma.mfaFactor.findFirst({
@@ -126,26 +145,36 @@ export class AuthLoginService {
       return { mfaRequired: true, mfaMethod, mfaToken, user };
     }
 
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginCount: 0,
-        lockedUntil: null,
-        lastLoginAt: new Date(),
-        ...(input.timezone ? { timezone: input.timezone } : {}),
-      },
+    // The login-state reset and its audit event must commit together — this
+    // codebase's outbox contract (see OutboxService.emit's own doc comment)
+    // is that passing `tx` is "the whole point of the pattern". Emitting
+    // outside the transaction meant a crash between the two calls left the
+    // user's failedLoginCount/lockedUntil silently reset with no audit trail
+    // ever recorded for it.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginCount: 0,
+          lockedUntil: null,
+          lastLoginAt: new Date(),
+          ...(input.timezone ? { timezone: input.timezone } : {}),
+        },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: user.id,
+          eventType: 'auth.login',
+          action: 'LOGIN',
+          actorId: user.id,
+          summary: `User ${email} logged in`,
+          ip: device?.ip ?? null,
+          userAgent: device?.userAgent ?? null,
+        },
+        tx,
+      );
     });
-    await this.outbox.emit({
-      aggregateType: 'User',
-      aggregateId: user.id,
-      eventType: 'auth.login',
-      action: 'LOGIN',
-      actorId: user.id,
-      summary: `User ${email} logged in`,
-      ip: device?.ip ?? null,
-      userAgent: device?.userAgent ?? null,
-    });
-    if (device?.changed) await this.emitNewDevice(user.id, device);
 
     return issueTokens(user, ctx, device);
   }
@@ -208,6 +237,41 @@ export class AuthLoginService {
     const device = ctx
       ? await this.devices.resolveForLogin(user.id, ctx)
       : undefined;
+    // Note: the "new device" notification for this login was already fired
+    // by login()'s own resolveForLogin() call, before the MFA challenge was
+    // even issued — resolveForLogin() persists a Device row on first call,
+    // so this second call always sees `changed: false` for the same device.
+
+    // The non-MFA success path resets these and audits the login; this path
+    // never did either — a user who mistyped their password a few times
+    // before completing MFA kept carrying that failedLoginCount forever
+    // (this branch never clears it), silently creeping toward
+    // MAX_FAILED_LOGINS on future, unrelated mistakes, and MFA-gated logins
+    // were invisible to the audit log.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          failedLoginCount: 0,
+          lockedUntil: null,
+          lastLoginAt: new Date(),
+        },
+      });
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: user.id,
+          eventType: 'auth.login',
+          action: 'LOGIN',
+          actorId: user.id,
+          summary: `User ${user.email} logged in (MFA)`,
+          ip: device?.ip ?? null,
+          userAgent: device?.userAgent ?? null,
+        },
+        tx,
+      );
+    });
+
     return issueTokens(user, ctx, device);
   }
 
@@ -258,45 +322,72 @@ export class AuthLoginService {
     }
 
     let isNewUser = false;
-    const user = await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.user.findUnique({ where: { email } });
-      const isNew = !existing;
-      const username = isNew
-        ? await this.usernames.generate(email, tx)
-        : undefined;
-      const target =
-        existing ??
-        (await tx.user.create({
-          data: {
-            email,
-            name: profile.name ?? null,
-            username,
-            status: 'ACTIVE',
-            emailVerifiedAt: new Date(),
-          },
-        }));
-      if (isNew) isNewUser = true;
-      await tx.account.create({
-        data: {
-          userId: target.id,
-          type: profile.type,
-          provider: profile.provider,
-          providerAccountId: profile.providerAccountId,
-        },
-      });
-      await this.outbox.emit(
-        {
-          aggregateType: 'User',
-          aggregateId: target.id,
-          eventType: existing ? 'auth.account_linked' : 'user.signup',
-          action: existing ? 'LOGIN' : 'SIGNUP',
-          actorId: target.id,
-          summary: `${existing ? 'Linked' : 'Created'} ${profile.provider} account`,
-        },
-        tx,
-      );
-      return target;
-    });
+    let user: User | undefined;
+    // UsernameService.generate() only checks-then-suggests — it can't reserve
+    // the name — so two concurrent signups deriving the same base username
+    // (e.g. the same email local-part via different providers) can both see
+    // it as available and both attempt to create with it, and only one wins
+    // the real DB @unique constraint. Retrying re-enters generate() fresh,
+    // which now sees the winner's username as taken and picks a suffixed one
+    // instead of dead-ending the loser's signup with a raw 500.
+    for (let attempt = 1; attempt <= MAX_USERNAME_RACE_ATTEMPTS; attempt++) {
+      try {
+        user = await this.prisma.$transaction(async (tx) => {
+          const existing = await tx.user.findUnique({ where: { email } });
+          const isNew = !existing;
+          const username = isNew
+            ? await this.usernames.generate(email, tx)
+            : undefined;
+          const target =
+            existing ??
+            (await tx.user.create({
+              data: {
+                email,
+                name: profile.name ?? null,
+                username,
+                status: 'ACTIVE',
+                emailVerifiedAt: new Date(),
+              },
+            }));
+          if (isNew) isNewUser = true;
+          await tx.account.create({
+            data: {
+              userId: target.id,
+              type: profile.type,
+              provider: profile.provider,
+              providerAccountId: profile.providerAccountId,
+            },
+          });
+          await this.outbox.emit(
+            {
+              aggregateType: 'User',
+              aggregateId: target.id,
+              eventType: existing ? 'auth.account_linked' : 'user.signup',
+              action: existing ? 'LOGIN' : 'SIGNUP',
+              actorId: target.id,
+              summary: `${existing ? 'Linked' : 'Created'} ${profile.provider} account`,
+            },
+            tx,
+          );
+          return target;
+        });
+        break;
+      } catch (err) {
+        const isUsernameRace =
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002' &&
+          isConstraintOn(err.meta?.target, 'username');
+        if (!isUsernameRace || attempt === MAX_USERNAME_RACE_ATTEMPTS)
+          throw err;
+        isNewUser = false;
+        this.logger.warn(
+          `loginWithOAuth: username race for ${email} (attempt ${attempt}/${MAX_USERNAME_RACE_ATTEMPTS}), retrying with a fresh candidate`,
+        );
+      }
+    }
+    // Every loop iteration above either assigns `user` and breaks, or throws
+    // — it can never fall through without one of the two.
+    if (!user) throw new Error('unreachable: loginWithOAuth resolved no user');
 
     const device = ctx
       ? await this.devices.resolveForLogin(user.id, ctx)
@@ -351,33 +442,58 @@ export class AuthLoginService {
       where: { userId, codeHash, usedAt: null },
     });
     if (!backupCode) return false;
-    await this.prisma.mfaBackupCode.update({
-      where: { id: backupCode.id },
+    // Atomically claim it: MfaBackupCode has no unique/partial-index
+    // constraint backing "single use" (only @@index([userId])), so two
+    // concurrent MFA-verify calls with the same code could otherwise both
+    // pass the check above and both succeed. This updateMany's own WHERE
+    // clause re-checks `usedAt: null` at the moment of the write, not the
+    // earlier read — only one concurrent caller can ever claim it.
+    const claimed = await this.prisma.mfaBackupCode.updateMany({
+      where: { id: backupCode.id, usedAt: null },
       data: { usedAt: new Date() },
     });
-    return true;
+    return claimed.count === 1;
   }
 
   private async registerFailedLogin(user: User): Promise<void> {
-    const failed = user.failedLoginCount + 1;
-    const lock = failed >= MAX_FAILED_LOGINS;
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: {
-        failedLoginCount: failed,
-        lockedUntil: lock
-          ? new Date(Date.now() + LOCK_MINUTES * 60_000)
-          : user.lockedUntil,
-      },
-    });
-    await this.outbox.emit({
-      aggregateType: 'User',
-      aggregateId: user.id,
-      eventType: 'auth.login.failed',
-      action: 'LOGIN_FAILED',
-      level: 'WARN',
-      actorId: user.id,
-      summary: `Failed login #${failed}${lock ? ' (account locked)' : ''}`,
+    // The increment, the (conditional) lockout write, and the audit event
+    // all commit as one unit — previously the increment and lockout were two
+    // separate top-level writes, so a crash in between could permanently
+    // leave an account that had already crossed MAX_FAILED_LOGINS unlocked
+    // (count persisted, lockedUntil never set), silently defeating the
+    // brute-force lockout. Passing `tx` to outbox.emit follows this
+    // codebase's own outbox contract (see OutboxService.emit's doc comment).
+    await this.prisma.$transaction(async (tx) => {
+      // Atomic increment, not `user.failedLoginCount + 1` computed from an
+      // already-fetched, potentially-stale object — concurrent wrong-password
+      // requests previously each read/wrote the same base value (a lost
+      // update), so a burst of parallel brute-force attempts could blow
+      // through MAX_FAILED_LOGINS without the lockout ever triggering.
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: { failedLoginCount: { increment: 1 } },
+      });
+      const lock = updated.failedLoginCount >= MAX_FAILED_LOGINS;
+      if (lock) {
+        // A harmless redundant write if two concurrent attempts both cross
+        // the threshold at once — both just set ~the same lockout expiry.
+        await tx.user.update({
+          where: { id: user.id },
+          data: { lockedUntil: new Date(Date.now() + LOCK_MINUTES * 60_000) },
+        });
+      }
+      await this.outbox.emit(
+        {
+          aggregateType: 'User',
+          aggregateId: user.id,
+          eventType: 'auth.login.failed',
+          action: 'LOGIN_FAILED',
+          level: 'WARN',
+          actorId: user.id,
+          summary: `Failed login #${updated.failedLoginCount}${lock ? ' (account locked)' : ''}`,
+        },
+        tx,
+      );
     });
   }
 

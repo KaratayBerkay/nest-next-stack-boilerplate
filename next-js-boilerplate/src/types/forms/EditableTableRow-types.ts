@@ -5,9 +5,13 @@ export interface EditableTableRowProps {
   form: any;
   field: any;
   index: number;
+  rowKey: string;
   status: RowStatus;
   rowSchemas: any;
-  onSaveRow: (idx: number) => void;
+  onSaveRow: (rowKey: string) => void;
+  onDuplicateRow: (idx: number) => void;
+  onMoveRow: (from: number, to: number) => void;
+  onRemoveRow: (idx: number) => void;
   t: any;
   simulateError: any;
   toast: any;

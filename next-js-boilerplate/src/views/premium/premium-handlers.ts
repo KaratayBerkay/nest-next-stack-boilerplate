@@ -54,7 +54,7 @@ export function handleExportPremiumCSV(
     return;
   }
   const csv = [
-    "Metric,Value",
+    t.csvHeader,
     `${t.totalUsers},${stats.totalUsers}`,
     `${t.activeUsers},${stats.activeUsers}`,
     `${t.revenue},${stats.revenue}`,

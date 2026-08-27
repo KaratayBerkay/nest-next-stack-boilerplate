@@ -3,10 +3,12 @@ import { cookies } from "next/headers";
 import { backendFormFetch } from "@/lib/backend";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
 import { POST as POST_METHOD } from "@/constants/api/methods";
-import { MAX_UPLOAD_SIZE, MAX_UPLOAD_SIZE_MB } from "@/constants/upload";
+import {
+  ALLOWED_IMAGE_TYPES,
+  MAX_UPLOAD_SIZE,
+  MAX_UPLOAD_SIZE_MB,
+} from "@/constants/upload";
 import { logger } from "@/lib/logger";
-
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 export async function POST(request: Request) {
   try {
@@ -22,9 +24,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File is required" }, { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.includes(file.type)) {
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Only JPEG, PNG, WebP, and GIF images are allowed" },
+        { error: "Only JPEG, PNG, WebP, GIF, and AVIF images are allowed" },
         { status: 400 },
       );
     }

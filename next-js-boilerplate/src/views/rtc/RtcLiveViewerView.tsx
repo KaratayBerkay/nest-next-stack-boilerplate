@@ -21,6 +21,7 @@ import { RtcReportDialog } from "@/components/rtc/RtcReportDialog";
 import { streamChatQueryOptions } from "@/api/client/rtc/streams-query";
 import { useStreamActions } from "@/api/client/rtc/streams-actions";
 import type { LiveStreamJoinResult } from "@/api/server/rtc/streams/types";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 interface ChatItem {
   id: string;
@@ -116,9 +117,25 @@ export function RtcLiveViewerView() {
   );
 
   useEffect(() => {
-    if (!chatHistory || seededChat.current) return;
-    seededChat.current = true;
-    setChat([...chatHistory.messages].reverse());
+    if (!chatHistory) return;
+    if (!seededChat.current) {
+      seededChat.current = true;
+      setChat([...chatHistory.messages].reverse());
+      return;
+    }
+    // Re-runs after a reconnect-triggered refetch (resyncAfterConnect
+    // invalidates this query) — merge rather than replace, since WS-pushed
+    // messages already appended locally must survive a refetch that hasn't
+    // caught up yet. See RtcMeetingRoomView's identical fix.
+    setChat((prev) => {
+      const known = new Set(prev.map((m) => m.id));
+      const missing = chatHistory.messages.filter((m) => !known.has(m.id));
+      if (missing.length === 0) return prev;
+      return [...prev, ...missing].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    });
   }, [chatHistory]);
 
   useEffect(() => {
@@ -136,22 +153,39 @@ export function RtcLiveViewerView() {
       })
       .catch((err) => {
         if (cancelled) return;
+        logRtcEvent({
+          event: "stream.join_failed",
+          rtcKind: "stream",
+          rtcId: slug,
+          exceptionType: "CLIENT_REQUEST_ERROR",
+          error: err,
+          phase: "joining",
+        });
         const status = (err as { exception?: { statusCode?: number } })
           .exception?.statusCode;
         setPhase(status === 404 ? "not-found" : "ended");
         toast({
-          title: err instanceof Error ? err.message : "Failed to join stream",
+          title: err instanceof Error ? err.message : t.joinStreamFailed,
           variant: "destructive",
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [slug, joinStream, toast, user?.id]);
+  }, [slug, joinStream, toast, user?.id, t.joinStreamFailed]);
 
   useEffect(() => {
     return () => {
-      void leaveStream(slug);
+      void leaveStream(slug).catch((error) =>
+        logRtcEvent({
+          event: "stream.leave_failed",
+          rtcKind: "stream",
+          rtcId: slug,
+          exceptionType: "CLIENT_REQUEST_ERROR",
+          error,
+          phase: "unmount",
+        }),
+      );
     };
   }, [slug, leaveStream]);
 
@@ -191,6 +225,8 @@ export function RtcLiveViewerView() {
     phase === "active" ? (join?.token ?? null) : null,
     join?.stream.broadcaster.id ?? "",
     false,
+    slug,
+    join?.roomName,
   );
 
   const sendChat = useCallback(() => {
@@ -201,7 +237,16 @@ export function RtcLiveViewerView() {
   }, [chatInput, realtime, slug]);
 
   const handleLeave = () => {
-    void leaveStream(slug);
+    void leaveStream(slug).catch((error) =>
+      logRtcEvent({
+        event: "stream.leave_failed",
+        rtcKind: "stream",
+        rtcId: slug,
+        exceptionType: "CLIENT_REQUEST_ERROR",
+        error,
+        phase: "active",
+      }),
+    );
     router.push(`/v1/${lang}/rtc/live`);
   };
 
@@ -278,7 +323,17 @@ export function RtcLiveViewerView() {
                       reason,
                       details,
                       join?.stream.broadcaster.id,
-                    )
+                    ).catch((error) => {
+                      logRtcEvent({
+                        event: "stream.report_failed",
+                        rtcKind: "stream",
+                        rtcId: slug,
+                        exceptionType: "CLIENT_REQUEST_ERROR",
+                        error,
+                        metadata: { reason },
+                      });
+                      throw error;
+                    })
                   }
                 >
                   {(open) => (

@@ -7,7 +7,6 @@ import {
   IconCrown,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/Button";
-import { IconButton } from "@/components/ui/button/icon-button";
 import { Input } from "@/components/ui/Input";
 import { EmojiPickerButton } from "@/components/ui/EmojiPickerButton";
 import { cn } from "@/lib/cn";
@@ -22,14 +21,12 @@ import type {
   EmojiButtonProps,
 } from "@/types/chat-room/ChatRoomSubComponent-types";
 
-export function SidebarCloseButton({ onClick }: SidebarCloseButtonProps) {
+export function SidebarCloseButton({
+  onClick,
+  label,
+}: SidebarCloseButtonProps) {
   return (
-    <Button
-      variant="ghost"
-      size="icon-sm"
-      onClick={onClick}
-      aria-label="Close rooms sidebar"
-    >
+    <Button variant="ghost" size="icon-sm" onClick={onClick} aria-label={label}>
       <IconX size={18} />
     </Button>
   );

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterEach } from "vitest";
 import {
   getMonthNames,
   MONTHS,
@@ -8,8 +8,45 @@ import {
   formatDateTimeShort,
   formatDateByPreference,
   formatDateTimeByPreference,
+  getCurrentLocale,
   type DateDisplayPreference,
 } from "./date-time";
+
+describe("getCurrentLocale", () => {
+  afterEach(() => {
+    window.history.replaceState(null, "", "/");
+    document.cookie = "lang=; expires=Thu, 01 Jan 1970 00:00:00 UTC";
+  });
+
+  it("reads the language segment from the current pathname", () => {
+    window.history.replaceState(null, "", "/v1/tr/feed");
+    expect(getCurrentLocale()).toBe("tr");
+  });
+
+  it("falls back to the lang cookie when the pathname has no language segment", () => {
+    window.history.replaceState(null, "", "/no-lang-segment");
+    document.cookie = "lang=tr";
+    expect(getCurrentLocale()).toBe("tr");
+  });
+
+  it("defaults to en when neither the pathname nor the cookie has a language", () => {
+    window.history.replaceState(null, "", "/no-lang-segment");
+    expect(getCurrentLocale()).toBe("en");
+  });
+});
+
+describe("date formatters default to the site's language, not the browser's", () => {
+  afterEach(() => {
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("formatDateLong follows the /tr/ URL segment when locale is omitted", () => {
+    window.history.replaceState(null, "", "/v1/tr/feed");
+    const d = new Date(2026, 0, 15);
+    expect(formatDateLong(d)).toBe(formatDateLong(d, "tr"));
+    expect(formatDateLong(d)).not.toBe(formatDateLong(d, "en"));
+  });
+});
 
 describe("getMonthNames", () => {
   it("returns the 12 English long month names by default", () => {

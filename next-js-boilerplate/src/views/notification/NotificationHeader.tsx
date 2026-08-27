@@ -16,9 +16,11 @@ export function NotificationHeader({
   unsubscribe,
   unreadCount,
   markAllRead,
+  backLabel,
   markAllReadLabel,
   enablePushLabel,
   disablePushLabel,
+  pushBlockedLabel,
   navigateToFeed,
 }: NotificationHeaderProps) {
   return (
@@ -26,13 +28,20 @@ export function NotificationHeader({
       <div className="flex items-center gap-2">
         <IconButton
           icon={<IconArrowLeft size={20} stroke={1.5} />}
-          label="Back"
+          label={backLabel}
           onClick={navigateToFeed}
         />
         <h2 className="text-fg text-sm font-semibold">{title}</h2>
       </div>
       <div className="flex items-center gap-2">
-        {supported && permission !== "granted" && (
+        {supported && permission === "denied" && (
+          <IconButton
+            icon={<IconBellOff size={16} stroke={1.5} />}
+            label={pushBlockedLabel}
+            disabled
+          />
+        )}
+        {supported && permission === "default" && (
           <IconButton
             icon={<IconBellOff size={16} stroke={1.5} />}
             label={enablePushLabel}

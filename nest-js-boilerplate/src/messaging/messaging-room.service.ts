@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Logger, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
@@ -24,6 +24,12 @@ export const CHAT_ROOMS = [
 ] as const;
 export type ChatRoom = (typeof CHAT_ROOMS)[number];
 export const VIP_ROOM_PREFIX = 'vip-';
+// The one VIP room both frontend and mobile hardcode as joinable. isValidRoom()
+// already accepts any `vip-`-prefixed slug and hasRoomTierAccess() already
+// gates it correctly by prefix alone — this list exists solely so seedRooms()
+// creates the backing Room row (a real FK target for RoomMessage.roomId),
+// which nothing previously did.
+export const VIP_ROOMS = ['vip-lounge'] as const;
 
 /**
  * Cache of DB-registered room slugs (Room.slug), refreshed from Postgres.
@@ -64,6 +70,8 @@ export function hasRoomTierAccess(
 }
 
 export class MessagingRoomService {
+  private readonly logger = new Logger(MessagingRoomService.name);
+
   /**
    * Chat-room membership uses Redis Sets as the authoritative source for
    * user IDs (cross-instance safe). The in-memory Map stores full
@@ -80,11 +88,40 @@ export class MessagingRoomService {
     private readonly storageCrypto: StorageCryptoService,
     private readonly usage: UsageService,
   ) {
-    void this.seedRooms().then(() => refreshDbRoomSlugs(this.prisma));
+    // This app has no process-level unhandledRejection/uncaughtException
+    // handler, so an unguarded rejection here (very plausible right after a
+    // container restart, before Postgres is fully ready to accept
+    // connections) previously crashed the process before it served any
+    // traffic, on every boot. Retries with a short backoff instead of
+    // crashing OR silently giving up — a few attempts covers "Postgres
+    // isn't ready yet" without hanging startup if it's genuinely down.
+    void this.seedRoomsWithRetry();
+  }
+
+  private async seedRoomsWithRetry(attempt = 1): Promise<void> {
+    const MAX_ATTEMPTS = 5;
+    const RETRY_DELAY_MS = 2000;
+    try {
+      await this.seedRooms();
+      await refreshDbRoomSlugs(this.prisma);
+    } catch (err) {
+      const error = err as Error;
+      if (attempt >= MAX_ATTEMPTS) {
+        this.logger.error(
+          `Room seeding failed after ${MAX_ATTEMPTS} attempts — chat-room messaging will fail until this succeeds (next restart or a future call): ${error.message}`,
+        );
+        return;
+      }
+      this.logger.warn(
+        `Room seeding failed (attempt ${attempt}/${MAX_ATTEMPTS}), retrying in ${RETRY_DELAY_MS}ms: ${error.message}`,
+      );
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+      await this.seedRoomsWithRetry(attempt + 1);
+    }
   }
 
   private async seedRooms(): Promise<void> {
-    for (const slug of CHAT_ROOMS) {
+    for (const slug of [...CHAT_ROOMS, ...VIP_ROOMS]) {
       await this.prisma.room.upsert({
         where: { slug },
         update: {},
@@ -108,17 +145,38 @@ export class MessagingRoomService {
     return `${ROOM_MEMBERS_PREFIX}${room}:userIds`;
   }
 
+  /**
+   * Fire-and-forget Redis calls throughout this file previously had no
+   * `.catch()` at all — an ioredis rejection (auth error, maxmemory,
+   * cluster failover) is an unhandled promise rejection with no
+   * process-level handler anywhere in this app, which crashes the whole
+   * process by default. `realtime.gateway.ts` already wraps its own
+   * equivalent fire-and-forget Redis calls the same way, via its
+   * `safeRedis` helper — this mirrors that.
+   */
+  private safeRedis(label: string, promise: Promise<unknown> | undefined) {
+    promise?.catch((err: Error) => {
+      this.logger.warn(`Redis ${label} failed: ${err.message}`);
+    });
+  }
+
   joinRoom(room: string, member: RoomMember) {
     if (!this.rooms.has(room)) this.rooms.set(room, new Map());
     this.rooms.get(room)!.set(member.socketId, member);
-    void this.redis?.sadd(this.redisRoomKey(room), member.socketId);
+    this.safeRedis(
+      'sadd:roomMembers',
+      this.redis?.sadd(this.redisRoomKey(room), member.socketId),
+    );
 
     // Track userId refcount locally and in Redis.
     if (!this.userSocketCounts.has(room))
       this.userSocketCounts.set(room, new Map());
     const counts = this.userSocketCounts.get(room)!;
     counts.set(member.userId, (counts.get(member.userId) ?? 0) + 1);
-    void this.redis?.sadd(this.redisUserKey(room), member.userId);
+    this.safeRedis(
+      'sadd:roomUserIds',
+      this.redis?.sadd(this.redisUserKey(room), member.userId),
+    );
 
     return this.getRoomMembers(room);
   }
@@ -128,7 +186,10 @@ export class MessagingRoomService {
     if (roomMap) {
       const member = roomMap.get(socketId);
       roomMap.delete(socketId);
-      void this.redis?.srem(this.redisRoomKey(room), socketId);
+      this.safeRedis(
+        'srem:roomMembers',
+        this.redis?.srem(this.redisRoomKey(room), socketId),
+      );
 
       // Decrement userId refcount; remove from Redis when last socket leaves.
       if (member) {
@@ -137,7 +198,10 @@ export class MessagingRoomService {
           const prev = counts.get(member.userId) ?? 0;
           if (prev <= 1) {
             counts.delete(member.userId);
-            void this.redis?.srem(this.redisUserKey(room), member.userId);
+            this.safeRedis(
+              'srem:roomUserIds',
+              this.redis?.srem(this.redisUserKey(room), member.userId),
+            );
           } else {
             counts.set(member.userId, prev - 1);
           }
@@ -156,14 +220,20 @@ export class MessagingRoomService {
         const member = members.get(socketId)!;
         members.delete(socketId);
         affected.push(room);
-        void this.redis?.srem(this.redisRoomKey(room), socketId);
+        this.safeRedis(
+          'srem:roomMembers',
+          this.redis?.srem(this.redisRoomKey(room), socketId),
+        );
 
         const counts = this.userSocketCounts.get(room);
         if (counts) {
           const prev = counts.get(member.userId) ?? 0;
           if (prev <= 1) {
             counts.delete(member.userId);
-            void this.redis?.srem(this.redisUserKey(room), member.userId);
+            this.safeRedis(
+              'srem:roomUserIds',
+              this.redis?.srem(this.redisUserKey(room), member.userId),
+            );
           } else {
             counts.set(member.userId, prev - 1);
           }
@@ -280,12 +350,28 @@ export class MessagingRoomService {
       });
     // Attachment envelopes come from the server-side upload store, not the
     // client frame (the full-file ciphertext must never ride the WS).
-    const storedAttachments = await resolveAttachmentEnvelopes(
-      this.prisma,
-      attachments ?? [],
-    );
-    return this.prisma.roomMessage
-      .create({
+    const { attachments: storedAttachments, ownedUrls } =
+      await resolveAttachmentEnvelopes(
+        this.prisma,
+        attachments ?? [],
+        senderId,
+        {
+          kind: 'CHAT_ROOM',
+          scopeId: roomId,
+        },
+      );
+    // The message row and the PendingUpload relink must commit together —
+    // previously these were two separate top-level writes (create, then a
+    // trailing .then() doing the relink). PendingUpload's own access-control
+    // gate (see upload.controller.ts's assertCanAccessUpload) treats
+    // uploadedBy-only rows as visible to the uploader alone, so if the relink
+    // never landed (crash, transient DB error), the message still saved and
+    // rendered for the sender, but every OTHER room member got a 404 trying
+    // to view the attachment — an image silently broken for its actual
+    // audience. Failing the whole send instead is the recoverable outcome:
+    // the sender sees an error and can just retry.
+    const row = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.roomMessage.create({
         data: {
           roomId,
           senderId,
@@ -310,32 +396,26 @@ export class MessagingRoomService {
           sender: { select: { name: true, email: true } },
           attachments: true,
         },
-      })
-      .then(async (row) => {
-        // Link each attachment back to the room message it shipped in so the
-        // upload is traceable from PendingUpload (kind/scopeId written at
-        // upload time + roomMessageId backfilled here).
-        if (row.attachments.length > 0) {
-          // Each attachment's auto-generated thumbnail is its own
-          // PendingUpload row (a separate R2 object under `thumbnails/`), so
-          // it must be linked here too — otherwise its access-control check
-          // (uploader-only, since roomMessageId stays null) 404s the
-          // thumbnail for every room member but the uploader themselves.
-          const uploadUrls = row.attachments.flatMap((a) =>
-            a.thumbnailUrl ? [a.url, a.thumbnailUrl] : [a.url],
-          );
-          await this.prisma.pendingUpload.updateMany({
-            where: { url: { in: uploadUrls } },
-            data: { roomMessageId: row.id },
-          });
-        }
-        return {
-          ...row,
-          attachments: row.attachments.map((a) =>
-            this.storageCrypto.toWireAttachment(a),
-          ),
-        };
       });
+      // Link each attachment back to the room message it shipped in so the
+      // upload is traceable from PendingUpload (kind/scopeId written at
+      // upload time + roomMessageId backfilled here). `ownedUrls` (not a
+      // derivation from row.attachments) is the relink set — see
+      // resolveAttachmentEnvelopes' ownership check.
+      if (ownedUrls.length > 0) {
+        await tx.pendingUpload.updateMany({
+          where: { url: { in: ownedUrls } },
+          data: { roomMessageId: created.id },
+        });
+      }
+      return created;
+    });
+    return {
+      ...row,
+      attachments: row.attachments.map((a) =>
+        this.storageCrypto.toWireAttachment(a),
+      ),
+    };
   }
 
   async getRoomMessages(

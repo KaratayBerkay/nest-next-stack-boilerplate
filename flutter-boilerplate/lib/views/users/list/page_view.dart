@@ -90,8 +90,10 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                           ],
                         ),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: () => context
-                            .go('/v1/${widget.lang}/users/${friends[i].id}'),
+                        onTap: () => context.go(
+                          '/v1/${widget.lang}/users/detail/${friends[i].id}',
+                          extra: friends[i],
+                        ),
                       ),
                     );
                   },
@@ -106,8 +108,10 @@ class _UsersListPageContentState extends ConsumerState<UsersListPageContent> {
                     itemBuilder: (_, i) => ListTile(
                       leading: Avatar(name: users[i].name),
                       title: Text(users[i].name),
-                      onTap: () =>
-                          context.go('/v1/${widget.lang}/users/${users[i].id}'),
+                      onTap: () => context.go(
+                        '/v1/${widget.lang}/users/detail/${users[i].id}',
+                        extra: users[i],
+                      ),
                     ),
                   ),
                 ),

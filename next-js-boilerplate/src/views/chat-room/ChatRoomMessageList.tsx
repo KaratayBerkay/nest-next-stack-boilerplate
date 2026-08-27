@@ -36,7 +36,7 @@ export const ChatRoomMessageList = forwardRef<
     >
       {msgsError && (
         <div className="flex flex-1 items-center justify-center">
-          <p className="text-error text-xs">Failed to load messages</p>
+          <p className="text-error text-xs">{t.failedToLoad}</p>
         </div>
       )}
       {msgsLoading && !msgsError && (
@@ -115,6 +115,11 @@ export const ChatRoomMessageList = forwardRef<
                   </span>
                 </span>
               ) : null}
+              {msg.failed && (
+                <p className="text-error mt-0.5 text-[10px]">
+                  {t.messageFailedToSend}
+                </p>
+              )}
             </div>
           </div>
         );

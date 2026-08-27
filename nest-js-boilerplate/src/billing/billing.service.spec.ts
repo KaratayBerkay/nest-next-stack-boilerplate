@@ -371,7 +371,11 @@ describe('BillingService', () => {
       );
     });
 
-    it('dedupes a real retry via the stored client idempotency key', async () => {
+    it("dedupes a real retry via the stored client idempotency key, scoped to the caller's own wallet", async () => {
+      // Regression: idempotencyKey is a client-suppliable GraphQL argument
+      // (billing.resolver.ts), so the lookup must never match another
+      // user's transaction just because they happened to pass the same key
+      // — scoping this by userId is what closes that cross-tenant leak.
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
       mockPrisma.walletTransaction.findFirst.mockResolvedValue({
         status: 'COMPLETED',
@@ -386,7 +390,13 @@ describe('BillingService', () => {
       );
 
       expect(mockPrisma.walletTransaction.findFirst).toHaveBeenCalledWith({
-        where: { clientIdempotencyKey: 'retry-key-1' },
+        where: {
+          clientIdempotencyKey: 'retry-key-1',
+          OR: [
+            { fromWallet: { userId: 'u1' } },
+            { toWallet: { userId: 'u1' } },
+          ],
+        },
       });
       expect(result.success).toBe(true);
       expect(mockProvider.createSubscription).not.toHaveBeenCalled();
@@ -410,8 +420,7 @@ describe('BillingService', () => {
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
       const firstCall = mockPrisma.$executeRaw.mock.calls[0] as
-        | readonly string[]
-        | undefined;
+        readonly string[] | undefined;
       expect(String(firstCall?.[0] ?? '')).toContain('pg_advisory_xact_lock');
       expect(result.success).toBe(true);
       expect(result.periodEnd).toEqual(new Date('2026-03-01'));
@@ -876,7 +885,7 @@ describe('BillingService', () => {
 
   describe('cancelSubscription', () => {
     it('runs the rich cancellation path: ledger row + outbox event + notification', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      const freshUser = {
         subscriptionTier: SubscriptionTier.PREMIUM,
         stripeCustomerId: 'cus_1',
         email: 'user@example.com',
@@ -886,7 +895,13 @@ describe('BillingService', () => {
         pendingTier: null,
         pendingTierEffectiveAt: null,
         stripeSubscriptionScheduleId: null,
-      });
+        cancelAtPeriodEnd: false,
+      };
+      mockPrisma.user.findUnique.mockResolvedValue(freshUser);
+      // The advisory-lock fix re-reads the user fresh inside the lock rather
+      // than trusting the caller's pre-lock snapshot — see
+      // handleFullCancellation's own comment for why.
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(freshUser);
 
       await service.cancelSubscription('u1');
 
@@ -926,7 +941,7 @@ describe('BillingService', () => {
     });
 
     it('releases a pending schedule and clears all three pending fields at cancel time', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      const freshUser = {
         subscriptionTier: SubscriptionTier.PREMIUM,
         stripeCustomerId: 'cus_1',
         email: 'user@example.com',
@@ -936,7 +951,10 @@ describe('BillingService', () => {
         pendingTier: SubscriptionTier.BASIC,
         pendingTierEffectiveAt: new Date('2026-03-01'),
         stripeSubscriptionScheduleId: 'sub_sched_1',
-      });
+        cancelAtPeriodEnd: false,
+      };
+      mockPrisma.user.findUnique.mockResolvedValue(freshUser);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(freshUser);
 
       await service.cancelSubscription('u1');
 
@@ -955,7 +973,7 @@ describe('BillingService', () => {
     });
 
     it('does not release a schedule when none is stored', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      const freshUser = {
         subscriptionTier: SubscriptionTier.PREMIUM,
         stripeCustomerId: 'cus_1',
         email: 'user@example.com',
@@ -965,7 +983,10 @@ describe('BillingService', () => {
         pendingTier: null,
         pendingTierEffectiveAt: null,
         stripeSubscriptionScheduleId: null,
-      });
+        cancelAtPeriodEnd: false,
+      };
+      mockPrisma.user.findUnique.mockResolvedValue(freshUser);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(freshUser);
 
       await service.cancelSubscription('u1');
 
@@ -973,7 +994,7 @@ describe('BillingService', () => {
     });
 
     it('propagates provider failures instead of swallowing them', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({
+      const freshUser = {
         subscriptionTier: SubscriptionTier.PREMIUM,
         stripeCustomerId: 'cus_1',
         email: 'user@example.com',
@@ -983,7 +1004,10 @@ describe('BillingService', () => {
         pendingTier: null,
         pendingTierEffectiveAt: null,
         stripeSubscriptionScheduleId: null,
-      });
+        cancelAtPeriodEnd: false,
+      };
+      mockPrisma.user.findUnique.mockResolvedValue(freshUser);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(freshUser);
       mockProvider.cancelSubscription.mockRejectedValue(
         new Error('stripe down'),
       );
@@ -1027,6 +1051,66 @@ describe('BillingService', () => {
       );
       expect(mockOutbox.emit).toHaveBeenCalled();
       expect(mockNotification.create).toHaveBeenCalled();
+    });
+
+    it("takes the per-user advisory lock and re-reads fresh state instead of trusting the pre-lock snapshot — regression: this path previously ran with no lock at all and used the caller's stale `user` object throughout, so a concurrent cancel (double-click, or racing a tier-change for the same user) could both read the same stripeSubscriptionId and both call Stripe, with the loser's walletTransaction.create() colliding on the deterministic idempotencyKey", async () => {
+      const freshUser = {
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+        cancelAtPeriodEnd: false,
+      };
+      mockPrisma.user.findUnique.mockResolvedValue(freshUser);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(freshUser);
+
+      await service.cancelSubscription('u1');
+
+      expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+      expect(mockPrisma.user.findUniqueOrThrow).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        select: expect.anything() as never,
+      });
+    });
+
+    it('no-ops (no Stripe call, no ledger row, no notification) when a concurrent request already cancelled the subscription — the fresh re-read inside the lock is what makes this a safe idempotent retry instead of a duplicate cancellation', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+        cancelAtPeriodEnd: false,
+      });
+      // Fresh read inside the lock sees a concurrent request already won.
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        subscriptionTier: SubscriptionTier.PREMIUM,
+        stripeCustomerId: 'cus_1',
+        email: 'user@example.com',
+        name: 'Test',
+        stripeSubscriptionId: 'sub_x',
+        subscriptionPeriodEnd: new Date('2026-02-01'),
+        pendingTier: null,
+        pendingTierEffectiveAt: null,
+        stripeSubscriptionScheduleId: null,
+        cancelAtPeriodEnd: true,
+      });
+
+      await service.cancelSubscription('u1');
+
+      expect(mockProvider.cancelSubscription).not.toHaveBeenCalled();
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockPrisma.walletTransaction.create).not.toHaveBeenCalled();
+      expect(mockNotification.create).not.toHaveBeenCalled();
     });
 
     it('throws when the user is already FREE', async () => {

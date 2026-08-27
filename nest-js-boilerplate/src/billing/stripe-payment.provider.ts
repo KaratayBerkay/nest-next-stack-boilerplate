@@ -71,7 +71,9 @@ export class StripePaymentProvider implements PaymentProvider {
           ? 'insufficient_funds'
           : msg.includes('card_declined')
             ? 'declined'
-            : 'subscription_failed',
+            : msg.includes('authentication_required')
+              ? 'authentication_required'
+              : 'subscription_failed',
       };
     }
   }

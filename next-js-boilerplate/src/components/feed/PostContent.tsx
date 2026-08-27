@@ -4,6 +4,12 @@ import Image from "next/image";
 import { imageUrl } from "@/lib/image";
 import type { PostContentProps } from "@/types/feed/PostContent-types";
 
+// Array.from splits by Unicode code point — plain .slice/.length count UTF-16 units and can split a surrogate pair (emoji) mid-character.
+export function truncate(text: string, max: number): string {
+  const chars = Array.from(text);
+  return chars.length > max ? chars.slice(0, max).join("") + "..." : text;
+}
+
 export function PostContent({
   postData,
   editing,
@@ -32,6 +38,8 @@ export function PostContent({
             type="text"
             value={editTitle}
             onChange={(e) => onTitleChange(e.target.value)}
+            minLength={3}
+            maxLength={200}
             className="border-border bg-surface text-fg w-full rounded border px-2 py-1 text-sm font-semibold"
           />
         ) : (
@@ -49,9 +57,7 @@ export function PostContent({
           />
         ) : (
           <p className="text-muted text-xs leading-relaxed break-words whitespace-pre-wrap">
-            {postData.content.length > 200
-              ? postData.content.slice(0, 200) + "..."
-              : postData.content}
+            {truncate(postData.content, 200)}
           </p>
         )}
       </div>

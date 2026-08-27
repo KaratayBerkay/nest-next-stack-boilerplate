@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const PAYMENT_METHODS_QUERY = `
   query MyPaymentMethods {
@@ -75,7 +75,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  let body: { action?: string; paymentMethodId?: string };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
+      { status: 400 },
+    );
+  }
   const { action, paymentMethodId } = body;
 
   if (!paymentMethodId) {
@@ -85,15 +98,32 @@ export async function POST(request: Request) {
     );
   }
 
-  const mutation =
-    action === "setDefault"
-      ? SET_DEFAULT_PAYMENT_METHOD_MUTATION
-      : REMOVE_PAYMENT_METHOD_MUTATION;
+  // Explicit allow-list, not "anything that isn't setDefault means remove" —
+  // this is a destructive mutation, so an unrecognized/missing `action`
+  // should fail closed instead of defaulting to removing the card.
+  let mutation: string;
+  if (action === "setDefault") {
+    mutation = SET_DEFAULT_PAYMENT_METHOD_MUTATION;
+  } else if (action === "remove") {
+    mutation = REMOVE_PAYMENT_METHOD_MUTATION;
+  } else {
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "action must be 'setDefault' or 'remove'",
+        key: "errors.invalidAction",
+      },
+      { status: 400 },
+    );
+  }
 
+  const extraHeaders = await csrfEchoHeaders();
   const { errors } = await graphqlFetch<{ [key: string]: boolean }>(
     mutation,
     { paymentMethodId },
     accessToken,
+    extraHeaders ?? undefined,
   );
 
   if (errors) {

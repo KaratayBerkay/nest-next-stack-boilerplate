@@ -15,6 +15,7 @@
   "awaiting": "Yanıt bekleniyor",
   "sentByYou": "(sizin gönderdiğiniz)",
   "usersFound": "{count} kullanıcı bulundu",
+  "searchTruncated": "Gösterilenden daha fazla eşleşme var — daraltmak için aramanızı detaylandırın",
   "suggestedFriends": "Önerilen Arkadaşlar",
   "suggestedFriendsDesc": "Tanıyabileceğiniz kişiler",
   "loadSuggestions": "Önerileri yükle",
@@ -22,5 +23,10 @@
   "noSuggestions": "Henüz öneri yok",
   "mutualFriends": "{count} ortak arkadaş",
   "failedToLoadSuggestions": "Öneriler yüklenemedi",
+  "searchFailed": "Kullanıcılar aranamadı. Tekrar deneyin.",
+  "failedToSendRequest": "Arkadaşlık isteği gönderilemedi",
+  "failedToAcceptRequest": "Arkadaşlık isteği kabul edilemedi",
+  "failedToDeclineRequest": "Arkadaşlık isteği reddedilemedi",
+  "requestSent": "İstek gönderildi",
   "signInRequired": "Arkadaş bulmak için giriş yapın"
 }

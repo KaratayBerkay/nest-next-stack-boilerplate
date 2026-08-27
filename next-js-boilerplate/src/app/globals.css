@@ -34,6 +34,7 @@
   --info: #0369a1;
   --info-fg: #ffffff;
   --overlay: #000000;
+  --overlay-fg: #ffffff;
 }
 
 /* ── Dark (pure black) ──────────────────────────────────────────── */
@@ -56,6 +57,7 @@
   --info: #38bdf8;
   --info-fg: #082f49;
   --overlay: #000000;
+  --overlay-fg: #f5f5f5;
 }
 
 /* ── Moon Note (moonlit night, notes-app calm) ───────────────────── */
@@ -83,6 +85,7 @@
   --info: #60a5fa;
   --info-fg: #082f49;
   --overlay: #000000;
+  --overlay-fg: #f5f7ff;
 }
 
 /* ── Component style system ──────────────────────────────────────── */
@@ -117,6 +120,7 @@
   --info: #38bdf8;
   --info-fg: #082f49;
   --overlay: #000000;
+  --overlay-fg: #f8fafc;
   --comp-card-bg: linear-gradient(135deg, #0f172a 0%, #020617 100%);
   --comp-card-border: rgba(148, 163, 184, 0.15);
   --comp-card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
@@ -152,6 +156,7 @@
   --info: #38bdf8;
   --info-fg: #082f49;
   --overlay: #000000;
+  --overlay-fg: #f8fafc;
   --comp-card-bg: rgba(255, 255, 255, 0.05);
   --comp-card-border: rgba(255, 255, 255, 0.1);
   --comp-card-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
@@ -187,6 +192,7 @@
   --info: #06b6d4;
   --info-fg: #020617;
   --overlay: #000000;
+  --overlay-fg: #f8fafc;
   --comp-card-bg: rgba(2, 6, 23, 0.8);
   --comp-card-border: rgba(6, 182, 212, 0.3);
   --comp-card-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
@@ -222,6 +228,7 @@
   --info: #a78bfa;
   --info-fg: #0b0b1a;
   --overlay: #000000;
+  --overlay-fg: #f5f3ff;
   --comp-card-bg: linear-gradient(135deg, #2d2d52 0%, #1e1e32 100%);
   --comp-card-border: transparent;
   --comp-card-shadow: 0 25px 50px -12px rgba(88, 28, 135, 0.3);
@@ -263,6 +270,7 @@
   --color-info: var(--info);
   --color-info-fg: var(--info-fg);
   --color-overlay: var(--overlay);
+  --color-overlay-fg: var(--overlay-fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

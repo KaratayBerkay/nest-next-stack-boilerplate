@@ -55,13 +55,17 @@ export default function TeamInvitePage() {
     },
   });
 
-  const { emails, role, message } = useStore(form.store, (s) => ({
+  const { emails, role, message, emailInput } = useStore(form.store, (s) => ({
     emails: s.values.emails,
     role: s.values.role,
     message: s.values.message,
+    emailInput: s.values.emailInput,
   }));
 
-  const canNext = step === 0 ? emails.length > 0 : true;
+  // A non-empty, not-yet-committed address also unlocks Next — it gets
+  // validated and folded into `emails` when the user actually clicks it
+  // (see NavigationButtons.handleNext), rather than silently dropped.
+  const canNext = step === 0 ? emails.length > 0 || !!emailInput.trim() : true;
 
   if (quotaExceeded) {
     return (
@@ -130,6 +134,7 @@ export default function TeamInvitePage() {
           step={step}
           setStep={setStep}
           canNext={canNext}
+          setEmailInputError={setEmailInputError}
           t={t.teamInvite}
           form={form}
         />

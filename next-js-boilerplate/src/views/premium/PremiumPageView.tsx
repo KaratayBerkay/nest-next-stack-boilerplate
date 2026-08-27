@@ -20,7 +20,9 @@ export function PremiumPageView() {
   const t = useMessages("premium");
   const [stats, setStats] = useState<PremiumStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
-  const [growthStats, setGrowthStats] = useState<PremiumGrowthStats | null>(null);
+  const [growthStats, setGrowthStats] = useState<PremiumGrowthStats | null>(
+    null,
+  );
   const [loadingGrowth, setLoadingGrowth] = useState(false);
 
   return (
@@ -28,8 +30,11 @@ export function PremiumPageView() {
       <StatsSection
         stats={stats}
         loadingStats={loadingStats}
-        onLoadStats={() => loadPremiumStats(setLoadingStats, setStats, toast, t)}
+        onLoadStats={() =>
+          loadPremiumStats(setLoadingStats, setStats, toast, t)
+        }
         onExportCSV={() => handleExportPremiumCSV(stats, growthStats, toast, t)}
+        hasGrowthStats={!!growthStats}
         t={t}
       />
       <GrowthStatsSection

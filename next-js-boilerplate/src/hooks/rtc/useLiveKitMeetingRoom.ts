@@ -9,6 +9,7 @@ import {
   type Participant,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 export interface MeetingParticipantView {
   identity: string;
@@ -73,6 +74,8 @@ function toView(
  */
 export function useLiveKitMeetingRoom(
   token: string | null,
+  meetingId?: string | null,
+  roomName?: string | null,
 ): UseLiveKitMeetingRoomResult {
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
@@ -82,9 +85,13 @@ export function useLiveKitMeetingRoom(
   const [localMicEnabled, setLocalMicEnabled] = useState(true);
   const [localCameraEnabled, setLocalCameraEnabled] = useState(true);
   const [localScreenShareEnabled, setLocalScreenShareEnabled] = useState(false);
-  const [activeSpeakerIds, setActiveSpeakerIds] = useState<ReadonlySet<string>>(
-    new Set(),
-  );
+  // A ref, not useState: this only needs to be *current* at the moment
+  // rebuildParticipants reads it — it never needs to be reactive on its own.
+  // LiveKit fires ActiveSpeakersChanged continuously during any conversation;
+  // making it useState (and a dep of rebuildParticipants, which sits in the
+  // room-connect effect's deps below) meant every speaking-activity update
+  // tore down and reconnected the entire LiveKit room.
+  const activeSpeakerIdsRef = useRef<ReadonlySet<string>>(new Set());
 
   const rebuildParticipants = useCallback(() => {
     const room = roomRef.current;
@@ -92,13 +99,14 @@ export function useLiveKitMeetingRoom(
       setParticipants([]);
       return;
     }
+    const activeSpeakerIds = activeSpeakerIdsRef.current;
     setParticipants([
       toView(room.localParticipant, activeSpeakerIds),
       ...Array.from(room.remoteParticipants.values(), (p) =>
         toView(p, activeSpeakerIds),
       ),
     ]);
-  }, [activeSpeakerIds]);
+  }, []);
 
   useEffect(() => {
     const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
@@ -108,6 +116,26 @@ export function useLiveKitMeetingRoom(
     roomRef.current = room;
     let disposed = false;
     const onAnyChange = () => rebuildParticipants();
+    const telemetry = (
+      event: string,
+      options: {
+        exceptionType?: "CLIENT_ERROR" | "CLIENT_REJECTION";
+        error?: unknown;
+        metadata?: Record<string, unknown>;
+        phase?: string;
+        mediaType?: "audio" | "video" | "screen";
+      } = {},
+    ) => {
+      logRtcEvent({
+        event,
+        rtcKind: "meeting",
+        rtcId: meetingId,
+        roomName,
+        ...options,
+      });
+    };
+
+    telemetry("meeting.livekit.connecting", { phase: "connecting" });
 
     room
       .on(RoomEvent.ParticipantConnected, onAnyChange)
@@ -119,30 +147,45 @@ export function useLiveKitMeetingRoom(
       .on(RoomEvent.LocalTrackPublished, onAnyChange)
       .on(RoomEvent.LocalTrackUnpublished, onAnyChange)
       .on(RoomEvent.ActiveSpeakersChanged, (speakers) => {
-        setActiveSpeakerIds(new Set(speakers.map((s) => s.identity)));
+        activeSpeakerIdsRef.current = new Set(speakers.map((s) => s.identity));
+        rebuildParticipants();
       })
-      .on(RoomEvent.Disconnected, () => setConnected(false))
+      .on(RoomEvent.Disconnected, () => {
+        if (disposed) return;
+        telemetry("meeting.livekit.disconnected", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
+        setConnected(false);
+      })
       .on(RoomEvent.Reconnecting, () => {
-        console.warn("[useLiveKitMeetingRoom] Reconnecting…");
+        telemetry("meeting.livekit.reconnecting", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
       })
       .on(RoomEvent.Reconnected, () => {
-        console.info("[useLiveKitMeetingRoom] Reconnected");
+        telemetry("meeting.livekit.reconnected", { phase: "connected" });
         rebuildParticipants();
       })
       .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
-        console.warn(
-          "[useLiveKitMeetingRoom] Track subscription failed for",
-          trackSid,
-        );
+        telemetry("meeting.livekit.track_subscription_failed", {
+          exceptionType: "CLIENT_ERROR",
+          metadata: { trackSid },
+          phase: "connected",
+        });
       })
       .on(
         RoomEvent.ConnectionQualityChanged,
         (quality: ConnectionQuality, participant) => {
           if (quality === ConnectionQuality.Poor) {
-            console.warn(
-              "[useLiveKitMeetingRoom] Poor connection quality from",
-              participant?.identity ?? "local",
-            );
+            telemetry("meeting.livekit.connection_quality_poor", {
+              exceptionType: "CLIENT_ERROR",
+              metadata: {
+                participantId: participant?.identity ?? "local",
+              },
+              phase: "connected",
+            });
           }
         },
       );
@@ -155,10 +198,34 @@ export function useLiveKitMeetingRoom(
           return;
         }
         setConnected(true);
-        await room.localParticipant.setMicrophoneEnabled(true);
-        await room.localParticipant.setCameraEnabled(true);
+        telemetry("meeting.livekit.connected", { phase: "connected" });
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true);
+        } catch (error) {
+          telemetry("meeting.media.microphone_enable_failed", {
+            exceptionType: "CLIENT_ERROR",
+            error,
+            mediaType: "audio",
+            phase: "connected",
+          });
+        }
+        try {
+          await room.localParticipant.setCameraEnabled(true);
+        } catch (error) {
+          telemetry("meeting.media.camera_enable_failed", {
+            exceptionType: "CLIENT_ERROR",
+            error,
+            mediaType: "video",
+            phase: "connected",
+          });
+        }
         rebuildParticipants();
-      } catch {
+      } catch (error) {
+        telemetry("meeting.livekit.connection_failed", {
+          exceptionType: "CLIENT_ERROR",
+          error,
+          phase: "connecting",
+        });
         // Connection failed — `connected` stays false; the room UI's own
         // leave control lets the user bail out.
       }
@@ -170,7 +237,62 @@ export function useLiveKitMeetingRoom(
       roomRef.current = null;
       setParticipants([]);
     };
-  }, [token, rebuildParticipants]);
+  }, [meetingId, roomName, token, rebuildParticipants]);
+
+  // ---- Wake Lock: prevent OS from sleeping the screen during a meeting ----
+  // Ported from useLiveKitRoom (1:1 calls) — this had only ever been wired
+  // up for calls, so backgrounding a group meeting got none of the same
+  // throttling protection.
+  useEffect(() => {
+    if (!connected) return;
+
+    const wakeLockRef: { current: WakeLockSentinel | null } = { current: null };
+
+    const acquire = async () => {
+      try {
+        if (!("wakeLock" in navigator)) return;
+        if (wakeLockRef.current) return;
+        const sentinel = await navigator.wakeLock.request("screen");
+        wakeLockRef.current = sentinel;
+        sentinel.addEventListener("release", () => {
+          wakeLockRef.current = null;
+        });
+      } catch {
+        // Wake Lock denied (permission policy, headless browser, etc.) —
+        // non-fatal, the meeting still works without it.
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
+
+    void acquire();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    };
+  }, [connected]);
+
+  // ---- Media Session: tell the OS this is active media, not an idle tab ----
+  useEffect(() => {
+    if (!connected || !("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: roomName || "Meeting",
+      artist: "Group Meeting",
+      artwork: [],
+    });
+    navigator.mediaSession.playbackState = "playing";
+
+    return () => {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+    };
+  }, [connected, roomName]);
 
   const toggleMic = useCallback(() => {
     const room = roomRef.current;
@@ -179,8 +301,24 @@ export function useLiveKitMeetingRoom(
     setLocalMicEnabled(next);
     void room.localParticipant
       .setMicrophoneEnabled(next)
-      .then(() => rebuildParticipants());
-  }, [localMicEnabled, rebuildParticipants]);
+      .then(() => rebuildParticipants())
+      .catch((error) => {
+        logRtcEvent({
+          event: "meeting.media.microphone_toggle_failed",
+          rtcKind: "meeting",
+          rtcId: meetingId,
+          roomName,
+          mediaType: "audio",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
+        // Revert the optimistic flip — without this the mute icon could
+        // show "unmuted" while the mic call actually failed and stayed
+        // muted (or vice versa), with no way to tell from the UI.
+        setLocalMicEnabled(!next);
+      });
+  }, [localMicEnabled, meetingId, rebuildParticipants, roomName]);
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current;
@@ -189,8 +327,21 @@ export function useLiveKitMeetingRoom(
     setLocalCameraEnabled(next);
     void room.localParticipant
       .setCameraEnabled(next)
-      .then(() => rebuildParticipants());
-  }, [localCameraEnabled, rebuildParticipants]);
+      .then(() => rebuildParticipants())
+      .catch((error) => {
+        logRtcEvent({
+          event: "meeting.media.camera_toggle_failed",
+          rtcKind: "meeting",
+          rtcId: meetingId,
+          roomName,
+          mediaType: "video",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
+        setLocalCameraEnabled(!next);
+      });
+  }, [localCameraEnabled, meetingId, rebuildParticipants, roomName]);
 
   const toggleScreenShare = useCallback(() => {
     const room = roomRef.current;
@@ -200,12 +351,22 @@ export function useLiveKitMeetingRoom(
     void room.localParticipant
       .setScreenShareEnabled(next)
       .then(() => rebuildParticipants())
-      .catch(() => {
+      .catch((error) => {
+        logRtcEvent({
+          event: "meeting.media.screen_share_failed",
+          rtcKind: "meeting",
+          rtcId: meetingId,
+          roomName,
+          mediaType: "screen",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
         // User cancelled the browser's screen-share picker (or it failed) —
         // revert the optimistic toggle rather than showing a stuck-on state.
         setLocalScreenShareEnabled(false);
       });
-  }, [localScreenShareEnabled, rebuildParticipants]);
+  }, [localScreenShareEnabled, meetingId, rebuildParticipants, roomName]);
 
   return {
     connected,

@@ -2,9 +2,7 @@ import { PushSubscriptionService } from './push-subscription.service';
 
 interface MockPrisma {
   pushSubscription: {
-    findUnique: jest.Mock;
-    update: jest.Mock;
-    create: jest.Mock;
+    upsert: jest.Mock;
     deleteMany: jest.Mock;
     findMany: jest.Mock;
   };
@@ -13,9 +11,7 @@ interface MockPrisma {
 function mockPrisma(): MockPrisma {
   return {
     pushSubscription: {
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      create: jest.fn(),
+      upsert: jest.fn(),
       deleteMany: jest.fn(),
       findMany: jest.fn(),
     },
@@ -32,9 +28,8 @@ describe('PushSubscriptionService', () => {
   });
 
   describe('subscribe', () => {
-    it('creates a new subscription when the endpoint is not already registered', async () => {
-      prisma.pushSubscription.findUnique.mockResolvedValue(null);
-      prisma.pushSubscription.create.mockResolvedValue({
+    it('upserts by endpoint in a single atomic call — regression: the prior findUnique-then-create/update was a TOCTOU race where two concurrent subscribe() calls for the same endpoint (a service worker re-registering across two open tabs) could both see no existing row and both attempt create(), so the loser hit a raw 500 from the endpoint unique-constraint violation instead of its keys simply being saved', async () => {
+      prisma.pushSubscription.upsert.mockResolvedValue({
         id: 'sub1',
         userId: 'u1',
         endpoint: 'https://push.example.com/abc',
@@ -49,31 +44,29 @@ describe('PushSubscriptionService', () => {
       );
 
       expect(result.id).toBe('sub1');
-      expect(prisma.pushSubscription.findUnique).toHaveBeenCalledWith({
+      expect(prisma.pushSubscription.upsert).toHaveBeenCalledWith({
         where: { endpoint: 'https://push.example.com/abc' },
-      });
-      expect(prisma.pushSubscription.create).toHaveBeenCalledWith({
-        data: {
+        create: {
           userId: 'u1',
           endpoint: 'https://push.example.com/abc',
           p256dh: 'p256dh-key',
           auth: 'auth-secret',
           userAgent: 'Mozilla/5.0',
         },
+        update: {
+          p256dh: 'p256dh-key',
+          auth: 'auth-secret',
+          userAgent: 'Mozilla/5.0',
+          userId: 'u1',
+        },
       });
-      expect(prisma.pushSubscription.update).not.toHaveBeenCalled();
     });
 
     it('re-keys an existing endpoint to the current user instead of duplicating it', async () => {
       // Browsers reuse the same push endpoint across logins/devices, and it can
       // legitimately belong to a different account than before (e.g. shared
       // device, re-login as someone else). subscribe() must upsert by endpoint.
-      prisma.pushSubscription.findUnique.mockResolvedValue({
-        id: 'existing-sub',
-        userId: 'old-user',
-        endpoint: 'https://push.example.com/shared',
-      });
-      prisma.pushSubscription.update.mockResolvedValue({
+      prisma.pushSubscription.upsert.mockResolvedValue({
         id: 'existing-sub',
         userId: 'new-user',
       });
@@ -86,16 +79,10 @@ describe('PushSubscriptionService', () => {
       );
 
       expect(result.userId).toBe('new-user');
-      expect(prisma.pushSubscription.update).toHaveBeenCalledWith({
-        where: { id: 'existing-sub' },
-        data: {
-          p256dh: 'p256dh-new',
-          auth: 'auth-new',
-          userAgent: undefined,
-          userId: 'new-user',
-        },
-      });
-      expect(prisma.pushSubscription.create).not.toHaveBeenCalled();
+      const call = prisma.pushSubscription.upsert.mock.calls[0] as [
+        { update: { userId: string } },
+      ];
+      expect(call[0].update.userId).toBe('new-user');
     });
   });
 

@@ -6,6 +6,7 @@ import '../../server/posts/comments.dart';
 import '../../server/posts/list.dart';
 import '../../server/posts/single.dart';
 import '../../server/posts/stats.dart';
+import '../../server/posts/who_reacted.dart';
 
 const pageSize = 5;
 
@@ -144,4 +145,10 @@ final postCommentsProvider =
 final postStatsProvider = FutureProvider((ref) async {
   final server = ref.read(postStatsServerProvider);
   return server.call();
+});
+
+final whoReactedProvider =
+    FutureProvider.family<List<Reactor>, String>((ref, String postId) async {
+  final server = ref.read(whoReactedServerProvider);
+  return server.call(postId);
 });

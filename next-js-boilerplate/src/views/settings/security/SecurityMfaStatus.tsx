@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { InputOTP } from "@/components/ui/InputOTP";
 import { Button } from "@/components/ui/Button";
 import type { SecurityMfaStatusProps } from "@/types/views/settings/SecurityPageContent-types";
@@ -11,6 +12,7 @@ export function SecurityMfaStatus({
   confirmingDisable,
   disableCode,
   error,
+  submitting,
   onDisableCodeChange,
   onEnable,
   onConfirmDisable,
@@ -32,7 +34,8 @@ export function SecurityMfaStatus({
             <Button
               variant="destructive"
               onClick={onDisable}
-              disabled={disableCode.length < 6}
+              disabled={disableCode.length < 6 || submitting}
+              loading={submitting}
               className="w-full"
             >
               {t.securityDisableTwoFactor}
@@ -54,12 +57,12 @@ export function SecurityMfaStatus({
       )}
       {error && <p className="text-error text-sm">{error}</p>}
       <div className="pt-4">
-        <a
+        <Link
           href={`/v1/${lang}/settings/sessions`}
           className="text-brand text-sm underline"
         >
           {t.navSessions}
-        </a>
+        </Link>
       </div>
     </div>
   );

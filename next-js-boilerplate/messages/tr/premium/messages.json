@@ -1,5 +1,6 @@
 {
   "heading": "Premium Panel",
+  "csvHeader": "Metrik,Değer",
   "signInToView": "Premium içerikleri görüntülemek için giriş yapın",
   "upgradeMessage": "Premium özellikleri ve istatistikleri görüntülemek için yükseltin.",
   "viewPlans": "Planları görüntüle",

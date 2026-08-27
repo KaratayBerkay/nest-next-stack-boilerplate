@@ -19,7 +19,6 @@ import { Logger } from 'nestjs-pino';
 import { LoggingInterceptor } from '../interceptors/logging.interceptor';
 import { MessagingService } from './messaging.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
-import { PushNotificationService } from '../push-notification/push-notification.service';
 import { MarkReadInput } from './dto/mark-read.input';
 import { FavoriteConversationInput } from './dto/favorite-conversation.input';
 import { SendMessageRestDto } from './dto/send-message-rest.dto';
@@ -38,7 +37,6 @@ export class MessagingController {
   constructor(
     private readonly ms: MessagingService,
     private readonly realtime: RealtimeGateway,
-    private readonly push: PushNotificationService,
     private readonly logger: Logger,
     private readonly storageCrypto: StorageCryptoService,
   ) {}
@@ -252,7 +250,7 @@ export class MessagingController {
   ) {
     // Client E2EE envelope passes through; when absent the service encrypts
     // the plaintext for at-rest storage itself (never plaintext).
-    return this.ms.sendAndDeliverMessage(
+    const result = await this.ms.sendAndDeliverMessage(
       user.userId,
       recipientId,
       body.text,
@@ -262,6 +260,10 @@ export class MessagingController {
       { text: body.text, attachments: body.attachments },
       body.replyToId,
     );
+    // sendAndDeliverMessage resolves { message, delivery } — delivery is an
+    // internal WS-fan-out payload (see messaging.resolver.ts's sendMessage
+    // for the same unwrap on the GraphQL side); don't leak it over REST.
+    return { message: result.message };
   }
 
   @Post('messages/:messageId/delete-for-me')
@@ -335,13 +337,17 @@ export class MessagingController {
     return this.ms.rooms.listRooms();
   }
 
-  @Get('rooms/:roomId/messages')
+  @Get('rooms/:roomSlug/messages')
   @ApiOperation({ summary: 'Get paginated room messages' })
   @ApiQuery({ name: 'before', required: false })
   @ApiQuery({ name: 'take', required: false })
   async getRoomMessages(
     @CurrentUser() user: JwtUser,
-    @Param('roomId') roomId: string,
+    // Route param is deliberately not named `roomId`: that key is now a
+    // globally-encrypted uuid field (see uuid-fields.ts) and this is a
+    // plain-text room slug ("general", "vip-lounge") — the id-codec
+    // interceptor would try (and fail) to decrypt it as a uuid otherwise.
+    @Param('roomSlug') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
   ) {
@@ -359,7 +365,7 @@ export class MessagingController {
     };
   }
 
-  @Get('rooms/:roomId/attachments')
+  @Get('rooms/:roomSlug/attachments')
   @ApiOperation({
     summary: 'List every attachment ever shared in a room, newest first',
   })
@@ -390,7 +396,7 @@ export class MessagingController {
   })
   async getRoomAttachments(
     @CurrentUser() user: JwtUser,
-    @Param('roomId') roomId: string,
+    @Param('roomSlug') roomId: string,
     @Query('before') before?: string,
     @Query('take') take?: string,
     @Query('search') search?: string,

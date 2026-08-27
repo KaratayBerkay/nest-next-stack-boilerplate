@@ -15,11 +15,11 @@ export type { FriendUser } from "./server/messages/friends";
 export type { FriendRequest as ServerFriendRequest } from "./server/messages/friend-requests";
 export type { FeedPost, FeedListResult } from "./server/posts/list";
 export type { SinglePost } from "./server/posts/single";
+export type { AuditLogParams } from "./server/admin/audit-logs";
 export type {
   AuditLogEntry,
   AuditLogResponse,
-  AuditLogParams,
-} from "./server/admin/audit-logs";
+} from "@/types/admin/AuditLog-types";
 export type { SubscriptionInfo } from "./server/billing/subscription";
 export type { BillingHistoryEntry } from "./server/billing/history";
 export type { PremiumStats } from "./server/premium/stats";
@@ -77,7 +77,6 @@ export { messageUsageQueryOptions } from "./client/usage/query";
 export { storageUsageQueryOptions } from "./client/usage/query";
 
 // client — mutations / actions
-export { useMarkNotificationRead } from "./client/notifications/mark-read";
 export { useNotificationActions } from "./client/notifications/actions";
 export { useMarkMessagesRead } from "./client/messages/mark-read";
 export { useMessageActions } from "./client/messages/actions";

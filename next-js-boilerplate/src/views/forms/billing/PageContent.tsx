@@ -12,7 +12,11 @@ import { useFormsDemoActions } from "@/api/client/forms-demo/actions";
 import { createBillingFieldSchemas } from "@/validators/forms/billing";
 import { billingDefaultValues } from "@/validators/forms/billing-inits";
 import { PLANS, PAYMENT_METHODS, getPlanLabels } from "./billing-constants";
-import { calcPrice, validateTaxId } from "./billing-utils";
+import {
+  calcPrice,
+  resolveCouponPercent,
+  validateTaxId,
+} from "./billing-utils";
 import { CouponStatus } from "./CouponStatus";
 import { handleCouponBlur } from "./billing-handlers";
 
@@ -40,9 +44,13 @@ export default function BillingPage() {
     }),
   );
 
+  const couponPct = useMemo(
+    () => resolveCouponPercent(couponCode),
+    [couponCode],
+  );
   const price = useMemo(
-    () => calcPrice(plan, billingPeriod),
-    [plan, billingPeriod],
+    () => calcPrice(plan, billingPeriod, couponPct),
+    [plan, billingPeriod, couponPct],
   );
   const planLabels = useMemo(() => getPlanLabels(t.billing), [t]);
 

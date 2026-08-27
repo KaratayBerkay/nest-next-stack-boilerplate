@@ -15,12 +15,31 @@ import '../../types/messages/message.dart';
 class ChatMessageBubble extends ConsumerWidget {
   final ChatMessage message;
   final bool isMe;
+  final String? currentUserId;
+  final String peerName;
+  final ValueChanged<ChatMessage>? onReply;
 
   const ChatMessageBubble({
     super.key,
     required this.message,
     this.isMe = false,
+    this.currentUserId,
+    this.peerName = '',
+    this.onReply,
   });
+
+  String _replyAuthorLabel(BuildContext context, String senderId) {
+    final t = AppLocalizations.of(context);
+    return senderId == currentUserId ? t.messagesYou : peerName;
+  }
+
+  String _replySnippet(BuildContext context, ReplyPreview reply) {
+    final t = AppLocalizations.of(context);
+    if (reply.deletedAt != null) return t.messagesDeletedMessage;
+    if (reply.body != null && reply.body!.isNotEmpty) return reply.body!;
+    if (reply.hasAttachments) return t.messagesAttachmentLabel;
+    return '';
+  }
 
   Future<void> _deleteForMe(BuildContext context, WidgetRef ref) async {
     final t = AppLocalizations.of(context);
@@ -91,6 +110,41 @@ class ChatMessageBubble extends ConsumerWidget {
                 ),
               ),
             ),
+          if (!isDeleted && message.replyTo != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.65,
+              ),
+              decoration: BoxDecoration(
+                color: colors.surfaceAlt,
+                borderRadius: BorderRadius.circular(8),
+                border: Border(
+                  left: BorderSide(color: colors.brand, width: 3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _replyAuthorLabel(context, message.replyTo!.senderId),
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: colors.brand,
+                    ),
+                  ),
+                  Text(
+                    _replySnippet(context, message.replyTo!),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, color: colors.fgMuted),
+                  ),
+                ],
+              ),
+            ),
           if (!isDeleted)
             for (final att in message.attachments)
               Padding(
@@ -99,6 +153,7 @@ class ChatMessageBubble extends ConsumerWidget {
                   url: att.url,
                   type: att.type,
                   name: att.name,
+                  thumbnailUrl: att.thumbnailUrl,
                 ),
               ),
           Row(
@@ -191,6 +246,13 @@ class ChatMessageBubble extends ConsumerWidget {
 
     return ContextMenu(
       entries: [
+        if (onReply != null)
+          ContextMenuEntry(
+            value: 'reply',
+            label: t.messagesReply,
+            icon: Icons.reply,
+            onTap: () => onReply!(message),
+          ),
         ContextMenuEntry(
           value: 'delete-for-me',
           label: t.messagesDeleteForMe,

@@ -21,6 +21,7 @@ const CATEGORIES = [
   'network',
   'database',
   'performance',
+  'rtc',
 ] as const;
 
 const EXCEPTION_TYPES = [
@@ -86,6 +87,39 @@ export class FrontendEventDto {
   @IsOptional()
   @IsString()
   platform?: string;
+
+  @IsOptional()
+  @IsIn(['call', 'meeting', 'stream'])
+  rtcKind?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(128)
+  rtcId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(256)
+  roomName?: string;
+
+  @IsOptional()
+  @IsIn(['audio', 'video', 'screen'])
+  mediaType?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  phase?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(4096)
+  errorMessage?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16384)
+  stack?: string;
 }
 
 export class LogActivityDto {

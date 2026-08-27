@@ -28,10 +28,14 @@ describe("formatCurrency", () => {
 
 describe("formatPrice", () => {
   it("appends a /mo cadence for a non-zero recurring price", () => {
-    expect(formatPrice(999, "USD")).toBe("$9.99/mo");
+    expect(formatPrice(999, "USD", "Free")).toBe("$9.99/mo");
   });
 
-  it("special-cases zero as Free, no cadence suffix", () => {
-    expect(formatPrice(0, "USD")).toBe("Free");
+  it("special-cases zero as the caller-supplied free label, no cadence suffix", () => {
+    expect(formatPrice(0, "USD", "Free")).toBe("Free");
+  });
+
+  it("uses the caller's translated free label, not a hardcoded English one", () => {
+    expect(formatPrice(0, "USD", "Ücretsiz")).toBe("Ücretsiz");
   });
 });

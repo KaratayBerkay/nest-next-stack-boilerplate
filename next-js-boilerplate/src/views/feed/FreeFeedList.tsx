@@ -3,13 +3,24 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { FeedListProps } from "@/types/feed/FeedList-types";
 import type { Post } from "@/types/feed/PostCard-types";
-import { useSuspenseQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useSuspenseQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { PostCard } from "@/components/feed/PostCard";
 import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { feedListQueryOptions } from "@/api/client/posts/query";
-import { PAGE_SIZE, handleLoadMore, handleToggleComments, handleDeletePost, refreshFeedList } from "@/lib/feed/feed-list-actions";
+import {
+  PAGE_SIZE,
+  handleLoadMore,
+  handleToggleComments,
+  handleDeletePost,
+  refreshFeedList,
+  mergeFeedPosts,
+} from "@/lib/feed/feed-list-actions";
 import { usePostHashScroll } from "@/hooks/usePostHashScroll";
 import { FeedListEmptyState } from "@/components/feed/FeedListEmptyState";
 
@@ -46,7 +57,7 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
   });
 
   const posts = useMemo(
-    () => [...(data?.posts ?? []), ...extraPosts],
+    () => mergeFeedPosts(data?.posts ?? [], extraPosts),
     [data?.posts, extraPosts],
   );
   const hasMore =
@@ -98,18 +109,28 @@ export function FeedList({ search, initialFeedData }: FeedListProps) {
     [queryClient, search],
   );
 
-  useEffect(() => {
-    if (newFlag && posts.length > 0) {
-      const id = setTimeout(() => handleRefresh(), 0);
-      return () => clearTimeout(id);
-    }
-  }, [newFlag, posts.length, handleRefresh]);
+  // Surfaced as a banner the reader taps, not an automatic reset — `newFlag`
+  // flips on ANY user's post finishing its friend-fan-out (a global topic,
+  // not scoped to this reader's own friends), so auto-refreshing instantly
+  // collapsed the feed back to page 1 mid-scroll or mid-comment with zero
+  // warning, discarding whatever pages the reader had already loaded.
+  const showNewPostsBanner = Boolean(newFlag) && posts.length > 0;
 
   return (
     <div
       ref={scrollRef}
       className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
     >
+      {showNewPostsBanner && (
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="bg-brand text-brand-fg sticky top-0 z-10 rounded-lg py-2 text-center text-xs font-medium shadow"
+        >
+          {t.newPostsAvailable}
+        </button>
+      )}
+
       {posts.length === 0 ? (
         <FeedListEmptyState />
       ) : (

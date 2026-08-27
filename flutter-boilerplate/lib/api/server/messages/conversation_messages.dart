@@ -28,6 +28,13 @@ const _query = '''
         createdAt
         readAt
         deletedAt
+        replyTo {
+          id
+          senderId
+          body
+          deletedAt
+          hasAttachments
+        }
       }
       hasMore
     }

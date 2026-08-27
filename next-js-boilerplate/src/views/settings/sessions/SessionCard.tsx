@@ -10,6 +10,7 @@ import { deviceLabel } from "@/lib/sessions/device-label";
 import { cn } from "@/lib/cn";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import type { SessionCardProps } from "@/types/settings/SessionCard-types";
 
 export function SessionCard({
@@ -18,6 +19,7 @@ export function SessionCard({
   dateDisplay,
   onRevoke,
 }: SessionCardProps) {
+  const t = useMessages("settings");
   const deviceType = session.deviceType?.toUpperCase();
   const isMobile =
     deviceType === "MOBILE_IOS" ||
@@ -50,16 +52,20 @@ export function SessionCard({
         <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
             <span className="truncate text-sm font-medium">
-              {deviceLabel(session.userAgent, session.deviceType)}
+              {deviceLabel(
+                session.userAgent,
+                session.deviceType,
+                t.unknownDevice,
+              )}
             </span>
             {isCurrent && (
               <Badge variant="soft" pill className="text-[10px]">
-                Current
+                {t.currentSession}
               </Badge>
             )}
             {session.trusted && (
               <Badge variant="success" pill className="text-[10px]">
-                Trusted
+                {t.trustedDevice}
               </Badge>
             )}
           </div>
@@ -67,12 +73,12 @@ export function SessionCard({
             {session.ip && (
               <span className="flex items-center gap-1">
                 <IconWorld size={12} stroke={1.5} />
-                IP: {session.ip}
+                {t.ipLabel} {session.ip}
               </span>
             )}
             {session.issuedAt && (
               <span>
-                Started:{" "}
+                {t.startedLabel}{" "}
                 {formatDateTimeByPreference(session.issuedAt, dateDisplay)}
               </span>
             )}
@@ -80,12 +86,14 @@ export function SessionCard({
           {session.deviceId && (
             <details className="group mt-1">
               <summary className="text-muted/60 hover:text-muted cursor-pointer list-none text-[10px]">
-                More Device Info
+                {t.moreDeviceInfo}
               </summary>
               <div className="text-muted/50 mt-1 flex flex-col gap-0.5 text-[10px]">
-                <span>Device ID: {session.deviceId}</span>
+                <span>
+                  {t.deviceId} {session.deviceId}
+                </span>
                 <span className="break-all">
-                  User-Agent: {session.userAgent ?? "N/A"}
+                  {t.userAgent} {session.userAgent ?? "N/A"}
                 </span>
               </div>
             </details>
@@ -98,9 +106,9 @@ export function SessionCard({
           size="xs"
           className="shrink-0"
           onClick={() => onRevoke(session.sessionId)}
-          aria-label={`Revoke session from ${session.ip ?? "unknown device"}`}
+          aria-label={`Revoke session from ${session.ip ?? t.unknownDevice}`}
         >
-          Revoke
+          {t.revoke}
         </Button>
       )}
     </div>

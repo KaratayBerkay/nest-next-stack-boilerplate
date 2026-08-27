@@ -23,12 +23,20 @@ const frontendEventSchema = z.object({
       "network",
       "database",
       "performance",
+      "rtc",
     ])
     .optional(),
   event: z.string().optional(),
   exceptionType: exceptionTypeEnum.optional(),
   page: z.string().optional(),
   durationMs: z.number().optional(),
+  rtcKind: z.enum(["call", "meeting", "stream"]).optional(),
+  rtcId: z.string().max(128).optional(),
+  roomName: z.string().max(256).optional(),
+  mediaType: z.enum(["audio", "video", "screen"]).optional(),
+  phase: z.string().max(64).optional(),
+  errorMessage: z.string().max(4096).optional(),
+  stack: z.string().max(16384).optional(),
 });
 
 export type FrontendEvent = z.infer<typeof frontendEventSchema>;

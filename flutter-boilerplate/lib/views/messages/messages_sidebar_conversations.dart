@@ -2,20 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/date_time.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/messages/actions.dart';
 import '../../api/client/messages/query.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 import '../../hooks/use_messages_page.dart';
 import '../../l10n/app_localizations.dart';
+import 'messages_sidebar_filter_bar.dart';
 import 'online_avatar.dart';
 
 class MessagesSidebarConversations extends ConsumerWidget {
   final String searchQuery;
+  final MessagesFilter filter;
 
   const MessagesSidebarConversations({
     super.key,
     this.searchQuery = '',
+    this.filter = MessagesFilter.all,
   });
 
   @override
@@ -29,24 +33,32 @@ class MessagesSidebarConversations extends ConsumerWidget {
       loading: () => const Spinner(),
       error: (_, __) => Center(child: Text(t.messagesFailedToLoad)),
       data: (convs) {
-        final filtered = searchQuery.isEmpty
-            ? convs
-            : convs
-                .where(
-                  (c) =>
-                      c.userName
-                          .toLowerCase()
-                          .contains(searchQuery.toLowerCase()) ||
-                      (c.lastMessage
-                              ?.toLowerCase()
-                              .contains(searchQuery.toLowerCase()) ??
-                          false),
-                )
-                .toList();
+        var filtered = switch (filter) {
+          MessagesFilter.unread => convs.where((c) => c.unreadCount > 0),
+          MessagesFilter.favorites => convs.where((c) => c.isFavorite),
+          MessagesFilter.all => convs,
+        }
+            .toList();
+        if (searchQuery.isNotEmpty) {
+          filtered = filtered
+              .where(
+                (c) =>
+                    c.userName
+                        .toLowerCase()
+                        .contains(searchQuery.toLowerCase()) ||
+                    (c.lastMessage
+                            ?.toLowerCase()
+                            .contains(searchQuery.toLowerCase()) ??
+                        false),
+              )
+              .toList();
+        }
 
         if (filtered.isEmpty) {
           return EmptyWidget(
-            title: t.messagesNoConversations,
+            title: filter == MessagesFilter.favorites
+                ? t.messagesNoFavorites
+                : t.messagesNoConversations,
             icon: Icons.forum_outlined,
           );
         }
@@ -143,6 +155,20 @@ class MessagesSidebarConversations extends ConsumerWidget {
                           ),
                         ],
                       ),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        conv.isFavorite ? Icons.star : Icons.star_border,
+                        size: 18,
+                        color: conv.isFavorite ? colors.brand : colors.fgMuted,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: conv.isFavorite
+                          ? t.messagesRemoveFavorite
+                          : t.messagesAddFavorite,
+                      onPressed: () => ref
+                          .read(messageActionsProvider)
+                          .setFavorite(conv.userId, !conv.isFavorite),
                     ),
                   ],
                 ),

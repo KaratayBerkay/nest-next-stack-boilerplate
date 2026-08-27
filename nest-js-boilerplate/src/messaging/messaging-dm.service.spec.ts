@@ -30,6 +30,7 @@ describe('MessagingDmService', () => {
     messageAttachment: { findMany: jest.Mock };
     user: { findMany: jest.Mock };
     $queryRawUnsafe: jest.Mock;
+    $transaction: jest.Mock;
   };
   let mockCache: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
   let areFriendsMock: jest.Mock;
@@ -66,7 +67,14 @@ describe('MessagingDmService', () => {
       },
       messageAttachment: { findMany: jest.fn().mockResolvedValue([]) },
       $queryRawUnsafe: jest.fn().mockResolvedValue([]),
+      $transaction: jest.fn(),
     };
+    // Interactive $transaction: run the callback with `tx` === this same
+    // mock, matching this repo's established Prisma-mock convention (see
+    // comment.service.spec.ts / billing.service.spec.ts).
+    mockPrisma.$transaction.mockImplementation(
+      (cb: (tx: typeof mockPrisma) => unknown) => cb(mockPrisma),
+    );
     mockCache = {
       get: jest.fn().mockResolvedValue(null),
       set: jest.fn(),
@@ -168,6 +176,44 @@ describe('MessagingDmService', () => {
       expect(result.delivery).toHaveProperty('senderPayload');
     });
 
+    it('reports the unread count as-is, not +1 — regression: getUnreadCount() queries AFTER the message was already created and committed by sendMessage(), so its result already includes the message just sent; adding 1 on top inflated the recipient-side conversation badge by one on every send', async () => {
+      const fakeMessage = {
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        body: 'hello',
+        createdAt: new Date(),
+        attachments: [],
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@b.com',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          hideAvatar: false,
+        },
+      };
+      mockPrisma.message.create.mockResolvedValue(fakeMessage);
+      areFriendsMock.mockResolvedValue(true);
+      // 3 unread messages from u1 to u2 already exist (this new one included,
+      // since count() runs after the create commits).
+      mockPrisma.message.count.mockResolvedValue(3);
+
+      await service.sendAndDeliverMessage('u1', 'u2', 'hello', areFriendsMock);
+
+      const call = mockRealtime.emitToService.mock.calls[0] as [
+        string,
+        string,
+        { conversation: { unread: number } },
+      ];
+      expect(call[0]).toBe('u2');
+      expect(call[2].conversation.unread).toBe(3);
+    });
+
     it('resolves attachment envelopes from the server-side upload store, not the frame', async () => {
       const fakeMessage = {
         id: 'm1',
@@ -200,6 +246,8 @@ describe('MessagingDmService', () => {
           nonce: 'n1',
           ct: 'c1',
           uploadedBy: 'u1',
+          kind: 'MESSAGES',
+          scopeId: 'u1',
           createdAt: new Date(),
         },
       ]);
@@ -241,6 +289,149 @@ describe('MessagingDmService', () => {
           }),
         }),
       );
+    });
+
+    it('creates the message and relinks its PendingUpload rows inside the same transaction — regression: these were two separate top-level writes, so a crash/transient error between them left the message saved and visible to the sender while every OTHER recipient got a 404 trying to view the attachment (assertCanAccessUpload only lets the uploader through when messageId is still null)', async () => {
+      const fakeMessage = {
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        attachments: [],
+        replyTo: null,
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@a.com',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          hideAvatar: false,
+        },
+      };
+      mockPrisma.message.create.mockResolvedValue(fakeMessage);
+      mockPrisma.message.count.mockResolvedValue(0);
+      areFriendsMock.mockResolvedValue(true);
+      mockPrisma.pendingUpload.findMany.mockResolvedValue([
+        {
+          objectName: 'file-1.png',
+          url: 'https://minio/uploads/file-1.png',
+          v: 'storage-v1',
+          nonce: 'n1',
+          ct: 'c1',
+          uploadedBy: 'u1',
+          kind: 'MESSAGES',
+          scopeId: 'u1',
+          createdAt: new Date(),
+        },
+      ]);
+
+      await service.sendAndDeliverMessage(
+        'u1',
+        'u2',
+        '',
+        areFriendsMock,
+        undefined,
+        undefined,
+        [
+          {
+            url: 'https://minio/uploads/file-1.png',
+            type: 'image/png',
+            name: 'file-1.png',
+          },
+        ],
+      );
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.pendingUpload.updateMany).toHaveBeenCalledWith({
+        where: { url: { in: ['https://minio/uploads/file-1.png'] } },
+        data: { messageId: 'm1' },
+      });
+      // The create must run (and the id it produces be used) inside the
+      // same transaction call, not a bare top-level create racing the relink.
+      expect(
+        mockPrisma.message.create.mock.invocationCallOrder[0],
+      ).toBeLessThan(
+        mockPrisma.pendingUpload.updateMany.mock.invocationCallOrder[0],
+      );
+    });
+
+    it('does not hydrate or re-link an attachment uploaded by someone else', async () => {
+      const fakeMessage = {
+        id: 'm1',
+        senderId: 'u1',
+        recipientId: 'u2',
+        body: '',
+        createdAt: new Date(),
+        attachments: [],
+        sender: {
+          id: 'u1',
+          name: 'Alice',
+          email: 'a@b.com',
+          hideAvatar: false,
+        },
+        recipient: {
+          id: 'u2',
+          name: 'Bob',
+          email: 'b@b.com',
+          hideAvatar: false,
+        },
+      };
+      mockPrisma.message.create.mockResolvedValue(fakeMessage);
+      mockPrisma.message.count.mockResolvedValue(0);
+      areFriendsMock.mockResolvedValue(true);
+      // Row exists, but it was uploaded by a different user (u2) — u1 merely
+      // saw this url in a message u2 sent them and is trying to attach it to
+      // a message of their own.
+      mockPrisma.pendingUpload.findMany.mockResolvedValue([
+        {
+          objectName: 'file-1.png',
+          url: 'https://minio/uploads/file-1.png',
+          v: 'storage-v1',
+          nonce: 'n1',
+          ct: 'c1',
+          uploadedBy: 'u2',
+          kind: 'MESSAGES',
+          scopeId: 'u2',
+          createdAt: new Date(),
+        },
+      ]);
+
+      await service.sendAndDeliverMessage(
+        'u1',
+        'u2',
+        '',
+        areFriendsMock,
+        undefined,
+        undefined,
+        [
+          {
+            url: 'https://minio/uploads/file-1.png',
+            type: 'image/png',
+            name: 'file-1.png',
+          },
+        ],
+      );
+
+      expect(mockPrisma.message.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            attachments: {
+              create: [
+                {
+                  url: 'https://minio/uploads/file-1.png',
+                  type: 'image/png',
+                  name: 'file-1.png',
+                  thumbnailUrl: null,
+                },
+              ],
+            },
+          }),
+        }),
+      );
+      expect(mockPrisma.pendingUpload.updateMany).not.toHaveBeenCalled();
     });
 
     it('withholds the recipient avatarUrl when the recipient has hideAvatar set', async () => {
@@ -537,8 +728,20 @@ describe('MessagingDmService', () => {
           },
         ]); // receivedMessages
       mockPrisma.user.findMany.mockResolvedValue([
-        { id: 'u2', email: 'u2@x.com', name: 'U2', avatarUrl: null, hideAvatar: false },
-        { id: 'u3', email: 'u3@x.com', name: 'U3', avatarUrl: null, hideAvatar: false },
+        {
+          id: 'u2',
+          email: 'u2@x.com',
+          name: 'U2',
+          avatarUrl: null,
+          hideAvatar: false,
+        },
+        {
+          id: 'u3',
+          email: 'u3@x.com',
+          name: 'U3',
+          avatarUrl: null,
+          hideAvatar: false,
+        },
       ]);
       mockPrisma.favoriteConversation.findMany.mockResolvedValue([
         { peerId: 'u2' },
@@ -830,7 +1033,7 @@ describe('MessagingDmService', () => {
   });
 
   describe('setFavorite', () => {
-    it('upserts a FavoriteConversation row and busts only the actor\'s cache when favoriting', async () => {
+    it("upserts a FavoriteConversation row and busts only the actor's cache when favoriting", async () => {
       const result = await service.setFavorite('u1', 'u2', true);
 
       expect(mockPrisma.favoriteConversation.upsert).toHaveBeenCalledWith({

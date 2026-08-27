@@ -13,6 +13,7 @@ import {
 import { SecurityChangePassword } from "./SecurityChangePassword";
 import { SecurityMfaStatus } from "./SecurityMfaStatus";
 import { SecurityMfaWizard } from "./SecurityMfaWizard";
+import type { I18nMessages } from "@/generated/i18n-messages";
 import type {
   SecurityPageContentProps,
   MfaStep,
@@ -25,14 +26,27 @@ async function handleEnroll(
   setStep: Dispatch<SetStateAction<MfaStep>>,
   setEnrolling: Dispatch<SetStateAction<boolean>>,
   setError: Dispatch<SetStateAction<string | null>>,
+  setVerifyCode: Dispatch<SetStateAction<string>>,
+  setCodesSaved: Dispatch<SetStateAction<boolean>>,
+  t: I18nMessages["settings"],
 ) {
+  // Cleared up front, not just on this call's own success path — otherwise
+  // a stale error from a previous failed attempt (or a previous step
+  // entirely) keeps rendering underneath a since-succeeded flow.
+  setError(null);
   try {
     const data = await enrollMfaServer();
     setEnrollData(data);
     setStep("qr-code");
     setEnrolling(true);
+    // A new secret invalidates any code already typed for the old one
+    // (reachable via "Regenerate QR" from the verify step), and a fresh
+    // enrollment must not start with the previous cycle's backup-codes
+    // acknowledgment still checked.
+    setVerifyCode("");
+    setCodesSaved(false);
   } catch {
-    setError("Failed to start enrollment");
+    setError(t.securityMfaEnrollFailed);
   }
 }
 
@@ -42,7 +56,11 @@ async function handleVerify(
   setStep: Dispatch<SetStateAction<MfaStep>>,
   setMfaEnabled: Dispatch<SetStateAction<boolean>>,
   setError: Dispatch<SetStateAction<string | null>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  t: I18nMessages["settings"],
 ) {
+  setError(null);
+  setSubmitting(true);
   try {
     const data = await verifyMfaEnrollmentServer(verifyCode);
     if (data.backupCodes) {
@@ -50,10 +68,12 @@ async function handleVerify(
       setStep("backup-codes");
       setMfaEnabled(true);
     } else {
-      setError("Verification failed");
+      setError(t.securityMfaVerifyFailed);
     }
   } catch {
-    setError("Verification failed");
+    setError(t.securityMfaVerifyFailed);
+  } finally {
+    setSubmitting(false);
   }
 }
 
@@ -63,7 +83,11 @@ async function handleDisable(
   setConfirmingDisable: Dispatch<SetStateAction<boolean>>,
   setDisableCode: Dispatch<SetStateAction<string>>,
   setError: Dispatch<SetStateAction<string | null>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  t: I18nMessages["settings"],
 ) {
+  setError(null);
+  setSubmitting(true);
   try {
     const data = await disableMfaServer(disableCode);
     if (data.success) {
@@ -71,10 +95,12 @@ async function handleDisable(
       setConfirmingDisable(false);
       setDisableCode("");
     } else {
-      setError("Failed to disable MFA");
+      setError(t.securityMfaDisableFailed);
     }
   } catch {
-    setError("Failed to disable MFA");
+    setError(t.securityMfaDisableFailed);
+  } finally {
+    setSubmitting(false);
   }
 }
 
@@ -96,6 +122,7 @@ export default function SecurityPageContent({
   const [codesSaved, setCodesSaved] = useState(false);
   const [disableCode, setDisableCode] = useState("");
   const [confirmingDisable, setConfirmingDisable] = useState(false);
+  const [mfaSubmitting, setMfaSubmitting] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -115,11 +142,23 @@ export default function SecurityPageContent({
           confirmingDisable={confirmingDisable}
           disableCode={disableCode}
           error={error}
+          submitting={mfaSubmitting}
           onDisableCodeChange={setDisableCode}
           onEnable={() =>
-            handleEnroll(setEnrollData, setStep, setEnrolling, setError)
+            handleEnroll(
+              setEnrollData,
+              setStep,
+              setEnrolling,
+              setError,
+              setVerifyCode,
+              setCodesSaved,
+              t,
+            )
           }
-          onConfirmDisable={() => setConfirmingDisable(true)}
+          onConfirmDisable={() => {
+            setError(null);
+            setConfirmingDisable(true);
+          }}
           onDisable={() =>
             handleDisable(
               disableCode,
@@ -127,6 +166,8 @@ export default function SecurityPageContent({
               setConfirmingDisable,
               setDisableCode,
               setError,
+              setMfaSubmitting,
+              t,
             )
           }
         />
@@ -139,6 +180,7 @@ export default function SecurityPageContent({
           backupCodes={backupCodes}
           codesSaved={codesSaved}
           error={error}
+          submitting={mfaSubmitting}
           onVerifyCodeChange={setVerifyCode}
           onCodesSavedChange={setCodesSaved}
           onContinueToVerify={() => setStep("verify")}
@@ -149,10 +191,20 @@ export default function SecurityPageContent({
               setStep,
               setMfaEnabled,
               setError,
+              setMfaSubmitting,
+              t,
             )
           }
           onRegenerateQr={() =>
-            handleEnroll(setEnrollData, setStep, setEnrolling, setError)
+            handleEnroll(
+              setEnrollData,
+              setStep,
+              setEnrolling,
+              setError,
+              setVerifyCode,
+              setCodesSaved,
+              t,
+            )
           }
           onDone={() => setEnrolling(false)}
         />

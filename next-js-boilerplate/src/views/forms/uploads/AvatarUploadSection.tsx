@@ -35,7 +35,7 @@ export function AvatarUploadSection({
                           ...f,
                           status: "done",
                           progress: 100,
-                          preview: result.urls?.full,
+                          preview: result.urls?.full ?? f.preview,
                         }
                       : f,
                   ),

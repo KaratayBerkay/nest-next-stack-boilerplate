@@ -172,6 +172,11 @@
   "authErrorsEmailInvalid": "Invalid email address",
   "authErrorsPasswordRequired": "Password is required",
   "authErrorsPasswordMin": "Password must be at least 8 characters",
+  "passwordRulesHeading": "Password must contain:",
+  "passwordRuleLength": "8-128 characters",
+  "passwordRuleLowercase": "One lowercase letter",
+  "passwordRuleUppercase": "One uppercase letter",
+  "passwordRuleNumber": "One number",
   "authErrorsPasswordMax": "Password must be at most 128 characters",
   "authErrorsPasswordMin6": "Password must be at least 6 characters",
   "authErrorsFirstNameRequired": "First name is required",
@@ -188,6 +193,12 @@
   "authErrorsUndoPasswordChangeFailed": "Could not undo the password change — the link may have expired or already been used",
   "authErrorsVerifyEmailTokenMissing": "Verification token is missing",
   "authErrorsVerifyEmailFailed": "Email verification failed",
+  "allUploadsTitle": "All uploads",
+  "allUploadsEmpty": "No files uploaded here yet",
+  "allUploadsFailedToLoad": "Failed to load uploads",
+  "files": "attachments",
+  "storageLimitReached": "You have reached your storage limit.",
+  "storageLimitUpgradeHint": "Each plan upgrade doubles your message storage.",
   "chatRoomTitle": "Chat Rooms",
   "chatRoomConnected": "Connected",
   "chatRoomConnecting": "Connecting...",
@@ -1004,6 +1015,13 @@
   "messagesTyping": "Typing...",
   "messagesChats": "Chats",
   "messagesFriends": "Friends",
+  "messagesFilterAll": "All",
+  "messagesFilterUnread": "Unread",
+  "messagesFilterFavorites": "Favorites",
+  "messagesFilterGroups": "Groups",
+  "messagesAddFavorite": "Add to favorites",
+  "messagesRemoveFavorite": "Remove from favorites",
+  "messagesNoFavorites": "No favorite conversations yet",
   "messagesSearchUsers": "Search all users...",
   "messagesSearchFriends": "Search friends...",
   "messagesAdd": "Add",
@@ -1032,6 +1050,15 @@
   "messagesDeleteForEveryoneConfirm": "This message will be removed for everyone in this conversation. This cannot be undone.",
   "messagesFailedToDeleteMessage": "Failed to delete message",
   "messagesCancel": "Cancel",
+  "messagesReply": "Reply",
+  "messagesReplyingTo": "Replying to {name}",
+  "@messagesReplyingTo": {
+    "placeholders": {
+      "name": {}
+    }
+  },
+  "messagesYou": "You",
+  "messagesAttachmentLabel": "Attachment",
   "notificationTitle": "Notifications",
   "notificationMarkAllRead": "Mark all read",
   "notificationNoNotifications": "No notifications",
@@ -1561,6 +1588,16 @@
   "postsEditPost": "Edit post",
   "postsReply": "Reply",
   "postsSend": "Send",
+  "postsReactionsHeading": "Reactions",
+  "postsReactionsFailed": "Couldn't load reactions",
+  "postsNoReactionsYet": "No reactions yet",
+  "postsUnknownUser": "Someone",
+  "postsAndNOthers": "and {count} others",
+  "@postsAndNOthers": {
+    "placeholders": {
+      "count": {}
+    }
+  },
   "@premiumErrorStatus": {
     "placeholders": {
       "status": {}
@@ -1608,6 +1645,7 @@
   "premiumGrowthStatsTitle": "Growth Stats",
   "premiumActiveSubs": "Active Subs",
   "premiumNewUsersMonth": "New Users (Month)",
+  "premiumNewUsers7d": "New Users (Last 7 Days)",
   "premiumNewSubsMonth": "New Subs (Month)",
   "premiumGrowthRate": "Growth Rate",
   "premiumCsvCopied": "CSV content copied to clipboard",
@@ -1621,6 +1659,7 @@
   "usersNoFriends": "No friends yet",
   "usersOnline": "Online",
   "usersOffline": "Offline",
+  "usersDetailUnavailable": "Profile details aren't available here — go back and open this profile from a list.",
   "usersProfile": "Profile",
   "adminSearchUsers": "Search Users",
   "adminTypeToSearch": "Type to search users",

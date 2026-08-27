@@ -569,6 +569,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authErrorsPasswordMin => 'Şifre en az 8 karakter olmalıdır';
 
   @override
+  String get passwordRulesHeading => 'Şifre şunları içermelidir:';
+
+  @override
+  String get passwordRuleLength => '8-128 karakter';
+
+  @override
+  String get passwordRuleLowercase => 'Bir küçük harf';
+
+  @override
+  String get passwordRuleUppercase => 'Bir büyük harf';
+
+  @override
+  String get passwordRuleNumber => 'Bir rakam';
+
+  @override
   String get authErrorsPasswordMax => 'Şifre en fazla 128 karakter olmalıdır';
 
   @override
@@ -620,6 +635,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get authErrorsVerifyEmailFailed => 'E-posta doğrulama başarısız';
+
+  @override
+  String get allUploadsTitle => 'Tüm yüklemeler';
+
+  @override
+  String get allUploadsEmpty => 'Burada henüz dosya yüklenmedi';
+
+  @override
+  String get allUploadsFailedToLoad => 'Yüklemeler yüklenemedi';
+
+  @override
+  String get files => 'ek';
+
+  @override
+  String get storageLimitReached => 'Depolama limitinize ulaştınız.';
+
+  @override
+  String get storageLimitUpgradeHint =>
+      'Her plan yükseltmesi mesaj depolama alanınızı ikiye katlar.';
 
   @override
   String get chatRoomTitle => 'Sohbet Odaları';
@@ -3252,6 +3286,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesFriends => 'Arkadaşlar';
 
   @override
+  String get messagesFilterAll => 'Tümü';
+
+  @override
+  String get messagesFilterUnread => 'Okunmamış';
+
+  @override
+  String get messagesFilterFavorites => 'Favoriler';
+
+  @override
+  String get messagesFilterGroups => 'Gruplar';
+
+  @override
+  String get messagesAddFavorite => 'Favorilere ekle';
+
+  @override
+  String get messagesRemoveFavorite => 'Favorilerden çıkar';
+
+  @override
+  String get messagesNoFavorites => 'Henüz favori konuşma yok';
+
+  @override
   String get messagesSearchUsers => 'Tüm kullanıcıları ara...';
 
   @override
@@ -3339,6 +3394,20 @@ class AppLocalizationsTr extends AppLocalizations {
   String get messagesCancel => 'İptal';
 
   @override
+  String get messagesReply => 'Yanıtla';
+
+  @override
+  String messagesReplyingTo(Object name) {
+    return '$name yanıtlanıyor';
+  }
+
+  @override
+  String get messagesYou => 'Sen';
+
+  @override
+  String get messagesAttachmentLabel => 'Ek';
+
+  @override
   String get notificationTitle => 'Bildirimler';
 
   @override
@@ -3422,7 +3491,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get premiumRevenue => 'Gelir';
 
   @override
-  String get premiumNewUsers7d => 'Yeni Kullanıcı (7g)';
+  String get premiumNewUsers7d => 'Yeni Kullanıcılar (Son 7 Gün)';
 
   @override
   String get premiumTotalPosts => 'Toplam Gönderi';
@@ -4726,6 +4795,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get postsSend => 'Gönder';
 
   @override
+  String get postsReactionsHeading => 'Tepkiler';
+
+  @override
+  String get postsReactionsFailed => 'Tepkiler yüklenemedi';
+
+  @override
+  String get postsNoReactionsYet => 'Henüz tepki yok';
+
+  @override
+  String get postsUnknownUser => 'Biri';
+
+  @override
+  String postsAndNOthers(Object count) {
+    return 've $count kişi daha';
+  }
+
+  @override
   String checkoutSelectedPlan(Object tier) {
     return 'Seçilen plan: $tier';
   }
@@ -4796,6 +4882,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get usersOffline => 'Çevrimdışı';
+
+  @override
+  String get usersDetailUnavailable =>
+      'Profil ayrıntıları burada mevcut değil — geri dönüp bu profili bir listeden açın.';
 
   @override
   String get usersProfile => 'Profil';

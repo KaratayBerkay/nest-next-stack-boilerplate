@@ -144,8 +144,15 @@ export function ChatMessageBubble({
           {isMe && (
             <MessageTick
               status={
-                msg.readAt ? "read" : msg.deliveredAt ? "delivered" : "sent"
+                msg.failed
+                  ? "failed"
+                  : msg.readAt
+                    ? "read"
+                    : msg.deliveredAt
+                      ? "delivered"
+                      : "sent"
               }
+              failedLabel={t.messageFailedToSend}
             />
           )}
         </div>

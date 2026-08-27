@@ -1,8 +1,9 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs } from '../realtime/realtime.types';
 import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
+import { rtcErrorLog } from './rtc-logger';
 
 /**
  * Registers the room-chat rtc:* frame vocabulary on the shared
@@ -21,6 +22,8 @@ import { RtcStreamService } from './rtc-stream.service';
  */
 @Injectable()
 export class RtcChatWsGateway implements OnModuleInit {
+  private readonly logger = new Logger(RtcChatWsGateway.name);
+
   constructor(
     private readonly realtime: RealtimeGateway,
     private readonly meetings: RtcMeetingService,
@@ -30,18 +33,46 @@ export class RtcChatWsGateway implements OnModuleInit {
   onModuleInit() {
     this.realtime.registerHandler('rtc:join-room-chat', async (ws, data) => {
       const authWs = ws as AuthWs;
-      await this.meetings.joinRoomChat(authWs, data.slug);
-      await this.streams.joinRoomChat(authWs, data.slug);
+      await this.run('join-room-chat', authWs, data, async () => {
+        await this.meetings.joinRoomChat(authWs, data.slug);
+        await this.streams.joinRoomChat(authWs, data.slug);
+      });
     });
     this.realtime.registerHandler('rtc:leave-room-chat', (ws, data) => {
       const authWs = ws as AuthWs;
-      this.meetings.leaveRoomChat(authWs, data.slug);
-      this.streams.leaveRoomChat(authWs, data.slug);
+      // leaveRoomChat on both services is synchronous (an in-memory socket
+      // bookkeeping update, not a DB write) — no `async`/`await` needed here.
+      void this.run('leave-room-chat', authWs, data, () => {
+        this.meetings.leaveRoomChat(authWs, data.slug);
+        this.streams.leaveRoomChat(authWs, data.slug);
+      });
     });
     this.realtime.registerHandler('rtc:chat-message', async (ws, data) => {
       const authWs = ws as AuthWs;
-      await this.meetings.sendChatMessage(authWs, data.slug, data.text);
-      await this.streams.sendChatMessage(authWs, data.slug, data.text);
+      await this.run('chat-message', authWs, data, async () => {
+        await this.meetings.sendChatMessage(authWs, data.slug, data.text);
+        await this.streams.sendChatMessage(authWs, data.slug, data.text);
+      });
     });
+  }
+
+  private async run(
+    operation: string,
+    ws: AuthWs,
+    data: Record<string, unknown>,
+    action: () => void | Promise<void>,
+  ): Promise<void> {
+    try {
+      await action();
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('websocket.chat_operation_failed', error, {
+          operation,
+          slug: typeof data.slug === 'string' ? data.slug : undefined,
+          userId: ws.userId,
+          socketId: ws.socketId,
+        }),
+      );
+    }
   }
 }

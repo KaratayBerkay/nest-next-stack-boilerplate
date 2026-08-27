@@ -1,6 +1,6 @@
 "use client";
 
-import { TIER_FEATURES } from "@/lib/checkout/tier-features";
+import { useTierFeatures } from "@/lib/checkout/tier-features";
 import { TIERS } from "@/lib/tier";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
@@ -51,13 +51,14 @@ function XIcon({ className }: ClassNameProps) {
 
 export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
   const t = useMessages("settings");
+  const tierFeatures = useTierFeatures();
   const currentTierIndex = TIERS.indexOf(currentTier);
 
   const allBenefits: { feature: string; included: boolean }[] = [];
 
   for (let i = 1; i <= currentTierIndex; i++) {
     const tier = TIERS[i];
-    const features = TIER_FEATURES[tier] ?? [];
+    const features = tierFeatures[tier] ?? [];
     for (const feature of features) {
       if (!allBenefits.some((b) => b.feature === feature)) {
         allBenefits.push({ feature, included: true });
@@ -68,7 +69,12 @@ export function PlanBenefits({ currentTier, className }: PlanBenefitsProps) {
   const nextTierIndex = currentTierIndex + 1;
   if (nextTierIndex < TIERS.length) {
     const nextTier = TIERS[nextTierIndex];
-    const nextFeatures = TIER_FEATURES[nextTier] ?? [];
+    // Every tier above FREE starts its feature list with a self-referential
+    // "Everything in {current tier}" line (see pricing/messages.json) —
+    // showing that as a crossed-out, "not included" item is nonsensical
+    // (the user already has everything in their own tier by definition), so
+    // skip the next tier's own first entry.
+    const nextFeatures = (tierFeatures[nextTier] ?? []).slice(1);
     for (const feature of nextFeatures) {
       if (!allBenefits.some((b) => b.feature === feature)) {
         allBenefits.push({ feature, included: false });

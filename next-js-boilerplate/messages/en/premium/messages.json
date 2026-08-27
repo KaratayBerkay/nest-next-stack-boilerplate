@@ -1,5 +1,6 @@
 {
   "heading": "Premium Dashboard",
+  "csvHeader": "Metric,Value",
   "signInToView": "Sign in to view premium",
   "upgradeMessage": "Upgrade to view premium features and stats.",
   "viewPlans": "View plans",

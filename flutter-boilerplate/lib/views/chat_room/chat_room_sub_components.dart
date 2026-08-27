@@ -4,12 +4,10 @@ import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
 class SidebarCloseButton extends StatelessWidget {
-  final bool useNativeControls;
   final VoidCallback onClick;
 
   const SidebarCloseButton({
     super.key,
-    this.useNativeControls = false,
     required this.onClick,
   });
 
@@ -24,7 +22,6 @@ class SidebarCloseButton extends StatelessWidget {
 }
 
 class RoomButton extends StatelessWidget {
-  final bool useNativeControls;
   final String room;
   final bool isActive;
   final int count;
@@ -33,7 +30,6 @@ class RoomButton extends StatelessWidget {
 
   const RoomButton({
     super.key,
-    this.useNativeControls = false,
     required this.room,
     this.isActive = false,
     this.count = 0,
@@ -95,7 +91,6 @@ class RoomButton extends StatelessWidget {
 }
 
 class HamburgerButton extends StatelessWidget {
-  final bool useNativeControls;
   final String room;
   final String countLabel;
   final String? ariaLabel;
@@ -103,7 +98,6 @@ class HamburgerButton extends StatelessWidget {
 
   const HamburgerButton({
     super.key,
-    this.useNativeControls = false,
     required this.room,
     required this.countLabel,
     this.ariaLabel,
@@ -144,7 +138,6 @@ class HamburgerButton extends StatelessWidget {
 }
 
 class MessageInput extends StatelessWidget {
-  final bool useNativeControls;
   final TextEditingController controller;
   final String? placeholder;
   final bool disabled;
@@ -152,7 +145,6 @@ class MessageInput extends StatelessWidget {
 
   const MessageInput({
     super.key,
-    this.useNativeControls = false,
     required this.controller,
     this.placeholder,
     this.disabled = false,
@@ -224,14 +216,12 @@ class ComposerIconButton extends StatelessWidget {
 }
 
 class SendButton extends StatelessWidget {
-  final bool useNativeControls;
   final VoidCallback? onClick;
   final bool disabled;
   final String? label;
 
   const SendButton({
     super.key,
-    this.useNativeControls = false,
     this.onClick,
     this.disabled = false,
     this.label,

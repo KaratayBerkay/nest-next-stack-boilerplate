@@ -84,6 +84,7 @@ const CATEGORY_EVENTS = new Set([
   "network",
   "database",
   "performance",
+  "rtc",
 ]);
 
 export const POST = withLogging(async (request, log) => {

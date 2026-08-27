@@ -44,6 +44,7 @@ import {
 } from "@/api/client/rtc/meetings-query";
 import { useMeetingActions } from "@/api/client/rtc/meetings-actions";
 import type { JoinMeetingResult } from "@/api/server/rtc/meetings/types";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 interface ChatItem {
   id: string;
@@ -143,8 +144,12 @@ function PeoplePanel({
   isHost: boolean;
   slug: string;
   youLabel: string;
-  muteParticipant: (slug: string, userId: string, mute: boolean) => void;
-  removeParticipant: (slug: string, userId: string) => void;
+  muteParticipant: (
+    slug: string,
+    userId: string,
+    mute: boolean,
+  ) => Promise<unknown>;
+  removeParticipant: (slug: string, userId: string) => Promise<unknown>;
   t: Record<string, string>;
 }) {
   return (
@@ -162,14 +167,36 @@ function PeoplePanel({
                 variant="ghost"
                 icon={<IconMuteAction size={14} />}
                 label={t.muteParticipant}
-                onClick={() => void muteParticipant(slug, p.identity, true)}
+                onClick={() =>
+                  void muteParticipant(slug, p.identity, true).catch((error) =>
+                    logRtcEvent({
+                      event: "meeting.participant_mute_failed",
+                      rtcKind: "meeting",
+                      rtcId: slug,
+                      exceptionType: "CLIENT_REQUEST_ERROR",
+                      error,
+                      metadata: { participantId: p.identity },
+                    }),
+                  )
+                }
               />
               <IconButton
                 size="icon-sm"
                 variant="ghost"
                 icon={<IconUserX size={14} />}
                 label={t.removeParticipant}
-                onClick={() => void removeParticipant(slug, p.identity)}
+                onClick={() =>
+                  void removeParticipant(slug, p.identity).catch((error) =>
+                    logRtcEvent({
+                      event: "meeting.participant_remove_failed",
+                      rtcKind: "meeting",
+                      rtcId: slug,
+                      exceptionType: "CLIENT_REQUEST_ERROR",
+                      error,
+                      metadata: { participantId: p.identity },
+                    }),
+                  )
+                }
               />
             </span>
           )}
@@ -213,9 +240,28 @@ export function RtcMeetingRoomView() {
   const { data: chatHistory } = useQuery(meetingChatQueryOptions(slug));
 
   useEffect(() => {
-    if (!chatHistory || seededChat.current) return;
-    seededChat.current = true;
-    setChat([...chatHistory.messages].reverse());
+    if (!chatHistory) return;
+    if (!seededChat.current) {
+      seededChat.current = true;
+      setChat([...chatHistory.messages].reverse());
+      return;
+    }
+    // Re-runs after a reconnect-triggered refetch (resyncAfterConnect
+    // invalidates this query), not just on first load — the one-shot guard
+    // above previously discarded every later fetch, so any chat message
+    // sent during a WS connection gap was silently lost forever even though
+    // the server had it all along. Merge rather than replace: WS-pushed
+    // messages already appended locally (via the rtc:chat-message
+    // subscription below) must survive a refetch that hasn't caught up yet.
+    setChat((prev) => {
+      const known = new Set(prev.map((m) => m.id));
+      const missing = chatHistory.messages.filter((m) => !known.has(m.id));
+      if (missing.length === 0) return prev;
+      return [...prev, ...missing].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    });
   }, [chatHistory]);
 
   useEffect(() => {
@@ -228,22 +274,39 @@ export function RtcMeetingRoomView() {
       })
       .catch((err) => {
         if (cancelled) return;
+        logRtcEvent({
+          event: "meeting.join_failed",
+          rtcKind: "meeting",
+          rtcId: slug,
+          exceptionType: "CLIENT_REQUEST_ERROR",
+          error: err,
+          phase: "joining",
+        });
         const status = (err as { exception?: { statusCode?: number } })
           .exception?.statusCode;
         setPhase(status === 404 ? "not-found" : "ended");
         toast({
-          title: err instanceof Error ? err.message : "Failed to join meeting",
+          title: err instanceof Error ? err.message : t.joinMeetingFailed,
           variant: "destructive",
         });
       });
     return () => {
       cancelled = true;
     };
-  }, [slug, joinMeeting, toast]);
+  }, [slug, joinMeeting, toast, t.joinMeetingFailed]);
 
   useEffect(() => {
     return () => {
-      void leaveMeeting(slug);
+      void leaveMeeting(slug).catch((error) =>
+        logRtcEvent({
+          event: "meeting.leave_failed",
+          rtcKind: "meeting",
+          rtcId: slug,
+          exceptionType: "CLIENT_REQUEST_ERROR",
+          error,
+          phase: "unmount",
+        }),
+      );
     };
   }, [slug, leaveMeeting]);
 
@@ -265,7 +328,13 @@ export function RtcMeetingRoomView() {
       }),
       realtime.subscribe("rtc:meeting-participant-joined", (data) => {
         if (data.slug !== slug || data.userId === user?.id) return;
-        toast({ title: `${data.name ?? "Someone"} joined`, variant: "info" });
+        toast({
+          title: t.participantJoined.replace(
+            "{name}",
+            (data.name as string | undefined) ?? t.someone,
+          ),
+          variant: "info",
+        });
       }),
       realtime.subscribe("rtc:meeting-ended", (data) => {
         if (data.slug !== slug) return;
@@ -294,6 +363,8 @@ export function RtcMeetingRoomView() {
     slug,
     user?.id,
     toast,
+    t.participantJoined,
+    t.someone,
     t.meetingEndedNotice,
     t.meetingRemovedNotice,
     t.meetingLimitWarning,
@@ -301,6 +372,8 @@ export function RtcMeetingRoomView() {
 
   const livekit = useLiveKitMeetingRoom(
     phase === "active" ? (join?.token ?? null) : null,
+    slug,
+    join?.roomName,
   );
 
   const sendChat = useCallback(() => {
@@ -317,13 +390,37 @@ export function RtcMeetingRoomView() {
   );
 
   const handleLeave = () => {
-    void leaveMeeting(slug);
+    void leaveMeeting(slug).catch((error) =>
+      logRtcEvent({
+        event: "meeting.leave_failed",
+        rtcKind: "meeting",
+        rtcId: slug,
+        exceptionType: "CLIENT_REQUEST_ERROR",
+        error,
+        phase: "active",
+      }),
+    );
     router.push(`/v1/${lang}/rtc/meetings`);
   };
 
   const handleEnd = async () => {
-    await endMeeting(slug);
-    router.push(`/v1/${lang}/rtc/meetings`);
+    try {
+      await endMeeting(slug);
+      router.push(`/v1/${lang}/rtc/meetings`);
+    } catch (error) {
+      logRtcEvent({
+        event: "meeting.end_failed",
+        rtcKind: "meeting",
+        rtcId: slug,
+        exceptionType: "CLIENT_REQUEST_ERROR",
+        error,
+        phase: "active",
+      });
+      toast({
+        title: error instanceof Error ? error.message : t.endMeetingFailed,
+        variant: "destructive",
+      });
+    }
   };
 
   const toggleSidebar = (panel: "chat" | "people") => {
@@ -406,7 +503,19 @@ export function RtcMeetingRoomView() {
             />
             <div className="mx-1 h-6 w-px bg-gray-300" />
             <RtcInviteDialog
-              onInvite={(userId) => inviteToMeeting(slug, userId)}
+              onInvite={(userId) =>
+                inviteToMeeting(slug, userId).catch((error) => {
+                  logRtcEvent({
+                    event: "meeting.invite_failed",
+                    rtcKind: "meeting",
+                    rtcId: slug,
+                    exceptionType: "CLIENT_REQUEST_ERROR",
+                    error,
+                    metadata: { participantId: userId },
+                  });
+                  throw error;
+                })
+              }
             >
               {(open) => (
                 <IconButton
@@ -419,7 +528,17 @@ export function RtcMeetingRoomView() {
             </RtcInviteDialog>
             <RtcReportDialog
               onSubmit={(reason, details) =>
-                reportMeeting(slug, reason, details)
+                reportMeeting(slug, reason, details).catch((error) => {
+                  logRtcEvent({
+                    event: "meeting.report_failed",
+                    rtcKind: "meeting",
+                    rtcId: slug,
+                    exceptionType: "CLIENT_REQUEST_ERROR",
+                    error,
+                    metadata: { reason },
+                  });
+                  throw error;
+                })
               }
             >
               {(open) => (
@@ -476,12 +595,36 @@ export function RtcMeetingRoomView() {
               <RtcRecordingControl
                 recording={recording}
                 onStart={async () => {
-                  await startRecording(slug);
-                  await refetchRecording();
+                  try {
+                    await startRecording(slug);
+                    await refetchRecording();
+                  } catch (error) {
+                    logRtcEvent({
+                      event: "meeting.recording_start_failed",
+                      rtcKind: "meeting",
+                      rtcId: slug,
+                      exceptionType: "CLIENT_REQUEST_ERROR",
+                      error,
+                      phase: "active",
+                    });
+                    throw error;
+                  }
                 }}
                 onStop={async () => {
-                  await stopRecording(slug);
-                  await refetchRecording();
+                  try {
+                    await stopRecording(slug);
+                    await refetchRecording();
+                  } catch (error) {
+                    logRtcEvent({
+                      event: "meeting.recording_stop_failed",
+                      rtcKind: "meeting",
+                      rtcId: slug,
+                      exceptionType: "CLIENT_REQUEST_ERROR",
+                      error,
+                      phase: "active",
+                    });
+                    throw error;
+                  }
                 }}
               />
             </div>
@@ -497,7 +640,7 @@ export function RtcMeetingRoomView() {
               <IconButton
                 variant="ghost"
                 icon={<IconX size={16} />}
-                label="Close"
+                label={t.close}
                 onClick={() => setSidebar(null)}
               />
             </div>

@@ -15,6 +15,7 @@ export interface SecurityMfaStatusProps {
   confirmingDisable: boolean;
   disableCode: string;
   error: string | null;
+  submitting: boolean;
   onDisableCodeChange: Dispatch<SetStateAction<string>>;
   onEnable: () => void;
   onConfirmDisable: () => void;
@@ -33,6 +34,7 @@ export interface SecurityMfaWizardProps {
   backupCodes: string[];
   codesSaved: boolean;
   error: string | null;
+  submitting: boolean;
   onVerifyCodeChange: Dispatch<SetStateAction<string>>;
   onCodesSavedChange: Dispatch<SetStateAction<boolean>>;
   onContinueToVerify: () => void;

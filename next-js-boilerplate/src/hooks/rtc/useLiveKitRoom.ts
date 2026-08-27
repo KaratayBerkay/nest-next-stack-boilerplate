@@ -11,6 +11,7 @@ import {
   type RemoteTrack,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 export interface UseLiveKitRoomElements {
   localVideoRef: React.RefObject<HTMLVideoElement | null>;
@@ -21,10 +22,18 @@ export interface UseLiveKitRoomElements {
 export interface UseLiveKitRoomResult {
   connected: boolean;
   remoteConnected: boolean;
+  livekitError: "connection" | "microphone" | "camera" | null;
   micEnabled: boolean;
   cameraEnabled: boolean;
   toggleMic: () => void;
   toggleCamera: () => void;
+}
+
+interface LiveKitMediaState {
+  token: string | null;
+  micEnabled: boolean;
+  cameraEnabled: boolean;
+  error: "connection" | "microphone" | "camera" | null;
 }
 
 function attachCameraTrack(pub: TrackPublication, el: HTMLVideoElement | null) {
@@ -58,18 +67,25 @@ export function useLiveKitRoom(
   token: string | null,
   hasVideo: boolean,
   elements: UseLiveKitRoomElements,
+  callId?: string | null,
+  roomName?: string | null,
 ): UseLiveKitRoomResult {
   const { localVideoRef, remoteVideoRef, remoteAudioRef } = elements;
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
   const [remoteConnected, setRemoteConnected] = useState(false);
-  const [micEnabled, setMicEnabled] = useState(true);
-  const [cameraEnabled, setCameraEnabled] = useState(hasVideo);
-  const cameraRef = useRef(hasVideo);
-
-  useEffect(() => {
-    cameraRef.current = cameraEnabled;
-  }, [cameraEnabled]);
+  const [mediaState, setMediaState] = useState<LiveKitMediaState>({
+    token: null,
+    micEnabled: true,
+    cameraEnabled: hasVideo,
+    error: null,
+  });
+  const isCurrentMediaState = mediaState.token === token;
+  const micEnabled = isCurrentMediaState ? mediaState.micEnabled : true;
+  const cameraEnabled = isCurrentMediaState
+    ? mediaState.cameraEnabled
+    : hasVideo;
+  const livekitError = isCurrentMediaState ? mediaState.error : null;
 
   /** Re-scan the remote participant's tracks and attach any that are missing
    *  from the DOM — called after reconnection to recover lost media. */
@@ -104,6 +120,27 @@ export function useLiveKitRoom(
     roomRef.current = room;
     let disposed = false;
 
+    const telemetry = (
+      event: string,
+      options: {
+        exceptionType?: "CLIENT_ERROR" | "CLIENT_REJECTION";
+        error?: unknown;
+        metadata?: Record<string, unknown>;
+        phase?: string;
+      } = {},
+    ) => {
+      logRtcEvent({
+        event,
+        rtcKind: "call",
+        rtcId: callId,
+        roomName,
+        mediaType: hasVideo ? "video" : "audio",
+        ...options,
+      });
+    };
+
+    telemetry("call.livekit.connecting", { phase: "connecting" });
+
     room
       .on(RoomEvent.TrackSubscribed, (track) => {
         attachRemoteTrack(
@@ -117,10 +154,11 @@ export function useLiveKitRoom(
         track.detach();
       })
       .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
-        console.warn(
-          "[useLiveKitRoom] Track subscription failed for",
-          trackSid,
-        );
+        telemetry("call.livekit.track_subscription_failed", {
+          exceptionType: "CLIENT_ERROR",
+          metadata: { trackSid },
+          phase: "connected",
+        });
       })
       .on(RoomEvent.LocalTrackPublished, (pub) => {
         attachCameraTrack(pub, localVideoRef.current);
@@ -131,23 +169,44 @@ export function useLiveKitRoom(
         }
       })
       .on(RoomEvent.ParticipantConnected, () => setRemoteConnected(true))
-      .on(RoomEvent.ParticipantDisconnected, () => setRemoteConnected(false))
-      .on(RoomEvent.Disconnected, () => setConnected(false))
+      .on(RoomEvent.ParticipantDisconnected, () =>
+        setRemoteConnected(room.remoteParticipants.size > 0),
+      )
+      .on(RoomEvent.Disconnected, () => {
+        if (disposed) return;
+        telemetry("call.livekit.disconnected", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
+        setConnected(false);
+        setRemoteConnected(false);
+        setMediaState((current) =>
+          current.token === token
+            ? { ...current, error: "connection" }
+            : current,
+        );
+      })
       .on(RoomEvent.Reconnecting, () => {
-        console.warn("[useLiveKitRoom] Reconnecting…");
+        telemetry("call.livekit.reconnecting", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
       })
       .on(RoomEvent.Reconnected, () => {
-        console.info("[useLiveKitRoom] Reconnected");
+        telemetry("call.livekit.reconnected", { phase: "connected" });
         reattachRemoteTracks(room);
       })
       .on(
         RoomEvent.ConnectionQualityChanged,
         (quality: ConnectionQuality, participant) => {
           if (quality === ConnectionQuality.Poor) {
-            console.warn(
-              "[useLiveKitRoom] Poor connection quality from",
-              participant?.identity ?? "local",
-            );
+            telemetry("call.livekit.connection_quality_poor", {
+              exceptionType: "CLIENT_ERROR",
+              metadata: {
+                participantId: participant?.identity ?? "local",
+              },
+              phase: "connected",
+            });
           }
         },
       );
@@ -158,9 +217,20 @@ export function useLiveKitRoom(
       } catch (err) {
         if (disposed) return;
         if (attempt < 2) {
+          telemetry("call.livekit.connect_retry", {
+            exceptionType: "CLIENT_ERROR",
+            error: err,
+            metadata: { attempt: attempt + 1 },
+            phase: "connecting",
+          });
           await new Promise((r) => setTimeout(r, 2000));
           return connectWithRetry(attempt + 1);
         }
+        telemetry("call.livekit.connection_failed", {
+          exceptionType: "CLIENT_ERROR",
+          error: err,
+          phase: "connecting",
+        });
         throw err;
       }
     };
@@ -173,20 +243,75 @@ export function useLiveKitRoom(
           return;
         }
         setConnected(true);
+        telemetry("call.livekit.connected", { phase: "connected" });
         setRemoteConnected(room.remoteParticipants.size > 0);
+        setMediaState({
+          token,
+          micEnabled: true,
+          cameraEnabled: hasVideo,
+          error: null,
+        });
 
-        await room.localParticipant.setMicrophoneEnabled(true);
-
-        if (cameraRef.current) {
-          const pub = await room.localParticipant.setCameraEnabled(true);
-          if (pub) attachCameraTrack(pub, localVideoRef.current);
-        } else {
-          await room.localParticipant.setCameraEnabled(false);
-          setCameraEnabled(false);
+        try {
+          await room.localParticipant.setMicrophoneEnabled(true);
+          if (disposed) return;
+        } catch (error) {
+          if (disposed) return;
+          telemetry("call.media.microphone_enable_failed", {
+            exceptionType: "CLIENT_ERROR",
+            error,
+            phase: "connected",
+          });
+          setMediaState((current) =>
+            current.token === token
+              ? { ...current, micEnabled: false, error: "microphone" }
+              : current,
+          );
         }
-      } catch {
-        // Connection failed after retries — `connected` stays false; the
-        // hangup button lets the user bail out and server-side cleanup runs.
+
+        if (hasVideo) {
+          try {
+            const pub = await room.localParticipant.setCameraEnabled(true);
+            if (disposed) return;
+            if (pub) attachCameraTrack(pub, localVideoRef.current);
+          } catch (error) {
+            if (disposed) return;
+            telemetry("call.media.camera_enable_failed", {
+              exceptionType: "CLIENT_ERROR",
+              error,
+              phase: "connected",
+            });
+            setMediaState((current) =>
+              current.token === token
+                ? {
+                    ...current,
+                    cameraEnabled: false,
+                    error: current.error ?? "camera",
+                  }
+                : current,
+            );
+          }
+        }
+      } catch (error) {
+        if (!disposed) {
+          telemetry("call.livekit.connection_failed", {
+            exceptionType: "CLIENT_ERROR",
+            error,
+            phase: "connecting",
+          });
+          setConnected(false);
+          setRemoteConnected(false);
+          setMediaState((current) =>
+            current.token === token
+              ? { ...current, error: "connection" }
+              : {
+                  token,
+                  micEnabled: true,
+                  cameraEnabled: hasVideo,
+                  error: "connection",
+                },
+          );
+        }
       }
     })();
 
@@ -197,7 +322,7 @@ export function useLiveKitRoom(
       setConnected(false);
       setRemoteConnected(false);
     };
-  }, [token, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
+  }, [callId, roomName, token, hasVideo, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
 
   // ---- Wake Lock: prevent OS from sleeping the screen during a call ----
   useEffect(() => {
@@ -259,25 +384,55 @@ export function useLiveKitRoom(
       navigator.mediaSession.metadata = null;
       navigator.mediaSession.playbackState = "none";
     };
-  }, [connected]);
+    // remoteConnected (not just connected) is a deliberate dep: on the
+    // caller side, `connected` typically flips true before the callee's
+    // participant has joined, so remoteParticipants is empty at that
+    // instant — without re-running once the peer actually connects, the
+    // lock-screen title stays stuck on the "Active Call" fallback for the
+    // rest of the call.
+  }, [connected, remoteConnected]);
 
   const toggleMic = useCallback(async () => {
     const room = roomRef.current;
-    if (!room) return;
+    if (!room || !connected) return;
     const next = !micEnabled;
-    setMicEnabled(next);
+    setMediaState((current) => ({
+      ...(current.token === token
+        ? current
+        : { token, micEnabled: true, cameraEnabled: hasVideo, error: null }),
+      micEnabled: next,
+    }));
     try {
       await room.localParticipant.setMicrophoneEnabled(next);
-    } catch {
-      setMicEnabled(!next);
+    } catch (error) {
+      logRtcEvent({
+        event: "call.media.microphone_toggle_failed",
+        rtcKind: "call",
+        rtcId: callId,
+        roomName,
+        mediaType: hasVideo ? "video" : "audio",
+        phase: "connected",
+        exceptionType: "CLIENT_ERROR",
+        error,
+      });
+      setMediaState((current) =>
+        current.token === token
+          ? { ...current, micEnabled: !next, error: "microphone" }
+          : current,
+      );
     }
-  }, [micEnabled]);
+  }, [callId, connected, hasVideo, micEnabled, roomName, token]);
 
   const toggleCamera = useCallback(async () => {
     const room = roomRef.current;
-    if (!room) return;
+    if (!room || !connected) return;
     const next = !cameraEnabled;
-    setCameraEnabled(next);
+    setMediaState((current) => ({
+      ...(current.token === token
+        ? current
+        : { token, micEnabled: true, cameraEnabled: hasVideo, error: null }),
+      cameraEnabled: next,
+    }));
     try {
       const pub = await room.localParticipant.setCameraEnabled(next);
       if (next && pub) {
@@ -285,14 +440,37 @@ export function useLiveKitRoom(
       } else if (!next && pub?.track) {
         pub.track.detach();
       }
-    } catch {
-      setCameraEnabled(!next);
+    } catch (error) {
+      logRtcEvent({
+        event: "call.media.camera_toggle_failed",
+        rtcKind: "call",
+        rtcId: callId,
+        roomName,
+        mediaType: "video",
+        phase: "connected",
+        exceptionType: "CLIENT_ERROR",
+        error,
+      });
+      setMediaState((current) =>
+        current.token === token
+          ? { ...current, cameraEnabled: !next, error: "camera" }
+          : current,
+      );
     }
-  }, [cameraEnabled, localVideoRef]);
+  }, [
+    callId,
+    cameraEnabled,
+    connected,
+    hasVideo,
+    localVideoRef,
+    roomName,
+    token,
+  ]);
 
   return {
     connected,
     remoteConnected,
+    livekitError,
     micEnabled,
     cameraEnabled,
     toggleMic,

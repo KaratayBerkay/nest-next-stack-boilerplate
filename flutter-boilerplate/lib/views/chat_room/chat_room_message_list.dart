@@ -51,7 +51,7 @@ class ChatRoomMessageList extends StatelessWidget {
     if (messages.isEmpty) {
       return Center(
         child: Text(
-          'No messages yet',
+          AppLocalizations.of(context).chatRoomNoMessages,
           style: TextStyle(color: colors.fgMuted, fontSize: 12),
         ),
       );
@@ -141,6 +141,7 @@ class ChatRoomMessageList extends StatelessWidget {
                           url: att.url,
                           type: att.type,
                           name: att.name,
+                          thumbnailUrl: att.thumbnailUrl,
                         ),
                       ),
                     if (msg.content.isNotEmpty)

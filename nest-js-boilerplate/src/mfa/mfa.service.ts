@@ -34,16 +34,22 @@ export class MfaService {
       secret,
     });
 
-    // Replace any prior pending TOTP factor, then store the new one encrypted at rest.
-    await this.prisma.mfaFactor.deleteMany({
-      where: { userId, method: 'TOTP', verifiedAt: null },
-    });
-    await this.prisma.mfaFactor.create({
-      data: {
-        userId,
-        method: 'TOTP',
-        secret: Uint8Array.from(this.crypto.encrypt(secret)),
-      },
+    // Replace any prior pending TOTP factor, then store the new one encrypted
+    // at rest — same transaction, not two top-level writes. Otherwise two
+    // concurrent enroll() calls (double-click, two tabs) can each pass the
+    // deleteMany before either creates, leaving two pending factors at once;
+    // a crash between the two calls could also leave the user with none.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.mfaFactor.deleteMany({
+        where: { userId, method: 'TOTP', verifiedAt: null },
+      });
+      await tx.mfaFactor.create({
+        data: {
+          userId,
+          method: 'TOTP',
+          secret: Uint8Array.from(this.crypto.encrypt(secret)),
+        },
+      });
     });
 
     return { otpauthUrl, secret };

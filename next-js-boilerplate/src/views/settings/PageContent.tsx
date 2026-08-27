@@ -38,10 +38,10 @@ export default function PageContent({
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
 
   const FEATURES: Record<Tier, string[]> = {
-    FREE: p.featuresBasic,
-    BASIC: p.featuresMedium,
-    MEDIUM: p.featuresPremium,
-    PREMIUM: p.featuresPro,
+    FREE: p.featuresFree,
+    BASIC: p.featuresBasic,
+    MEDIUM: p.featuresMedium,
+    PREMIUM: p.featuresPremium,
   };
 
   return (

@@ -12,13 +12,24 @@ describe('DeviceService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      // enforceDeviceLimit's dependencies — every resolveForLogin call runs
+      // it. Defaulted low so it's a no-op unless a test explicitly exercises
+      // eviction, matching the real ConfigService default it's compared
+      // against below.
+      count: jest.fn().mockResolvedValue(1),
+      findMany: jest.fn().mockResolvedValue([]),
+      deleteMany: jest.fn(),
     },
   };
 
   const mockConfig = {
-    get: jest.fn((key: string) => {
+    // Real ConfigService.get(key, default) returns `default` for an unset
+    // key — this mock previously always returned `undefined` regardless of
+    // the caller's default, which silently broke any code (like
+    // enforceDeviceLimit's MAX_DEVICES_PER_USER lookup) relying on that.
+    get: jest.fn((key: string, defaultValue?: unknown) => {
       if (key === 'NODE_ENV') return 'development';
-      return undefined;
+      return defaultValue;
     }),
     getOrThrow: jest.fn((key: string) => {
       if (key === 'ENCRYPTION_KEY')
@@ -195,6 +206,64 @@ describe('DeviceService', () => {
       expect(result.deviceToken).toBeDefined();
       expect(result.changed).toBe(true);
       expect(mockPrisma.device.create).toHaveBeenCalled();
+    });
+
+    it('evicts the oldest devices once the per-user limit is exceeded', async () => {
+      mockPrisma.device.findUnique.mockResolvedValue(null);
+      mockPrisma.device.create.mockResolvedValue({
+        id: 'dev-new',
+        userId,
+        token: 'fresh-token',
+        type: 'WEB',
+        fingerprint: null,
+        ip: null,
+        lastSeenAt: new Date(),
+      });
+      mockPrisma.device.count.mockResolvedValue(12);
+      mockPrisma.device.findMany.mockResolvedValue([
+        { id: 'oldest-1', type: 'WEB' },
+        { id: 'oldest-2', type: 'MOBILE' },
+      ]);
+
+      const req = {
+        headers: {},
+        cookies: {},
+        ip: '127.0.0.1',
+        res: { cookie: jest.fn() },
+      };
+      await service.resolveForLogin(userId, { req } as never);
+
+      // 12 devices, default MAX_DEVICES_PER_USER of 10 -> 2 oldest evicted.
+      expect(mockPrisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 2 }),
+      );
+      expect(mockPrisma.device.deleteMany).toHaveBeenCalledWith({
+        where: { id: { in: ['oldest-1', 'oldest-2'] } },
+      });
+    });
+
+    it('does not evict anything when at or under the per-user limit', async () => {
+      mockPrisma.device.findUnique.mockResolvedValue(null);
+      mockPrisma.device.create.mockResolvedValue({
+        id: 'dev-new',
+        userId,
+        token: 'fresh-token',
+        type: 'WEB',
+        fingerprint: null,
+        ip: null,
+        lastSeenAt: new Date(),
+      });
+      mockPrisma.device.count.mockResolvedValue(10);
+
+      const req = {
+        headers: {},
+        cookies: {},
+        ip: '127.0.0.1',
+        res: { cookie: jest.fn() },
+      };
+      await service.resolveForLogin(userId, { req } as never);
+
+      expect(mockPrisma.device.deleteMany).not.toHaveBeenCalled();
     });
   });
 });

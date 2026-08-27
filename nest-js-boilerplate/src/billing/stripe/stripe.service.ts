@@ -144,7 +144,26 @@ export class StripeService {
   ): Promise<Stripe.Subscription | null> {
     try {
       return await this.stripe.subscriptions.retrieve(subscriptionId);
-    } catch {
+    } catch (err) {
+      // Callers (billing.service.ts's getSubscription) treat a null return
+      // as "no live subscription, fall back to the tier's default price" —
+      // correct for a genuine 404 (the subscription was deleted directly on
+      // Stripe), but this previously swallowed EVERY failure identically
+      // with zero logging, including transient network/API errors. A user
+      // whose DB record says they have a live stripeSubscriptionId would
+      // silently see a generic default price instead of their actual
+      // negotiated one, with no trail to tell "really gone" apart from
+      // "Stripe was unreachable just now."
+      const isNotFound =
+        typeof err === 'object' &&
+        err !== null &&
+        'code' in err &&
+        (err as { code?: string }).code === 'resource_missing';
+      if (!isNotFound) {
+        this.logger.warn(
+          `getSubscription(${subscriptionId}) failed with a non-404 error — falling back as if no live subscription exists: ${(err as Error).message}`,
+        );
+      }
       return null;
     }
   }

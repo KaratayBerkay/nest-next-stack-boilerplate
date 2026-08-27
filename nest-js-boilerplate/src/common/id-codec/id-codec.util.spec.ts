@@ -41,11 +41,18 @@ describe('id-codec.util', () => {
     expect(decrypted).toEqual(input);
   });
 
-  it('leaves a non-uuid roomId (routing slug) untouched even though the name looks id-shaped', () => {
-    const input = { roomId: 'general', id: UUID_A };
+  it('treats a REST/WS-level roomId as a real uuid field (RtcRoom-backed FK), unlike the GraphQL per-model roomId on RoomMessage', () => {
+    // No REST/WS payload ever puts RoomMessage's routing slug under the key
+    // "roomId" — that model's own wire boundary (messaging.controller.ts's
+    // `rooms/:roomSlug/...` routes, messaging-ws.gateway.ts's `room`/`slug`
+    // frame keys) deliberately never spells it that way. So at the flat,
+    // no-model-context REST/WS layer, "roomId" is unambiguously the
+    // RtcRoom-backed uuid FK shared by CallSession/Meeting/LiveStream/etc.
+    const input = { roomId: UUID_A, id: UUID_B };
     const out = deepEncryptIds(input) as typeof input;
-    expect(out.roomId).toBe('general');
-    expect(out.id).not.toBe(UUID_A);
+    expect(out.roomId).not.toBe(UUID_A);
+    expect(out.id).not.toBe(UUID_B);
+    expect(deepDecryptIds(out)).toEqual(input);
   });
 
   it('encryptFieldIfId only transforms a field the given GraphQL type actually owns as a uuid', () => {
@@ -70,9 +77,10 @@ describe('id-codec.util', () => {
     expect(encryptFieldIfId('SessionUserPayload', 'email', 'a@x.com')).toBe(
       'a@x.com',
     );
-    // And still safe for the ambiguous name even via the fallback path.
-    expect(encryptFieldIfId('SomeHandRolledType', 'roomId', 'general')).toBe(
-      'general',
+    // roomId is unambiguous at the flat/fallback level too now (see
+    // uuid-fields.spec.ts) — the fallback path picks up the same global set.
+    expect(encryptFieldIfId('SomeHandRolledType', 'roomId', UUID_A)).not.toBe(
+      UUID_A,
     );
   });
 

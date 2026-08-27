@@ -276,6 +276,70 @@ describe('TokenStoreService', () => {
     expect(await service.read(k2)).toBeNull();
   });
 
+  it('retries revokeAllForUser through a transient Redis failure instead of leaving a banned/password-changed session valid — this is the only enforcement mechanism for admin ban/suspend and password-change session invalidation, so a single transient error here previously meant the old session just... stayed valid', async () => {
+    const k1 = service.buildKey('a5', 'b5', 'c5');
+    await service.write(k1, {
+      userId: 'u5',
+      email: 'u5@t.com',
+      role: 'USER',
+      sessionId: 's5',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
+    });
+    let calls = 0;
+    const realMulti = redis.multi.getMockImplementation()!;
+    redis.multi.mockImplementation((...args: unknown[]) => {
+      calls++;
+      if (calls === 1) {
+        return {
+          hset: () => {},
+          expire: () => {},
+          sadd: () => {},
+          set: () => {},
+          del: () => {},
+          srem: () => {},
+          hincrby: () => {},
+          exec: () => Promise.reject(new Error('ECONNRESET')),
+        };
+      }
+      return (realMulti as (...a: unknown[]) => unknown)(...args);
+    });
+
+    const result = await service.revokeAllForUser('u5');
+
+    expect(result).toBe(1);
+    expect(await service.read(k1)).toBeNull();
+    expect(calls).toBeGreaterThan(1);
+  });
+
+  it('still throws (loudly logged) once every revokeAllForUser retry is exhausted, rather than silently swallowing the failure', async () => {
+    const key = service.buildKey('a6', 'b6', 'c6');
+    await service.write(key, {
+      userId: 'u6',
+      email: 'u6@t.com',
+      role: 'USER',
+      sessionId: 's6',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
+    });
+    redis.multi.mockImplementation(() => ({
+      hset: () => {},
+      expire: () => {},
+      sadd: () => {},
+      set: () => {},
+      del: () => {},
+      srem: () => {},
+      hincrby: () => {},
+      exec: () => Promise.reject(new Error('still down')),
+    }));
+
+    await expect(service.revokeAllForUser('u6')).rejects.toThrow(
+      'still down',
+    );
+  });
+
   describe('revokeSessionBySessionId', () => {
     it('revokes the matching session by sessionIdHash, leaving others intact', async () => {
       const k1 = service.buildKey('a5', 'b5', 'c5');

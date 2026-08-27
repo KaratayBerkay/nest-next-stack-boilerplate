@@ -202,11 +202,9 @@ class _PremiumPremiumViewState extends ConsumerState<_PremiumPremiumView> {
       ..writeln('Total Users,${stats.totalUsers}')
       ..writeln('Active Subscriptions,${stats.activeSubscriptions}')
       ..writeln('Monthly Revenue,\$${stats.monthlyRevenue}')
-      ..writeln('New Users This Month,${growth.newUsersThisMonth}')
-      ..writeln(
-        'New Subscriptions This Month,${growth.newSubscriptionsThisMonth}',
-      )
-      ..writeln('Growth Rate,${growth.growthRate}%');
+      ..writeln('New Users (Last 7 Days),${growth.newUsersLast7Days}')
+      ..writeln('Total Posts,${growth.totalPosts}')
+      ..writeln('Total Friendships,${growth.totalFriendships}');
 
     final t = AppLocalizations.of(context);
     Clipboard.setData(ClipboardData(text: csv.toString()));
@@ -323,20 +321,20 @@ class _GrowthStatsGrid extends StatelessWidget {
       runSpacing: 12,
       children: [
         _StatCard(
-          title: t.premiumNewUsersMonth,
-          value: '${growth.newUsersThisMonth}',
+          title: t.premiumNewUsers7d,
+          value: '${growth.newUsersLast7Days}',
           icon: Icons.person_add,
           color: colors.info,
         ),
         _StatCard(
-          title: t.premiumNewSubsMonth,
-          value: '${growth.newSubscriptionsThisMonth}',
+          title: t.premiumTotalPosts,
+          value: '${growth.totalPosts}',
           icon: Icons.trending_up,
           color: colors.success,
         ),
         _StatCard(
-          title: t.premiumGrowthRate,
-          value: '${growth.growthRate.toStringAsFixed(1)}%',
+          title: t.premiumTotalFriendships,
+          value: '${growth.totalFriendships}',
           icon: Icons.show_chart,
           color: colors.warning,
         ),

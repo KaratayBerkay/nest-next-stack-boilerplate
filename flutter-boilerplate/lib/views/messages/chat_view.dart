@@ -5,10 +5,14 @@ import 'package:flutter_boilerplate/components/ui/scroll_to_bottom_button/scroll
 import 'package:flutter_boilerplate/lib/container.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/usage/query.dart';
 import '../../hooks/use_auth.dart';
+import '../../l10n/app_localizations.dart';
+import '../../types/messages/message.dart';
 import 'chat_input_bar.dart';
 import 'chat_message_list.dart';
 import 'chat_view_header.dart';
+import 'storage_limit_notice.dart';
 
 class ChatView extends ConsumerStatefulWidget {
   final String conversationId;
@@ -28,6 +32,7 @@ class _ChatViewState extends ConsumerState<ChatView> {
   final _scrollController = ScrollController();
   bool _isAtBottom = true;
   String? _lastMessageLastId;
+  ChatMessage? _replyTarget;
 
   @override
   void initState() {
@@ -53,6 +58,15 @@ class _ChatViewState extends ConsumerState<ChatView> {
 
   void _markRead() {
     ref.read(markReadActionsProvider).call(widget.conversationId);
+  }
+
+  String _replyTargetLabel() {
+    final target = _replyTarget;
+    if (target == null) return '';
+    final myId = ref.read(currentUserProvider)?.id;
+    return target.senderId == myId
+        ? AppLocalizations.of(context).messagesYou
+        : target.senderName;
   }
 
   void _onScroll() {
@@ -134,6 +148,10 @@ class _ChatViewState extends ConsumerState<ChatView> {
     final hasMessages = currentMessages.isNotEmpty;
     final showScrollButton = !_isAtBottom && hasMessages;
 
+    final messageUsage = ref.watch(messageUsageProvider).asData?.value;
+    final storageLimitReached =
+        messageUsage != null && messageUsage.bytes >= messageUsage.limitBytes;
+
     final body = Column(
       children: [
         ChatViewHeader(
@@ -144,12 +162,19 @@ class _ChatViewState extends ConsumerState<ChatView> {
           child: ChatMessageList(
             conversationId: widget.conversationId,
             scrollController: _scrollController,
+            onReply: (msg) => setState(() => _replyTarget = msg),
           ),
         ),
-        ChatInputBar(
-          conversationId: widget.conversationId,
-          onSent: _scrollToBottom,
-        ),
+        if (storageLimitReached)
+          const StorageLimitNotice()
+        else
+          ChatInputBar(
+            conversationId: widget.conversationId,
+            onSent: _scrollToBottom,
+            replyTarget: _replyTarget,
+            replyTargetLabel: _replyTargetLabel(),
+            onCancelReply: () => setState(() => _replyTarget = null),
+          ),
       ],
     );
 

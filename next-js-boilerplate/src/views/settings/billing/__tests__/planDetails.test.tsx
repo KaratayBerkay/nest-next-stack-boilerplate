@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { PlanDetails } from "../PlanDetails";
+
+const subscribeMock = vi.fn();
 
 vi.mock("@/lib/i18n/MessagesProvider", () => ({
   useMessages: () => ({
@@ -32,13 +34,19 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@/api/client/billing/actions", () => ({
-  useBillingActions: () => ({ subscribe: vi.fn() }),
+  useBillingActions: () => ({ subscribe: subscribeMock }),
 }));
 
 vi.mock("next/link", () => ({
   default: ({ href, children }: { href: string; children: string }) => (
     <a href={href}>{children}</a>
   ),
+}));
+
+// Button renders through useComponentVariant, which needs a ThemeProvider
+// this unit test doesn't set up — stub it to the default variant.
+vi.mock("@/hooks/useComponentVariant", () => ({
+  useComponentVariant: () => "default",
 }));
 
 // The real ConfirmDialog renders Dialog/Button, which need a ThemeProvider
@@ -64,15 +72,15 @@ describe("PlanDetails pending-change gating", () => {
         tier="BASIC"
         priceCents={999}
         currency="USD"
-        periodEnd="Aug 1, 2026"
+        periodEnd="2026-08-01T12:00:00.000Z"
         cancelAtPeriodEnd={false}
         pendingTier="PREMIUM"
-        pendingTierEffectiveAt="Sep 1, 2026"
+        pendingTierEffectiveAt="2026-09-01T12:00:00.000Z"
       />,
     );
     expect(
       screen.getByRole("button", {
-        name: /You have a change to Premium scheduled for Sep 1, 2026/,
+        name: /You have a change to Premium scheduled for September 1, 2026/,
       }),
     ).toBeTruthy();
     expect(
@@ -87,7 +95,7 @@ describe("PlanDetails pending-change gating", () => {
         tier="BASIC"
         priceCents={999}
         currency="USD"
-        periodEnd="Aug 1, 2026"
+        periodEnd="2026-08-01T12:00:00.000Z"
         cancelAtPeriodEnd={false}
       />,
     );
@@ -101,6 +109,73 @@ describe("PlanDetails pending-change gating", () => {
   });
 });
 
+describe("PlanDetails pending-change cancellation", () => {
+  it("sends a non-empty idempotency key and disables the button while the request is in flight", async () => {
+    let resolveSubscribe!: () => void;
+    subscribeMock.mockReset();
+    subscribeMock.mockReturnValue(
+      new Promise<void>((resolve) => {
+        resolveSubscribe = resolve;
+      }),
+    );
+
+    render(
+      <PlanDetails
+        tier="BASIC"
+        priceCents={999}
+        currency="USD"
+        periodEnd="2026-08-01T12:00:00.000Z"
+        cancelAtPeriodEnd={false}
+        pendingTier="PREMIUM"
+        pendingTierEffectiveAt="2026-09-01T12:00:00.000Z"
+      />,
+    );
+
+    const button = screen.getByRole("button", {
+      name: /You have a change to Premium scheduled for September 1, 2026/,
+    });
+    fireEvent.click(button);
+
+    expect(subscribeMock).toHaveBeenCalledTimes(1);
+    const [, , idempotencyKey] = subscribeMock.mock.calls[0] as [
+      string,
+      string | undefined,
+      string | undefined,
+      string,
+    ];
+    expect(idempotencyKey).toBeTruthy();
+    expect((button as HTMLButtonElement).disabled).toBe(true);
+
+    // A second click while the first request is still in flight must not
+    // fire a second mutation — this is exactly the double-submit this fix
+    // closes.
+    fireEvent.click(button);
+    expect(subscribeMock).toHaveBeenCalledTimes(1);
+
+    resolveSubscribe();
+    await waitFor(() =>
+      expect((button as HTMLButtonElement).disabled).toBe(false),
+    );
+  });
+});
+
+describe("PlanDetails date formatting", () => {
+  it("formats the raw ISO renewal date instead of showing it verbatim", () => {
+    render(
+      <PlanDetails
+        tier="BASIC"
+        priceCents={999}
+        currency="USD"
+        periodEnd="2026-08-01T12:00:00.000Z"
+        cancelAtPeriodEnd={false}
+      />,
+    );
+
+    expect(screen.getByText("August 1, 2026")).toBeTruthy();
+    expect(screen.queryByText("2026-08-01T12:00:00.000Z")).toBeNull();
+  });
+});
+
 describe("PlanDetails price display", () => {
   it("renders the real subscription price/currency, not a static USD table", () => {
     render(
@@ -108,7 +183,7 @@ describe("PlanDetails price display", () => {
         tier="MEDIUM"
         priceCents={1899}
         currency="EUR"
-        periodEnd="Aug 1, 2026"
+        periodEnd="2026-08-01T12:00:00.000Z"
         cancelAtPeriodEnd={false}
       />,
     );

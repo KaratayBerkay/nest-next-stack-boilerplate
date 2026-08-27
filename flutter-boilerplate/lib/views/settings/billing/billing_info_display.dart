@@ -11,6 +11,7 @@ class BillingInfoDisplay extends StatelessWidget {
   final String? state;
   final String? zip;
   final String? country;
+  final String? vatNumber;
 
   const BillingInfoDisplay({
     super.key,
@@ -22,6 +23,7 @@ class BillingInfoDisplay extends StatelessWidget {
     this.state,
     this.zip,
     this.country,
+    this.vatNumber,
   });
 
   @override
@@ -58,6 +60,11 @@ class BillingInfoDisplay extends StatelessWidget {
           ),
         if (country != null)
           Text(country!, style: TextStyle(color: colors.fgMuted, fontSize: 13)),
+        if (vatNumber != null && vatNumber!.isNotEmpty)
+          Text(
+            'VAT: $vatNumber',
+            style: TextStyle(color: colors.fgMuted, fontSize: 13),
+          ),
       ],
     );
   }

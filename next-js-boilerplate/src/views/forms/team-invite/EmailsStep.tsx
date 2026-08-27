@@ -12,7 +12,7 @@ import type { EmailsStepProps } from "@/types/views/forms/EmailsStep-types";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MEMBER_EMAILS = new Set(["alice@example.com", "bob@example.com"]);
 
-function validateEmail(
+export function validateEmail(
   value: string,
   emails: string[],
   t: Record<string, unknown>,
@@ -51,6 +51,7 @@ export function EmailsStep({
                 onKeyDown={(e) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
+                    if (!field.state.value.trim()) return;
                     const error = validateEmail(field.state.value, emails, t);
                     if (error) {
                       setEmailInputError(error);
@@ -70,6 +71,7 @@ export function EmailsStep({
                 size="sm"
                 variant="outline"
                 onClick={() => {
+                  if (!field.state.value.trim()) return;
                   const error = validateEmail(field.state.value, emails, t);
                   if (error) {
                     setEmailInputError(error);

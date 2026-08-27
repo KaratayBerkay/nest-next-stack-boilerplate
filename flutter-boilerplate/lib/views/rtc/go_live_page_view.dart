@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_boilerplate/lib/tier_view.dart';
@@ -79,8 +80,16 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         'slug': result.stream.slug,
       });
       _sentJoinChat = true;
-      await _connectRoom(result.token);
-    } catch (e) {
+      await _connectRoom(result.token, result.roomName, result.stream.slug);
+    } catch (e, stackTrace) {
+      logRtcEvent(
+        event: 'stream.start_failed',
+        rtcKind: 'stream',
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: e,
+        stackTrace: stackTrace,
+        phase: 'starting',
+      );
       if (mounted) {
         ScaffoldMessenger.of(
           context,
@@ -91,21 +100,89 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     }
   }
 
-  Future<void> _connectRoom(String token) async {
+  Future<void> _connectRoom(
+    String token,
+    String roomName,
+    String streamId,
+  ) async {
     final room = lk.Room();
     _room = room;
     final listener = room.createListener();
     _listener = listener;
 
+    logRtcEvent(
+      event: 'stream.livekit.connecting',
+      rtcKind: 'stream',
+      rtcId: streamId,
+      roomName: roomName,
+      phase: 'connecting',
+      metadata: {'role': 'broadcaster'},
+    );
+
     listener
       ..on<lk.LocalTrackPublishedEvent>((_) => _rebuildLocalVideo())
       ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildLocalVideo())
       ..on<lk.RoomReconnectingEvent>((_) {
-        debugPrint('[GoLive] Reconnecting…');
+        logRtcEvent(
+          event: 'stream.livekit.reconnecting',
+          rtcKind: 'stream',
+          rtcId: streamId,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'role': 'broadcaster'},
+        );
       })
       ..on<lk.RoomReconnectedEvent>((_) {
-        debugPrint('[GoLive] Reconnected');
+        logRtcEvent(
+          event: 'stream.livekit.reconnected',
+          rtcKind: 'stream',
+          rtcId: streamId,
+          roomName: roomName,
+          phase: 'connected',
+          metadata: {'role': 'broadcaster'},
+        );
         _rebuildLocalVideo();
+      })
+      ..on<lk.RoomDisconnectedEvent>((event) {
+        logRtcEvent(
+          event: 'stream.livekit.disconnected',
+          rtcKind: 'stream',
+          rtcId: streamId,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'reason': event.reason?.name, 'role': 'broadcaster'},
+        );
+        // Unlike the call/meeting/viewer pages, an involuntary disconnect
+        // here does NOT auto-end anything — the backend deliberately does
+        // not end a stream when the broadcaster's own connection drops
+        // (mirrors meetings' host-leaves policy; only an explicit endStream
+        // or LiveKit's own departure-timeout does). Just stop showing a
+        // frozen stale frame from before the connection died; the End
+        // Stream control and the LiveKit room's own timeout remain the
+        // ways this actually resolves.
+        if (mounted &&
+            event.reason != null &&
+            event.reason != lk.DisconnectReason.clientInitiated) {
+          setState(() => _videoTrack = null);
+        }
+      })
+      ..on<lk.ParticipantConnectionQualityUpdatedEvent>((event) {
+        if (event.connectionQuality == lk.ConnectionQuality.poor) {
+          logRtcEvent(
+            event: 'stream.livekit.connection_quality_poor',
+            rtcKind: 'stream',
+            rtcId: streamId,
+            roomName: roomName,
+            exceptionType: 'CLIENT_ERROR',
+            phase: 'connected',
+            metadata: {
+              'participantId': event.participant.identity,
+              'role': 'broadcaster',
+            },
+          );
+        }
       });
 
     try {
@@ -114,10 +191,57 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         await room.disconnect();
         return;
       }
-      await room.localParticipant?.setMicrophoneEnabled(true);
-      await room.localParticipant?.setCameraEnabled(true);
+      logRtcEvent(
+        event: 'stream.livekit.connected',
+        rtcKind: 'stream',
+        rtcId: streamId,
+        roomName: roomName,
+        phase: 'connected',
+        metadata: {'role': 'broadcaster'},
+      );
+      try {
+        await room.localParticipant?.setMicrophoneEnabled(true);
+      } catch (error, stackTrace) {
+        logRtcEvent(
+          event: 'stream.media.microphone_enable_failed',
+          rtcKind: 'stream',
+          rtcId: streamId,
+          roomName: roomName,
+          mediaType: 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+      }
+      try {
+        await room.localParticipant?.setCameraEnabled(true);
+      } catch (error, stackTrace) {
+        logRtcEvent(
+          event: 'stream.media.camera_enable_failed',
+          rtcKind: 'stream',
+          rtcId: streamId,
+          roomName: roomName,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+      }
       _rebuildLocalVideo();
-    } catch (_) {
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.livekit.connection_failed',
+        rtcKind: 'stream',
+        rtcId: streamId,
+        roomName: roomName,
+        exceptionType: 'CLIENT_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'connecting',
+        metadata: {'role': 'broadcaster'},
+      );
       // Connection failed — the page's own end control lets the user bail.
     }
   }
@@ -139,7 +263,24 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     if (room == null) return;
     final next = !_localMicEnabled;
     setState(() => _localMicEnabled = next);
-    room.localParticipant?.setMicrophoneEnabled(next);
+    room.localParticipant?.setMicrophoneEnabled(next).then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'stream.media.microphone_toggle_failed',
+          rtcKind: 'stream',
+          rtcId: _live?.stream.slug,
+          mediaType: 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state, matching _toggleScreenShare below.
+        if (mounted) setState(() => _localMicEnabled = !next);
+      },
+    );
   }
 
   void _toggleCamera() {
@@ -147,9 +288,24 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     if (room == null) return;
     final next = !_localCameraEnabled;
     setState(() => _localCameraEnabled = next);
-    room.localParticipant
-        ?.setCameraEnabled(next)
-        .then((_) => _rebuildLocalVideo());
+    room.localParticipant?.setCameraEnabled(next).then<void>(
+      (_) => _rebuildLocalVideo(),
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'stream.media.camera_toggle_failed',
+          rtcKind: 'stream',
+          rtcId: _live?.stream.slug,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state, matching _toggleScreenShare below.
+        if (mounted) setState(() => _localCameraEnabled = !next);
+      },
+    );
   }
 
   void _toggleScreenShare() {
@@ -157,12 +313,22 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     if (room == null) return;
     final next = !_localScreenShareEnabled;
     setState(() => _localScreenShareEnabled = next);
-    room.localParticipant
-        ?.setScreenShareEnabled(next)
-        .then((_) => _rebuildLocalVideo())
-        .catchError((_) {
-      if (mounted) setState(() => _localScreenShareEnabled = false);
-    });
+    room.localParticipant?.setScreenShareEnabled(next).then<void>(
+      (_) => _rebuildLocalVideo(),
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'stream.media.screen_share_failed',
+          rtcKind: 'stream',
+          rtcId: _live?.stream.slug,
+          mediaType: 'screen',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        if (mounted) setState(() => _localScreenShareEnabled = false);
+      },
+    );
   }
 
   void _sendChat() {
@@ -199,8 +365,25 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
       ),
     );
     if (confirmed != true) return;
-    await ref.read(streamActionsProvider).end(slug);
-    if (mounted) context.go('/v1/${widget.lang}/rtc/live');
+    try {
+      await ref.read(streamActionsProvider).end(slug);
+      if (mounted) context.go('/v1/${widget.lang}/rtc/live');
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.end_failed',
+        rtcKind: 'stream',
+        rtcId: slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    }
   }
 
   Future<void> _toggleRecording() async {
@@ -213,6 +396,21 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
           ? await actions.stopRecording(slug)
           : await actions.startRecording(slug);
       if (mounted) setState(() => _recording = next);
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'stream.recording_toggle_failed',
+        rtcKind: 'stream',
+        rtcId: slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
     } finally {
       if (mounted) setState(() => _recordingBusy = false);
     }

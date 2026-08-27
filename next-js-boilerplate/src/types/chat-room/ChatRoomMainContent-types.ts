@@ -14,6 +14,7 @@ export interface ChatRoomMainContentProps {
   hasNextPage: boolean;
   onFetchNextPage: () => void;
   input: string;
+  messageError: string | null;
   attaching: boolean;
   uploadItems: UploadItem[];
   bottomRef: RefObject<HTMLDivElement | null>;

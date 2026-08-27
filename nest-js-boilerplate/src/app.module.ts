@@ -158,13 +158,11 @@ const CORE_MODULES = [
   AuthorizationModule,
   StripeModule,
   BillingModule,
-  ProjectTasksModule,
   PostModule,
   CommentModule,
   NotificationModule,
   PushNotificationModule,
   ReactionsModule,
-  TeamMembersModule,
   MfaModule,
   MessagingModule,
   RtcModule,
@@ -188,6 +186,19 @@ const CORE_MODULES = [
 // part of a production build. Set LOAD_DEMO_MODULES=true to include them.
 const DEMO_MODULES = [
   UsersModule, // demo CRUD module — leaks passwordHash; must not run in production
+  // ProjectTasksModule/TeamMembersModule: their own resolver doc comments
+  // describe them as exercising GraphQL through multi-level FK depth
+  // (Task -> Project -> Organization -> User) and Prisma-schema-derived
+  // class-validator decorators — a demo, like everything else in this list.
+  // Unlike the others, they were never gated: findAll()/create() on both
+  // have zero organization/team scoping (any authenticated user could read
+  // or write any other tenant's tasks/team membership, and self-assign
+  // isLead: true), and since they were unconditionally loaded that gap ran
+  // in every environment, not just local dev. Gating them here closes that
+  // in any real deployment while preserving what they actually demonstrate
+  // locally.
+  ProjectTasksModule,
+  TeamMembersModule,
   GrpcModule,
   CqrsExampleModule,
   RouterDemoModule,
@@ -221,7 +232,7 @@ const DEMO_MODULES = [
   StaticAssetsModule,
 ];
 
-const isDemoEnabled =
+export const isDemoEnabled =
   process.env.LOAD_DEMO_MODULES === 'true' ||
   process.env.NODE_ENV === 'development';
 

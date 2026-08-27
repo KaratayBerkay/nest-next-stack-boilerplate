@@ -5,6 +5,7 @@ import {
   FileValidator,
   Get,
   Headers,
+  Logger,
   MaxFileSizeValidator,
   NotFoundException,
   ParseFilePipe,
@@ -19,6 +20,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import type { Prisma } from '@prisma/client';
 import type { Request, Response } from 'express';
 import { randomUUID } from 'node:crypto';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
@@ -31,10 +33,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import type { JwtUser } from '../auth/auth.types';
 import { hasRoomTierAccess } from '../messaging/messaging.service';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
-import {
-  FREE_UPLOAD_STORAGE_BYTES,
-  TIER_STORAGE_MULTIPLIER,
-} from '../usage/usage.constants';
+import { UsageService } from '../usage/usage.service';
 
 interface ImageUrls {
   badge: string;
@@ -158,12 +157,15 @@ class ChatAttachmentTypeValidator extends FileValidator<{
 @UseGuards(SessionAuthGuard)
 @Controller('upload')
 export class UploadController {
+  private readonly logger = new Logger(UploadController.name);
+
   constructor(
     private readonly s3bucket: S3BucketService,
     private readonly images: ImageService,
     private readonly thumbnails: AttachmentThumbnailService,
     private readonly storageCrypto: StorageCryptoService,
     private readonly prisma: PrismaService,
+    private readonly usage: UsageService,
   ) {}
 
   /**
@@ -181,41 +183,87 @@ export class UploadController {
     scope: UploadScope,
     userId: string,
   ): Promise<string | null> {
-    const thumbnail = await this.thumbnails.generate(
-      buffer,
-      mimetype,
-      originalname,
-    );
-    if (!thumbnail) return null;
+    // The doc comment above promises "never throws" and callers rely on
+    // that by running this alongside the real upload via Promise.all — but
+    // nothing here was actually guarded. A thumbnail-generation error (a
+    // malformed image tripping the image library), an R2 hiccup, or a DB
+    // hiccup would reject this whole function, which rejected the
+    // Promise.all, which failed the ENTIRE upload — including a real file
+    // that may have already finished uploading, now orphaned in storage
+    // with no PendingUpload row ever created for it (that write runs after
+    // the Promise.all, which never resolved).
+    try {
+      const thumbnail = await this.thumbnails.generate(
+        buffer,
+        mimetype,
+        originalname,
+      );
+      if (!thumbnail) return null;
 
-    const objectName = `${scope.thumbnailPrefix}${randomUUID()}.webp`;
-    const envelope = this.storageCrypto.encryptBytes(
-      userId,
-      new Uint8Array(thumbnail),
-    );
-    const url = await this.s3bucket.upload(
-      objectName,
-      Buffer.from(envelope.ct, 'base64'),
-      undefined,
-      'application/octet-stream',
-    );
-    await this.prisma.pendingUpload.upsert({
-      where: { objectName },
-      create: {
+      const objectName = `${scope.thumbnailPrefix}${randomUUID()}.webp`;
+      const envelope = this.storageCrypto.encryptBytes(
+        userId,
+        new Uint8Array(thumbnail),
+      );
+      const url = await this.s3bucket.upload(
         objectName,
-        url,
-        v: envelope.v,
-        nonce: envelope.nonce,
-        uploadedBy: userId,
-        size: thumbnail.length,
-        kind: scope.kind,
-        scopeId: scope.scopeId,
-        filename: originalname,
-        mimetype: 'image/webp',
-      },
-      update: {},
+        Buffer.from(envelope.ct, 'base64'),
+        undefined,
+        'application/octet-stream',
+      );
+      await this.prisma.pendingUpload.upsert({
+        where: { objectName },
+        create: {
+          objectName,
+          url,
+          v: envelope.v,
+          nonce: envelope.nonce,
+          uploadedBy: userId,
+          size: thumbnail.length,
+          kind: scope.kind,
+          scopeId: scope.scopeId,
+          filename: originalname,
+          mimetype: 'image/webp',
+        },
+        update: {},
+      });
+      return url;
+    } catch (err) {
+      this.logger.warn(
+        `Thumbnail generation/storage failed for ${originalname} (${mimetype}) — continuing without a thumbnail: ${(err as Error).message}`,
+      );
+      return null;
+    }
+  }
+
+  /**
+   * Re-checks the upload quota and persists the PendingUpload row atomically
+   * under a per-user advisory lock. The `assertCanUploadBytes` call made
+   * before the (slow) S3 upload/encryption/thumbnail work is only a fast-fail
+   * UX optimization — it reads a live aggregate with no reservation, so
+   * concurrent uploads from the same user (a multi-file drag-drop, two open
+   * tabs) could all pass that early check against the same pre-upload usage
+   * snapshot and, combined, land well over the limit. This is the actual
+   * enforcement point: the lock serializes each user's own uploads for the
+   * duration of one fast DB round-trip (not the slow network transfer), so
+   * each one's re-check sees the previous one's already-committed usage.
+   */
+  private async persistUploadWithinQuota(
+    userId: string,
+    tier: SubscriptionTier,
+    sizeBytes: number,
+    objectName: string,
+    createData: Prisma.PendingUploadCreateInput,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+      await this.usage.assertCanUploadBytes(userId, sizeBytes, tier, tx);
+      await tx.pendingUpload.upsert({
+        where: { objectName },
+        create: createData,
+        update: {},
+      });
     });
-    return url;
   }
 
   @Post('single')
@@ -304,7 +352,11 @@ export class UploadController {
       this.extFromName(file.originalname);
     const objectName = `${scope.prefix}${randomUUID()}${extension}`;
 
-    await this.assertUploadStorageCapacity(user, file.size);
+    await this.usage.assertCanUploadBytes(
+      user.userId,
+      file.size,
+      (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE,
+    );
 
     const envelope = this.storageCrypto.encryptBytes(
       user.userId,
@@ -330,9 +382,12 @@ export class UploadController {
     // object name. Messaging services resolve it from the attachment `url`
     // at message-save time, which keeps the full-file ciphertext off the WS
     // frame (the socket is capped at 64 KiB per frame).
-    await this.prisma.pendingUpload.upsert({
-      where: { objectName },
-      create: {
+    await this.persistUploadWithinQuota(
+      user.userId,
+      (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE,
+      file.size,
+      objectName,
+      {
         objectName,
         url,
         v: envelope.v,
@@ -345,8 +400,7 @@ export class UploadController {
         mimetype: file.mimetype,
         thumbnailUrl,
       },
-      update: {},
-    });
+    );
     return {
       url,
       originalname: file.originalname,
@@ -425,7 +479,11 @@ export class UploadController {
       ATTACHMENT_EXTENSIONS[mimetype] ?? this.extFromName(originalname);
     const objectName = `${scope.prefix}${randomUUID()}${extension}`;
 
-    await this.assertUploadStorageCapacity(user, buffer.length);
+    await this.usage.assertCanUploadBytes(
+      user.userId,
+      buffer.length,
+      (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE,
+    );
 
     const envelope = this.storageCrypto.encryptBytes(
       user.userId,
@@ -447,9 +505,12 @@ export class UploadController {
         user.userId,
       ),
     ]);
-    await this.prisma.pendingUpload.upsert({
-      where: { objectName },
-      create: {
+    await this.persistUploadWithinQuota(
+      user.userId,
+      (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE,
+      buffer.length,
+      objectName,
+      {
         objectName,
         url,
         v: envelope.v,
@@ -462,8 +523,7 @@ export class UploadController {
         mimetype,
         thumbnailUrl,
       },
-      update: {},
-    });
+    );
     return {
       url,
       originalname,
@@ -592,30 +652,6 @@ export class UploadController {
   private extFromName(originalname: string): string {
     const match = /\.([a-z0-9]{1,10})$/i.exec(originalname);
     return match ? `.${match[1].toLowerCase()}` : '';
-  }
-
-  /**
-   * Rejects the upload when persisting it would push the user past their
-   * tier's upload-storage allowance (250 MB for FREE, doubled per upgrade).
-   * PendingUpload is the authoritative source — it is append-only and every
-   * chat attachment upload writes exactly one row.
-   */
-  private async assertUploadStorageCapacity(
-    user: JwtUser,
-    additionalBytes: number,
-  ): Promise<void> {
-    const tier = (user.tier as SubscriptionTier) ?? SubscriptionTier.FREE;
-    const multiplier = TIER_STORAGE_MULTIPLIER[tier] ?? 1;
-    const agg = await this.prisma.pendingUpload.aggregate({
-      _sum: { size: true },
-      where: { uploadedBy: user.userId },
-    });
-    const used = agg._sum.size ?? 0;
-    if (used + additionalBytes > FREE_UPLOAD_STORAGE_BYTES * multiplier) {
-      throw new PayloadTooLargeException(
-        'Upload storage limit reached — upgrade your plan or remove files',
-      );
-    }
   }
 
   private async processImage(file: Express.Multer.File): Promise<ImageUrls> {

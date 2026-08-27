@@ -30,5 +30,18 @@ export function routeToPageClaim(
     const room = sp.get("room") || "general";
     return { page: "chat-room", params: { room } };
   }
+  if (route.startsWith("rtc/meetings/")) {
+    const slug = route.split("/")[2];
+    if (slug) return { page: "rtc-meeting", params: { slug } };
+    return { page: null };
+  }
+  if (route.startsWith("rtc/live/")) {
+    const slug = route.split("/")[2];
+    // "go-live" is the static setup page (app/v1/[lang]/rtc/live/go-live/),
+    // not a dynamic [slug] route — there's no real stream to resync there.
+    if (slug && slug !== "go-live")
+      return { page: "rtc-stream", params: { slug } };
+    return { page: null };
+  }
   return { page: null };
 }

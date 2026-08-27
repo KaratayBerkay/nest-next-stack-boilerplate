@@ -1,5 +1,6 @@
 import { HttpException, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { ExecutionContext } from '@nestjs/common';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -162,6 +163,7 @@ describe('SessionAuthGuard', () => {
       config,
       tokenStore as unknown as TokenStoreService,
       validator,
+      { getAllAndOverride: () => false } as unknown as Reflector,
     );
   });
 
@@ -414,6 +416,7 @@ describe('SessionAuthGuard', () => {
       strictConfig,
       tokenStore as unknown as TokenStoreService,
       strictValidator,
+      { getAllAndOverride: () => false } as unknown as Reflector,
     );
     await expect(
       strictGuard.canActivate(
@@ -438,6 +441,7 @@ describe('SessionAuthGuard', () => {
       config,
       brokenStore as unknown as TokenStoreService,
       brokenValidator,
+      { getAllAndOverride: () => false } as unknown as Reflector,
     );
     const accessToken = await jwtService.signAsync(validPayload);
     const rbacToken = derivation.deriveRbacToken(USER_ID, 'FREE');

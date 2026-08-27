@@ -1,4 +1,5 @@
 import { Controller, Post, Req, Res, Logger } from '@nestjs/common';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { StripeService } from './stripe/stripe.service';
@@ -12,6 +13,7 @@ import { OutboxService } from '../outbox/outbox.service';
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
 @Controller('stripe')
+@SkipThrottle()
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
 
@@ -135,60 +137,79 @@ export class StripeWebhookController {
       ? new Date((invoice['period_end'] as number) * 1000)
       : null;
 
-    const wallet = await this.wallet.ensureWallet(user.id);
-    await this.upsertInvoiceTransaction({
-      idempotencyKey: `stripe_invoice:${invoiceId}`,
-      walletId: wallet.id,
-      invoiceId,
-      subscriptionId,
-      effectiveTier,
-      amountPaid,
-      currency: currency.toUpperCase(),
-      paymentIntentId,
-      invoiceUrl,
+    // Four causally-related writes — the wallet ledger row, the period-end/
+    // subscriptionId update, the tier reconciliation, and the pendingTier
+    // clear — used to be separate top-level statements. A crash or
+    // exception between them could leave the ledger showing a reconciled
+    // tier that User.subscriptionTier didn't yet reflect, with nothing
+    // (no cron/reconciliation job exists anywhere in this app) to catch a
+    // mismatch that outlives Stripe's own webhook-retry window. One
+    // transaction makes them succeed or fail together; upsertInvoiceTransaction's
+    // own idempotency-key lookup already makes the whole handler safe to
+    // retry from scratch on a Stripe redelivery.
+    await this.prisma.$transaction(async (tx) => {
+      const wallet = await this.wallet.ensureWallet(user.id, tx);
+      await this.upsertInvoiceTransaction(tx, {
+        idempotencyKey: `stripe_invoice:${invoiceId}`,
+        walletId: wallet.id,
+        invoiceId,
+        subscriptionId,
+        effectiveTier,
+        amountPaid,
+        currency: currency.toUpperCase(),
+        paymentIntentId,
+        invoiceUrl,
+      });
+
+      if (periodEnd) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            subscriptionPeriodEnd: periodEnd,
+            // Never null out an existing subscription with a non-subscription
+            // invoice (e.g. a setup intent invoice).
+            ...(subscriptionId
+              ? { stripeSubscriptionId: subscriptionId }
+              : {}),
+          },
+        });
+      }
+
+      // The billed tier may have changed (mid-cycle switch, or a previous
+      // attempt that never persisted) — converge the user's tier on it.
+      if (billedTier && billedTier !== user.subscriptionTier) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { subscriptionTier: billedTier as never },
+        });
+        this.logger.log(
+          {
+            category: 'billing',
+            event: 'billing.tier_reconciled',
+            userId: user.id,
+            from: user.subscriptionTier,
+            to: billedTier,
+          },
+          `Reconciled user ${user.id} tier to ${billedTier}`,
+        );
+      }
+
+      // A scheduled paid<->paid change (see BillingService.handleTierChange)
+      // has now been billed — clear the pending markers so the UI stops
+      // showing "changing to X on <date>".
+      if (user.pendingTier && billedTier && billedTier === user.pendingTier) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { pendingTier: null, pendingTierEffectiveAt: null },
+        });
+      }
     });
 
-    if (periodEnd) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          subscriptionPeriodEnd: periodEnd,
-          // Never null out an existing subscription with a non-subscription
-          // invoice (e.g. a setup intent invoice).
-          ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
-        },
-      });
-    }
-
-    // The billed tier may have changed (mid-cycle switch, or a previous
-    // attempt that never persisted) — converge the user's tier on it.
+    // Redis, not Postgres — deliberately outside the transaction above (it
+    // isn't rolled back by a DB failure and shouldn't gate on one either).
     if (billedTier && billedTier !== user.subscriptionTier) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { subscriptionTier: billedTier as never },
-      });
       await this.tokenStore.rewriteFieldsForUser(user.id, {
         tier: billedTier,
-      });
-      this.logger.log(
-        {
-          category: 'billing',
-          event: 'billing.tier_reconciled',
-          userId: user.id,
-          from: user.subscriptionTier,
-          to: billedTier,
-        },
-        `Reconciled user ${user.id} tier to ${billedTier}`,
-      );
-    }
-
-    // A scheduled paid<->paid change (see BillingService.handleTierChange)
-    // has now been billed — clear the pending markers so the UI stops
-    // showing "changing to X on <date>".
-    if (user.pendingTier && billedTier && billedTier === user.pendingTier) {
-      await this.prisma.user.update({
-        where: { id: user.id },
-        data: { pendingTier: null, pendingTierEffectiveAt: null },
       });
     }
 
@@ -301,17 +322,20 @@ export class StripeWebhookController {
     return this.stripeService.getTierForPriceId(priceId);
   }
 
-  private async upsertInvoiceTransaction(params: {
-    idempotencyKey: string;
-    walletId: string;
-    invoiceId: string;
-    subscriptionId: string | null;
-    effectiveTier: string;
-    amountPaid: number;
-    currency: string;
-    paymentIntentId: string | null;
-    invoiceUrl: string | null;
-  }) {
+  private async upsertInvoiceTransaction(
+    tx: Prisma.TransactionClient,
+    params: {
+      idempotencyKey: string;
+      walletId: string;
+      invoiceId: string;
+      subscriptionId: string | null;
+      effectiveTier: string;
+      amountPaid: number;
+      currency: string;
+      paymentIntentId: string | null;
+      invoiceUrl: string | null;
+    },
+  ) {
     const data: {
       type: 'FEE';
       status: 'COMPLETED';
@@ -339,13 +363,13 @@ export class StripeWebhookController {
       },
     };
 
-    const existing = await this.prisma.walletTransaction.findUnique({
+    const existing = await tx.walletTransaction.findUnique({
       where: { idempotencyKey: params.idempotencyKey },
     });
     if (existing) {
       // Re-delivery of the same invoice (webhook retry): reconcile the row
       // instead of creating a duplicate.
-      await this.prisma.walletTransaction.update({
+      await tx.walletTransaction.update({
         where: { idempotencyKey: params.idempotencyKey },
         data: {
           ...data,
@@ -358,7 +382,7 @@ export class StripeWebhookController {
       return;
     }
 
-    await this.prisma.walletTransaction.create({
+    await tx.walletTransaction.create({
       data: {
         ...data,
         idempotencyKey: params.idempotencyKey,

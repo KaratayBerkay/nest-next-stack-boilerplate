@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../../api/client/auth/actions.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/auth/labeled_field.dart';
+import '../../../components/auth/password_requirements.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
@@ -151,15 +152,20 @@ class _ResetPasswordPageContentState
           required: true,
           controller: _passwordCtrl,
           obscureText: true,
+          showVisibilityToggle: true,
           errorText: _error,
           textInputAction: TextInputAction.next,
+          onChanged: (_) => setState(() {}),
         ),
+        const SizedBox(height: 6),
+        PasswordRequirements(password: _passwordCtrl.text),
         const SizedBox(height: 12),
         LabeledField(
           label: t.authFormResetPasswordConfirmPasswordLabel,
           required: true,
           controller: _confirmCtrl,
           obscureText: true,
+          showVisibilityToggle: true,
           textInputAction: TextInputAction.done,
           onSubmitted: _submit,
         ),

@@ -1,4 +1,5 @@
 import type { Response } from 'express';
+import { ForbiddenException } from '@nestjs/common';
 import { UploadController } from './upload.controller';
 
 describe('UploadController', () => {
@@ -10,10 +11,14 @@ describe('UploadController', () => {
     exists: jest.Mock;
   };
   let mockStorageCrypto: { decryptBytes: jest.Mock; encryptBytes: jest.Mock };
+  let mockThumbnails: { generate: jest.Mock };
+  let mockUsage: { assertCanUploadBytes: jest.Mock };
   let mockPrisma: {
-    pendingUpload: { findUnique: jest.Mock };
+    pendingUpload: { findUnique: jest.Mock; upsert: jest.Mock };
     message: { findUnique: jest.Mock };
     roomMessage: { findUnique: jest.Mock };
+    $transaction: jest.Mock;
+    $executeRaw: jest.Mock;
   };
   let mockRes: { set: jest.Mock; end: jest.Mock };
 
@@ -21,28 +26,43 @@ describe('UploadController', () => {
 
   beforeEach(() => {
     mockS3bucket = {
-      upload: jest.fn(),
+      upload: jest
+        .fn()
+        .mockResolvedValue('https://r2/uploads/messages/u1/x.png'),
       remove: jest.fn(),
       download: jest.fn(),
       exists: jest.fn(),
     };
     mockStorageCrypto = {
       decryptBytes: jest.fn(),
-      encryptBytes: jest.fn(),
+      encryptBytes: jest
+        .fn()
+        .mockReturnValue({ v: 'storage-v1', nonce: 'n1', ct: 'Y2lwaGVy' }),
+    };
+    mockThumbnails = { generate: jest.fn().mockResolvedValue(null) };
+    mockUsage = {
+      assertCanUploadBytes: jest.fn().mockResolvedValue(undefined),
     };
     mockPrisma = {
-      pendingUpload: { findUnique: jest.fn() },
+      pendingUpload: { findUnique: jest.fn(), upsert: jest.fn() },
       message: { findUnique: jest.fn() },
       roomMessage: { findUnique: jest.fn() },
+      // Interactive $transaction: run the callback with `tx` === this same
+      // mock, matching this repo's established Prisma-mock convention.
+      $transaction: jest.fn((cb: (tx: typeof mockPrisma) => unknown) =>
+        cb(mockPrisma),
+      ),
+      $executeRaw: jest.fn().mockResolvedValue(undefined),
     };
     mockRes = { set: jest.fn(), end: jest.fn() };
 
     controller = new UploadController(
       mockS3bucket as never,
       {} as never,
-      {} as never,
+      mockThumbnails as never,
       mockStorageCrypto as never,
       mockPrisma as never,
+      mockUsage as never,
     );
   });
 
@@ -101,6 +121,62 @@ describe('UploadController', () => {
         controller.serve(user, mockRes as unknown as Response, 'a/b.png'),
       ).rejects.toThrow('Attachment not found');
       expect(mockRes.end).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('attachment', () => {
+    function fakeFile(overrides: Partial<Express.Multer.File> = {}) {
+      return {
+        originalname: 'photo.png',
+        mimetype: 'image/png',
+        buffer: Buffer.from('file-bytes'),
+        size: 10,
+        ...overrides,
+      } as Express.Multer.File;
+    }
+
+    it('persists the upload inside the quota-locked transaction, not a bare top-level upsert', async () => {
+      const result = await controller.attachment(user, fakeFile());
+
+      expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.$executeRaw).toHaveBeenCalled();
+      expect(mockUsage.assertCanUploadBytes).toHaveBeenCalledWith(
+        'u1',
+        10,
+        'FREE',
+        mockPrisma,
+      );
+      const upsertCall = mockPrisma.pendingUpload.upsert.mock.calls[0] as [
+        { create: { uploadedBy: string; size: number } },
+      ];
+      expect(upsertCall[0].create).toMatchObject({
+        uploadedBy: 'u1',
+        size: 10,
+      });
+      expect(result.url).toBe('https://r2/uploads/messages/u1/x.png');
+    });
+
+    it('rejects the upload when the authoritative re-check inside the lock finds the quota exceeded — even though the earlier fast-fail check (run before the slow S3/encrypt work) had passed', async () => {
+      mockUsage.assertCanUploadBytes
+        .mockResolvedValueOnce(undefined) // early fast-fail check
+        .mockRejectedValueOnce(new ForbiddenException('over quota')); // re-check inside the lock
+
+      await expect(controller.attachment(user, fakeFile())).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockPrisma.pendingUpload.upsert).not.toHaveBeenCalled();
+    });
+
+    it('does not fail the upload when thumbnail generation throws — regression: generateAndStoreThumbnail\'s own doc comment promises "never throws", but nothing enforced that, so a thumbnail-library error rejected the Promise.all it shared with the real S3 upload and failed the entire upload', async () => {
+      mockThumbnails.generate.mockRejectedValue(new Error('corrupt image'));
+
+      const result = await controller.attachment(user, fakeFile());
+
+      expect(result.url).toBe('https://r2/uploads/messages/u1/x.png');
+      const upsertCall = mockPrisma.pendingUpload.upsert.mock.calls[0] as [
+        { create: { thumbnailUrl: string | null } },
+      ];
+      expect(upsertCall[0].create.thumbnailUrl).toBeNull();
     });
   });
 });

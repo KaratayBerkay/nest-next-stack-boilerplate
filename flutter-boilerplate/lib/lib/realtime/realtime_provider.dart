@@ -120,7 +120,6 @@ void resyncAfterConnect(Ref ref) {
   ref.invalidate(friendsListProvider);
   ref.invalidate(notificationsProvider);
   ref.invalidate(notificationsUnreadCountProvider);
-  ref.invalidate(dmUnreadNotificationsProvider);
   // Recovers a ringing/connected call whose point-in-time rtc:invite/
   // rtc:accepted push landed during the connection gap.
   ref.invalidate(activeCallProvider);
@@ -161,7 +160,6 @@ void handleRenewFrame(Ref ref, String renew, Map<String, dynamic> frame) {
           ref.invalidate(notificationsUnreadCountProvider);
         case 'DmCount':
           ref.invalidate(dmUnreadCountProvider);
-          ref.invalidate(dmUnreadNotificationsProvider);
           ref.invalidate(notificationsUnreadCountProvider);
         case 'Item':
           final item = frame['item'] as Map<String, dynamic>?;
@@ -211,6 +209,19 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
       // vanished with zero user feedback.
       final text = (frame['message'] ?? frame['msg']) as String?;
       _showRealtimeError(ref, text);
+    case 'tier-changed':
+      // Mirrors web's lib/realtime/event-dispatch.ts `case "tier-changed"` —
+      // applies a live tier change without waiting for the next session
+      // refresh. Backend enforcement is unaffected either way: SessionAuthGuard
+      // re-derives the rbac token from the real Redis-stored tier, not this
+      // locally-cached value.
+      final newTier = frame['tier'] as String?;
+      final current = ref.read(authProvider).asData?.value;
+      if (newTier != null && current != null) {
+        ref
+            .read(authProvider.notifier)
+            .updateUser(current.copyWith(tier: newTier.toLowerCase()));
+      }
     case 'rtc:ringing':
       final callId = frame['callId'] as String?;
       if (callId != null) ref.read(rtcCallProvider.notifier).onRinging(callId);
@@ -245,7 +256,12 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
     case 'rtc:hangup':
     case 'rtc:missed':
       final callId = frame['callId'] as String?;
-      if (callId != null) ref.read(rtcCallProvider.notifier).onEnded(callId);
+      if (callId != null) {
+        ref.read(rtcCallProvider.notifier).onEnded(
+              callId,
+              reason: frame['type'] as String? ?? 'ended',
+            );
+      }
     case 'rtc:call-limit-warning':
       final callId = frame['callId'] as String?;
       final seconds = (frame['secondsRemaining'] as num?)?.toInt();

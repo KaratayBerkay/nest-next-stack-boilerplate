@@ -1,5 +1,6 @@
 import * as webPush from 'web-push';
 import { PushNotificationService } from './push-notification.service';
+import { decryptId } from '../common/id-codec/id-codec';
 
 jest.mock('web-push', () => ({
   setVapidDetails: jest.fn(),
@@ -95,6 +96,31 @@ describe('PushNotificationService', () => {
         }),
       );
       expect(prisma.pushSubscription.delete).not.toHaveBeenCalled();
+    });
+
+    it('encrypts database-uuid fields in the notification data payload — this channel bypasses the REST/GraphQL/WS id-codec boundary entirely, so a raw callId/senderId would otherwise reach the device in plaintext', async () => {
+      prisma.pushSubscription.findMany.mockResolvedValue([
+        { id: 's1', endpoint: 'https://a', p256dh: 'p1', auth: 'a1' },
+      ]);
+      mockedSendNotification.mockResolvedValue(undefined);
+      const service = buildService();
+      const rawCallId = '01890a5d-ac96-774b-bcce-b302099a8057';
+
+      await service.sendToUser('u1', 'Missed call', undefined, undefined, {
+        kind: 'rtc-missed-call',
+        callId: rawCallId,
+      });
+
+      const [, body] = mockedSendNotification.mock.calls[0] as [
+        unknown,
+        string,
+      ];
+      const sent = JSON.parse(body) as {
+        data: { callId: string; kind: string };
+      };
+      expect(sent.data.callId).not.toBe(rawCallId);
+      expect(decryptId(sent.data.callId)).toBe(rawCallId);
+      expect(sent.data.kind).toBe('rtc-missed-call');
     });
 
     it('returns sent: 0, failed: 0 when the user has no subscriptions', async () => {

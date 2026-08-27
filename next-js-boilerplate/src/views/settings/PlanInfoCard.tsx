@@ -22,13 +22,14 @@ export default function PlanInfoCard({
       <div>
         <p className="text-lg font-bold">{tierLabel(tier)}</p>
         <p className="text-muted text-sm">
-          {formatPrice(TIER_PRICES_CENTS[tier], currency)}
+          {formatPrice(TIER_PRICES_CENTS[tier], currency, t.free)}
         </p>
         {tier !== "FREE" && periodEnd && (
           <p className="text-muted mt-1 text-xs">
-            {cancelAtPeriodEnd
-              ? `Cancels on ${formatDateByPreference(periodEnd, dateDisplay)}`
-              : `Next payment: ${formatDateByPreference(periodEnd, dateDisplay)}`}
+            {(cancelAtPeriodEnd
+              ? t.planInfoCardCancelsOn
+              : t.planInfoCardNextPayment
+            ).replace("{date}", formatDateByPreference(periodEnd, dateDisplay))}
           </p>
         )}
       </div>

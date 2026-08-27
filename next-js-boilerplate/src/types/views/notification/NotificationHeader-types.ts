@@ -7,8 +7,10 @@ export interface NotificationHeaderProps {
   unsubscribe: () => void;
   unreadCount: number;
   markAllRead: () => void;
+  backLabel: string;
   markAllReadLabel: string;
   enablePushLabel: string;
   disablePushLabel: string;
+  pushBlockedLabel: string;
   navigateToFeed: () => void;
 }

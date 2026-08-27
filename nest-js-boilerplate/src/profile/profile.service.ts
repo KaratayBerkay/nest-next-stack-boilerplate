@@ -1,5 +1,5 @@
-import { ConflictException, Injectable } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { ConflictException, Injectable, Logger } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { TokenStoreService } from '../auth/token-store.service';
 import { CacheAsideService } from '../caching/cache-aside.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -7,6 +7,8 @@ import type { UpdateProfileInput } from './dto/update-profile.input';
 
 @Injectable()
 export class ProfileService {
+  private readonly logger = new Logger(ProfileService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
@@ -54,7 +56,27 @@ export class ProfileService {
       data.username = username;
     }
 
-    const user = await this.prisma.user.update({ where: { id: userId }, data });
+    let user;
+    try {
+      user = await this.prisma.user.update({ where: { id: userId }, data });
+    } catch (err) {
+      // The isUsernameAvailable-style check above is still a TOCTOU race —
+      // the DB's own @unique constraint on username is what actually
+      // prevents a collision, but without this catch a race loser got a raw
+      // 500 instead of the same friendly conflict every other caller sees.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          exc: 'EX_PROFILE_USERNAME_TAKEN',
+          msg: 'Username is already taken',
+          key: 'settings.errors.usernameTaken',
+          field: 'username',
+        });
+      }
+      throw err;
+    }
 
     // CacheAsideService catches and logs its own failures internally.
     void this.cache.invalidate(`cache:profile:${userId}`);
@@ -73,7 +95,18 @@ export class ProfileService {
     if (input.locale !== undefined) redisFields.locale = input.locale;
     if (input.timezone !== undefined) redisFields.timezone = input.timezone;
     if (Object.keys(redisFields).length > 0) {
-      await this.tokenStore.rewriteFieldsForUser(userId, redisFields);
+      // The Postgres row is already the committed source of truth at this
+      // point — this is a best-effort fan-out to refresh cached session
+      // fields. A transient Redis hiccup here must not turn an already-
+      // successful profile update into an error response (the client would
+      // see a failure for a change that, on refresh, actually took effect).
+      try {
+        await this.tokenStore.rewriteFieldsForUser(userId, redisFields);
+      } catch (err) {
+        this.logger.error(
+          `rewriteFieldsForUser failed after a committed profile update for userId=${userId} — active sessions may show stale profile fields until their next refresh: ${(err as Error).message}`,
+        );
+      }
     }
 
     return user;

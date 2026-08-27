@@ -1,12 +1,22 @@
+import { LANGS, DEFAULT_LANG } from "@/constants/i18n";
+import { readLangCookie } from "@/lib/read-lang-cookie";
+
 export type DateInput = string | number | Date;
 
+// Passing no `locale` to Intl falls back to the *browser's* language, not
+// this site's selected one — a user browsing the Turkish UI with an
+// English-language browser saw every date rendered in English regardless.
+// Almost every formatter below previously left `locale` unset entirely.
+export function getCurrentLocale(): string {
+  if (typeof window === "undefined") return DEFAULT_LANG;
+  const seg = window.location.pathname
+    .split("/")
+    .find((s) => (LANGS as readonly string[]).includes(s));
+  return seg ?? readLangCookie();
+}
+
 export type TodayFormat =
-  | "ISO"
-  | "only_date"
-  | "year"
-  | "month"
-  | "day"
-  | "weekday";
+  "ISO" | "only_date" | "year" | "month" | "day" | "weekday";
 
 export type DateField<T> = (item: T) => DateInput;
 
@@ -65,15 +75,24 @@ export function getToday(type: TodayFormat): string | number {
   }
 }
 
-export function formatDate(input: DateInput, locale?: string): string {
+export function formatDate(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleDateString(locale);
 }
 
-export function formatDateTime(input: DateInput, locale?: string): string {
+export function formatDateTime(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleString(locale);
 }
 
-export function formatDateLong(input: DateInput, locale?: string): string {
+export function formatDateLong(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleDateString(locale, {
     year: "numeric",
     month: "long",
@@ -81,7 +100,10 @@ export function formatDateLong(input: DateInput, locale?: string): string {
   });
 }
 
-export function formatMonthYear(input: DateInput, locale?: string): string {
+export function formatMonthYear(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleDateString(locale, {
     year: "numeric",
     month: "short",
@@ -90,11 +112,17 @@ export function formatMonthYear(input: DateInput, locale?: string): string {
 
 export type DateDisplayPreference = "long" | "iso" | "short";
 
-export function formatDateShort(input: DateInput, locale?: string): string {
+export function formatDateShort(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleDateString(locale, { dateStyle: "short" });
 }
 
-export function formatDateTimeShort(input: DateInput, locale?: string): string {
+export function formatDateTimeShort(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
   return toDate(input).toLocaleString(locale, {
     dateStyle: "short",
     timeStyle: "short",
@@ -263,7 +291,7 @@ export function formatHoursMinutes(hours: number, minutes: number): string {
 }
 
 export function getMonthNames(
-  locale?: string,
+  locale: string = getCurrentLocale(),
   month: "long" | "short" = "long",
 ): string[] {
   const fmt = new Intl.DateTimeFormat(locale, { month });

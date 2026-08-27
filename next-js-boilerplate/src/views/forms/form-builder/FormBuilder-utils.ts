@@ -9,12 +9,21 @@ const RESERVED_NAMES = new Set([
 ]);
 const NAME_REGEX = /^[a-zA-Z][a-zA-Z0-9]{0,30}$/;
 
-export function sanitizeFieldName(label: string): string {
+export function sanitizeFieldName(
+  label: string,
+  existingNames: string[] = [],
+): string {
   let name = label.replace(/[^a-zA-Z0-9]/g, "").replace(/^(\d)/, "_$1");
   if (!name || RESERVED_NAMES.has(name) || !NAME_REGEX.test(name)) {
     name = `field_${Math.random().toString(36).slice(2, 8)}`;
   }
-  return name;
+  // Two fields with the same (or same-sanitizing) label previously collided
+  // on one `name` — they then silently shared a single value in the dynamic
+  // preview form instead of each having their own.
+  if (!existingNames.includes(name)) return name;
+  let suffix = 2;
+  while (existingNames.includes(`${name}${suffix}`)) suffix++;
+  return `${name}${suffix}`;
 }
 
 let nextFieldId = 5;

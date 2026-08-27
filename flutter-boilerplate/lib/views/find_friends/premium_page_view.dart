@@ -173,8 +173,9 @@ class PremiumFindFriendsPage extends ConsumerWidget {
           padding: const EdgeInsets.only(bottom: 8),
           child: PendingRequestCard(
             request: req,
-            onAccept: () =>
-                ref.read(friendActionsProvider).acceptRequest(req.id),
+            onAccept: req.isIncoming
+                ? () => ref.read(friendActionsProvider).acceptRequest(req.id)
+                : null,
             onDecline: () =>
                 ref.read(friendActionsProvider).declineRequest(req.id),
           ),

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 import { FileUpload, humanSize } from "@/components/ui/FileUpload";
 import { useToast } from "@/components/ui/toast/use-toast";
+import { Spinner } from "@/components/ui/Spinner";
 import type { ImageUploadProps } from "@/types/ui/ImageUpload-types";
 import type { UploadFile, FileUploadLabels } from "@/types/ui/FileUpload-types";
 
@@ -92,8 +93,17 @@ export function ImageUpload({
                 <circle cx="12" cy="7" r="4" />
               </svg>
             )}
+            {current?.status === "uploading" && (
+              <div
+                className="bg-bg/60 absolute inset-0 flex items-center justify-center rounded-full"
+                role="status"
+                aria-label={labels.uploading ?? "Uploading"}
+              >
+                <Spinner size="sm" />
+              </div>
+            )}
           </div>
-          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100">
+          <label className="bg-bg/60 text-fg absolute inset-0 flex cursor-pointer items-center justify-center rounded-full text-xs font-medium opacity-0 transition-opacity focus-within:opacity-100 hover:opacity-100">
             <span>{labels.changePhoto}</span>
             <input
               type="file"
@@ -113,12 +123,20 @@ export function ImageUpload({
                   }
                   const preview = URL.createObjectURL(file);
                   revokeRef.current.add(preview);
+                  // "pending", not "done" — this is only a local preview, no
+                  // upload has happened yet. Consumers (e.g.
+                  // AvatarUploadSection) watch for a newly-added "pending"
+                  // file to know when to actually call their upload action;
+                  // marking it "done" here meant that upload was never
+                  // triggered at all, so a real-mode profile save persisted
+                  // this ephemeral blob: URL as the user's avatarUrl instead
+                  // of the uploaded file's server URL.
                   onChange([
                     {
                       id: "avatar",
                       file,
                       progress: 0,
-                      status: "done",
+                      status: "pending",
                       preview,
                     } as UploadFile,
                   ]);
@@ -128,10 +146,15 @@ export function ImageUpload({
           </label>
         </div>
         {!current && (
-          <p className="text-muted text-center text-xxs">
+          <p className="text-muted text-xxs text-center">
             {labels.acceptedTypesText?.("image/*") ?? "Images"}
             {maxSizeBytes &&
               ` · ${labels.maxSizeLabel?.(humanSize(maxSizeBytes)) ?? `max ${humanSize(maxSizeBytes)}`}`}
+          </p>
+        )}
+        {current?.status === "error" && (
+          <p className="text-error text-xxs text-center">
+            {current.error || labels.uploadFailed || "Upload failed"}
           </p>
         )}
         {current && (
@@ -157,6 +180,7 @@ export function ImageUpload({
         files={value}
         onFilesChange={handleFilesChange}
         labels={labelsProp}
+        hideFileList
       />
       {value.length > 0 && (
         <div

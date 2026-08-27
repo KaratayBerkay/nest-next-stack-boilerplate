@@ -168,4 +168,49 @@ describe('StripeService', () => {
       });
     });
   });
+
+  describe('getSubscription', () => {
+    it('returns the live subscription on success', async () => {
+      const service = buildService();
+      const sub = { id: 'sub_1', status: 'active' };
+      jest
+        .spyOn(service.stripe.subscriptions, 'retrieve')
+        .mockResolvedValue(sub as never);
+
+      await expect(service.getSubscription('sub_1')).resolves.toEqual(sub);
+    });
+
+    it('returns null without logging for a genuine 404 (the subscription no longer exists on Stripe)', async () => {
+      const service = buildService();
+      jest.spyOn(service.stripe.subscriptions, 'retrieve').mockRejectedValue({
+        code: 'resource_missing',
+        message: 'No such subscription',
+      });
+      const warnSpy = jest
+        .spyOn(service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+
+      const result = await service.getSubscription('sub_gone');
+
+      expect(result).toBeNull();
+      expect(warnSpy).not.toHaveBeenCalled();
+    });
+
+    it('logs a warning (still returning null) for a non-404 failure — regression: every failure was previously swallowed identically with zero logging, so a transient Stripe/network error looked indistinguishable from "this subscription genuinely no longer exists," silently showing a user with a live stripeSubscriptionId a generic default price instead of their actual one, with no trail to diagnose why', async () => {
+      const service = buildService();
+      jest
+        .spyOn(service.stripe.subscriptions, 'retrieve')
+        .mockRejectedValue(new Error('ECONNRESET'));
+      const warnSpy = jest
+        .spyOn(service['logger'], 'warn')
+        .mockImplementation(() => undefined);
+
+      const result = await service.getSubscription('sub_1');
+
+      expect(result).toBeNull();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining('ECONNRESET'),
+      );
+    });
+  });
 });

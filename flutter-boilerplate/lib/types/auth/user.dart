@@ -41,12 +41,16 @@ class AuthenticatedUser {
     );
   }
 
-  AuthenticatedUser copyWith({bool? mfaEnabled, String? chatNickname}) {
+  AuthenticatedUser copyWith({
+    bool? mfaEnabled,
+    String? chatNickname,
+    String? tier,
+  }) {
     return AuthenticatedUser(
       id: id,
       email: email,
       name: name,
-      tier: tier,
+      tier: tier ?? this.tier,
       role: role,
       avatarUrl: avatarUrl,
       language: language,

@@ -7,7 +7,7 @@ import {
 } from "@/lib/cookie";
 import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { publishEvent } from "@/lib/kafka";
-import { tierLabel } from "@/lib/tier";
+import { tierLabel, TIER_ORDER, type Tier } from "@/lib/tier";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import {
   decodeSessionUserCookie,
@@ -89,7 +89,14 @@ export async function POST(request: NextRequest) {
   // the backend releases the schedule without charging, so no card is needed.
   const isUpgrade = ["BASIC", "MEDIUM", "PREMIUM"].includes(body.tier);
   const isReSelection = body.tier === body.currentTier;
-  if (isUpgrade && !isReSelection && !body.paymentMethodId) {
+  // A card is only actually required for a fresh FREE->paid subscription —
+  // Stripe already has a payment method on file for any paid->paid change,
+  // which is why the backend mutation itself never demands one for that
+  // case. Defaulting to "from FREE" when the caller omits currentTier keeps
+  // existing callers that always do supply a real card (StripeCardForm)
+  // unaffected either way.
+  const isFromFree = !body.currentTier || body.currentTier === "FREE";
+  if (isUpgrade && !isReSelection && isFromFree && !body.paymentMethodId) {
     return NextResponse.json(
       {
         statusCode: 400,
@@ -145,15 +152,25 @@ export async function POST(request: NextRequest) {
   }>(ME_QUERY, {}, accessToken);
   const user = meData?.data?.me;
 
-  await publishEvent("billing.subscription.upgraded", {
-    userId: user?.id ?? "unknown",
-    email: user?.email ?? "unknown",
-    name: user?.name ?? "User",
-    tier: body.tier,
-    label: tierLabel(body.tier),
-    timestamp: new Date().toISOString(),
-    event: "subscription.upgraded",
-  });
+  // Only a genuine move to a higher tier is an "upgraded" event — this used
+  // to fire unconditionally, including for downgrades and cancellations,
+  // which would mislead any future consumer (e.g. a "Welcome to Premium"
+  // email triggered by a downgrade).
+  const isRealUpgrade =
+    !isReSelection &&
+    (TIER_ORDER[body.tier as Tier] ?? 0) >
+      (TIER_ORDER[body.currentTier as Tier] ?? 0);
+  if (isRealUpgrade) {
+    await publishEvent("billing.subscription.upgraded", {
+      userId: user?.id ?? "unknown",
+      email: user?.email ?? "unknown",
+      name: user?.name ?? "User",
+      tier: body.tier,
+      label: tierLabel(body.tier),
+      timestamp: new Date().toISOString(),
+      event: "subscription.upgraded",
+    });
+  }
 
   const response = NextResponse.json({
     ok: true,

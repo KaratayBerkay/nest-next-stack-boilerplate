@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ACCESS_TOKEN_COOKIE } from "@/lib/cookie";
-import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
+import { csrfEchoHeaders, graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 
 const BILLING_ADDRESS_QUERY = `
   query MyBillingAddress {
@@ -79,9 +79,23 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = await request.json();
+  let body: { input?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      {
+        statusCode: 400,
+        exc: "EX_VALIDATION_FORM",
+        msg: "Invalid JSON body",
+        key: "errors.invalidJson",
+      },
+      { status: 400 },
+    );
+  }
   const { input } = body;
 
+  const extraHeaders = await csrfEchoHeaders();
   const { data, errors } = await graphqlFetch<{
     upsertBillingAddress: {
       name: string | null;
@@ -92,7 +106,12 @@ export async function POST(request: Request) {
       zipCode: string | null;
       vatNumber: string | null;
     };
-  }>(UPSERT_BILLING_ADDRESS_MUTATION, { input }, accessToken);
+  }>(
+    UPSERT_BILLING_ADDRESS_MUTATION,
+    { input },
+    accessToken,
+    extraHeaders ?? undefined,
+  );
 
   if (errors) {
     const body = graphqlErrorBody(errors, "Failed to update billing address");

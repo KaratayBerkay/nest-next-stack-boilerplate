@@ -8,7 +8,6 @@ import {
 } from './messaging.service';
 import type { RoomMember } from './messaging.types';
 import { initials, type MessageAttachment } from './messaging.types';
-import { PushNotificationService } from '../push-notification/push-notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs as RealtimeAuthWs } from '../realtime/realtime.types';
 import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
@@ -76,7 +75,6 @@ export class MessagingWsGateway implements OnModuleInit {
     private readonly realtime: RealtimeGateway,
     private readonly prisma: PrismaService,
     private readonly ms: MessagingService,
-    private readonly push: PushNotificationService,
     private readonly wireCrypto: WireCryptoService,
   ) {}
 
@@ -266,7 +264,18 @@ export class MessagingWsGateway implements OnModuleInit {
       avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(data.room, member);
-    void this.ms.persistJoin(data.room, ws.userId);
+    // persistJoin runs a bare prisma.$transaction with nothing downstream to
+    // catch a rejection — this app has no process-level
+    // unhandledRejection/uncaughtException handler, and Node's default for
+    // an unhandled rejection is to crash the whole process. Room join/leave
+    // fires on every chat-room page navigation (one of the hottest paths in
+    // the app), so a single transient Postgres hiccup here previously risked
+    // taking down the backend for every connected user, not just this one.
+    this.ms.persistJoin(data.room, ws.userId).catch((err: Error) => {
+      this.logger.error(
+        `persistJoin failed for room=${data.room} userId=${ws.userId}: ${err.message}`,
+      );
+    });
     this.realtime.registerRoomSocket(
       data.room,
       ws as unknown as RealtimeAuthWs,
@@ -288,7 +297,11 @@ export class MessagingWsGateway implements OnModuleInit {
     ws.room = undefined;
     const members = this.ms.leaveRoom(data.room, ws.socketId);
     this.realtime.leaveRoomSocket(data.room, ws.socketId);
-    void this.ms.persistLeave(data.room, ws.userId);
+    this.ms.persistLeave(data.room, ws.userId).catch((err: Error) => {
+      this.logger.error(
+        `persistLeave failed for room=${data.room} userId=${ws.userId}: ${err.message}`,
+      );
+    });
     this.realtime.broadcastToRoom(data.room, {
       type: 'user-left',
       room: data.room,
@@ -430,7 +443,11 @@ export class MessagingWsGateway implements OnModuleInit {
       avatarUrl: ws.avatarUrl ?? null,
     };
     const members = this.ms.joinRoom(room, member);
-    void this.ms.persistJoin(room, ws.userId);
+    this.ms.persistJoin(room, ws.userId).catch((err: Error) => {
+      this.logger.error(
+        `persistJoin failed for room=${room} userId=${ws.userId}: ${err.message}`,
+      );
+    });
     this.realtime.registerRoomSocket(room, ws as unknown as RealtimeAuthWs);
     this.realtime.broadcastToRoom(room, {
       type: 'user-joined',
@@ -449,7 +466,11 @@ export class MessagingWsGateway implements OnModuleInit {
     ws.room = undefined;
     const members = this.ms.leaveRoom(params.room, ws.socketId);
     this.realtime.leaveRoomSocket(params.room, ws.socketId);
-    void this.ms.persistLeave(params.room, ws.userId);
+    this.ms.persistLeave(params.room, ws.userId).catch((err: Error) => {
+      this.logger.error(
+        `persistLeave failed for room=${params.room} userId=${ws.userId}: ${err.message}`,
+      );
+    });
     this.realtime.broadcastToRoom(params.room, {
       type: 'user-left',
       room: params.room,

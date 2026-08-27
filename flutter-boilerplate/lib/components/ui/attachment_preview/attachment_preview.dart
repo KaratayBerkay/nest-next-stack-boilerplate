@@ -26,12 +26,14 @@ class AttachmentPreview extends ConsumerWidget {
   final String url;
   final String? type;
   final String? name;
+  final String? thumbnailUrl;
 
   const AttachmentPreview({
     super.key,
     required this.url,
     this.type,
     this.name,
+    this.thumbnailUrl,
   });
 
   bool get _isImage => (type ?? '').startsWith('image/');
@@ -78,7 +80,9 @@ class AttachmentPreview extends ConsumerWidget {
             borderRadius: BorderRadius.circular(10),
             child: headersAsync.when(
               data: (headers) => CachedNetworkImage(
-                imageUrl: _serveUrl(url),
+                imageUrl: _serveUrl(
+                  (thumbnailUrl?.isNotEmpty ?? false) ? thumbnailUrl! : url,
+                ),
                 httpHeaders: headers,
                 width: 180,
                 height: 120,

@@ -21,6 +21,7 @@ import {
 } from './rtc-tier-limits.constants';
 import { NotificationService } from '../notification/notification.service';
 import { FriendsService } from '../friends/friends.service';
+import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 export type { RtcChatMessageView as MeetingChatMessageView } from './rtc-chat.service';
 
@@ -75,32 +76,75 @@ export class RtcMeetingService {
     const maxDurationMinutes = meetingMaxDurationMinutes(tier);
     const slug = generateSlug();
 
-    const room = await this.prisma.rtcRoom.create({
-      data: {
-        kind: RtcRoomKind.MEETING,
-        state: RtcRoomState.PENDING,
-        createdById: userId,
-      },
+    // RtcRoom + Meeting are created together, atomically — a Meeting row
+    // must never be able to exist independently of its RtcRoom (or vice
+    // versa). Previously these were two separate top-level creates with an
+    // external LiveKit call and an intermediate ACTIVE-transition wedged
+    // between them: a crash after the room went ACTIVE but before the
+    // Meeting row was created left a room that looked live but had no
+    // Meeting to ever find it through again (myMeetings/meetingBySlug both
+    // query Meeting, and handleRoomEndedByLiveKit's own lookup starts from
+    // Meeting too) — a permanent, unswept orphan. Only the subsequent
+    // activation (after LiveKit, which can't run inside a DB transaction)
+    // happens as a separate step now; if that fails, at least the Meeting
+    // row exists and is visibly stuck rather than invisibly leaked.
+    const roomId = await this.prisma.$transaction(async (tx) => {
+      const room = await tx.rtcRoom.create({
+        data: {
+          kind: RtcRoomKind.MEETING,
+          state: RtcRoomState.PENDING,
+          createdById: userId,
+        },
+      });
+      await tx.meeting.create({
+        data: {
+          roomId: room.id,
+          hostId: userId,
+          title: trimmed,
+          slug,
+          maxParticipants,
+          maxDurationMinutes,
+        },
+      });
+      return room.id;
     });
-    const livekitRoomName = `meeting-${room.id}`;
-    await this.liveKit.createRoom(livekitRoomName, maxParticipants);
+
+    const livekitRoomName = `meeting-${roomId}`;
+    try {
+      await this.liveKit.createRoom(livekitRoomName, maxParticipants);
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('meeting.livekit_create_failed', error, {
+          roomId,
+          roomName: livekitRoomName,
+          userId,
+          phase: RtcRoomState.PENDING,
+        }),
+      );
+      throw error;
+    }
     const now = new Date();
     await this.prisma.rtcRoom.update({
-      where: { id: room.id },
+      where: { id: roomId },
       data: { state: RtcRoomState.ACTIVE, livekitRoomName, startedAt: now },
     });
 
-    return this.prisma.meeting.create({
-      data: {
-        roomId: room.id,
-        hostId: userId,
-        title: trimmed,
-        slug,
-        maxParticipants,
-        maxDurationMinutes,
-      },
+    const meeting = await this.prisma.meeting.findUniqueOrThrow({
+      where: { roomId },
       include: { room: true, host: true },
     });
+    this.logger.log(
+      rtcLog('meeting.created', {
+        meetingId: meeting.id,
+        roomId: meeting.roomId,
+        slug: meeting.slug,
+        userId,
+        maxParticipants,
+        maxDurationMinutes,
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
+    return meeting;
   }
 
   async meetingBySlug(slug: string) {
@@ -127,39 +171,70 @@ export class RtcMeetingService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const existing = await this.prisma.rtcParticipant.findUnique({
-      where: { roomId_userId: { roomId: meeting.roomId, userId } },
-    });
-    if (!existing || existing.leftAt) {
-      const activeCount = await this.prisma.rtcParticipant.count({
-        where: { roomId: meeting.roomId, leftAt: null },
-      });
-      if (activeCount >= meeting.maxParticipants) {
-        throw new ForbiddenException({
-          exc: 'EX_MEETING_FULL',
-          msg: 'This meeting is at capacity',
-          key: 'rtc.errors.meetingFull',
-        });
-      }
-    }
-
     const role =
       userId === meeting.hostId
         ? RtcParticipantRole.HOST
         : RtcParticipantRole.PARTICIPANT;
-    await this.prisma.rtcParticipant.upsert({
-      where: { roomId_userId: { roomId: meeting.roomId, userId } },
-      create: { roomId: meeting.roomId, userId, role, livekitIdentity: userId },
-      update: { leftAt: null, joinedAt: new Date() },
+
+    // The capacity check-then-upsert must be atomic against a concurrent
+    // join to the SAME meeting — two requests racing in at exactly
+    // maxParticipants-1 active seats could otherwise both pass the count
+    // check and both upsert, exceeding the cap. A `SELECT ... FOR UPDATE` on
+    // the room row inside this transaction serializes concurrent joiners of
+    // this one meeting (unrelated meetings are unaffected) without needing
+    // full-database SERIALIZABLE isolation + retry handling.
+    await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT id FROM "RtcRoom" WHERE id = ${meeting.roomId}::uuid FOR UPDATE`;
+
+      const existing = await tx.rtcParticipant.findUnique({
+        where: { roomId_userId: { roomId: meeting.roomId, userId } },
+      });
+      if (!existing || existing.leftAt) {
+        const activeCount = await tx.rtcParticipant.count({
+          where: { roomId: meeting.roomId, leftAt: null },
+        });
+        if (activeCount >= meeting.maxParticipants) {
+          throw new ForbiddenException({
+            exc: 'EX_MEETING_FULL',
+            msg: 'This meeting is at capacity',
+            key: 'rtc.errors.meetingFull',
+          });
+        }
+      }
+
+      await tx.rtcParticipant.upsert({
+        where: { roomId_userId: { roomId: meeting.roomId, userId } },
+        create: {
+          roomId: meeting.roomId,
+          userId,
+          role,
+          livekitIdentity: userId,
+        },
+        update: { leftAt: null, joinedAt: new Date() },
+      });
     });
 
-    const token = await this.liveKit.mintToken({
-      identity: userId,
-      name: displayName(user),
-      roomName: meeting.room.livekitRoomName!,
-      canPublish: true,
-      canSubscribe: true,
-    });
+    let token: string;
+    try {
+      token = await this.liveKit.mintToken({
+        identity: userId,
+        name: displayName(user),
+        roomName: meeting.room.livekitRoomName!,
+        canPublish: true,
+        canSubscribe: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('meeting.livekit_token_failed', error, {
+          meetingId: meeting.id,
+          roomId: meeting.roomId,
+          slug,
+          userId,
+          roomName: meeting.room.livekitRoomName,
+        }),
+      );
+      throw error;
+    }
 
     this.realtime.broadcastToRoom(chatChannel(slug), {
       type: 'rtc:meeting-participant-joined',
@@ -169,6 +244,17 @@ export class RtcMeetingService {
       avatarUrl: user.avatarUrl ?? null,
       role,
     });
+
+    this.logger.log(
+      rtcLog('meeting.joined', {
+        meetingId: meeting.id,
+        roomId: meeting.roomId,
+        slug,
+        userId,
+        role,
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
 
     return {
       token,
@@ -209,6 +295,14 @@ export class RtcMeetingService {
       body: meeting.title,
       payload: { kind: 'rtc-meeting-invite', slug },
     });
+    this.logger.log(
+      rtcLog('meeting.invite_sent', {
+        slug,
+        userId: inviterId,
+        participantId: targetUserId,
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
   }
 
   async leaveMeeting(userId: string, slug: string): Promise<void> {
@@ -220,6 +314,14 @@ export class RtcMeetingService {
       slug,
       userId,
     });
+    this.logger.log(
+      rtcLog('meeting.left', {
+        meetingId: meeting.id,
+        roomId: meeting.roomId,
+        slug,
+        userId,
+      }),
+    );
   }
 
   async endMeeting(userId: string, slug: string): Promise<void> {
@@ -262,6 +364,15 @@ export class RtcMeetingService {
       slug,
       userId: targetUserId,
     });
+    this.logger.log(
+      rtcLog('meeting.participant_removed', {
+        meetingId: meeting.id,
+        roomId: meeting.roomId,
+        slug,
+        userId: hostUserId,
+        participantId: targetUserId,
+      }),
+    );
   }
 
   async muteMeetingParticipant(
@@ -286,6 +397,16 @@ export class RtcMeetingService {
       slug,
       muted,
     });
+    this.logger.log(
+      rtcLog('meeting.participant_muted', {
+        meetingId: meeting.id,
+        roomId: meeting.roomId,
+        slug,
+        userId: hostUserId,
+        participantId: targetUserId,
+        muted,
+      }),
+    );
   }
 
   // ==================== Chat ====================
@@ -389,6 +510,13 @@ export class RtcMeetingService {
       slug,
       secondsRemaining,
     });
+    this.logger.log(
+      rtcLog('meeting.limit_warning', {
+        slug,
+        secondsRemaining,
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
   }
 
   // ==================== Internal ====================
@@ -457,14 +585,16 @@ export class RtcMeetingService {
     reason: 'ended' | 'tier_limit',
   ): Promise<void> {
     const now = new Date();
-    await this.prisma.rtcParticipant.updateMany({
-      where: { roomId, leftAt: null },
-      data: { leftAt: now },
-    });
-    await this.prisma.rtcRoom.update({
-      where: { id: roomId },
-      data: { state: RtcRoomState.ENDED, endedAt: now },
-    });
+    await this.prisma.$transaction([
+      this.prisma.rtcParticipant.updateMany({
+        where: { roomId, leftAt: null },
+        data: { leftAt: now },
+      }),
+      this.prisma.rtcRoom.update({
+        where: { id: roomId },
+        data: { state: RtcRoomState.ENDED, endedAt: now },
+      }),
+    ]);
     if (livekitRoomName) {
       await this.liveKit.deleteRoom(livekitRoomName);
     }
@@ -473,6 +603,13 @@ export class RtcMeetingService {
       slug,
       reason,
     });
-    this.logger.log({ category: 'rtc', event: 'meeting.ended', slug, reason });
+    this.logger.log(
+      rtcLog('meeting.ended', {
+        roomId,
+        slug,
+        reason,
+        phase: RtcRoomState.ENDED,
+      }),
+    );
   }
 }

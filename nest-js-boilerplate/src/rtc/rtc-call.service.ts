@@ -19,6 +19,7 @@ import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { displayName } from '../common/utils/display-name';
 import { callMaxDurationMinutes } from './rtc-tier-limits.constants';
 import { NotificationService } from '../notification/notification.service';
+import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 // Ported from voice-call-system's own client-side ring convention (the
 // reference repo has no server-side ring-timeout at all — foreground-only,
@@ -92,37 +93,74 @@ export class RtcCallService {
     const callerId = ws.userId;
 
     if (calleeId === callerId) {
-      this.sendError(ws, 'You cannot call yourself');
+      this.logger.warn(
+        rtcLog('call.invite_rejected', {
+          reason: 'self_call',
+          userId: callerId,
+        }),
+      );
+      this.sendError(ws, 'self_call');
       return;
     }
     if (!this.realtime.onlineCount.has(calleeId)) {
-      this.sendError(ws, 'That user is offline');
+      this.logger.warn(
+        rtcLog('call.invite_rejected', {
+          callerId,
+          calleeId,
+          reason: 'callee_offline',
+        }),
+      );
+      this.sendError(ws, 'callee_offline');
       return;
     }
     if (await this.hasActiveCall(callerId, calleeId)) {
-      this.sendError(ws, 'Busy');
+      this.logger.warn(
+        rtcLog('call.invite_rejected', {
+          callerId,
+          calleeId,
+          reason: 'busy',
+        }),
+      );
+      this.sendError(ws, 'busy');
       return;
     }
 
-    const room = await this.prisma.rtcRoom.create({
-      data: {
-        kind: RtcRoomKind.CALL,
-        state: RtcRoomState.PENDING,
-        createdById: callerId,
-      },
-    });
-    const call = await this.prisma.callSession.create({
-      data: {
-        roomId: room.id,
-        callerId,
-        calleeId,
-        state: CallEndState.RINGING,
-        hasVideo: Boolean(hasVideo),
-      },
-      include: { caller: true },
+    // Created together, atomically — a crash between two separate top-level
+    // creates here would leave an orphaned PENDING RtcRoom with no
+    // CallSession ever pointing at it (no LiveKit room exists yet at invite
+    // time, so unlike accept()'s LiveKit-setup path there's no external
+    // resource to leak, but it's still a dead, permanently-unreachable row).
+    const call = await this.prisma.$transaction(async (tx) => {
+      const room = await tx.rtcRoom.create({
+        data: {
+          kind: RtcRoomKind.CALL,
+          state: RtcRoomState.PENDING,
+          createdById: callerId,
+        },
+      });
+      return tx.callSession.create({
+        data: {
+          roomId: room.id,
+          callerId,
+          calleeId,
+          state: CallEndState.RINGING,
+          hasVideo: Boolean(hasVideo),
+        },
+        include: { caller: true },
+      });
     });
 
     this.startRingTimeout(call.id);
+
+    this.logger.log(
+      rtcLog('call.invited', {
+        callId: call.id,
+        callerId,
+        calleeId,
+        hasVideo: call.hasVideo,
+        phase: call.state,
+      }),
+    );
 
     this.realtime.emitToUser(callerId, {
       type: 'rtc:ringing',
@@ -140,11 +178,41 @@ export class RtcCallService {
 
   async accept(ws: AuthWs, callId: unknown): Promise<void> {
     if (!ws.userId || typeof callId !== 'string' || !callId) return;
+    // Claim the ringing row atomically. Without this transition, two accept
+    // frames can both mint rooms/tokens and race to create the same
+    // participants, leaving the call in an indeterminate state.
+    const claimed = await this.prisma.callSession.updateMany({
+      where: {
+        id: callId,
+        calleeId: ws.userId,
+        state: CallEndState.RINGING,
+      },
+      data: { state: CallEndState.CONNECTING },
+    });
+    if (claimed.count !== 1) {
+      this.logger.warn(
+        rtcLog('call.accept_rejected', {
+          callId,
+          userId: ws.userId,
+          reason: 'not_ringing_or_not_callee',
+        }),
+      );
+      this.sendError(ws, 'call_unavailable', callId);
+      return;
+    }
+
     const call = await this.prisma.callSession.findUnique({
       where: { id: callId },
+      include: { caller: true },
     });
-    if (call?.calleeId !== ws.userId || call.state !== CallEndState.RINGING) {
-      this.sendError(ws, 'Call is no longer available', callId);
+    if (!call) {
+      this.logger.error(
+        rtcLog('call.accept_lookup_failed', {
+          callId,
+          userId: ws.userId,
+        }),
+      );
+      this.sendError(ws, 'call_unavailable', callId);
       return;
     }
     this.clearRingTimeout(callId);
@@ -167,78 +235,137 @@ export class RtcCallService {
     const livekitRoomName = `call-${call.id}`;
     try {
       await this.liveKit.createRoom(livekitRoomName, 2);
-    } catch (err) {
-      this.logger.error('LiveKit createRoom failed for a call', err as Error);
-      await this.endCall(call.id, CallEndState.FAILED, 'failed');
-      const frame = { type: 'rtc:hangup', callId, reason: 'failed' };
-      this.realtime.emitToUser(call.callerId, frame);
-      this.realtime.emitToUser(call.calleeId, frame);
-      return;
-    }
+      const [callerToken, calleeToken] = await Promise.all([
+        this.liveKit.mintToken({
+          identity: call.callerId,
+          roomName: livekitRoomName,
+          canPublish: true,
+          canSubscribe: true,
+        }),
+        this.liveKit.mintToken({
+          identity: call.calleeId,
+          roomName: livekitRoomName,
+          canPublish: true,
+          canSubscribe: true,
+        }),
+      ]);
 
-    const [callerToken, calleeToken] = await Promise.all([
-      this.liveKit.mintToken({
-        identity: call.callerId,
-        roomName: livekitRoomName,
-        canPublish: true,
-        canSubscribe: true,
-      }),
-      this.liveKit.mintToken({
-        identity: call.calleeId,
-        roomName: livekitRoomName,
-        canPublish: true,
-        canSubscribe: true,
-      }),
-    ]);
-
-    const now = new Date();
-    await this.prisma.$transaction([
-      this.prisma.rtcRoom.update({
-        where: { id: call.roomId },
-        data: { state: RtcRoomState.ACTIVE, livekitRoomName, startedAt: now },
-      }),
-      this.prisma.callSession.update({
-        where: { id: call.id },
+      const now = new Date();
+      const connectedClaim = await this.prisma.callSession.updateMany({
+        where: { id: call.id, state: CallEndState.CONNECTING },
         data: {
           state: CallEndState.CONNECTED,
           acceptedAt: now,
           maxDurationMinutes,
         },
-      }),
-      this.prisma.rtcParticipant.createMany({
-        data: [
-          {
-            roomId: call.roomId,
-            userId: call.callerId,
-            role: RtcParticipantRole.CALLER,
-            livekitIdentity: call.callerId,
-          },
-          {
-            roomId: call.roomId,
-            userId: call.calleeId,
-            role: RtcParticipantRole.CALLEE,
-            livekitIdentity: call.calleeId,
-          },
-        ],
-      }),
-    ]);
+      });
+      if (connectedClaim.count !== 1) {
+        // Lost the race: something else (e.g. a concurrent hangup) already
+        // moved this call out of CONNECTING while LiveKit setup was in
+        // flight. Whoever won already sent its own notification — we're not
+        // authoritative here, so just clean up the room we just minted and
+        // stop, without touching CallSession/RtcRoom state again.
+        await this.liveKit.deleteRoom(livekitRoomName).catch((cleanupErr) => {
+          this.logger.error(
+            rtcErrorLog('call.orphaned_room_cleanup_failed', cleanupErr, {
+              callId,
+              roomName: livekitRoomName,
+            }),
+          );
+        });
+        this.logger.warn(
+          rtcLog('call.accept_raced', {
+            callId,
+            callerId: call.callerId,
+            calleeId: call.calleeId,
+            reason: 'ended_during_livekit_setup',
+          }),
+        );
+        return;
+      }
 
-    this.startDurationCap(call.id, maxDurationMinutes);
+      await this.prisma.$transaction([
+        this.prisma.rtcRoom.update({
+          where: { id: call.roomId },
+          data: { state: RtcRoomState.ACTIVE, livekitRoomName, startedAt: now },
+        }),
+        this.prisma.rtcParticipant.createMany({
+          data: [
+            {
+              roomId: call.roomId,
+              userId: call.callerId,
+              role: RtcParticipantRole.CALLER,
+              livekitIdentity: call.callerId,
+            },
+            {
+              roomId: call.roomId,
+              userId: call.calleeId,
+              role: RtcParticipantRole.CALLEE,
+              livekitIdentity: call.calleeId,
+            },
+          ],
+        }),
+      ]);
 
-    this.realtime.emitToUser(call.callerId, {
-      type: 'rtc:accepted',
-      callId,
-      token: callerToken,
-      roomName: livekitRoomName,
-      maxDurationMinutes,
-    });
-    this.realtime.emitToUser(call.calleeId, {
-      type: 'rtc:accepted',
-      callId,
-      token: calleeToken,
-      roomName: livekitRoomName,
-      maxDurationMinutes,
-    });
+      this.startDurationCap(call.id, maxDurationMinutes);
+
+      this.logger.log(
+        rtcLog('call.accepted', {
+          callId,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+          hasVideo: call.hasVideo,
+          roomName: livekitRoomName,
+          maxDurationMinutes,
+          phase: CallEndState.CONNECTED,
+        }),
+      );
+
+      this.realtime.emitToUser(call.callerId, {
+        type: 'rtc:accepted',
+        callId,
+        token: callerToken,
+        roomName: livekitRoomName,
+        maxDurationMinutes,
+      });
+      this.realtime.emitToUser(call.calleeId, {
+        type: 'rtc:accepted',
+        callId,
+        token: calleeToken,
+        roomName: livekitRoomName,
+        maxDurationMinutes,
+      });
+    } catch (err) {
+      this.logger.error(
+        rtcErrorLog('call.livekit_setup_failed', err, {
+          callId,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+          hasVideo: call.hasVideo,
+          roomName: livekitRoomName,
+          phase: CallEndState.CONNECTING,
+        }),
+      );
+      const ended = await this.endCall(
+        call.id,
+        [CallEndState.CONNECTING, CallEndState.CONNECTED],
+        CallEndState.FAILED,
+        'failed',
+      );
+      if (!ended) return;
+      this.logger.error(
+        rtcLog('call.failed', {
+          callId,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+          reason: 'livekit_setup_failed',
+          phase: CallEndState.FAILED,
+        }),
+      );
+      const frame = { type: 'rtc:hangup', callId, reason: 'failed' };
+      this.realtime.emitToUser(call.callerId, frame);
+      this.realtime.emitToUser(call.calleeId, frame);
+    }
   }
 
   async reject(ws: AuthWs, callId: unknown): Promise<void> {
@@ -246,10 +373,42 @@ export class RtcCallService {
     const call = await this.prisma.callSession.findUnique({
       where: { id: callId },
     });
-    if (call?.calleeId !== ws.userId || call.state !== CallEndState.RINGING)
+    if (call?.calleeId !== ws.userId || call.state !== CallEndState.RINGING) {
+      this.logger.warn(
+        rtcLog('call.reject_rejected', {
+          callId,
+          userId: ws.userId,
+          reason: 'not_ringing_or_not_callee',
+        }),
+      );
       return;
-    this.clearRingTimeout(callId);
-    await this.endCall(callId, CallEndState.REJECTED, 'rejected');
+    }
+    const ended = await this.endCall(
+      callId,
+      [CallEndState.RINGING],
+      CallEndState.REJECTED,
+      'rejected',
+    );
+    if (!ended) {
+      this.logger.warn(
+        rtcLog('call.reject_raced', {
+          callId,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+          reason: 'already_transitioned',
+        }),
+      );
+      return;
+    }
+    this.logger.log(
+      rtcLog('call.rejected', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'rejected',
+        phase: CallEndState.REJECTED,
+      }),
+    );
     this.realtime.emitToUser(call.callerId, { type: 'rtc:rejected', callId });
   }
 
@@ -258,10 +417,42 @@ export class RtcCallService {
     const call = await this.prisma.callSession.findUnique({
       where: { id: callId },
     });
-    if (call?.callerId !== ws.userId || call.state !== CallEndState.RINGING)
+    if (call?.callerId !== ws.userId || call.state !== CallEndState.RINGING) {
+      this.logger.warn(
+        rtcLog('call.cancel_rejected', {
+          callId,
+          userId: ws.userId,
+          reason: 'not_ringing_or_not_caller',
+        }),
+      );
       return;
-    this.clearRingTimeout(callId);
-    await this.endCall(callId, CallEndState.CANCELLED, 'cancelled');
+    }
+    const ended = await this.endCall(
+      callId,
+      [CallEndState.RINGING],
+      CallEndState.CANCELLED,
+      'cancelled',
+    );
+    if (!ended) {
+      this.logger.warn(
+        rtcLog('call.cancel_raced', {
+          callId,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+          reason: 'already_transitioned',
+        }),
+      );
+      return;
+    }
+    this.logger.log(
+      rtcLog('call.cancelled', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'cancelled',
+        phase: CallEndState.CANCELLED,
+      }),
+    );
     this.realtime.emitToUser(call.calleeId, { type: 'rtc:cancelled', callId });
   }
 
@@ -270,14 +461,55 @@ export class RtcCallService {
     const call = await this.prisma.callSession.findUnique({
       where: { id: callId },
     });
-    if (!call || (call.callerId !== ws.userId && call.calleeId !== ws.userId))
+    if (!call || (call.callerId !== ws.userId && call.calleeId !== ws.userId)) {
+      this.logger.warn(
+        rtcLog('call.hangup_rejected', {
+          callId,
+          userId: ws.userId,
+          reason: 'not_participant',
+        }),
+      );
       return;
+    }
     if (
       call.state !== CallEndState.CONNECTED &&
       call.state !== CallEndState.CONNECTING
-    )
+    ) {
+      this.logger.warn(
+        rtcLog('call.hangup_rejected', {
+          callId,
+          userId: ws.userId,
+          reason: 'not_connected',
+          phase: call.state,
+        }),
+      );
       return;
-    await this.endCall(callId, CallEndState.ENDED, 'hangup');
+    }
+    const ended = await this.endCall(
+      callId,
+      [CallEndState.CONNECTED, CallEndState.CONNECTING],
+      CallEndState.ENDED,
+      'hangup',
+    );
+    if (!ended) {
+      this.logger.warn(
+        rtcLog('call.hangup_raced', {
+          callId,
+          userId: ws.userId,
+          reason: 'already_transitioned',
+        }),
+      );
+      return;
+    }
+    this.logger.log(
+      rtcLog('call.ended', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'hangup',
+        phase: CallEndState.ENDED,
+      }),
+    );
     const otherId = call.callerId === ws.userId ? call.calleeId : call.callerId;
     this.realtime.emitToUser(otherId, {
       type: 'rtc:hangup',
@@ -308,15 +540,44 @@ export class RtcCallService {
       },
     });
     for (const call of calls) {
-      this.clearRingTimeout(call.id);
       if (call.callerId === userId) {
-        await this.endCall(call.id, CallEndState.CANCELLED, 'cancelled');
+        const ended = await this.endCall(
+          call.id,
+          [CallEndState.RINGING],
+          CallEndState.CANCELLED,
+          'cancelled',
+        );
+        if (!ended) continue;
+        this.logger.log(
+          rtcLog('call.cancelled', {
+            callId: call.id,
+            callerId: call.callerId,
+            calleeId: call.calleeId,
+            reason: 'socket_disconnect',
+            phase: CallEndState.CANCELLED,
+          }),
+        );
         this.realtime.emitToUser(call.calleeId, {
           type: 'rtc:cancelled',
           callId: call.id,
         });
       } else {
-        await this.endCall(call.id, CallEndState.MISSED, 'missed');
+        const ended = await this.endCall(
+          call.id,
+          [CallEndState.RINGING],
+          CallEndState.MISSED,
+          'missed',
+        );
+        if (!ended) continue;
+        this.logger.log(
+          rtcLog('call.missed', {
+            callId: call.id,
+            callerId: call.callerId,
+            calleeId: call.calleeId,
+            reason: 'callee_socket_disconnect',
+            phase: CallEndState.MISSED,
+          }),
+        );
         this.realtime.emitToUser(call.callerId, {
           type: 'rtc:missed',
           callId: call.id,
@@ -334,7 +595,22 @@ export class RtcCallService {
       where: { roomId },
     });
     if (call?.state !== CallEndState.CONNECTED) return;
-    await this.endCall(call.id, CallEndState.ENDED, 'hangup');
+    const ended = await this.endCall(
+      call.id,
+      [CallEndState.CONNECTED],
+      CallEndState.ENDED,
+      'hangup',
+    );
+    if (!ended) return;
+    this.logger.log(
+      rtcLog('call.ended', {
+        callId: call.id,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'peer_left',
+        phase: CallEndState.ENDED,
+      }),
+    );
     const frame = { type: 'rtc:hangup', callId: call.id, reason: 'hangup' };
     this.realtime.emitToUser(call.callerId, frame);
     this.realtime.emitToUser(call.calleeId, frame);
@@ -355,7 +631,22 @@ export class RtcCallService {
     ) {
       return;
     }
-    await this.endCall(call.id, CallEndState.ENDED, 'hangup');
+    const ended = await this.endCall(
+      call.id,
+      [CallEndState.CONNECTED, CallEndState.CONNECTING],
+      CallEndState.ENDED,
+      'hangup',
+    );
+    if (!ended) return;
+    this.logger.log(
+      rtcLog('call.ended', {
+        callId: call.id,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'room_finished',
+        phase: CallEndState.ENDED,
+      }),
+    );
     const frame = { type: 'rtc:hangup', callId: call.id, reason: 'hangup' };
     this.realtime.emitToUser(call.callerId, frame);
     this.realtime.emitToUser(call.calleeId, frame);
@@ -473,17 +764,34 @@ export class RtcCallService {
     return count > 0;
   }
 
+  /**
+   * Atomically claims callId out of one of `fromStates` into `state`. Every
+   * caller below used to read-then-write (a findUnique guard, then this
+   * method did an unconditional update) — a TOCTOU race: two concurrent
+   * transitions (e.g. accept() vs. a same-instant cancel()) could each pass
+   * their own stale read and both proceed, with whichever write committed
+   * last silently overwriting the other, while BOTH callers still notified
+   * their users regardless of which write actually won. Returns false if the
+   * claim lost the race — callers must treat that as "someone else already
+   * ended this call" and skip their own logging/notification rather than
+   * sending a second, possibly-contradictory frame.
+   */
   private async endCall(
     callId: string,
+    fromStates: CallEndState[],
     state: CallEndState,
     endReason: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.clearRingTimeout(callId);
     this.clearDurationTimers(callId);
     const now = new Date();
-    const call = await this.prisma.callSession.update({
-      where: { id: callId },
+    const claimed = await this.prisma.callSession.updateMany({
+      where: { id: callId, state: { in: fromStates } },
       data: { state, endedAt: now, endReason },
+    });
+    if (claimed.count !== 1) return false;
+    const call = await this.prisma.callSession.findUniqueOrThrow({
+      where: { id: callId },
     });
     const room = await this.prisma.rtcRoom.update({
       where: { id: call.roomId },
@@ -492,11 +800,16 @@ export class RtcCallService {
     if (room.livekitRoomName) {
       await this.liveKit.deleteRoom(room.livekitRoomName);
     }
+    return true;
   }
 
   private startRingTimeout(callId: string): void {
     const timer = setTimeout(() => {
-      void this.handleRingTimeout(callId);
+      void this.handleRingTimeout(callId).catch((error) => {
+        this.logger.error(
+          rtcErrorLog('call.ring_timeout_failed', error, { callId }),
+        );
+      });
     }, RING_TIMEOUT_SECONDS * 1000);
     this.ringTimers.set(callId, timer);
   }
@@ -514,7 +827,22 @@ export class RtcCallService {
       where: { id: callId },
     });
     if (call?.state !== CallEndState.RINGING) return;
-    await this.endCall(callId, CallEndState.MISSED, 'missed');
+    const ended = await this.endCall(
+      callId,
+      [CallEndState.RINGING],
+      CallEndState.MISSED,
+      'missed',
+    );
+    if (!ended) return;
+    this.logger.log(
+      rtcLog('call.missed', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'ring_timeout',
+        phase: CallEndState.MISSED,
+      }),
+    );
     this.realtime.emitToUser(call.callerId, { type: 'rtc:missed', callId });
     this.realtime.emitToUser(call.calleeId, { type: 'rtc:missed', callId });
     this.notifyMissedCall(call);
@@ -543,8 +871,11 @@ export class RtcCallService {
       });
     })().catch((err: Error) =>
       this.logger.error(
-        { event: 'missed_call_notification_failed', error: err.message },
-        `Missed call notification failed: ${err.message}`,
+        rtcErrorLog('call.missed_notification_failed', err, {
+          callId: call.id,
+          callerId: call.callerId,
+          calleeId: call.calleeId,
+        }),
       ),
     );
   }
@@ -559,13 +890,21 @@ export class RtcCallService {
     if (warnMs > 0) {
       timers.push(
         setTimeout(() => {
-          void this.sendCallLimitWarning(callId);
+          void this.sendCallLimitWarning(callId).catch((error) => {
+            this.logger.error(
+              rtcErrorLog('call.limit_warning_failed', error, { callId }),
+            );
+          });
         }, warnMs),
       );
     }
     timers.push(
       setTimeout(() => {
-        void this.forceCallLimitHangup(callId);
+        void this.forceCallLimitHangup(callId).catch((error) => {
+          this.logger.error(
+            rtcErrorLog('call.limit_hangup_failed', error, { callId }),
+          );
+        });
       }, totalMs),
     );
     this.durationTimers.set(callId, timers);
@@ -590,6 +929,15 @@ export class RtcCallService {
     };
     this.realtime.emitToUser(call.callerId, frame);
     this.realtime.emitToUser(call.calleeId, frame);
+    this.logger.log(
+      rtcLog('call.limit_warning', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        secondsRemaining: CALL_LIMIT_WARNING_LEAD_SECONDS,
+        phase: call.state,
+      }),
+    );
   }
 
   private async forceCallLimitHangup(callId: string): Promise<void> {
@@ -597,13 +945,35 @@ export class RtcCallService {
       where: { id: callId },
     });
     if (call?.state !== CallEndState.CONNECTED) return;
-    await this.endCall(callId, CallEndState.ENDED, 'tier_limit');
+    const ended = await this.endCall(
+      callId,
+      [CallEndState.CONNECTED],
+      CallEndState.ENDED,
+      'tier_limit',
+    );
+    if (!ended) return;
+    this.logger.log(
+      rtcLog('call.ended', {
+        callId,
+        callerId: call.callerId,
+        calleeId: call.calleeId,
+        reason: 'tier_limit',
+        phase: CallEndState.ENDED,
+      }),
+    );
     const frame = { type: 'rtc:hangup', callId, reason: 'tier_limit' };
     this.realtime.emitToUser(call.callerId, frame);
     this.realtime.emitToUser(call.calleeId, frame);
   }
 
   private sendError(ws: AuthWs, reason: string, callId?: string): void {
+    this.logger.warn(
+      rtcLog('call.error_sent', {
+        callId,
+        userId: ws.userId,
+        reason,
+      }),
+    );
     ws.send(
       JSON.stringify({
         type: 'rtc:error',

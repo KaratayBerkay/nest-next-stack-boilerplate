@@ -26,7 +26,11 @@ export function formatCurrency(cents: number, currency: CurrencyCode): string {
 /** A recurring plan price — same formatting as formatCurrency, plus the
  * "/mo" cadence and a "Free" special case. Not for one-time amounts like
  * invoice line items; use formatCurrency for those. */
-export function formatPrice(cents: number, currency: CurrencyCode): string {
-  if (cents === 0) return "Free";
+export function formatPrice(
+  cents: number,
+  currency: CurrencyCode,
+  freeLabel: string,
+): string {
+  if (cents === 0) return freeLabel;
   return `${formatCurrency(cents, currency)}/mo`;
 }

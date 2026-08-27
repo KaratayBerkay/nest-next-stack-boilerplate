@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import { type Tier } from "@/lib/tier";
 import { cn } from "@/lib/cn";
 import type { ClassNameProps } from "@/types/ui/ClassName-types";
@@ -35,13 +36,19 @@ export function handleAddressSave(
   data: Partial<BillingAddress>,
   mutation: ReturnType<typeof useUpsertBillingAddress>,
   onSaved: () => void,
+  toast: ReturnType<typeof useToast>["toast"],
+  failedMessage: string,
 ) {
-  mutation.mutate(data, { onSuccess: () => onSaved() });
+  mutation.mutate(data, {
+    onSuccess: () => onSaved(),
+    onError: () => toast({ title: failedMessage, variant: "destructive" }),
+  });
 }
 
 export function FreePageView({ className }: ClassNameProps) {
   const { user, loading } = useAuth();
   const t = useMessages("settings");
+  const { toast } = useToast();
   const [isEditingAddress, setIsEditingAddress] = useState(false);
   const upsertAddress = useUpsertBillingAddress();
 
@@ -107,8 +114,12 @@ export function FreePageView({ className }: ClassNameProps) {
                     address={address}
                     isSaving={upsertAddress.isPending}
                     onSave={(data) =>
-                      handleAddressSave(data, upsertAddress, () =>
-                        setIsEditingAddress(false),
+                      handleAddressSave(
+                        data,
+                        upsertAddress,
+                        () => setIsEditingAddress(false),
+                        toast,
+                        t.billingAddressSaveFailed,
                       )
                     }
                     onCancel={() => setIsEditingAddress(false)}

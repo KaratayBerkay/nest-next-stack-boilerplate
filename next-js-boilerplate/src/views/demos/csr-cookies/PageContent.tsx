@@ -10,7 +10,7 @@ export default function CsrCookiesPage() {
   useEffect(() => {
     getMeRawServer()
       .then((data) => {
-        setSession(data.authed ? data.session ?? null : null);
+        setSession("accessToken" in data ? data.accessToken : null);
         setLoading(false);
       })
       .catch(() => {

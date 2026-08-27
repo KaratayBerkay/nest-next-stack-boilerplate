@@ -14,6 +14,7 @@ export function SecurityMfaWizard({
   backupCodes,
   codesSaved,
   error,
+  submitting,
   onVerifyCodeChange,
   onCodesSavedChange,
   onContinueToVerify,
@@ -55,12 +56,18 @@ export function SecurityMfaWizard({
           {error && <p className="text-error text-sm">{error}</p>}
           <Button
             onClick={onVerify}
-            disabled={verifyCode.length < 6}
+            disabled={verifyCode.length < 6 || submitting}
+            loading={submitting}
             className="w-full"
           >
             {t.securityVerify}
           </Button>
-          <Button variant="link" onClick={onRegenerateQr} className="w-full">
+          <Button
+            variant="link"
+            onClick={onRegenerateQr}
+            disabled={submitting}
+            className="w-full"
+          >
             {t.securityRegenerateQr}
           </Button>
         </div>

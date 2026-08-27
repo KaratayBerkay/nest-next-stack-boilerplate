@@ -2,6 +2,7 @@ import type { ChangeEvent, KeyboardEvent, RefObject } from "react";
 
 export interface SidebarCloseButtonProps {
   onClick: () => void;
+  label: string;
 }
 
 export interface RoomButtonProps {

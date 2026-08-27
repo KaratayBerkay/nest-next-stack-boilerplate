@@ -17,21 +17,31 @@ import { join } from 'node:path';
 // process.cwd()-relative resolution is safe in every environment.
 //
 // A field counts as a uuid field iff: (a) it's the model's own `@id` field,
-// or (b) it's a relation's FK scalar whose `references` is exactly the
-// target model's own `@id` field name.
+// or (b) it's a relation's FK scalar that is itself `@db.Uuid`-typed AND
+// whose `references` is exactly the target model's own `@id` field name.
 //
 // That target-aware check matters: `RoomParticipant.roomId` references
 // `Room.id` (a real uuid FK — should be encrypted), but `RoomMessage.roomId`
 // references `Room.slug` (a routing slug like "general"/"vip-..." — must
-// never be touched, `messaging.controller.ts`'s `rooms/:roomId/messages`
+// never be touched, `messaging.controller.ts`'s `rooms/:roomSlug/messages`
 // route depends on it staying a plain string). Same field name, different
 // models, different answers — so a single flat name set can't represent both
 // correctly. `fieldsByModel` keeps full per-model precision (used by the
 // GraphQL schema transformer, which has type context via `mapSchema`).
+//
 // `globalSafeNames` is the flattened set used by REST/WS, where there's no
-// type context to disambiguate with — any name that qualifies in one model
-// but not another (currently just `roomId`) is conservatively dropped from
-// it rather than risk corrupting routing.
+// type context to disambiguate with. The `@db.Uuid` check is what lets it
+// still be precise: `RoomMessage.roomId` isn't `@db.Uuid` (it's a plain-text
+// FK to a slug column), so it never participates in the qualify/disqualify
+// vote for the name "roomId" at all — it's simply not uuid-shaped, not an
+// ambiguous case. That leaves every *other* `roomId` (RtcRoom-backed:
+// RoomParticipant, CallSession, Meeting, LiveStream, RtcReport,
+// RtcRecording, RtcChatMessage — all real `@db.Uuid` FKs to their own
+// RtcRoom/Room, all genuinely wanting encryption) free to qualify globally
+// with nothing left to conflict with. A conflict between two *both*
+// `@db.Uuid`-typed FKs that disagree on target field would still be a real
+// ambiguity and still gets conservatively dropped — see the "genuinely
+// ambiguous" test below.
 
 // Payload/param keys that carry an id value under a name that doesn't match
 // any real Prisma field — found by grepping actual call sites, not guessed:
@@ -56,6 +66,7 @@ interface ParsedField {
   name: string;
   type: string;
   isId: boolean;
+  isUuidTyped: boolean;
   relationFields?: string[];
   relationReferences?: string[];
 }
@@ -105,6 +116,10 @@ function parseSchema(schemaText: string): ParsedModel[] {
         name,
         type,
         isId: attrs.includes('id'),
+        // Matches `@db.Uuid` specifically, not any `@db.*` native-type
+        // annotation (`@db.Text`, `@db.Timestamptz`, ...) — those say
+        // nothing about whether the column is uuid-shaped.
+        isUuidTyped: /@db\.Uuid\b/.test(line),
         relationFields,
         relationReferences,
       });
@@ -135,6 +150,14 @@ function classify(models: ParsedModel[]): {
       set.add(ownId);
       qualifiedNames.add(ownId);
     }
+    // Scalar field name -> is it declared @db.Uuid? A `@relation(...)` line
+    // (e.g. `author User @relation(fields: [authorId], references: [id])`)
+    // never carries `@db.Uuid` itself — that annotation lives on the
+    // separate scalar FK column (`authorId String @db.Uuid`), a sibling
+    // field in the same model. Looked up by name below, not off `f`.
+    const uuidTypedFieldNames = new Set(
+      m.fields.filter((f) => f.isUuidTyped).map((f) => f.name),
+    );
     for (const f of m.fields) {
       if (!f.relationFields || !f.relationReferences) continue;
       const targetIdField = idFieldByModel.get(f.type);
@@ -143,6 +166,13 @@ function classify(models: ParsedModel[]): {
         f.relationReferences.length === 1 &&
         f.relationReferences[0] === targetIdField;
       for (const fkName of f.relationFields) {
+        // Not a uuid column at all (e.g. RoomMessage.roomId, a plain-text FK
+        // to Room.slug) — it can't be "the same id field, wrong target" the
+        // way two @db.Uuid FKs could; it's simply a different kind of data
+        // that happens to share a name. Skip it so it can't veto a sibling
+        // model's genuinely-uuid-typed field of the same name (see this
+        // file's top-of-file doc comment on `roomId`).
+        if (!uuidTypedFieldNames.has(fkName)) continue;
         if (qualifies) {
           set.add(fkName);
           qualifiedNames.add(fkName);

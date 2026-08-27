@@ -22,11 +22,7 @@ export function useApiKeyMutations(
   const { createApiKey, revokeApiKey } = useApiKeyActions();
 
   const createMutation = useMutation({
-    mutationFn: async (data: {
-      name: string;
-      expiresIn: string;
-      permissions: string[];
-    }) => {
+    mutationFn: async (data: { name: string; expiresIn: string }) => {
       const expiresInDays =
         data.expiresIn === "never" ? null : Number(data.expiresIn);
       return createApiKey(data.name, expiresInDays);
@@ -67,7 +63,6 @@ export function useApiKeyMutations(
       defaultValues: {
         name: "",
         expiresIn: "30",
-        permissions: [] as string[],
       },
       validators: {
         onSubmitAsync: async ({ value }) => {

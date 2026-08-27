@@ -49,6 +49,7 @@ const DEFAULT_LABELS: FileUploadLabels = {
   uploading: "Uploading...",
   changePhoto: "Change",
   removePhoto: "Remove photo",
+  maxFilesExceeded: (max: number) => `You can upload up to ${max} file(s)`,
 };
 
 export function FileUpload({
@@ -62,6 +63,7 @@ export function FileUpload({
   className,
   disabled,
   labels: labelsProp,
+  hideFileList,
 }: FileUploadProps) {
   const labels = useMemo(
     () => ({ ...DEFAULT_LABELS, ...labelsProp }),
@@ -73,12 +75,27 @@ export function FileUpload({
   const autoId = useId();
   const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
+  // Ids removed while their upload was still in flight — handleUpload's own
+  // loop state (see its comment) can't otherwise know about a removal that
+  // happened mid-batch, so without this it re-inserts the "removed" file
+  // once that upload settles.
+  const removedWhileUploadingRef = useRef<Set<string>>(new Set());
 
   const addFiles = useCallback(
     async (incoming: File[]) => {
       if (disabled) return;
       const maxFilesLimit = maxFiles ?? Infinity;
       const remaining = maxFilesLimit - files.length;
+      // Previously silently dropped whatever didn't fit — both here (already
+      // at the limit) and via the slice below (a selection that only
+      // partially fits) — with no indication to the user that anything was
+      // left out.
+      if (incoming.length > remaining && maxFiles) {
+        toast({
+          title: labels.maxFilesExceeded!(maxFiles),
+          variant: "destructive",
+        });
+      }
       if (remaining <= 0) return;
 
       const newFiles: UploadFile[] = [];
@@ -207,35 +224,48 @@ export function FileUpload({
   const handleUpload = useCallback(async () => {
     if (!onUpload || uploading) return;
     setUploading(true);
-    const pending = files.filter((f) => f.status === "pending");
+    // `current` is threaded through the whole loop and never re-derived
+    // from the `files` closure after the first line — regression: rebuilding
+    // each file's update from that stale closure meant uploading a 2nd file
+    // in the same batch reset the 1st file's already-"done" status back to
+    // "pending" (each iteration overwrote the others' progress with the
+    // batch's original, pre-upload snapshot).
+    let current = files;
+    const pending = current.filter((f) => f.status === "pending");
     for (const f of pending) {
-      const uploadingFiles = files.map((x) =>
+      current = current.map((x) =>
         x.id === f.id ? { ...x, status: "uploading" as const } : x,
       );
-      onFilesChange(uploadingFiles);
+      onFilesChange(current);
       try {
         await onUpload(f.file, (pct: number) => {
-          onFilesChange(
-            uploadingFiles.map((x) =>
-              x.id === f.id ? { ...x, progress: pct } : x,
-            ),
+          current = current.map((x) =>
+            x.id === f.id ? { ...x, progress: pct } : x,
           );
+          onFilesChange(current);
         });
-        onFilesChange(
-          uploadingFiles.map((x) =>
-            x.id === f.id
-              ? { ...x, status: "done" as const, progress: 100 }
-              : x,
-          ),
+        // The user may have removed this exact file while its upload was
+        // still running — don't resurrect it into the list once it settles.
+        if (removedWhileUploadingRef.current.delete(f.id)) continue;
+        current = current.map((x) =>
+          x.id === f.id ? { ...x, status: "done" as const, progress: 100 } : x,
         );
-      } catch {
-        onFilesChange(
-          uploadingFiles.map((x) =>
-            x.id === f.id
-              ? { ...x, status: "error" as const, error: labels.uploadFailed }
-              : x,
-          ),
+        onFilesChange(current);
+      } catch (err) {
+        if (removedWhileUploadingRef.current.delete(f.id)) continue;
+        // xhrUpload rejects with a specific reason (network error, server
+        // message, 413, etc.) — surfacing only the generic "Upload failed"
+        // label discarded that regardless of which one it actually was.
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : labels.uploadFailed;
+        current = current.map((x) =>
+          x.id === f.id
+            ? { ...x, status: "error" as const, error: message }
+            : x,
         );
+        onFilesChange(current);
       }
     }
     setUploading(false);
@@ -243,6 +273,13 @@ export function FileUpload({
 
   const handleRemove = useCallback(
     (id: string) => {
+      const removed = files.find((f) => f.id === id);
+      if (removed?.status === "uploading") {
+        // xhr-upload.ts has no abort() — the in-flight request keeps
+        // running regardless — but flagging it here stops handleUpload's
+        // loop from re-inserting this file once that request settles.
+        removedWhileUploadingRef.current.add(id);
+      }
       onFilesChange(files.filter((f) => f.id !== id));
     },
     [files, onFilesChange],
@@ -312,7 +349,7 @@ export function FileUpload({
         )}
       </div>
 
-      {files.length > 0 && (
+      {!hideFileList && files.length > 0 && (
         <div className="flex flex-col gap-2">
           {files.map((f) => (
             <div

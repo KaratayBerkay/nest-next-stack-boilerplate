@@ -49,17 +49,11 @@ export function ChatView({
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
   const [galleryOpen, setGalleryOpen] = useState(false);
+  // FreePageView keys <ChatView> by selectedUser.id, so switching peers
+  // remounts this whole component and every piece of state below —
+  // including replyTarget, input, and the upload state further down —
+  // starts fresh rather than leaking into the new conversation.
   const [replyTarget, setReplyTarget] = useState<ReplyPreview | null>(null);
-  // ChatView isn't remounted on peer switch (no key={selectedUser.id} at the
-  // call site), so a reply started in one conversation would otherwise
-  // linger into the next — reset during render (React's recommended
-  // adjust-state-on-prop-change pattern) rather than in an effect, since an
-  // unconditional setState in an effect causes an extra render pass.
-  const [replyTargetPeerId, setReplyTargetPeerId] = useState(selectedUser.id);
-  if (selectedUser.id !== replyTargetPeerId) {
-    setReplyTargetPeerId(selectedUser.id);
-    setReplyTarget(null);
-  }
   const {
     items: uploadItems,
     startUploads,
@@ -112,6 +106,9 @@ export function ChatView({
         setInput,
         setMessageError,
         scrollToBottom,
+        t.messageTooLong,
+        t.messageEmpty,
+        t.sendMessageFailed,
         undefined,
         replyTarget,
         handleCancelReply,
@@ -121,6 +118,9 @@ export function ChatView({
       input,
       sendMessage,
       scrollToBottom,
+      t.messageTooLong,
+      t.messageEmpty,
+      t.sendMessageFailed,
       replyTarget,
       handleCancelReply,
     ],
@@ -134,6 +134,9 @@ export function ChatView({
       setInput,
       setMessageError,
       scrollToBottom,
+      t.messageTooLong,
+      t.messageEmpty,
+      t.sendMessageFailed,
       doneAttachments(),
       replyTarget,
       handleCancelReply,
@@ -144,6 +147,9 @@ export function ChatView({
     input,
     sendMessage,
     scrollToBottom,
+    t.messageTooLong,
+    t.messageEmpty,
+    t.sendMessageFailed,
     doneAttachments,
     clearUploads,
     replyTarget,
@@ -233,6 +239,7 @@ export function ChatView({
           failedToLoad: t.failedToLoad,
           noMessages: t.noMessages,
           decryptionFailed: t.decryptionFailed,
+          today: t.today,
         }}
       />
 
@@ -260,6 +267,9 @@ export function ChatView({
             connectionState={connectionState}
             inputPlaceholder={t.inputPlaceholder}
             connectingLabel={t.connecting}
+            attachFileLabel={t.attachFile}
+            insertEmojiLabel={t.openEmojiPicker}
+            sendLabel={t.send}
             recipientId={selectedUser.id}
             onTypingStart={sendTypingStart}
             onTypingStop={sendTypingStop}

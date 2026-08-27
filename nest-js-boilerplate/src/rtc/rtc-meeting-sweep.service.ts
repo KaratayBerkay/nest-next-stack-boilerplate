@@ -6,6 +6,7 @@ import {
   MEETING_LIMIT_WARNING_LEAD_SECONDS,
   RtcMeetingService,
 } from './rtc-meeting.service';
+import { rtcErrorLog } from './rtc-logger';
 
 const SWEEP_INTERVAL_MS = 30_000;
 
@@ -39,14 +40,26 @@ export class RtcMeetingSweepService {
 
   @Interval(SWEEP_INTERVAL_MS)
   async sweep(): Promise<void> {
-    const rooms = await this.prisma.rtcRoom.findMany({
-      where: {
-        kind: RtcRoomKind.MEETING,
-        state: RtcRoomState.ACTIVE,
-        startedAt: { not: null },
-      },
-      include: { meeting: true },
-    });
+    const loadRooms = () =>
+      this.prisma.rtcRoom.findMany({
+        where: {
+          kind: RtcRoomKind.MEETING,
+          state: RtcRoomState.ACTIVE,
+          startedAt: { not: null },
+        },
+        include: { meeting: true },
+      });
+    let rooms: Awaited<ReturnType<typeof loadRooms>>;
+    try {
+      rooms = await loadRooms();
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('meeting.expiry_sweep_failed', error, {
+          reason: 'room_scan_failed',
+        }),
+      );
+      return;
+    }
 
     const now = Date.now();
     for (const room of rooms) {
@@ -61,8 +74,10 @@ export class RtcMeetingSweepService {
           await this.meetings.forceEndExpiredMeeting(room.meeting.slug);
         } catch (err) {
           this.logger.error(
-            'Failed to force-end expired meeting',
-            err as Error,
+            rtcErrorLog('meeting.expiry_sweep_failed', err, {
+              slug: room.meeting.slug,
+              roomId: room.id,
+            }),
           );
         }
         continue;

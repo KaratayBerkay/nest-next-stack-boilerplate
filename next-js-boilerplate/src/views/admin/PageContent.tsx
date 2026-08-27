@@ -8,6 +8,8 @@ import { UserTierRow } from "./UserTierRow";
 import {
   onQueryChange,
   setTier,
+  setUserStatus,
+  resetUserMfa,
   type UserResult,
 } from "@/lib/admin/admin-utils";
 import { PageInfoButton } from "@/components/ui/page-info";
@@ -27,8 +29,13 @@ export default function PageContent({ className }: ClassNameProps) {
     text: string;
   } | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const requestId = useRef(0);
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+  // resetMfa is restricted to SUPERADMIN on the backend (@Roles) — hidden
+  // rather than shown-then-denied for a plain ADMIN, unlike tier/status
+  // changes which only sometimes fail depending on the specific target.
+  const canResetMfa = user?.role === "SUPERADMIN";
 
   if (!isAdmin) {
     return (
@@ -51,7 +58,14 @@ export default function PageContent({ className }: ClassNameProps) {
         type="text"
         value={query}
         onChange={(e) =>
-          onQueryChange(e, setQuery, setResults, setSearching, searchTimer)
+          onQueryChange(
+            e,
+            setQuery,
+            setResults,
+            setSearching,
+            searchTimer,
+            requestId,
+          )
         }
         placeholder={t.searchPlaceholder}
         className="text-xs"
@@ -82,7 +96,34 @@ export default function PageContent({ className }: ClassNameProps) {
           <UserTierRow
             key={u.id}
             user={u}
-            onSetTier={(userId, tier) => setTier(userId, tier, setStatusMsg)}
+            onSetTier={(userId, tier) =>
+              setTier(
+                userId,
+                tier,
+                setStatusMsg,
+                (newTier) =>
+                  setResults((prev) =>
+                    prev.map((r) =>
+                      r.id === userId ? { ...r, subscriptionTier: newTier } : r,
+                    ),
+                  ),
+                t,
+              )
+            }
+            onSetStatus={(userId, status) =>
+              setUserStatus(
+                userId,
+                status,
+                setStatusMsg,
+                () =>
+                  setResults((prev) =>
+                    prev.map((r) => (r.id === userId ? { ...r, status } : r)),
+                  ),
+                t,
+              )
+            }
+            onResetMfa={(userId) => resetUserMfa(userId, setStatusMsg, t)}
+            canResetMfa={canResetMfa}
           />
         ))}
       </div>

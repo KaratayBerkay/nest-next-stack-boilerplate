@@ -22,6 +22,10 @@
       "mfaResendCode": "Kodu yeniden gönder",
       "mfaResendCooldown": "Yeniden göndermek için",
       "mfaResending": "Gönderiliyor...",
+      "mfaBackupCodeLabel": "Yedek kod",
+      "mfaBackupCodePlaceholder": "Yedek kodunuzu girin",
+      "mfaUseBackupCode": "Bunun yerine yedek kod kullan",
+      "mfaUseCode": "Bunun yerine doğrulama kodu kullan",
       "trustDevice": "Bu cihaza güven",
       "useDifferentAccount": "Farklı bir hesap kullan"
     },

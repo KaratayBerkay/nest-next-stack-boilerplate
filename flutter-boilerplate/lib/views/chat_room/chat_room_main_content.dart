@@ -10,7 +10,6 @@ import 'chat_room_message_list.dart';
 import 'chat_room_sub_components.dart';
 
 class ChatRoomMainContent extends StatelessWidget {
-  final bool useNativeControls;
   final String room;
   final Map<String, int> roomCounts;
   final String connectionState;
@@ -36,7 +35,6 @@ class ChatRoomMainContent extends StatelessWidget {
 
   const ChatRoomMainContent({
     super.key,
-    this.useNativeControls = false,
     required this.room,
     this.roomCounts = const {},
     this.connectionState = 'online',
@@ -137,7 +135,6 @@ class ChatRoomMainContent extends StatelessWidget {
                 child: Row(
                   children: [
                     HamburgerButton(
-                      useNativeControls: useNativeControls,
                       room: room,
                       countLabel: _placeholder(t),
                       onClick: () => onSetSidebarOpen(true),
@@ -220,7 +217,6 @@ class ChatRoomMainContent extends StatelessWidget {
                         ),
                         Expanded(
                           child: MessageInput(
-                            useNativeControls: useNativeControls,
                             controller: messageController,
                             placeholder: _placeholder(t),
                             disabled: connectionState != 'online',
@@ -229,7 +225,6 @@ class ChatRoomMainContent extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         SendButton(
-                          useNativeControls: useNativeControls,
                           onClick: onSend,
                           disabled: connectionState != 'online' ||
                               (messageController.text.trim().isEmpty &&

@@ -110,6 +110,7 @@
     "dataloader": "^2.2.3",
     "express-session": "^1.19.0",
     "fastify": "^5.8.5",
+    "firebase-admin": "^14.3.0",
     "graphql": "^16.14.2",
     "graphql-query-complexity": "^1.1.1",
     "graphql-scalars": "^1.25.0",

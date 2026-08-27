@@ -9,6 +9,9 @@ export interface ChatInputBarProps {
   connectionState: string;
   inputPlaceholder: string;
   connectingLabel: string;
+  attachFileLabel: string;
+  insertEmojiLabel: string;
+  sendLabel: string;
   recipientId: string;
   onTypingStart: (recipientId: string) => void;
   onTypingStop: (recipientId: string) => void;

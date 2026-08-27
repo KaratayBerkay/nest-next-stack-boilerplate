@@ -33,5 +33,12 @@
   "testCards": "Test cards:",
   "month": "Month",
   "year": "Year",
-  "paymentFailedGeneric": "Payment failed. Please try again."
+  "paymentFailedGeneric": "Payment failed. Please try again.",
+  "initializingPayment": "Initializing payment...",
+  "initializePaymentFailed": "Failed to initialize payment",
+  "validationFailed": "Validation failed",
+  "noPaymentMethodReturned": "No payment method returned",
+  "subscriptionFailed": "Subscription failed",
+  "upgradeToTier": "Upgrade to {tier}",
+  "changeToTier": "Change plan to {tier}"
 }

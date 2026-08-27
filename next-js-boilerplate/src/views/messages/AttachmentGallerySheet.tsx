@@ -154,7 +154,7 @@ export function AttachmentGallerySheet({
                         className="text-muted shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
                       />
                       {group.isToday
-                        ? "Today"
+                        ? t.today
                         : formatDateByPreference(group.createdAt, dateDisplay)}
                     </span>
                     <span className="text-muted text-xs font-normal">

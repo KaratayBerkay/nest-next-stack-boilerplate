@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { IconMoodSmile } from "@tabler/icons-react";
 import { usePostActions } from "@/api/client/posts/actions";
 import {
@@ -16,7 +17,7 @@ import type { ReactionButtonProps } from "@/types/feed/ReactionButton-types";
 
 const REACTION_TYPES = ["LIKE", "LOVE", "LAUGH", "WOW"] as const;
 
-const EMOJIS: Record<string, string> = {
+export const EMOJIS: Record<string, string> = {
   LIKE: "👍",
   LOVE: "❤️",
   LAUGH: "😂",
@@ -36,6 +37,7 @@ async function handleReactionInline(
     postId?: string;
     commentId?: string;
   }) => Promise<void>,
+  reactFailedMessage: string,
 ) {
   if (submitting) return;
   setSubmitting(true);
@@ -47,7 +49,7 @@ async function handleReactionInline(
     });
     onReactionChange?.();
   } catch {
-    toast({ title: "Failed to react", variant: "destructive" });
+    toast({ title: reactFailedMessage, variant: "destructive" });
   } finally {
     setSubmitting(false);
   }
@@ -62,6 +64,7 @@ function ReactionPicker({
 }: ReactionButtonProps) {
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const t = useMessages("posts");
   const { toggleReaction } = usePostActions();
   const { close } = usePopover();
 
@@ -85,6 +88,7 @@ function ReactionPicker({
                 onReactionChange,
                 toast,
                 toggleReaction,
+                t.reactFailed,
               );
               close();
             }}
@@ -112,13 +116,14 @@ export function ReactionInline({
   currentUserId,
   onReactionChange,
 }: ReactionButtonProps) {
+  const t = useMessages("posts");
   const total = reactions.length;
   const userReacted = reactions.some((r) => r.userId === currentUserId);
 
   return (
     <Popover>
       <PopoverTrigger
-        aria-label="React to this post"
+        aria-label={t.reactToPost}
         className={cn(
           "gap-1 rounded-lg px-1.5 py-1 text-[11px] font-normal transition-colors",
           userReacted ? "text-brand" : "text-muted hover:text-brand",

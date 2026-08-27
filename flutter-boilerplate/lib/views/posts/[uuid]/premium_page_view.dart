@@ -32,7 +32,7 @@ class PremiumPostDetailPage extends ConsumerWidget {
         body: Center(child: Text('Error: $e')),
       ),
       data: (post) {
-        final isAuthor = user?.id == post.id;
+        final isAuthor = user?.id == post.authorId;
         return PostDetailBaseView(
           post: post,
           lang: lang,

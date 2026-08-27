@@ -4,6 +4,7 @@ import { Notification } from '../@generated/notification/notification.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { deepEncryptIds } from '../common/id-codec/id-codec.util';
 import { NotificationService } from './notification.service';
 import { NotificationsPage } from './models/notifications-page.model';
 
@@ -19,8 +20,7 @@ export class NotificationResolver {
     @Args('take', { type: () => Int, nullable: true }) take?: number,
   ) {
     // findByUser over-fetches by one (see notification.service.ts) so the
-    // caller can tell "more exist" apart from "that was the last page" —
-    // mirrors NotificationController.list's own slicing exactly.
+    // caller can tell "more exist" apart from "that was the last page".
     const pageSize = Math.min(Math.max(take ?? 20, 1), 100);
     const raw = await this.notificationService.findByUser(
       user.userId,
@@ -28,7 +28,31 @@ export class NotificationResolver {
       pageSize,
     );
     const hasMore = raw.length > pageSize;
-    return { items: hasMore ? raw.slice(0, pageSize) : raw, hasMore };
+    const items = hasMore ? raw.slice(0, pageSize) : raw;
+    // Same hideAvatar redaction used everywhere else an actor's avatar is
+    // exposed (post/friends/messaging resolvers) — this query was the one
+    // place it was missing, leaking a hidden avatar to any client that
+    // selects actor.avatarUrl.
+    //
+    // `payload` is a raw JSON scalar (GraphQLJSON) — the schema transformer
+    // only encrypts a field by its own name (see encryptFieldIfId), it can't
+    // see inside an opaque JSON blob, so ids embedded in it (rtc-call
+    // .service.ts's `callId`, comment.service.ts's `postId`/`commentId`,
+    // messaging-dm.service.ts's `senderId`, ...) would otherwise reach the
+    // client as raw database uuids. Same content the WS push already
+    // protects for free via RealtimeGateway's socket-level encrypt — this is
+    // the GraphQL read path for the same data, so it needs its own pass.
+    return {
+      items: items.map((n) => ({
+        ...n,
+        payload: deepEncryptIds(n.payload ?? {}),
+        actor:
+          n.actor && n.actor.id !== user.userId && n.actor.hideAvatar
+            ? { ...n.actor, avatarUrl: null }
+            : n.actor,
+      })),
+      hasMore,
+    };
   }
 
   @Query(() => Int)

@@ -13,9 +13,13 @@ export function EditableTableRow({
   form,
   field,
   index: i,
+  rowKey,
   status,
   rowSchemas,
   onSaveRow,
+  onDuplicateRow,
+  onMoveRow,
+  onRemoveRow,
   t,
   simulateError,
   toast,
@@ -126,8 +130,12 @@ export function EditableTableRow({
         <EditableTableRowActions
           field={field}
           index={i}
+          rowKey={rowKey}
           status={status}
           onSaveRow={onSaveRow}
+          onDuplicateRow={onDuplicateRow}
+          onMoveRow={onMoveRow}
+          onRemoveRow={onRemoveRow}
           t={t}
         />
       </td>

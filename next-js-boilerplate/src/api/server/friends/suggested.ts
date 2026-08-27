@@ -7,6 +7,7 @@ export interface SuggestedFriend {
   id: string;
   name?: string;
   email: string;
+  avatarUrl?: string;
   mutualFriends: number;
 }
 
@@ -17,7 +18,7 @@ export async function fetchSuggestedFriendsServer(): Promise<
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
     body: JSON.stringify({
-      query: `query { suggestedFriends { id name email mutualFriends } }`,
+      query: `query { suggestedFriends { id name email avatarUrl mutualFriends } }`,
     }),
   });
   if (res.ok) {

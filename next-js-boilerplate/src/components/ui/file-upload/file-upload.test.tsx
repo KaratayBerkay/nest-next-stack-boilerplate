@@ -8,6 +8,9 @@ const toastMock = vi.fn();
 vi.mock("@/components/ui/toast/use-toast", () => ({
   useToast: () => ({ toast: toastMock }),
 }));
+vi.mock("@/hooks/useComponentVariant", () => ({
+  useComponentVariant: () => "default",
+}));
 
 function createMockFile(name: string, size: number, type: string): File {
   const blob = new Blob(["x".repeat(size)], { type });
@@ -84,7 +87,7 @@ describe("FileUpload", () => {
     expect(added[0].status).toBe("pending");
   });
 
-  it("respects maxFiles limit", () => {
+  it("respects maxFiles limit and warns about the files it dropped", () => {
     const { onFilesChange, fileInput } = renderFileUpload({
       maxFiles: 2,
     });
@@ -96,6 +99,110 @@ describe("FileUpload", () => {
     expect(onFilesChange).toHaveBeenCalledOnce();
     const added = onFilesChange.mock.calls[0][0] as UploadFile[];
     expect(added).toHaveLength(2);
+    expect(toastMock).toHaveBeenCalledOnce();
+    expect(toastMock.mock.calls[0][0].variant).toBe("destructive");
+  });
+
+  it("warns instead of silently no-op'ing when already at the maxFiles limit", () => {
+    const files: UploadFile[] = [
+      {
+        id: "f1",
+        file: createMockFile("a.txt", 100, "text/plain"),
+        progress: 100,
+        status: "done",
+      },
+      {
+        id: "f2",
+        file: createMockFile("b.txt", 100, "text/plain"),
+        progress: 100,
+        status: "done",
+      },
+    ];
+    const onFilesChange = vi.fn();
+    const utils = render(
+      <FileUpload files={files} onFilesChange={onFilesChange} maxFiles={2} />,
+    );
+    const fileInput = utils.container.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+
+    triggerFileSelect(fileInput, [createMockFile("c.txt", 100, "text/plain")]);
+
+    expect(onFilesChange).not.toHaveBeenCalled();
+    expect(toastMock).toHaveBeenCalledOnce();
+    expect(toastMock.mock.calls[0][0].variant).toBe("destructive");
+  });
+
+  it("does not warn when every selected file fits within the remaining slots", () => {
+    const { onFilesChange, fileInput } = renderFileUpload({
+      maxFiles: 3,
+    });
+    triggerFileSelect(fileInput, [
+      createMockFile("a.txt", 100, "text/plain"),
+      createMockFile("b.txt", 100, "text/plain"),
+    ]);
+    expect(onFilesChange).toHaveBeenCalledOnce();
+    expect(toastMock).not.toHaveBeenCalled();
+  });
+
+  it("surfaces the upload rejection's own message instead of a generic one", async () => {
+    const pending: UploadFile[] = [
+      {
+        id: "f1",
+        file: createMockFile("a.txt", 10, "text/plain"),
+        progress: 0,
+        status: "pending",
+      },
+    ];
+    const onFilesChange = vi.fn();
+    const onUpload = vi
+      .fn()
+      .mockRejectedValue(new Error("Network error during upload"));
+
+    render(
+      <FileUpload
+        files={pending}
+        onFilesChange={onFilesChange}
+        onUpload={onUpload}
+      />,
+    );
+    fireEvent.click(screen.getByText("Upload 1 file(s)"));
+
+    await vi.waitFor(() => {
+      const last = onFilesChange.mock.calls.at(-1)![0] as UploadFile[];
+      expect(last[0].status).toBe("error");
+    });
+    const last = onFilesChange.mock.calls.at(-1)![0] as UploadFile[];
+    expect(last[0].error).toBe("Network error during upload");
+  });
+
+  it("falls back to the generic label for a non-Error rejection", async () => {
+    const pending: UploadFile[] = [
+      {
+        id: "f1",
+        file: createMockFile("a.txt", 10, "text/plain"),
+        progress: 0,
+        status: "pending",
+      },
+    ];
+    const onFilesChange = vi.fn();
+    const onUpload = vi.fn().mockRejectedValue("plain string rejection");
+
+    render(
+      <FileUpload
+        files={pending}
+        onFilesChange={onFilesChange}
+        onUpload={onUpload}
+      />,
+    );
+    fireEvent.click(screen.getByText("Upload 1 file(s)"));
+
+    await vi.waitFor(() => {
+      const last = onFilesChange.mock.calls.at(-1)![0] as UploadFile[];
+      expect(last[0].status).toBe("error");
+    });
+    const last = onFilesChange.mock.calls.at(-1)![0] as UploadFile[];
+    expect(last[0].error).toBe("Upload failed");
   });
 
   it("renders existing files", () => {

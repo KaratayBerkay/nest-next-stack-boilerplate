@@ -7,6 +7,7 @@ import {
   WebhookReceiver,
   type VideoGrant,
 } from 'livekit-server-sdk';
+import { rtcErrorLog } from './rtc-logger';
 
 interface MintTokenOptions {
   identity: string;
@@ -84,13 +85,23 @@ export class LiveKitService {
       // Already gone (e.g. LiveKit's own empty-room timeout beat us to it)
       // — not an error from the caller's point of view.
       this.logger.warn(
-        `deleteRoom(${roomName}) failed: ${(err as Error).message}`,
+        rtcErrorLog('livekit.room_delete_failed', err, { roomName }),
       );
     }
   }
 
   async removeParticipant(roomName: string, identity: string): Promise<void> {
-    await this.roomService.removeParticipant(roomName, identity);
+    try {
+      await this.roomService.removeParticipant(roomName, identity);
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('livekit.participant_remove_failed', error, {
+          roomName,
+          participantId: identity,
+        }),
+      );
+      throw error;
+    }
   }
 
   async mutePublishedTrack(
@@ -135,7 +146,11 @@ export class LiveKitService {
       );
     } catch (err) {
       this.logger.warn(
-        `muteParticipantAudio(${roomName}, ${identity}) failed: ${(err as Error).message}`,
+        rtcErrorLog('livekit.participant_mute_failed', err, {
+          roomName,
+          participantId: identity,
+          muted,
+        }),
       );
     }
   }
@@ -144,9 +159,14 @@ export class LiveKitService {
     try {
       const participants = await this.roomService.listParticipants(roomName);
       return participants.length;
-    } catch {
+    } catch (error) {
       // Room doesn't exist (never started, or already ended) — zero live
       // viewers, not an error.
+      this.logger.warn(
+        rtcErrorLog('livekit.participant_count_unavailable', error, {
+          roomName,
+        }),
+      );
       return 0;
     }
   }

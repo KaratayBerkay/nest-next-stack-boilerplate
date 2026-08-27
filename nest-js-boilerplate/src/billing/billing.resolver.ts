@@ -12,6 +12,7 @@ import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
+import { Public } from '../auth/public.decorator';
 import { BillingService } from './billing.service';
 
 @ObjectType()
@@ -241,6 +242,7 @@ export class BillingResolver {
     };
   }
 
+  @Public()
   @Query(() => [PlanPriceInfo])
   async planPrices(
     @Args('currency', { nullable: true }) currency?: string,

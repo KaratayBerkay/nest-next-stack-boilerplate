@@ -10,7 +10,7 @@ import type { NextFunction, Request, Response } from 'express';
  * `pino-http` (via {@link getRequestId} in `genReqId`), route handlers, and {@link
  * OutboxService.emit} — reads the *same* id, so app log lines, the `x-request-id` response
  * header, and `AuditLog.requestId`/`correlationId` all line up. This is the correlation gap
- * called out in `docs/backend/research/logger.md`.
+ * called out in `docs/backend/platform-core/logging/README.md`.
  */
 export interface RequestContext {
   requestId: string;

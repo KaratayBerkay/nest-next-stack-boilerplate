@@ -5,10 +5,16 @@ interface MockRedis {
   setex: jest.Mock;
   get: jest.Mock;
   del: jest.Mock;
+  getdel: jest.Mock;
 }
 
 function mockRedis(): MockRedis {
-  return { setex: jest.fn(), get: jest.fn(), del: jest.fn() };
+  return {
+    setex: jest.fn(),
+    get: jest.fn(),
+    del: jest.fn(),
+    getdel: jest.fn(),
+  };
 }
 
 function mockConfig(values: Record<string, string> = {}) {
@@ -368,30 +374,31 @@ describe('OAuthService', () => {
   });
 
   describe('retrieveProfile', () => {
-    it('returns and consumes (deletes) the stored profile', async () => {
+    it('returns and atomically consumes the stored profile via GETDEL — regression for a race where separate GET+DEL calls let two concurrent pickups for the same state (a retried BFF request, a double-loaded callback page) both read the profile before either deleted it, logging in/creating a user twice from one completed OAuth handshake', async () => {
       const profile = {
         type: 'GOOGLE',
         provider: 'google',
         providerAccountId: 'g-1',
         email: 'alice@example.com',
       };
-      redis.get.mockResolvedValue(JSON.stringify(profile));
+      redis.getdel.mockResolvedValue(JSON.stringify(profile));
       const service = buildService();
 
       const result = await service.retrieveProfile('state-1');
 
       expect(result).toEqual(profile);
-      expect(redis.del).toHaveBeenCalledWith('oauth:profile:state-1');
+      expect(redis.getdel).toHaveBeenCalledWith('oauth:profile:state-1');
+      expect(redis.get).not.toHaveBeenCalled();
+      expect(redis.del).not.toHaveBeenCalled();
     });
 
     it('throws when the profile has expired or was already consumed', async () => {
-      redis.get.mockResolvedValue(null);
+      redis.getdel.mockResolvedValue(null);
       const service = buildService();
 
       await expect(service.retrieveProfile('gone')).rejects.toThrow(
         UnauthorizedException,
       );
-      expect(redis.del).not.toHaveBeenCalled();
     });
   });
 });

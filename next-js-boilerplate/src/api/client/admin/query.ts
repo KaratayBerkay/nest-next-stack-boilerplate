@@ -13,10 +13,7 @@ async function fetchAuditLogs(
   const { fetchAuditLogsServer } =
     await import("@/api/server/admin/audit-logs");
   const data = await fetchAuditLogsServer(params);
-  return {
-    items: data.entries as unknown as AuditLogEntry[],
-    total: data.total,
-  };
+  return { items: data.items, total: data.total };
 }
 
 export function auditLogsQueryOptions(params: AuditLogParams) {

@@ -101,7 +101,7 @@ export function BillingAddressForm({
           {isSaving ? t.saving : t.save}
         </Button>
         <Button type="button" variant="outline" onClick={onCancel}>
-          {t.cancelSubscription || "Cancel"}
+          {t.cancel}
         </Button>
       </div>
     </form>

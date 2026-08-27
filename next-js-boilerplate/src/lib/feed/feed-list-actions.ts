@@ -1,11 +1,30 @@
 "use client";
 
-import { type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import {
+  type Dispatch,
+  type MutableRefObject,
+  type SetStateAction,
+} from "react";
 import type { Post } from "@/types/feed/PostCard-types";
 import { fetchFeedListServer } from "@/api/server/posts/list";
 import { useQueryClient } from "@tanstack/react-query";
 
 export const PAGE_SIZE = 5;
+
+// Deleting a post that's on page 1 (data.posts) triggers a broad ["feed"]
+// invalidation; the refetched page 1 then shifts a post that was already
+// sitting in extraPosts (from a prior "load more") into its place — without
+// deduping, that post rendered twice, once from each array.
+export function mergeFeedPosts(pagePosts: Post[], extraPosts: Post[]): Post[] {
+  const seen = new Set<string>();
+  const merged: Post[] = [];
+  for (const p of [...pagePosts, ...extraPosts]) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    merged.push(p);
+  }
+  return merged;
+}
 
 export function handleToggleComments(
   postId: string,

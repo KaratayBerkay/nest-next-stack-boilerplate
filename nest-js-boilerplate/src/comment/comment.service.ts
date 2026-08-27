@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   ForbiddenException,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -13,6 +14,8 @@ import { UpdateCommentInput } from './dto/update-comment.input';
 
 @Injectable()
 export class CommentService {
+  private readonly logger = new Logger(CommentService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationService,
@@ -21,50 +24,91 @@ export class CommentService {
   ) {}
 
   async create(authorId: string, data: CreateCommentInput) {
+    const post = await this.prisma.post.findUnique({
+      where: { id: data.postId },
+      select: { authorId: true, title: true, deletedAt: true },
+    });
+    // Unlike update()/delete() in this same file, this previously never
+    // checked deletedAt at all — a comment could be attached to a
+    // soft-deleted post.
+    if (!post || post.deletedAt) {
+      throw new NotFoundException('Post not found');
+    }
+
     if (data.parentId) {
-      const existing = await this.prisma.comment.findFirst({
-        where: { authorId, parentId: data.parentId, deletedAt: null },
+      const parent = await this.prisma.comment.findUnique({
+        where: { id: data.parentId },
+        select: { postId: true, deletedAt: true },
       });
-      if (existing) {
-        throw new ConflictException({
-          exc: 'EX_CONFLICT_DUPLICATE',
-          msg: 'You have already replied to this comment',
-          key: 'error.commentDuplicateReply',
-        });
+      // Previously connected to `parent` without ever checking the parent's
+      // own postId matched data.postId — a reply could be persisted under a
+      // different post than its actual parent thread, an invariant enforced
+      // by neither the application nor the database.
+      if (!parent || parent.deletedAt || parent.postId !== data.postId) {
+        throw new NotFoundException('Comment not found');
       }
     }
 
-    const comment = await this.prisma.comment.create({
-      data: {
-        body: data.body,
-        imageUrl: data.imageUrl,
-        author: { connect: { id: authorId } },
-        post: { connect: { id: data.postId } },
-        ...(data.parentId && {
-          parent: { connect: { id: data.parentId } },
-        }),
-      },
-      include: {
-        author: true,
-        post: { select: { authorId: true, title: true } },
-      },
-    });
+    const comment = await this.prisma.$transaction(async (tx) => {
+      if (data.parentId) {
+        // Serializes concurrent "reply to this exact parent" attempts by
+        // this author — there's no @@unique([authorId, parentId]) backing
+        // the one-reply-per-parent rule, so two concurrent replies from the
+        // same user to the same parent could otherwise both pass this
+        // check-then-create and both get created.
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`comment-reply:${authorId}:${data.parentId}`}))`;
 
-    const post = await this.prisma.post.findUnique({
-      where: { id: data.postId },
-      select: { authorId: true, title: true },
-    });
+        const existingReply = await tx.comment.findFirst({
+          where: { authorId, parentId: data.parentId, deletedAt: null },
+        });
+        if (existingReply) {
+          throw new ConflictException({
+            exc: 'EX_CONFLICT_DUPLICATE',
+            msg: 'You have already replied to this comment',
+            key: 'error.commentDuplicateReply',
+          });
+        }
+      }
 
-    if (post && post.authorId !== authorId) {
-      await this.notifications.create({
-        userId: post.authorId,
-        actorId: authorId,
-        type: 'COMMENT',
-        title: 'New comment on your post',
-        body:
-          data.body.length > 100 ? data.body.slice(0, 100) + '...' : data.body,
-        payload: { postId: data.postId, commentId: comment.id },
+      return tx.comment.create({
+        data: {
+          body: data.body,
+          imageUrl: data.imageUrl,
+          author: { connect: { id: authorId } },
+          post: { connect: { id: data.postId } },
+          ...(data.parentId && {
+            parent: { connect: { id: data.parentId } },
+          }),
+        },
+        include: {
+          author: true,
+          post: { select: { authorId: true, title: true } },
+        },
       });
+    });
+
+    if (post.authorId !== authorId) {
+      try {
+        await this.notifications.create({
+          userId: post.authorId,
+          actorId: authorId,
+          type: 'COMMENT',
+          title: 'New comment on your post',
+          body:
+            data.body.length > 100
+              ? data.body.slice(0, 100) + '...'
+              : data.body,
+          payload: { postId: data.postId, commentId: comment.id },
+        });
+      } catch (err) {
+        // The comment already committed successfully above — a
+        // notification failure must not surface as an error for this
+        // mutation (previously it would: this call was unguarded, so a
+        // transient failure here both returned an error for an
+        // already-saved comment AND skipped the cache/realtime
+        // invalidation below entirely).
+        this.logger.error('Failed to send comment notification', err as Error);
+      }
     }
 
     // CacheAsideService catches and logs its own failures internally — it

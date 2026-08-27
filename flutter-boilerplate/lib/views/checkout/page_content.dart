@@ -238,6 +238,7 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
         PlanSummaryCard(
           tierLabel: tierLabel,
           price: price,
+          features: planSummaryFeaturesFor(targetTier),
           alreadySubscribed: isCurrent,
         ),
         if (!isCurrent) ...[

@@ -66,9 +66,13 @@ export async function handleTriggerErrorLab(deps: TriggerDeps) {
   if (deps.network === "timeout") {
     deps.setLoading(true);
     try {
-      const timeoutId = setTimeout(() => {}, 5000);
-      await deps.simulateError(deps.selectedScenario, { delayMs: 6000 });
-      clearTimeout(timeoutId);
+      // Races the (6s) request against a 5s rejection so "Timeout (5s)" actually fires at 5s instead of waiting the full 6s.
+      await Promise.race([
+        deps.simulateError(deps.selectedScenario, { delayMs: 6000 }),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("client_timeout")), 5000),
+        ),
+      ]);
     } catch {
       const { clientException } = await import("@/lib/exception-handler");
       const exc = clientException(

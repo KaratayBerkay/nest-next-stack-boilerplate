@@ -56,10 +56,41 @@ export type I18nMessages = {
       "searchPlaceholder": string;
       "searching": string;
       "noUsersFound": string;
+      "setTier": string;
+      "suspendUser": string;
+      "banUser": string;
+      "reactivateUser": string;
+      "resetMfa": string;
+      "suspendConfirm": string;
+      "banConfirm": string;
+      "reactivateConfirm": string;
+      "resetMfaConfirm": string;
+      "statusActive": string;
+      "statusSuspended": string;
+      "statusBanned": string;
+      "statusPendingVerification": string;
       "auditLogTitle": string;
       "allActions": string;
       "allLevels": string;
       "entityType": string;
+      "actionCreate": string;
+      "actionUpdate": string;
+      "actionDelete": string;
+      "actionLogin": string;
+      "actionLogout": string;
+      "actionLoginFailed": string;
+      "actionSignup": string;
+      "actionEmailVerified": string;
+      "actionPasswordChanged": string;
+      "actionMfaEnabled": string;
+      "actionMfaDisabled": string;
+      "actionRoleChanged": string;
+      "actionPermissionGranted": string;
+      "actionPermissionRevoked": string;
+      "actionExport": string;
+      "actionImport": string;
+      "actionApiKeyCreated": string;
+      "actionApiKeyRevoked": string;
       "loading": string;
       "noEntriesFound": string;
       "time": string;
@@ -80,6 +111,14 @@ export type I18nMessages = {
       "after": string;
       "system": string;
       "accessDenied": string;
+      "tierUpdated": string;
+      "tierUpdateFailed": string;
+      "statusUpdated": string;
+      "statusUpdateFailed": string;
+      "mfaResetSuccess": string;
+      "mfaResetFailed": string;
+      "networkError": string;
+      "notPermittedForUser": string;
     }
 
   "apiKeys": {
@@ -112,6 +151,10 @@ export type I18nMessages = {
           "mfaResendCode": string;
           "mfaResendCooldown": string;
           "mfaResending": string;
+          "mfaBackupCodeLabel": string;
+          "mfaBackupCodePlaceholder": string;
+          "mfaUseBackupCode": string;
+          "mfaUseCode": string;
           "trustDevice": string;
           "useDifferentAccount": string;
         };
@@ -220,9 +263,14 @@ export type I18nMessages = {
       "connecting": string;
       "disconnected": string;
       "rooms": string;
+      "closeSidebar": string;
+      "messageTooLong": string;
+      "messageFailedToSend": string;
+      "failedToLoad": string;
       "online": string;
       "noOneHere": string;
       "noMessages": string;
+      "today": string;
       "send": string;
       "messagePlaceholder": string;
       "openRooms": string;
@@ -287,6 +335,13 @@ export type I18nMessages = {
       "month": string;
       "year": string;
       "paymentFailedGeneric": string;
+      "initializingPayment": string;
+      "initializePaymentFailed": string;
+      "validationFailed": string;
+      "noPaymentMethodReturned": string;
+      "subscriptionFailed": string;
+      "upgradeToTier": string;
+      "changeToTier": string;
     }
 
   "error": {
@@ -347,6 +402,7 @@ export type I18nMessages = {
       "awaiting": string;
       "sentByYou": string;
       "usersFound": string;
+      "searchTruncated": string;
       "suggestedFriends": string;
       "suggestedFriendsDesc": string;
       "loadSuggestions": string;
@@ -354,6 +410,11 @@ export type I18nMessages = {
       "noSuggestions": string;
       "mutualFriends": string;
       "failedToLoadSuggestions": string;
+      "searchFailed": string;
+      "failedToSendRequest": string;
+      "failedToAcceptRequest": string;
+      "failedToDeclineRequest": string;
+      "requestSent": string;
       "signInRequired": string;
     }
 
@@ -498,20 +559,8 @@ export type I18nMessages = {
         "expires60": string;
         "expires90": string;
         "expiresNever": string;
-        "permissionsLabel": string;
-        "permissionReadUsers": string;
-        "permissionWriteUsers": string;
-        "permissionReadPosts": string;
-        "permissionWritePosts": string;
-        "permissionReadBilling": string;
-        "permissionWriteBilling": string;
-        "permissionAdmin": string;
-        "selectAll": string;
-        "ipWhitelistLabel": string;
-        "ipPlaceholder": string;
         "create": string;
         "creating": string;
-        "created": string;
         "copied": string;
         "revoke": string;
         "revokeConfirm": string;
@@ -523,7 +572,6 @@ export type I18nMessages = {
         "createdLabel": string;
         "expiresAtLabel": string;
         "lastUsedLabel": string;
-        "loadFailed": string;
         "reveal": string;
         "copy": string;
         "dismiss": string;
@@ -553,6 +601,7 @@ export type I18nMessages = {
         "priceSummary": string;
         "subtotal": string;
         "discount": string;
+        "couponDiscount": string;
         "total": string;
         "autoSave": string;
         "autoSaveFailed": string;
@@ -1195,6 +1244,8 @@ export type I18nMessages = {
       "add": string;
       "noConversations": string;
       "selectConversation": string;
+      "backToConversations": string;
+      "closeSidebar": string;
       "filterAll": string;
       "filterUnread": string;
       "filterFavorites": string;
@@ -1205,11 +1256,17 @@ export type I18nMessages = {
       "unfavoriteConversation": string;
       "searchChats": string;
       "noMessages": string;
+      "today": string;
       "inputPlaceholder": string;
+      "attachFile": string;
+      "openEmojiPicker": string;
       "connecting": string;
       "send": string;
       "loading": string;
       "failedToLoad": string;
+      "messageTooLong": string;
+      "messageEmpty": string;
+      "sendMessageFailed": string;
       "signInRequired": string;
       "decryptionFailed": string;
       "attachmentPreview": string;
@@ -1236,6 +1293,7 @@ export type I18nMessages = {
       "deleteForEveryoneConfirmTitle": string;
       "deleteForEveryoneConfirmDescription": string;
       "deleteMessageFailed": string;
+      "messageFailedToSend": string;
       "reply": string;
       "replyingTo": string;
       "you": string;
@@ -1248,11 +1306,16 @@ export type I18nMessages = {
   "notification": {
       "title": string;
       "markAllRead": string;
+      "markAllReadFailed": string;
       "noNotifications": string;
       "enablePush": string;
       "disablePush": string;
+      "pushBlocked": string;
       "back": string;
       "loadMore": string;
+      "notificationsWithUnread": string;
+      "close": string;
+      "seeMore": string;
     }
 
   "pages": {
@@ -11385,8 +11448,20 @@ export type I18nMessages = {
 
   "posts": {
       "back": string;
+      "viewPost": string;
       "deletePost": string;
       "deletePostConfirm": string;
+      "editPost": string;
+      "editComment": string;
+      "editReply": string;
+      "deleteComment": string;
+      "deleteReply": string;
+      "deleteCommentConfirm": string;
+      "reply": string;
+      "send": string;
+      "writeCommentPlaceholder": string;
+      "replyPlaceholder": string;
+      "noCommentsYet": string;
       "save": string;
       "cancel": string;
       "comments": string;
@@ -11394,10 +11469,19 @@ export type I18nMessages = {
       "whoReacted": string;
       "unknown": string;
       "postNotFound": string;
+      "editPostFailed": string;
+      "deletePostFailed": string;
+      "editCommentFailed": string;
+      "deleteCommentFailed": string;
+      "createCommentFailed": string;
+      "you": string;
+      "reactFailed": string;
+      "reactToPost": string;
     }
 
   "premium": {
       "heading": string;
+      "csvHeader": string;
       "signInToView": string;
       "upgradeMessage": string;
       "viewPlans": string;
@@ -11419,19 +11503,23 @@ export type I18nMessages = {
   "pricing": {
       "heading": string;
       "subtitle": string;
+      "free": string;
       "currentPlan": string;
       "included": string;
       "upgrade": string;
+      "getStarted": string;
+      "guestSubtitle": string;
+      "featuresFree": string[];
       "featuresBasic": string[];
       "featuresMedium": string[];
       "featuresPremium": string[];
-      "featuresPro": string[];
       "priceFree": string;
       "priceBasic": string;
       "priceMedium": string;
       "pricePremium": string;
       "changePending": string;
       "planChangeScheduled": string;
+      "downgrade": string;
     }
 
   "rtc": {
@@ -11448,6 +11536,14 @@ export type I18nMessages = {
       "incomingVideoCallTitle": string;
       "callingTitle": string;
       "connectingTitle": string;
+      "waitingForPeer": string;
+      "cancelling": string;
+      "callErrorTitle": string;
+      "callErrorDescription": string;
+      "callUnavailable": string;
+      "connectionUnavailable": string;
+      "microphoneUnavailable": string;
+      "cameraUnavailable": string;
       "accept": string;
       "decline": string;
       "cancel": string;
@@ -11477,6 +11573,7 @@ export type I18nMessages = {
       "cannotCallSelf": string;
       "myMeetingsTitle": string;
       "noMeetings": string;
+      "createMeetingFailed": string;
       "newMeeting": string;
       "newMeetingTitle": string;
       "meetingTitleLabel": string;
@@ -11486,6 +11583,7 @@ export type I18nMessages = {
       "join": string;
       "copyLink": string;
       "linkCopied": string;
+      "linkCopyFailed": string;
       "meetingEndedLabel": string;
       "meetingActiveLabel": string;
       "hostLabel": string;
@@ -11493,6 +11591,7 @@ export type I18nMessages = {
       "leaveMeeting": string;
       "endMeeting": string;
       "endMeetingConfirm": string;
+      "endMeetingFailed": string;
       "chatTitle": string;
       "chatPlaceholder": string;
       "send": string;
@@ -11503,8 +11602,11 @@ export type I18nMessages = {
       "removeParticipant": string;
       "removeParticipantConfirm": string;
       "joiningMeeting": string;
+      "joinMeetingFailed": string;
       "meetingNotFound": string;
       "meetingFull": string;
+      "participantJoined": string;
+      "someone": string;
       "meetingEndedNotice": string;
       "meetingRemovedNotice": string;
       "meetingLimitWarning": string;
@@ -11516,10 +11618,13 @@ export type I18nMessages = {
       "streamTitleLabel": string;
       "streamTitlePlaceholder": string;
       "startingStream": string;
+      "goLiveFailed": string;
       "viewerCount": string;
       "endStream": string;
       "endStreamConfirm": string;
+      "endStreamFailed": string;
       "joiningStream": string;
+      "joinStreamFailed": string;
       "ownStreamNotice": string;
       "manageStream": string;
       "streamNotFound": string;
@@ -11534,6 +11639,7 @@ export type I18nMessages = {
       "noFriendsToInvite": string;
       "invite": string;
       "invited": string;
+      "inviteFailed": string;
       "close": string;
       "reportTitle": string;
       "reportReasonLabel": string;
@@ -11544,8 +11650,10 @@ export type I18nMessages = {
       "reportDetailsPlaceholder": string;
       "reportSubmit": string;
       "reportSubmitted": string;
+      "reportFailed": string;
       "startRecording": string;
       "stopRecording": string;
+      "recordingActionFailed": string;
       "recordingComingSoonNote": string;
       "speakerOn": string;
       "speakerOff": string;
@@ -11587,15 +11695,29 @@ export type I18nMessages = {
       "paymentMethods": string;
       "addPaymentMethod": string;
       "makeDefault": string;
+      "paymentMethodDefault": string;
+      "removePaymentMethod": string;
+      "removePaymentMethodConfirm": string;
+      "paymentMethodRemoved": string;
+      "paymentMethodRemoveFailed": string;
+      "paymentMethodDefaultUpdated": string;
+      "paymentMethodUpdateFailed": string;
+      "paymentMethodAdded": string;
+      "savePaymentMethod": string;
+      "billingAddressSaveFailed": string;
+      "initializePaymentFailed": string;
+      "validationFailed": string;
+      "saveCardFailed": string;
       "editBillingInfo": string;
       "billingInfo": string;
       "billingAddressEmpty": string;
+      "cancel": string;
       "cancelSubscription": string;
       "cancelSubscriptionConfirm": string;
       "cancelSubscriptionSuccess": string;
       "cancelSubscriptionFailed": string;
       "invoices": string;
-      "invoiceNumber": string;
+      "invoiceDescription": string;
       "downloadInvoice": string;
       "viewInvoice": string;
       "paid": string;
@@ -11613,6 +11735,9 @@ export type I18nMessages = {
       "price": string;
       "renewalDate": string;
       "cancelsOn": string;
+      "free": string;
+      "planInfoCardCancelsOn": string;
+      "planInfoCardNextPayment": string;
       "planChangesOn": string;
       "planChangeScheduled": string;
       "editAddress": string;
@@ -11671,6 +11796,14 @@ export type I18nMessages = {
       "apiKeysLoadFailed": string;
       "apiKeysCreateFailed": string;
       "apiKeysRevokeFailed": string;
+      "apiKeysEnable": string;
+      "apiKeysDisable": string;
+      "apiKeysEnabled": string;
+      "apiKeysDisabledAction": string;
+      "apiKeysUpdateFailed": string;
+      "apiKeysRename": string;
+      "apiKeysRenamePrompt": string;
+      "apiKeysRenamed": string;
       "signInToManageSettings": string;
       "signInToManageBilling": string;
       "signInToManageAccount": string;
@@ -11681,8 +11814,13 @@ export type I18nMessages = {
       "noSessions": string;
       "sessionsLoadFailed": string;
       "sessionsRetry": string;
+      "revokeSessionFailed": string;
+      "revokeAllOtherSessionsFailed": string;
       "currentSession": string;
       "unknownDevice": string;
+      "trustedDevice": string;
+      "ipLabel": string;
+      "startedLabel": string;
       "moreDeviceInfo": string;
       "deviceId": string;
       "userAgent": string;
@@ -11718,6 +11856,8 @@ export type I18nMessages = {
       "securityDisable": string;
       "securityMfaDisabled": string;
       "securityMfaDisableFailed": string;
+      "securityMfaEnrollFailed": string;
+      "securityMfaVerifyFailed": string;
       "securityMfaVerifyCode": string;
       "errors": {
         "usernameTaken": string;
@@ -11812,6 +11952,8 @@ export type I18nMessages = {
       "counterDescription": string;
       "datePickerTitle": string;
       "datePickerDescription": string;
+      "dateRangePickerTitle": string;
+      "dateRangePickerDescription": string;
       "dialogTitle": string;
       "dialogDescription": string;
       "drawerTitle": string;

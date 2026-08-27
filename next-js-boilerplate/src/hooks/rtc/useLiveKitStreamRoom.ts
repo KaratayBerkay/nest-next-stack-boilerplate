@@ -9,6 +9,7 @@ import {
   type Participant,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 export interface UseLiveKitStreamRoomResult {
   connected: boolean;
@@ -38,6 +39,8 @@ export function useLiveKitStreamRoom(
   token: string | null,
   broadcasterId: string,
   isLocalBroadcaster: boolean,
+  streamId?: string | null,
+  roomName?: string | null,
 ): UseLiveKitStreamRoomResult {
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
@@ -91,6 +94,30 @@ export function useLiveKitStreamRoom(
     roomRef.current = room;
     let disposed = false;
     const onAnyChange = () => rebuildBroadcasterTracks();
+    const telemetry = (
+      event: string,
+      options: {
+        exceptionType?: "CLIENT_ERROR" | "CLIENT_REJECTION";
+        error?: unknown;
+        metadata?: Record<string, unknown>;
+        phase?: string;
+        mediaType?: "audio" | "video" | "screen";
+      } = {},
+    ) => {
+      logRtcEvent({
+        event,
+        rtcKind: "stream",
+        rtcId: streamId,
+        roomName,
+        ...options,
+        metadata: {
+          role: isLocalBroadcaster ? "broadcaster" : "viewer",
+          ...options.metadata,
+        },
+      });
+    };
+
+    telemetry("stream.livekit.connecting", { phase: "connecting" });
 
     room
       .on(RoomEvent.ParticipantConnected, onAnyChange)
@@ -101,28 +128,42 @@ export function useLiveKitStreamRoom(
       .on(RoomEvent.TrackUnmuted, onAnyChange)
       .on(RoomEvent.LocalTrackPublished, onAnyChange)
       .on(RoomEvent.LocalTrackUnpublished, onAnyChange)
-      .on(RoomEvent.Disconnected, () => setConnected(false))
+      .on(RoomEvent.Disconnected, () => {
+        if (disposed) return;
+        telemetry("stream.livekit.disconnected", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
+        setConnected(false);
+      })
       .on(RoomEvent.Reconnecting, () => {
-        console.warn("[useLiveKitStreamRoom] Reconnecting…");
+        telemetry("stream.livekit.reconnecting", {
+          exceptionType: "CLIENT_ERROR",
+          phase: "connected",
+        });
       })
       .on(RoomEvent.Reconnected, () => {
-        console.info("[useLiveKitStreamRoom] Reconnected");
+        telemetry("stream.livekit.reconnected", { phase: "connected" });
         rebuildBroadcasterTracks();
       })
       .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
-        console.warn(
-          "[useLiveKitStreamRoom] Track subscription failed for",
-          trackSid,
-        );
+        telemetry("stream.livekit.track_subscription_failed", {
+          exceptionType: "CLIENT_ERROR",
+          metadata: { trackSid },
+          phase: "connected",
+        });
       })
       .on(
         RoomEvent.ConnectionQualityChanged,
         (quality: ConnectionQuality, participant) => {
           if (quality === ConnectionQuality.Poor) {
-            console.warn(
-              "[useLiveKitStreamRoom] Poor connection quality from",
-              participant?.identity ?? "local",
-            );
+            telemetry("stream.livekit.connection_quality_poor", {
+              exceptionType: "CLIENT_ERROR",
+              metadata: {
+                participantId: participant?.identity ?? "local",
+              },
+              phase: "connected",
+            });
           }
         },
       );
@@ -135,12 +176,36 @@ export function useLiveKitStreamRoom(
           return;
         }
         setConnected(true);
+        telemetry("stream.livekit.connected", { phase: "connected" });
         if (isLocalBroadcaster) {
-          await room.localParticipant.setMicrophoneEnabled(true);
-          await room.localParticipant.setCameraEnabled(true);
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true);
+          } catch (error) {
+            telemetry("stream.media.microphone_enable_failed", {
+              exceptionType: "CLIENT_ERROR",
+              error,
+              mediaType: "audio",
+              phase: "connected",
+            });
+          }
+          try {
+            await room.localParticipant.setCameraEnabled(true);
+          } catch (error) {
+            telemetry("stream.media.camera_enable_failed", {
+              exceptionType: "CLIENT_ERROR",
+              error,
+              mediaType: "video",
+              phase: "connected",
+            });
+          }
         }
         rebuildBroadcasterTracks();
-      } catch {
+      } catch (error) {
+        telemetry("stream.livekit.connection_failed", {
+          exceptionType: "CLIENT_ERROR",
+          error,
+          phase: "connecting",
+        });
         // Connection failed — `connected` stays false; the page's own
         // leave/back control lets the user bail out.
       }
@@ -155,7 +220,62 @@ export function useLiveKitStreamRoom(
       setScreenShareTrack(null);
       setAudioTrack(null);
     };
-  }, [token, isLocalBroadcaster, rebuildBroadcasterTracks]);
+  }, [isLocalBroadcaster, rebuildBroadcasterTracks, roomName, streamId, token]);
+
+  // ---- Wake Lock: prevent OS from sleeping the screen during a stream ----
+  // Ported from useLiveKitRoom (1:1 calls) — this had only ever been wired
+  // up for calls, so backgrounding a live stream (broadcasting or viewing)
+  // got none of the same throttling protection.
+  useEffect(() => {
+    if (!connected) return;
+
+    const wakeLockRef: { current: WakeLockSentinel | null } = { current: null };
+
+    const acquire = async () => {
+      try {
+        if (!("wakeLock" in navigator)) return;
+        if (wakeLockRef.current) return;
+        const sentinel = await navigator.wakeLock.request("screen");
+        wakeLockRef.current = sentinel;
+        sentinel.addEventListener("release", () => {
+          wakeLockRef.current = null;
+        });
+      } catch {
+        // Wake Lock denied (permission policy, headless browser, etc.) —
+        // non-fatal, the stream still works without it.
+      }
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") acquire();
+    };
+
+    void acquire();
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void wakeLockRef.current?.release();
+      wakeLockRef.current = null;
+    };
+  }, [connected]);
+
+  // ---- Media Session: tell the OS this is active media, not an idle tab ----
+  useEffect(() => {
+    if (!connected || !("mediaSession" in navigator)) return;
+
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: roomName || "Live Stream",
+      artist: "Live Stream",
+      artwork: [],
+    });
+    navigator.mediaSession.playbackState = "playing";
+
+    return () => {
+      navigator.mediaSession.metadata = null;
+      navigator.mediaSession.playbackState = "none";
+    };
+  }, [connected, roomName]);
 
   const toggleMic = useCallback(() => {
     const room = roomRef.current;
@@ -164,8 +284,30 @@ export function useLiveKitStreamRoom(
     setLocalMicEnabled(next);
     void room.localParticipant
       .setMicrophoneEnabled(next)
-      .then(() => rebuildBroadcasterTracks());
-  }, [localMicEnabled, isLocalBroadcaster, rebuildBroadcasterTracks]);
+      .then(() => rebuildBroadcasterTracks())
+      .catch((error) => {
+        logRtcEvent({
+          event: "stream.media.microphone_toggle_failed",
+          rtcKind: "stream",
+          rtcId: streamId,
+          roomName,
+          mediaType: "audio",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
+        // Revert the optimistic flip — without this the mute icon could
+        // show "unmuted" while the mic call actually failed and stayed
+        // muted (or vice versa), with no way to tell from the UI.
+        setLocalMicEnabled(!next);
+      });
+  }, [
+    localMicEnabled,
+    isLocalBroadcaster,
+    rebuildBroadcasterTracks,
+    roomName,
+    streamId,
+  ]);
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current;
@@ -174,8 +316,27 @@ export function useLiveKitStreamRoom(
     setLocalCameraEnabled(next);
     void room.localParticipant
       .setCameraEnabled(next)
-      .then(() => rebuildBroadcasterTracks());
-  }, [localCameraEnabled, isLocalBroadcaster, rebuildBroadcasterTracks]);
+      .then(() => rebuildBroadcasterTracks())
+      .catch((error) => {
+        logRtcEvent({
+          event: "stream.media.camera_toggle_failed",
+          rtcKind: "stream",
+          rtcId: streamId,
+          roomName,
+          mediaType: "video",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
+        setLocalCameraEnabled(!next);
+      });
+  }, [
+    localCameraEnabled,
+    isLocalBroadcaster,
+    rebuildBroadcasterTracks,
+    roomName,
+    streamId,
+  ]);
 
   const toggleScreenShare = useCallback(() => {
     const room = roomRef.current;
@@ -185,10 +346,26 @@ export function useLiveKitStreamRoom(
     void room.localParticipant
       .setScreenShareEnabled(next)
       .then(() => rebuildBroadcasterTracks())
-      .catch(() => {
+      .catch((error) => {
+        logRtcEvent({
+          event: "stream.media.screen_share_failed",
+          rtcKind: "stream",
+          rtcId: streamId,
+          roomName,
+          mediaType: "screen",
+          phase: "connected",
+          exceptionType: "CLIENT_ERROR",
+          error,
+        });
         setLocalScreenShareEnabled(false);
       });
-  }, [localScreenShareEnabled, isLocalBroadcaster, rebuildBroadcasterTracks]);
+  }, [
+    localScreenShareEnabled,
+    isLocalBroadcaster,
+    rebuildBroadcasterTracks,
+    roomName,
+    streamId,
+  ]);
 
   return {
     connected,

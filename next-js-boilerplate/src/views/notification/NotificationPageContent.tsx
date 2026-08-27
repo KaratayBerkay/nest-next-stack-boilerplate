@@ -8,6 +8,7 @@ import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useDeviceType } from "@/hooks/useDeviceType";
 import { Button } from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 import { SkeletonMessage } from "@/components/ui/skeleton-shapes";
 import { useNotifications } from "@/lib/realtime/useNotifications";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
@@ -41,15 +42,27 @@ export function NotificationPageContent({ className }: ClassNameProps) {
   );
 
   const { markAllRead, markRead } = useNotificationActions();
+  const { toast } = useToast();
 
   const markedRef = useRef(false);
 
   useEffect(() => {
     if (notifications.length > 0 && !markedRef.current) {
       markedRef.current = true;
-      markAllRead();
+      // Best-effort background sync, not a user-initiated action — no toast
+      // on failure, but un-flip the guard so a later render gets to retry
+      // instead of silently giving up on this page view for good.
+      markAllRead().catch(() => {
+        markedRef.current = false;
+      });
     }
   }, [notifications.length, markAllRead]);
+
+  const handleMarkAllReadClick = useCallback(() => {
+    markAllRead().catch(() => {
+      toast({ title: t.markAllReadFailed, variant: "destructive" });
+    });
+  }, [markAllRead, toast, t.markAllReadFailed]);
 
   const notifSwipeRef = useYSwipeGesture<HTMLDivElement>();
 
@@ -99,10 +112,12 @@ export function NotificationPageContent({ className }: ClassNameProps) {
         requestPermission={requestPermission}
         unsubscribe={unsubscribe}
         unreadCount={unread.length}
-        markAllRead={markAllRead}
+        markAllRead={handleMarkAllReadClick}
+        backLabel={t.back}
         markAllReadLabel={t.markAllRead}
         enablePushLabel={t.enablePush}
         disablePushLabel={t.disablePush}
+        pushBlockedLabel={t.pushBlocked}
         navigateToFeed={goToFeed}
       />
 

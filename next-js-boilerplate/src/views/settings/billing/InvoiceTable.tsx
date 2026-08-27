@@ -6,6 +6,7 @@ import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
 import { cn } from "@/lib/cn";
 import { formatCurrency, toCurrencyCode } from "@/lib/currency";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { tierLabel } from "@/lib/tier";
 import { Button } from "@/components/ui/Button";
 import {
   Table,
@@ -21,9 +22,13 @@ import { InvoicePagination } from "./InvoicePagination";
 
 const PAGE_SIZE = 5;
 
-function extractInvoiceNumber(reference: string): string {
-  const match = reference.match(/#?(\d+)/);
-  return match ? `#${match[1]}` : reference;
+// Every transaction's `reference` the backend actually writes is
+// `subscription:${TIER}` (see billing.service.ts / stripe-webhook.controller.ts)
+// — there's no real sequential invoice-number concept in this data model, so
+// this describes what the charge was for instead of pretending otherwise.
+function describeInvoice(reference: string, fallback: string): string {
+  const match = reference.match(/^subscription:([A-Z]+)$/);
+  return match ? tierLabel(match[1]) : fallback;
 }
 
 export function InvoiceTable({
@@ -78,7 +83,7 @@ export function InvoiceTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t.invoiceNumber.replace("{number}", "#")}</TableHead>
+            <TableHead>{t.invoiceDescription}</TableHead>
             <TableHead>{t.date}</TableHead>
             <TableHead>{t.price}</TableHead>
             <TableHead>{t.status || "Status"}</TableHead>
@@ -89,7 +94,7 @@ export function InvoiceTable({
           {paginatedTransactions.map((tx) => (
             <TableRow key={tx.id}>
               <TableCell className="font-medium">
-                {extractInvoiceNumber(tx.reference)}
+                {describeInvoice(tx.reference, tx.reference)}
               </TableCell>
               <TableCell className="text-muted">
                 {formatDateByPreference(tx.createdAt, dateDisplay)}

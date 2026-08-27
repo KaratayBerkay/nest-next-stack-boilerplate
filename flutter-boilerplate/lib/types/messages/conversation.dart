@@ -6,6 +6,7 @@ class Conversation {
   final String? lastMessage;
   final DateTime? lastMessageAt;
   final int unreadCount;
+  final bool isFavorite;
 
   const Conversation({
     required this.id,
@@ -15,6 +16,7 @@ class Conversation {
     this.lastMessage,
     this.lastMessageAt,
     this.unreadCount = 0,
+    this.isFavorite = false,
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class Conversation {
           ? DateTime.parse(json['lastMessageAt'] as String)
           : null,
       unreadCount: json['unreadCount'] as int? ?? 0,
+      isFavorite: json['isFavorite'] as bool? ?? false,
     );
   }
 }

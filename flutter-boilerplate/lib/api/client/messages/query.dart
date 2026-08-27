@@ -6,9 +6,15 @@ import '../../server/messages/conversation_messages.dart';
 import '../../server/messages/conversations.dart';
 import '../../server/messages/dm_unread_count.dart';
 import '../../server/messages/room_messages.dart';
+import '../../server/messages/rooms.dart';
 
 final conversationsProvider = FutureProvider((ref) async {
   final server = ref.read(conversationsServerProvider);
+  return server.call();
+});
+
+final roomsProvider = FutureProvider((ref) async {
+  final server = ref.read(roomsServerProvider);
   return server.call();
 });
 

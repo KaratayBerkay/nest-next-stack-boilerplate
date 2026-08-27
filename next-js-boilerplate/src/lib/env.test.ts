@@ -5,6 +5,7 @@ describe("env schemas", () => {
   const MINIMAL_CLIENT = {
     NEXT_PUBLIC_APP_URL: "http://localhost:3001",
     NEXT_PUBLIC_REALTIME_WS_URL: "/ws",
+    NEXT_PUBLIC_LIVEKIT_URL: "wss://livekit.example.com",
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: "",
     NEXT_PUBLIC_STRIPE_KEY: "",
   };
@@ -15,6 +16,8 @@ describe("env schemas", () => {
     NEXT_PUBLIC_APP_URL: "http://localhost:3001",
     COOKIE_SAMESITE: "lax",
     KAFKA_BROKER: "disabled",
+    // HMAC key for the session_user cookie — schema requires >= 32 chars.
+    SESSION_COOKIE_SECRET: "test-session-cookie-secret-0123456789",
   };
 
   it("accepts minimal valid client env", () => {

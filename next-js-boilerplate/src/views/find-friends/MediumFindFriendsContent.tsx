@@ -11,7 +11,7 @@ import {
   friendsQueryOptions,
   friendRequestsQueryOptions,
 } from "@/api/client/friends/query";
-import type { FriendRequest } from "./search-utils";
+import { getOutgoingPendingIds, type FriendRequest } from "./search-utils";
 import { PaginationBar } from "./PaginationBar";
 import { UserSearchCard } from "./UserSearchCard";
 import { PendingRequestCard } from "./PendingRequestCard";
@@ -37,14 +37,16 @@ export function MediumFindFriendsContent({
     page,
     query,
     searching,
+    searchFailed,
     totalPages,
+    truncated,
     onQueryChange,
     goToPage,
   } = useFriendSearch(_user?.id);
   const { sendRequest, acceptRequest, declineRequest } = useFriendActions();
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
-  const pendingIds = new Set(friendRequests.map((r) => r.user.id));
+  const pendingIds = getOutgoingPendingIds(friendRequests);
 
   return (
     <div className={cn("flex min-h-0 flex-1 gap-6", className)}>
@@ -84,12 +86,21 @@ export function MediumFindFriendsContent({
                   {t.searching}
                 </p>
               )}
-              {!searching && query.trim().length >= 3 && items.length === 0 && (
-                <p className="text-muted py-8 text-center text-sm">
-                  {t.noUsersFound}
+              {!searching && searchFailed && query.trim().length >= 3 && (
+                <p className="text-error py-8 text-center text-sm">
+                  {t.searchFailed}
                 </p>
               )}
               {!searching &&
+                !searchFailed &&
+                query.trim().length >= 3 &&
+                items.length === 0 && (
+                  <p className="text-muted py-8 text-center text-sm">
+                    {t.noUsersFound}
+                  </p>
+                )}
+              {!searching &&
+                !searchFailed &&
                 items.map((u) => (
                   <UserSearchCard
                     key={u.id}
@@ -99,9 +110,11 @@ export function MediumFindFriendsContent({
                     onSendRequest={async () => {
                       const ok = await sendRequest(u.id);
                       if (ok) setSentIds((prev) => new Set(prev).add(u.id));
+                      return ok;
                     }}
                     pendingLabel={t.pending}
                     addFriendLabel={t.addFriend}
+                    sendFailedMessage={t.failedToSendRequest}
                   />
                 ))}
               {!searching && total > 0 && (
@@ -116,6 +129,11 @@ export function MediumFindFriendsContent({
               {!searching && total > 0 && (
                 <p className="text-muted text-center text-[10px]">
                   {t.usersFound.replace("{count}", String(total))}
+                </p>
+              )}
+              {!searching && truncated && (
+                <p className="text-muted text-center text-[10px]">
+                  {t.searchTruncated}
                 </p>
               )}
             </div>
@@ -136,6 +154,8 @@ export function MediumFindFriendsContent({
                   acceptLabel={t.accept}
                   declineLabel={t.decline}
                   awaitingLabel={t.awaiting}
+                  acceptFailedMessage={t.failedToAcceptRequest}
+                  declineFailedMessage={t.failedToDeclineRequest}
                 />
               ))
             )}

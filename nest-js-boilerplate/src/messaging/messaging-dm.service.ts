@@ -84,6 +84,16 @@ export class MessagingDmService {
       ) as { text?: string };
       return decrypted.text ?? '';
     } catch {}
+    // All three keys (room, sender, reader) failed. Falling back through
+    // legacy envelope formats is expected to fail once or twice on old
+    // messages, but exhausting every candidate key is not — it almost always
+    // means a corrupted envelope or a real crypto bug, not "this message
+    // just predates a key-derivation change." Previously this returned '''
+    // with zero signal, so the conversation preview silently going blank had
+    // no trail to diagnose why.
+    this.logger.warn(
+      `decryptPreview: exhausted all keys (room, sender, reader) for a message — returning empty preview. senderId=${msg.senderId ?? 'unknown'} userId=${userId}`,
+    );
     return '';
   }
 
@@ -435,75 +445,91 @@ export class MessagingDmService {
       });
     // Attachment envelopes come from the server-side upload store, not the
     // client frame (the full-file ciphertext must never ride the WS).
-    const storedAttachments = await resolveAttachmentEnvelopes(
-      this.prisma,
-      attachments ?? [],
-    );
-    const message = await this.prisma.message.create({
-      data: {
+    const { attachments: storedAttachments, ownedUrls } =
+      await resolveAttachmentEnvelopes(
+        this.prisma,
+        attachments ?? [],
         senderId,
-        recipientId,
-        v,
-        ct,
-        nonce,
-        letterCount: countLetters(text),
-        replyToId: validReplyToId ?? null,
-        attachments:
-          storedAttachments.length > 0
-            ? {
-                create: storedAttachments.map((a) => ({
-                  url: a.url,
-                  type: a.type,
-                  name: a.name,
-                  size: a.size,
-                  thumbnailUrl: a.thumbnailUrl ?? null,
-                })),
-              }
-            : undefined,
-      },
-      include: {
-        sender: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            hideAvatar: true,
-          },
+        {
+          kind: 'MESSAGES',
+          scopeId: senderId,
         },
-        recipient: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            hideAvatar: true,
-          },
+      );
+    // The message row and the PendingUpload relink must commit together —
+    // previously these were two separate top-level writes, so a crash/
+    // transient error between them left the message (and its attachments)
+    // saved and visible to the sender while every OTHER recipient got a 404
+    // trying to view the attachment (assertCanAccessUpload only allows the
+    // uploader through when messageId is still null) — an image silently
+    // broken for its actual audience. Failing the whole send instead is the
+    // recoverable outcome: the sender sees an error and can just retry.
+    const message = await this.prisma.$transaction(async (tx) => {
+      const created = await tx.message.create({
+        data: {
+          senderId,
+          recipientId,
+          v,
+          ct,
+          nonce,
+          letterCount: countLetters(text),
+          replyToId: validReplyToId ?? null,
+          attachments:
+            storedAttachments.length > 0
+              ? {
+                  create: storedAttachments.map((a) => ({
+                    url: a.url,
+                    type: a.type,
+                    name: a.name,
+                    size: a.size,
+                    thumbnailUrl: a.thumbnailUrl ?? null,
+                  })),
+                }
+              : undefined,
         },
-        attachments: true,
-        replyTo: { include: { attachments: true } },
-      },
+        include: {
+          sender: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              hideAvatar: true,
+            },
+          },
+          recipient: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              avatarUrl: true,
+              hideAvatar: true,
+            },
+          },
+          attachments: true,
+          replyTo: { include: { attachments: true } },
+        },
+      });
+      // Trace which persisted message each attachment was finally attached
+      // to — the PendingUpload row is the upload-time record, this links it
+      // to the message so uploads are traceable from the DB end-to-end.
+      if (ownedUrls.length > 0) {
+        // Each attachment's auto-generated thumbnail is its own PendingUpload
+        // row (a separate R2 object under `thumbnails/`), so it must be
+        // linked here too — otherwise its access-control check (uploader-
+        // only, since messageId stays null) 404s the thumbnail for every
+        // recipient but the uploader themselves. `ownedUrls` (not the raw
+        // attachment list) is the relink set — see resolveAttachmentEnvelopes'
+        // ownership check.
+        await tx.pendingUpload.updateMany({
+          where: { url: { in: ownedUrls } },
+          data: { messageId: created.id },
+        });
+      }
+      return created;
     });
     this.logger.log(
       `Message ${message.id} created: ${senderId} → ${recipientId}`,
     );
-    // Trace which persisted message each attachment was finally attached to —
-    // the PendingUpload row is the upload-time record, this links it to the
-    // message so uploads are traceable from the DB end-to-end.
-    if (storedAttachments.length > 0) {
-      // Each attachment's auto-generated thumbnail is its own PendingUpload
-      // row (a separate R2 object under `thumbnails/`), so it must be linked
-      // here too — otherwise its access-control check (uploader-only, since
-      // messageId stays null) 404s the thumbnail for every recipient but the
-      // uploader themselves.
-      const uploadUrls = storedAttachments.flatMap((a) =>
-        a.thumbnailUrl ? [a.url, a.thumbnailUrl] : [a.url],
-      );
-      await this.prisma.pendingUpload.updateMany({
-        where: { url: { in: uploadUrls } },
-        data: { messageId: message.id },
-      });
-    }
     await Promise.all([
       this.cache.del(`conversations:${senderId}`),
       this.cache.del(`conversations:${recipientId}`),
@@ -592,7 +618,12 @@ export class MessagingDmService {
         lastMessage,
         lastTime: message.createdAt,
         hasAttachments: (message.attachments?.length ?? 0) > 0,
-        unread: unread + 1,
+        // getUnreadCount() already runs after `message` was persisted (it
+        // was created and committed earlier in sendMessage, before this
+        // function ever ran), so it already counts this message — adding 1
+        // on top inflated every conversation's unread badge by one for as
+        // long as it had any unread messages at all.
+        unread,
       },
     });
     this.realtime.emitToService(message.recipientId, 'NOTIFICATION', {

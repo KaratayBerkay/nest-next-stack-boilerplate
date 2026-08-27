@@ -1,7 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier.dart';
 
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
+
+/// Per-tier feature bullets shown on the checkout summary card. Mirrors the
+/// web Plans page's copy (each tier lists its own features, not the next
+/// tier's) — see next-js-boilerplate's pricing i18n `featuresFree/Basic/
+/// Medium/Premium` for the source of truth this was copied from.
+List<String> planSummaryFeaturesFor(String tier) {
+  switch (tier.toLowerCase()) {
+    case Tier.basic:
+      return const [
+        'Everything in Free',
+        'Priority support',
+        'Basic analytics',
+      ];
+    case Tier.medium:
+      return const [
+        'Everything in Basic',
+        'Post stats & reaction breakdown',
+        'VIP room access',
+        'Suggested friends',
+      ];
+    case Tier.premium:
+      return const [
+        'Everything in Medium',
+        'Who-reacted list',
+        'Export data',
+        'Crown badge',
+        'Dedicated support',
+      ];
+    default:
+      return const ['Basic access', 'Community support'];
+  }
+}
 
 class PlanSummaryCard extends StatelessWidget {
   final String tierLabel;

@@ -4,10 +4,11 @@
 // Dashboard @analytics/@team parallel outlets → TabBar inside DashboardShell.
 // Gallery @modal route → showModalBottomSheet on top of grid (deep link uses full page).
 
-import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/route_observer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+import '../features/statics/index.dart';
 
 import '../hooks/use_auth.dart';
 import '../views/about/page_content.dart';
@@ -58,8 +59,8 @@ import '../views/home/page_content.dart';
 import '../views/messages/page_view.dart';
 import '../views/notification/page_view.dart';
 import '../views/plans/page_content.dart';
+import '../views/posts/[uuid]/page_view.dart';
 import '../views/posts/create_page_view.dart';
-import '../views/posts/detail_page_view.dart';
 import '../views/posts/page_view.dart';
 import '../views/premium/page_view.dart';
 import '../views/pricing/page_content.dart';
@@ -155,7 +156,6 @@ import '../views/ui/tooltip/page_content.dart';
 import '../views/ui/typography/page_content.dart';
 import '../views/users/detail/page_view.dart';
 import '../views/users/list/page_view.dart';
-import '../views/users/page_view.dart';
 import '../views/v1/home/page_content.dart' as v1_home;
 import '../views/v1/missing_page.dart';
 import '../views/v1/v1_shell.dart';
@@ -490,7 +490,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/posts/:uuid',
             name: 'v1PostDetail',
-            builder: (_, state) => PostDetailPageContent(
+            builder: (_, state) => PostDetailPage(
               lang: state.pathParameters['lang'] ?? 'en',
               postId: state.pathParameters['uuid'] ?? '',
             ),
@@ -536,14 +536,6 @@ final routerProvider = Provider<GoRouter>((ref) {
               initialRoom: state.uri.queryParameters['conversation'],
             ),
           ),
-          GoRoute(
-            path: '/v1/:lang/chat/:conversationId',
-            name: 'v1ChatRoomLegacy',
-            builder: (_, state) => ChatRoomPageContent(
-              lang: state.pathParameters['lang'] ?? 'en',
-              initialRoom: state.pathParameters['conversationId'],
-            ),
-          ),
           // Admin
           GoRoute(
             path: '/v1/:lang/admin',
@@ -565,15 +557,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           // Users
           GoRoute(
-            path: '/v1/:lang/users',
-            name: 'v1Users',
-            redirect: (_, state) =>
-                requireAdmin(state.pathParameters['lang'] ?? 'en'),
-            builder: (_, state) => UsersPageContent(
-              lang: state.pathParameters['lang'] ?? 'en',
-            ),
-          ),
-          GoRoute(
             path: '/v1/:lang/users/list',
             name: 'v1UsersList',
             redirect: (_, state) =>
@@ -590,6 +573,7 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => UserDetailPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
               userId: state.pathParameters['uuid'] ?? '',
+              extra: state.extra,
             ),
           ),
           GoRoute(
@@ -1231,11 +1215,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         ],
       ),
     ],
-    errorBuilder: (_, state) => Scaffold(
-      appBar: AppBar(title: const Text('404')),
-      body: Center(
-        child: Text('Page not found: ${state.uri}'),
-      ),
+    errorBuilder: (context, state) => NotFoundPage(
+      description: 'Page not found: ${state.uri}',
+      onBack: () => context.go('/'),
     ),
   );
 });

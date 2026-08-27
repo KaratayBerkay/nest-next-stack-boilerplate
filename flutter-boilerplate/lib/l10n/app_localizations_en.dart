@@ -566,6 +566,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get authErrorsPasswordMin => 'Password must be at least 8 characters';
 
   @override
+  String get passwordRulesHeading => 'Password must contain:';
+
+  @override
+  String get passwordRuleLength => '8-128 characters';
+
+  @override
+  String get passwordRuleLowercase => 'One lowercase letter';
+
+  @override
+  String get passwordRuleUppercase => 'One uppercase letter';
+
+  @override
+  String get passwordRuleNumber => 'One number';
+
+  @override
   String get authErrorsPasswordMax => 'Password must be at most 128 characters';
 
   @override
@@ -619,6 +634,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get authErrorsVerifyEmailFailed => 'Email verification failed';
+
+  @override
+  String get allUploadsTitle => 'All uploads';
+
+  @override
+  String get allUploadsEmpty => 'No files uploaded here yet';
+
+  @override
+  String get allUploadsFailedToLoad => 'Failed to load uploads';
+
+  @override
+  String get files => 'attachments';
+
+  @override
+  String get storageLimitReached => 'You have reached your storage limit.';
+
+  @override
+  String get storageLimitUpgradeHint =>
+      'Each plan upgrade doubles your message storage.';
 
   @override
   String get chatRoomTitle => 'Chat Rooms';
@@ -3247,6 +3281,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesFriends => 'Friends';
 
   @override
+  String get messagesFilterAll => 'All';
+
+  @override
+  String get messagesFilterUnread => 'Unread';
+
+  @override
+  String get messagesFilterFavorites => 'Favorites';
+
+  @override
+  String get messagesFilterGroups => 'Groups';
+
+  @override
+  String get messagesAddFavorite => 'Add to favorites';
+
+  @override
+  String get messagesRemoveFavorite => 'Remove from favorites';
+
+  @override
+  String get messagesNoFavorites => 'No favorite conversations yet';
+
+  @override
   String get messagesSearchUsers => 'Search all users...';
 
   @override
@@ -3333,6 +3388,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get messagesCancel => 'Cancel';
 
   @override
+  String get messagesReply => 'Reply';
+
+  @override
+  String messagesReplyingTo(Object name) {
+    return 'Replying to $name';
+  }
+
+  @override
+  String get messagesYou => 'You';
+
+  @override
+  String get messagesAttachmentLabel => 'Attachment';
+
+  @override
   String get notificationTitle => 'Notifications';
 
   @override
@@ -3415,7 +3484,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get premiumRevenue => 'Revenue';
 
   @override
-  String get premiumNewUsers7d => 'New Users (7d)';
+  String get premiumNewUsers7d => 'New Users (Last 7 Days)';
 
   @override
   String get premiumTotalPosts => 'Total Posts';
@@ -4715,6 +4784,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get postsSend => 'Send';
 
   @override
+  String get postsReactionsHeading => 'Reactions';
+
+  @override
+  String get postsReactionsFailed => 'Couldn\'t load reactions';
+
+  @override
+  String get postsNoReactionsYet => 'No reactions yet';
+
+  @override
+  String get postsUnknownUser => 'Someone';
+
+  @override
+  String postsAndNOthers(Object count) {
+    return 'and $count others';
+  }
+
+  @override
   String checkoutSelectedPlan(Object tier) {
     return 'Selected plan: $tier';
   }
@@ -4786,6 +4872,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get usersOffline => 'Offline';
+
+  @override
+  String get usersDetailUnavailable =>
+      'Profile details aren\'t available here — go back and open this profile from a list.';
 
   @override
   String get usersProfile => 'Profile';

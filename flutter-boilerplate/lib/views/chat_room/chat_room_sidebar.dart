@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import 'chat_room_sub_components.dart';
 
 class ChatRoomSidebar extends StatefulWidget {
-  final bool useNativeControls;
   final bool sidebarOpen;
   final List<String> rooms;
   final String room;
@@ -19,7 +19,6 @@ class ChatRoomSidebar extends StatefulWidget {
 
   const ChatRoomSidebar({
     super.key,
-    this.useNativeControls = false,
     this.sidebarOpen = false,
     required this.rooms,
     required this.room,
@@ -55,6 +54,7 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
   @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final t = AppLocalizations.of(context);
 
     return Container(
       width: double.infinity,
@@ -70,7 +70,7 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
           Row(
             children: [
               Text(
-                'Rooms',
+                t.chatRoomRooms,
                 style: TextStyle(
                   color: colors.fgMuted,
                   fontSize: 11,
@@ -81,7 +81,6 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
               const Spacer(),
               if (widget.sidebarOpen)
                 SidebarCloseButton(
-                  useNativeControls: widget.useNativeControls,
                   onClick: () => widget.onSetSidebarOpen(false),
                 ),
             ],
@@ -90,9 +89,9 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
           TabBar(
             controller: _tabController,
             tabs: [
-              const Tab(text: 'Rooms'),
+              Tab(text: t.chatRoomRooms),
               Tab(
-                text: 'Online (${widget.roomCounts[widget.room] ?? 0})',
+                text: t.chatRoomOnline(widget.roomCounts[widget.room] ?? 0),
               ),
             ],
             labelColor: colors.brand,
@@ -109,7 +108,6 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
                     final count = widget.roomCounts[r] ?? 0;
                     final isVip = widget.vipRooms.contains(r);
                     return RoomButton(
-                      useNativeControls: widget.useNativeControls,
                       room: r,
                       isActive: widget.room == r,
                       count: count,
@@ -121,7 +119,7 @@ class _ChatRoomSidebarState extends State<ChatRoomSidebar>
                 widget.roomMembers.isEmpty
                     ? Center(
                         child: Text(
-                          'No one is here',
+                          t.chatRoomNoOneHere,
                           style: TextStyle(color: colors.fgMuted, fontSize: 12),
                         ),
                       )

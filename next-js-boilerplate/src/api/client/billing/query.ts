@@ -12,7 +12,10 @@ export function subscriptionQueryOptions(userId?: string) {
   });
 }
 
-export function planPricesQueryOptions(currency: string, userId?: string) {
+export function planPricesQueryOptions(currency: string) {
+  // No userId gate: plan prices are the same for every viewer, logged in or
+  // not (the backend's `planPrices` query is `@Public()`) — this is what
+  // lets the guest-facing marketing pricing page reuse this same query.
   return queryOptions({
     queryKey: ["billing", "plan-prices", currency],
     queryFn: async () => {
@@ -20,7 +23,6 @@ export function planPricesQueryOptions(currency: string, userId?: string) {
         await import("@/api/server/billing/plan-prices");
       return fetchPlanPricesServer(currency);
     },
-    enabled: !!userId,
   });
 }
 

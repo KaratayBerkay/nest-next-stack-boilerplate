@@ -1,0 +1,4 @@
+services:
+  app:
+    environment:
+      SMTP_HOST: mailpit

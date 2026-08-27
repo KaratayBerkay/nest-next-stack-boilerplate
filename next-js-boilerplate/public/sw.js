@@ -36,6 +36,7 @@ self.addEventListener("notificationclick", (event) => {
   var kind = data.kind;
   var senderId = data.senderId;
   var postId = data.postId;
+  var slug = data.slug;
 
   event.waitUntil(
     clients
@@ -52,13 +53,21 @@ self.addEventListener("notificationclick", (event) => {
         }
 
         // Build target URL matching the frontend's notificationTarget map
+        // (src/lib/notifications/target.ts) — keep both in sync by hand,
+        // there's no way to share code between a service worker and the app.
         var url;
         if (kind === "direct-message" && senderId) {
           url = "/v1/" + lang + "/messages?user=" + senderId;
         } else if (kind === "friend-request" || kind === "friend-accepted") {
-          url = "/v1/" + lang + "/find-friends";
+          url = "/v1/" + lang + "/find-friends/requests";
+        } else if (kind === "rtc-missed-call") {
+          url = "/v1/" + lang + "/rtc/calls";
+        } else if (kind === "rtc-meeting-invite" && slug) {
+          url = "/v1/" + lang + "/rtc/meetings/" + slug;
+        } else if (kind === "rtc-stream-live" && slug) {
+          url = "/v1/" + lang + "/rtc/live/" + slug;
         } else if (postId) {
-          url = "/v1/" + lang + "/feed#post-" + postId;
+          url = "/v1/" + lang + "/posts/" + postId;
         } else {
           url = "/v1/" + lang + "/notification";
         }

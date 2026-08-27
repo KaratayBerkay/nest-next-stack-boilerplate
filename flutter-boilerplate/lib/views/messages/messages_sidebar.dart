@@ -4,12 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/theme.dart';
 import 'messages_sidebar_conversations.dart';
+import 'messages_sidebar_filter_bar.dart';
 import 'messages_sidebar_friends.dart';
 import 'messages_sidebar_search.dart';
 import 'messages_sidebar_tab_bar.dart';
 
 class MessagesSidebar extends ConsumerStatefulWidget {
-  const MessagesSidebar({super.key});
+  final String lang;
+
+  const MessagesSidebar({super.key, required this.lang});
 
   @override
   ConsumerState<MessagesSidebar> createState() => _MessagesSidebarState();
@@ -18,6 +21,7 @@ class MessagesSidebar extends ConsumerStatefulWidget {
 class _MessagesSidebarState extends ConsumerState<MessagesSidebar> {
   int _activeTab = 0;
   String _searchQuery = '';
+  MessagesFilter _filter = MessagesFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -39,9 +43,18 @@ class _MessagesSidebarState extends ConsumerState<MessagesSidebar> {
             activeTab: _activeTab,
             onTabChanged: (v) => setState(() => _activeTab = v),
           ),
+          if (_activeTab == 0)
+            MessagesSidebarFilterBar(
+              filter: _filter,
+              onFilterChanged: (f) => setState(() => _filter = f),
+              lang: widget.lang,
+            ),
           Expanded(
             child: _activeTab == 0
-                ? MessagesSidebarConversations(searchQuery: _searchQuery)
+                ? MessagesSidebarConversations(
+                    searchQuery: _searchQuery,
+                    filter: _filter,
+                  )
                 : MessagesSidebarFriends(searchQuery: _searchQuery),
           ),
         ],

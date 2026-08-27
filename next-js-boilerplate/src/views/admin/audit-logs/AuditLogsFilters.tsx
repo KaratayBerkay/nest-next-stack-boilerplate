@@ -26,24 +26,24 @@ export function AuditLogsFilters({
         className="text-xs"
       >
         <option value="">{t.allActions}</option>
-        <option value="CREATE">Create</option>
-        <option value="UPDATE">Update</option>
-        <option value="DELETE">Delete</option>
-        <option value="LOGIN">Login</option>
-        <option value="LOGOUT">Logout</option>
-        <option value="LOGIN_FAILED">Login Failed</option>
-        <option value="SIGNUP">Signup</option>
-        <option value="EMAIL_VERIFIED">Email Verified</option>
-        <option value="PASSWORD_CHANGED">Password Changed</option>
-        <option value="MFA_ENABLED">MFA Enabled</option>
-        <option value="MFA_DISABLED">MFA Disabled</option>
-        <option value="ROLE_CHANGED">Role Changed</option>
-        <option value="PERMISSION_GRANTED">Permission Granted</option>
-        <option value="PERMISSION_REVOKED">Permission Revoked</option>
-        <option value="EXPORT">Export</option>
-        <option value="IMPORT">Import</option>
-        <option value="API_KEY_CREATED">API Key Created</option>
-        <option value="API_KEY_REVOKED">API Key Revoked</option>
+        <option value="CREATE">{t.actionCreate}</option>
+        <option value="UPDATE">{t.actionUpdate}</option>
+        <option value="DELETE">{t.actionDelete}</option>
+        <option value="LOGIN">{t.actionLogin}</option>
+        <option value="LOGOUT">{t.actionLogout}</option>
+        <option value="LOGIN_FAILED">{t.actionLoginFailed}</option>
+        <option value="SIGNUP">{t.actionSignup}</option>
+        <option value="EMAIL_VERIFIED">{t.actionEmailVerified}</option>
+        <option value="PASSWORD_CHANGED">{t.actionPasswordChanged}</option>
+        <option value="MFA_ENABLED">{t.actionMfaEnabled}</option>
+        <option value="MFA_DISABLED">{t.actionMfaDisabled}</option>
+        <option value="ROLE_CHANGED">{t.actionRoleChanged}</option>
+        <option value="PERMISSION_GRANTED">{t.actionPermissionGranted}</option>
+        <option value="PERMISSION_REVOKED">{t.actionPermissionRevoked}</option>
+        <option value="EXPORT">{t.actionExport}</option>
+        <option value="IMPORT">{t.actionImport}</option>
+        <option value="API_KEY_CREATED">{t.actionApiKeyCreated}</option>
+        <option value="API_KEY_REVOKED">{t.actionApiKeyRevoked}</option>
       </NativeSelect>
 
       <NativeSelect

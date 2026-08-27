@@ -19,5 +19,6 @@ export interface ChatMessageListProps {
     failedToLoad: string;
     noMessages: string;
     decryptionFailed: string;
+    today: string;
   };
 }

@@ -17,6 +17,7 @@ import { displayName } from '../common/utils/display-name';
 import type { LiveStream, RtcRoom } from '@prisma/client';
 import { NotificationService } from '../notification/notification.service';
 import { FriendsService } from '../friends/friends.service';
+import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 export type { RtcChatMessageView as StreamChatMessageView } from './rtc-chat.service';
 
@@ -68,43 +69,88 @@ export class RtcStreamService {
     if (!broadcaster) throw new NotFoundException('User not found');
     const slug = generateSlug();
 
-    const room = await this.prisma.rtcRoom.create({
-      data: {
-        kind: RtcRoomKind.STREAM,
-        state: RtcRoomState.PENDING,
-        createdById: userId,
-      },
+    // RtcRoom + LiveStream + the broadcaster's own RtcParticipant row are
+    // created together, atomically — same reasoning as
+    // RtcMeetingService.createMeeting's matching comment: an "ACTIVE room,
+    // no LiveStream row" state must never be reachable, and a LiveStream
+    // whose broadcaster never got their own RtcParticipant would silently
+    // break the broadcaster's own access to their stream's chat
+    // (isActiveParticipant looks up exactly that row).
+    const roomId = await this.prisma.$transaction(async (tx) => {
+      const room = await tx.rtcRoom.create({
+        data: {
+          kind: RtcRoomKind.STREAM,
+          state: RtcRoomState.PENDING,
+          createdById: userId,
+        },
+      });
+      await tx.liveStream.create({
+        data: { roomId: room.id, broadcasterId: userId, title: trimmed, slug },
+      });
+      await tx.rtcParticipant.create({
+        data: {
+          roomId: room.id,
+          userId,
+          role: RtcParticipantRole.BROADCASTER,
+          livekitIdentity: userId,
+        },
+      });
+      return room.id;
     });
-    const livekitRoomName = `stream-${room.id}`;
-    await this.liveKit.createRoom(livekitRoomName);
+
+    const livekitRoomName = `stream-${roomId}`;
+    try {
+      await this.liveKit.createRoom(livekitRoomName);
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('stream.livekit_create_failed', error, {
+          roomId,
+          roomName: livekitRoomName,
+          userId,
+          phase: RtcRoomState.PENDING,
+        }),
+      );
+      throw error;
+    }
     const now = new Date();
     await this.prisma.rtcRoom.update({
-      where: { id: room.id },
+      where: { id: roomId },
       data: { state: RtcRoomState.ACTIVE, livekitRoomName, startedAt: now },
     });
 
-    const stream = await this.prisma.liveStream.create({
-      data: { roomId: room.id, broadcasterId: userId, title: trimmed, slug },
+    const stream = await this.prisma.liveStream.findUniqueOrThrow({
+      where: { roomId },
       include: { room: true, broadcaster: true },
     });
-    await this.prisma.rtcParticipant.create({
-      data: {
-        roomId: room.id,
+
+    let token: string;
+    try {
+      token = await this.liveKit.mintToken({
+        identity: userId,
+        name: displayName(broadcaster),
+        roomName: livekitRoomName,
+        canPublish: true,
+        canSubscribe: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('stream.livekit_token_failed', error, {
+          roomId,
+          roomName: livekitRoomName,
+          userId,
+        }),
+      );
+      throw error;
+    }
+
+    this.logger.log(
+      rtcLog('stream.started', {
+        roomId,
+        slug,
         userId,
-        role: RtcParticipantRole.BROADCASTER,
-        livekitIdentity: userId,
-      },
-    });
-
-    const token = await this.liveKit.mintToken({
-      identity: userId,
-      name: displayName(broadcaster),
-      roomName: livekitRoomName,
-      canPublish: true,
-      canSubscribe: true,
-    });
-
-    this.logger.log({ category: 'rtc', event: 'stream.started', slug });
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
     this.notifyFriendsWentLive(userId, stream.title, slug);
     return { token, roomName: livekitRoomName, stream };
   }
@@ -143,13 +189,20 @@ export class RtcStreamService {
       const failed = results.filter((r) => r.status === 'rejected').length;
       if (failed > 0) {
         this.logger.warn(
-          `stream-live notify: ${failed}/${friendIds.length} failed for ${slug}`,
+          rtcLog('stream.live_notification_partial_failure', {
+            slug,
+            userId: broadcasterId,
+            failed,
+            total: friendIds.length,
+          }),
         );
       }
     })().catch((err: Error) =>
       this.logger.error(
-        { event: 'stream_live_notification_failed', error: err.message },
-        `Stream-live notification failed: ${err.message}`,
+        rtcErrorLog('stream.live_notification_failed', err, {
+          slug,
+          userId: broadcasterId,
+        }),
       ),
     );
   }
@@ -203,13 +256,27 @@ export class RtcStreamService {
       update: { leftAt: null, joinedAt: new Date() },
     });
 
-    const token = await this.liveKit.mintToken({
-      identity: userId,
-      name: displayName(user),
-      roomName: stream.room.livekitRoomName!,
-      canPublish: false,
-      canSubscribe: true,
-    });
+    let token: string;
+    try {
+      token = await this.liveKit.mintToken({
+        identity: userId,
+        name: displayName(user),
+        roomName: stream.room.livekitRoomName!,
+        canPublish: false,
+        canSubscribe: true,
+      });
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('stream.livekit_token_failed', error, {
+          roomId: stream.roomId,
+          roomName: stream.room.livekitRoomName,
+          slug,
+          userId,
+          role: RtcParticipantRole.VIEWER,
+        }),
+      );
+      throw error;
+    }
 
     const viewerCount = await this.getViewerCount(stream);
     if (viewerCount > stream.peakViewerCount) {
@@ -226,6 +293,16 @@ export class RtcStreamService {
       name: displayName(user),
       viewerCount,
     });
+
+    this.logger.log(
+      rtcLog('stream.viewer_joined', {
+        roomId: stream.roomId,
+        slug,
+        userId,
+        viewerCount,
+        phase: RtcRoomState.ACTIVE,
+      }),
+    );
 
     return { token, roomName: stream.room.livekitRoomName!, stream };
   }
@@ -244,6 +321,14 @@ export class RtcStreamService {
       userId,
       viewerCount,
     });
+    this.logger.log(
+      rtcLog('stream.viewer_left', {
+        roomId: stream.roomId,
+        slug,
+        userId,
+        viewerCount,
+      }),
+    );
   }
 
   async endStream(userId: string, slug: string): Promise<void> {
@@ -379,18 +464,20 @@ export class RtcStreamService {
 
   private async finishStream(stream: StreamWithRoom): Promise<void> {
     const now = new Date();
-    await this.prisma.rtcParticipant.updateMany({
-      where: { roomId: stream.roomId, leftAt: null },
-      data: { leftAt: now },
-    });
-    await this.prisma.rtcRoom.update({
-      where: { id: stream.roomId },
-      data: { state: RtcRoomState.ENDED, endedAt: now },
-    });
-    await this.prisma.liveStream.update({
-      where: { id: stream.id },
-      data: { isLive: false, endedAt: now },
-    });
+    await this.prisma.$transaction([
+      this.prisma.rtcParticipant.updateMany({
+        where: { roomId: stream.roomId, leftAt: null },
+        data: { leftAt: now },
+      }),
+      this.prisma.rtcRoom.update({
+        where: { id: stream.roomId },
+        data: { state: RtcRoomState.ENDED, endedAt: now },
+      }),
+      this.prisma.liveStream.update({
+        where: { id: stream.id },
+        data: { isLive: false, endedAt: now },
+      }),
+    ]);
     if (stream.room.livekitRoomName) {
       await this.liveKit.deleteRoom(stream.room.livekitRoomName);
     }
@@ -398,10 +485,12 @@ export class RtcStreamService {
       type: 'rtc:stream-ended',
       slug: stream.slug,
     });
-    this.logger.log({
-      category: 'rtc',
-      event: 'stream.ended',
-      slug: stream.slug,
-    });
+    this.logger.log(
+      rtcLog('stream.ended', {
+        roomId: stream.roomId,
+        slug: stream.slug,
+        phase: RtcRoomState.ENDED,
+      }),
+    );
   }
 }

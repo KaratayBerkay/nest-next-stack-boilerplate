@@ -19,6 +19,7 @@ import { RtcChatService } from './rtc-chat.service';
 import { RtcChatWsGateway } from './rtc-chat-ws.gateway';
 import { RtcReportService } from './rtc-report.service';
 import { RtcRecordingService } from './rtc-recording.service';
+import { RtcErrorInterceptor } from './rtc-error.interceptor';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { RtcRecordingService } from './rtc-recording.service';
     RtcChatWsGateway,
     RtcReportService,
     RtcRecordingService,
+    RtcErrorInterceptor,
   ],
   exports: [
     LiveKitService,

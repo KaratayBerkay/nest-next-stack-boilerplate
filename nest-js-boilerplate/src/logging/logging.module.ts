@@ -11,8 +11,8 @@ import { buildPinoHttpOptions } from './logging.config';
  * correlation. Existing `new Logger(Foo.name)` call sites keep working — they are bridged onto
  * Pino once `main.ts` calls `app.useLogger(app.get(Logger))`.
  *
- * See `docs/backend/research/logger.md` for why the built-in logger was rejected and the transport
- * options (stdout → collector → Loki/ELK) this feeds.
+ * See `docs/backend/platform-core/logging/README.md` for why the built-in logger was rejected and
+ * the transport options (stdout → collector → Loki/ELK) this feeds.
  */
 @Module({
   imports: [

@@ -12,17 +12,18 @@ export class PushSubscriptionService {
     auth: string,
     userAgent?: string,
   ) {
-    const existing = await this.prisma.pushSubscription.findUnique({
+    // `endpoint` is @unique — upsert lets Postgres's own unique index
+    // (INSERT ... ON CONFLICT) resolve the race atomically. The prior
+    // findUnique-then-create/update was a TOCTOU race: two concurrent
+    // subscribe() calls for the same endpoint (a service worker
+    // re-registering across two open tabs) could both see no existing row
+    // and both attempt create(), and the loser's `endpoint` unique
+    // constraint violation would surface as a raw 500 instead of the keys
+    // simply being (re)saved.
+    return this.prisma.pushSubscription.upsert({
       where: { endpoint },
-    });
-    if (existing) {
-      return this.prisma.pushSubscription.update({
-        where: { id: existing.id },
-        data: { p256dh, auth, userAgent, userId },
-      });
-    }
-    return this.prisma.pushSubscription.create({
-      data: { userId, endpoint, p256dh, auth, userAgent },
+      create: { userId, endpoint, p256dh, auth, userAgent },
+      update: { p256dh, auth, userAgent, userId },
     });
   }
 

@@ -22,7 +22,7 @@ export default function PageContent({ className }: ClassNameProps) {
   const { user } = useAuth();
   const t = useMessages("settings");
   const { toast } = useToast();
-  const { createApiKey, revokeApiKey } = useApiKeyActions();
+  const { createApiKey, revokeApiKey, updateApiKey } = useApiKeyActions();
 
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(true);
@@ -107,6 +107,7 @@ export default function PageContent({ className }: ClassNameProps) {
         toast={toast}
         loadKeys={loadKeys}
         revokeApiKey={revokeApiKey}
+        updateApiKey={updateApiKey}
       />
     </div>
   );

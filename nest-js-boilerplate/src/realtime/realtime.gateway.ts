@@ -37,6 +37,22 @@ import type {
   VerifiedUpgradeRequest,
 } from './realtime.types';
 
+/**
+ * Chains `task` onto `prev` so it only starts once `prev` has settled —
+ * success or failure — instead of racing it. Used to serialize a single WS
+ * connection's inbound frames (see AuthWs._processingChain) without
+ * blocking any other connection. The trailing `.catch` both reports a
+ * failure through `onError` and resolves the returned promise, so one
+ * failing frame can't permanently jam every frame queued after it.
+ */
+export function chainAfter(
+  prev: Promise<void> | undefined,
+  task: () => Promise<void>,
+  onError: (err: Error) => void,
+): Promise<void> {
+  return (prev ?? Promise.resolve()).then(task).catch(onError);
+}
+
 @Injectable()
 export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   private static readonly MAX_SOCKETS_PER_USER = 20;
@@ -348,8 +364,13 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       this.handleOnline(authWs, { silent: !!replaced });
 
       ws.on('message', (raw: Buffer) => {
-        this.handleMessage(authWs, raw).catch((err) =>
-          this.logger.error('WS message handler error', err),
+        // Chain onto this socket's own queue, not a bare fire-and-forget —
+        // see AuthWs._processingChain's doc comment for why frame ordering
+        // needs this.
+        authWs._processingChain = chainAfter(
+          authWs._processingChain,
+          () => this.handleMessage(authWs, raw),
+          (err) => this.logger.error('WS message handler error', err),
         );
       });
 
@@ -513,13 +534,16 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
             case 'emitToUserEncrypted':
               if (userId && frame) {
                 if (this.skipPublished(eid)) break;
-                void this.emitToUserEncrypted(userId, frame);
+                // `true` = this delivery originated from another replica's
+                // publish; must never republish it again (see
+                // emitToUserEncrypted's own comment on `fromRedis`).
+                void this.emitToUserEncrypted(userId, frame, true);
               }
               break;
             case 'emitToRoomEncrypted':
               if (room && frame) {
                 if (this.skipPublished(eid)) break;
-                void this.emitToRoomEncrypted(room, frame);
+                void this.emitToRoomEncrypted(room, frame, true);
               }
               break;
           }
@@ -1108,6 +1132,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   async emitToUserEncrypted(
     userId: string,
     payload: Record<string, unknown>,
+    fromRedis = false,
   ): Promise<number> {
     // See emitToPageEncrypted's comment: encrypt into a fresh copy, never
     // mutate `payload` itself. It also feeds the Redis publish below, and
@@ -1137,7 +1162,16 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         }
       }
     }
-    if (!this.forwardingFromRedis) {
+    // `fromRedis` is an explicit argument, not a read of `this.forwardingFromRedis`
+    // here — regression: the subscriber's handler sets that flag true, calls this
+    // method with `void` (fire-and-forget) so it doesn't block on the awaits
+    // above, then resets the flag to false in its own `finally` before this
+    // method's continuation ever resumes. By the time execution reached this
+    // point, the flag had already flipped back to false, so every
+    // Redis-forwarded encrypted message was wrongly republished — with a
+    // fresh eid the other replica's dedup map had never seen — causing
+    // duplicate delivery that could ping-pong indefinitely between replicas.
+    if (!fromRedis) {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,
@@ -1161,6 +1195,7 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
   async emitToRoomEncrypted(
     room: string,
     payload: Record<string, unknown>,
+    fromRedis = false,
   ): Promise<number> {
     // See emitToPageEncrypted's comment: encrypt into a fresh copy, never
     // mutate `payload` itself — same reason (Redis publish + re-entrant
@@ -1188,7 +1223,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         }
       }
     }
-    if (!this.forwardingFromRedis) {
+    // See emitToUserEncrypted's comment on `fromRedis` — same bug, same fix:
+    // reading the shared `this.forwardingFromRedis` flag here (after the
+    // awaits above) would see it already reset by the subscriber's
+    // synchronous `finally`, wrongly republishing every forwarded room
+    // message back to Redis.
+    if (!fromRedis) {
       void this.safeRedis('publish', () =>
         this.redis.publish(
           RealtimeGateway.WS_CHANNEL,

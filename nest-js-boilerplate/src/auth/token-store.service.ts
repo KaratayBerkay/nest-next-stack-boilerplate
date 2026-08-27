@@ -1,4 +1,4 @@
-import { Inject, Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
 import { CryptoService } from '../common/crypto/crypto.service';
@@ -28,6 +28,7 @@ function parseJsonField(raw: string | undefined): string[] {
 
 @Injectable()
 export class TokenStoreService {
+  private readonly logger = new Logger(TokenStoreService.name);
   private readonly ttl: number;
 
   constructor(
@@ -269,7 +270,45 @@ export class TokenStoreService {
     return false;
   }
 
+  /**
+   * Every caller of this (admin ban/suspend, changePassword, resetPassword,
+   * undoPasswordChange, resetMfa) treats it as the sole enforcement
+   * mechanism — no code path re-checks live account state for an
+   * already-authenticated session, so this call succeeding is what actually
+   * invalidates a session, not just a courtesy cleanup. It runs strictly
+   * after its caller's own DB transaction already committed (Redis can't
+   * join that transaction), so a transient failure here previously left a
+   * stale — possibly attacker-held, or a just-banned user's — session fully
+   * valid with no retry and no visibility. Retried a few times with a short
+   * backoff to ride out exactly that kind of transient blip; if every
+   * attempt still fails, this still throws (unchanged for callers that
+   * already propagate the rejection) but only after logging loudly enough
+   * to actually get noticed and manually reconciled.
+   */
   async revokeAllForUser(userId: string): Promise<number> {
+    const MAX_ATTEMPTS = 3;
+    const RETRY_DELAY_MS = 250;
+    let lastError: unknown;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        return await this.revokeAllForUserOnce(userId);
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_ATTEMPTS) {
+          this.logger.warn(
+            `revokeAllForUser failed for user ${userId} (attempt ${attempt}/${MAX_ATTEMPTS}), retrying: ${(err as Error).message}`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+        }
+      }
+    }
+    this.logger.error(
+      `SECURITY: revokeAllForUser failed for user ${userId} after ${MAX_ATTEMPTS} attempts — this user's existing sessions may still be valid and were not revoked: ${(lastError as Error).message}`,
+    );
+    throw lastError;
+  }
+
+  private async revokeAllForUserOnce(userId: string): Promise<number> {
     const reverseKey = this.reverseIndexKey(userId);
     const sessions = await this.listSessionsWithKeys(userId);
     const pipe = this.redis.multi();

@@ -7,16 +7,19 @@ import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/messages/message.dart';
 import 'chat_message_bubble.dart';
 
 class ChatMessageList extends ConsumerWidget {
   final String conversationId;
   final ScrollController? scrollController;
+  final ValueChanged<ChatMessage>? onReply;
 
   const ChatMessageList({
     super.key,
     required this.conversationId,
     this.scrollController,
+    this.onReply,
   });
 
   @override
@@ -41,6 +44,17 @@ class ChatMessageList extends ConsumerWidget {
         icon: Icons.chat_outlined,
       );
     }
+
+    // A DM has exactly two participants — derive the peer's display name
+    // from any of their messages already in hand, for the reply-quote label
+    // (a message being quoted may be either party's, regardless of who
+    // authored the message currently rendering it).
+    final peerName = messages
+        .firstWhere(
+          (m) => m.senderId != currentUser?.id,
+          orElse: () => messages.first,
+        )
+        .senderName;
 
     final hasMore = messagesState.hasMore;
     return ListView.builder(
@@ -74,6 +88,9 @@ class ChatMessageList extends ConsumerWidget {
         return ChatMessageBubble(
           message: msg,
           isMe: isMe,
+          currentUserId: currentUser?.id,
+          peerName: peerName,
+          onReply: onReply,
         );
       },
     );

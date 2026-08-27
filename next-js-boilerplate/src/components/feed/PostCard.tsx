@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useSuspenseQuery, useQueryClient } from "@tanstack/react-query";
 import { usePostActions } from "@/api/client/posts/actions";
 import { singlePostQueryOptions } from "@/api/client/posts/query";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import type { PostCardProps } from "@/types/feed/PostCard-types";
 import { PostHeader } from "./PostHeader";
 import { PostContent } from "./PostContent";
@@ -16,13 +18,15 @@ async function handleEditPost(
   editContent: string,
   setEditing: Dispatch<SetStateAction<boolean>>,
   updatePost: (id: string, title: string, content: string) => Promise<void>,
+  toast: ReturnType<typeof useToast>["toast"],
+  failedMessage: string,
 ) {
   if (!editTitle.trim() || !editContent.trim()) return;
   try {
     await updatePost(postDataId, editTitle.trim(), editContent.trim());
     setEditing(false);
   } catch {
-    // silent
+    toast({ title: failedMessage, variant: "destructive" });
   }
 }
 
@@ -30,12 +34,14 @@ async function handleDeletePost(
   postDataId: string,
   onDelete: ((id: string) => void) | undefined,
   deletePost: (id: string) => Promise<void>,
+  toast: ReturnType<typeof useToast>["toast"],
+  failedMessage: string,
 ) {
   try {
     await deletePost(postDataId);
     onDelete?.(postDataId);
   } catch {
-    // silent
+    toast({ title: failedMessage, variant: "destructive" });
   }
 }
 
@@ -59,6 +65,8 @@ export function PostCard({
   onDelete,
 }: PostCardProps) {
   const { user } = useAuth();
+  const t = useMessages("posts");
+  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -89,7 +97,13 @@ export function PostCard({
           setEditing(true);
         }}
         onDeleteConfirm={() =>
-          handleDeletePost(postData.id, onDelete, deletePost)
+          handleDeletePost(
+            postData.id,
+            onDelete,
+            deletePost,
+            toast,
+            t.deletePostFailed,
+          )
         }
       />
 
@@ -112,17 +126,19 @@ export function PostCard({
                 editContent,
                 setEditing,
                 updatePost,
+                toast,
+                t.editPostFailed,
               )
             }
             className="bg-brand text-brand-fg rounded-lg px-3 py-1 text-xs font-medium"
           >
-            Save
+            {t.save}
           </button>
           <button
             onClick={() => setEditing(false)}
             className="text-muted text-xs underline"
           >
-            Cancel
+            {t.cancel}
           </button>
         </div>
       )}

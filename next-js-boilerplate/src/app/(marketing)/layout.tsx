@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { containerClass, SITE } from "@/constants/site";
-import { PRICING_PATH } from "@/constants/routes";
+import { PRICING_PATH, ABOUT_PATH } from "@/constants/routes";
 import { ThemeToggle } from "@/components/layout/ThemeToggle";
 import type { MarketingLayoutProps } from "@/types/marketing/MarketingLayout-types";
 
@@ -18,6 +18,12 @@ export default function MarketingLayout({ children }: MarketingLayoutProps) {
               className="text-muted hover:text-fg text-sm transition-colors"
             >
               Pricing
+            </Link>
+            <Link
+              href={ABOUT_PATH}
+              className="text-muted hover:text-fg text-sm transition-colors"
+            >
+              About
             </Link>
           </nav>
         </div>

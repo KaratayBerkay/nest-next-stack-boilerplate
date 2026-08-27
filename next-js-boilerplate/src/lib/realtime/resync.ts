@@ -25,5 +25,16 @@ export function resyncAfterConnect(
     qc.invalidateQueries({
       queryKey: ["room", currentClaim.params.room],
     });
+  } else if (
+    currentClaim?.page === "rtc-meeting" &&
+    currentClaim.params?.slug
+  ) {
+    qc.invalidateQueries({
+      queryKey: ["rtc", "meetings", currentClaim.params.slug, "chat"],
+    });
+  } else if (currentClaim?.page === "rtc-stream" && currentClaim.params?.slug) {
+    qc.invalidateQueries({
+      queryKey: ["rtc", "streams", currentClaim.params.slug, "chat"],
+    });
   }
 }

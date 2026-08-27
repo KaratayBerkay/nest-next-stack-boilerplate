@@ -8,9 +8,10 @@
  */
 export function deviceLabel(
   userAgent: string | undefined,
-  deviceType?: string,
+  deviceType: string | undefined,
+  unknownLabel: string,
 ): string {
-  if (!userAgent) return deviceType ?? "Unknown device";
+  if (!userAgent) return deviceType ?? unknownLabel;
 
   const os = parseOs(userAgent);
   const browser = parseBrowser(userAgent);
@@ -18,7 +19,7 @@ export function deviceLabel(
   if (browser && os) return `${browser} on ${os}`;
   if (browser) return browser;
   if (os) return os;
-  return deviceType ?? "Unknown device";
+  return deviceType ?? unknownLabel;
 }
 
 function parseOs(ua: string): string | null {

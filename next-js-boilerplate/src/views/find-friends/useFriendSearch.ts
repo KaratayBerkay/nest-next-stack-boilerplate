@@ -22,7 +22,7 @@ export function useFriendSearch(currentUserId?: string) {
 
   const skip = page * PAGE_SIZE;
 
-  const { data, isLoading } = useQuery(
+  const { data, isLoading, isError } = useQuery(
     searchUsersQueryOptions(debouncedQuery, PAGE_SIZE, skip),
   );
 
@@ -47,7 +47,11 @@ export function useFriendSearch(currentUserId?: string) {
     query,
     setQuery,
     searching: isLoading,
+    // Previously a failed search and a zero-match search both rendered an
+    // empty `items` array — indistinguishable "No users found" either way.
+    searchFailed: isError,
     totalPages,
+    truncated: data?.truncated ?? false,
     onQueryChange,
     goToPage,
   };

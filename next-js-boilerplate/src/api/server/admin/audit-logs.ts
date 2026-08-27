@@ -1,22 +1,6 @@
 import { apiFetchJson } from "@/lib/api-client";
 import { ADMIN_AUDIT_LOGS_URL } from "@/constants/api/urls";
-
-export interface AuditLogEntry {
-  id: string;
-  action: string;
-  level: string;
-  actor: { id: string; name: string; email: string } | null;
-  entity: { id: string; type: string };
-  summary: string;
-  ip?: string;
-  diff?: Record<string, unknown>;
-  createdAt: string;
-}
-
-export interface AuditLogResponse {
-  entries: AuditLogEntry[];
-  total: number;
-}
+import type { AuditLogResponse } from "@/types/admin/AuditLog-types";
 
 export interface AuditLogParams {
   take: number;

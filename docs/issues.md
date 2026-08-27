@@ -36,7 +36,6 @@ against source) → `fixed` | `wontfix`.
 | [FE-005](#fe-005) | LOW | Frontend | `meQueryOptions()` has zero callers anywhere in the app | verified | Phase 1a |
 | [FE-003](#fe-003) | INFO | Docs (self-correction) | This effort's own Phase-0 research called `src/views/auth/` "a 1-file stub" — the one file is a real, complete page, not a stub | verified | Phase 1a |
 | [FE-006](#fe-006) | — | Frontend | `/api/auth/token` vs `/api/auth/refresh` — checked, confusable names but not a bug | verified — wontfix | Phase 1a |
-| [BE-007](#be-007) | MED | Backend | `setUserStatus` (ban/suspend) and `resetMfa` admin mutations have zero UI consumer on either platform | verified | Phase 1b |
 | [CROSS-012](#cross-012) | MED | Backend + Frontend + Mobile | `updateApiKey` is fully implemented and BFF-proxied on web, but has no UI trigger on either platform | verified | Phase 1b |
 | [CROSS-014](#cross-014) | MED | Docs (self-correction) | Mobile's security screen IS routed under `settings/security` — earlier research's "top-level, not nested" claim was wrong | verified | Phase 1b |
 | [BE-006](#be-006) | LOW | Backend | `AdminResolver.createAuditLog()` is a dead duplicate of the real outbox-based audit logger; never called | verified | Phase 1b |
@@ -88,14 +87,11 @@ against source) → `fixed` | `wontfix`.
 | [MOB-016](#mob-016) | LOW | Mobile | Mobile's chat-room widget is dual-purposed as a second, unreachable 1:1 DM implementation | verified | Phase 3b |
 | [CROSS-026](#cross-026) | LOW | Frontend + Mobile | Web's and mobile's own chat-room deep-link query param names don't match each other | verified | Phase 3b |
 | [MOB-017](#mob-017) | LOW | Mobile | Mobile's attachment upload call never sends an upload-scope parameter — lands in the wrong storage folder | verified | Phase 3b |
-| [CROSS-029](#cross-029) | HIGH | Frontend + Mobile + Backend | No code path lets a logged-out visitor see real pricing/plan data on either platform — both redirect into a login wall, and the backend query is session-gated with no exception | verified | Phase 4a |
 | [CROSS-030](#cross-030) | HIGH | Frontend + Backend | Every paid↔paid tier change from web checkout 400s with a misleading "payment method required" error before reaching the backend; works correctly on mobile | verified | Phase 4a |
-| [CROSS-031](#cross-031) | MED | Frontend + Mobile | Tier feature-list copy is hardcoded independently in 3+ places across both platforms, with materially different wording each time | verified | Phase 4a |
 | [BE-020](#be-020) | MED | Backend | A brand-new subscription's first billing-history row can permanently show $0.00 with no invoice link if the confirming webhook is delayed or never arrives | verified | Phase 4a |
 | [BE-018](#be-018) | MED | Backend | The Stripe webhook endpoint has no throttle exemption and shares the app's global rate limit — a burst can make Stripe treat deliveries as failed | verified | Phase 4a |
 | [BE-022](#be-022) | MED | Backend | Upload-storage quota is displayed on both platforms but never enforced server-side — the enforcement function exists and is never called | verified | Phase 4b |
 | [CROSS-033](#cross-033) | MED | Frontend + Mobile | Mobile has no client-side equivalent of web's storage-limit notice; the real, server-enforced message-storage cap is only discoverable via a raw failed send | verified | Phase 4b |
-| [CROSS-034](#cross-034) | MED | Frontend + Mobile | Web's payment-methods settings UI is fully read-only; mobile's equivalent has a complete working add/remove/set-default flow — mobile ahead of web | verified | Phase 4b |
 | [MOB-023](#mob-023) | MED | Mobile | Mobile's live Premium growth-stats view permanently shows 0/0.0% for two fields with no backend counterpart; two real fetched fields are never displayed | verified | Phase 4b |
 | [FE-013](#fe-013) | LOW–MED | Frontend | Web's Plans page shows self-referential feature bullets on the Medium and Premium cards ("Everything in Medium" shown on the Medium card itself) | verified | Phase 4a |
 | [BE-019](#be-019) | LOW | Backend | Nothing distinguishes a Stripe 3DS/SCA decline from any other subscription-charge failure; neither client offers a recovery path for it | verified | Phase 4a |
@@ -125,6 +121,8 @@ against source) → `fixed` | `wontfix`.
 | [BE-026](#be-026) | LOW | Backend | `Post.category`/`Post.tags` have zero application-code references anywhere in `src/post/` — not even in a DTO | verified | schema.md |
 | [BE-027](#be-027) | LOW | Backend | The `Follow` model has zero application-code references anywhere in `src/` — no module queries or writes it | verified | schema.md |
 | [BE-028](#be-028) | LOW | Backend | 9 `User` columns/relations (`referredBy` self-relation, `birthDate`, `quietHoursStart`, `interests`, `metadata`, `preferences`, `phoneNumber`, `phoneVerified`, `reputation`) have zero application-code references anywhere | verified | schema.md |
+| [CROSS-040](#cross-040) | HIGH | Backend + Frontend + Infra(?) | 1:1 RTC calls always get cancelled ~5-10s after the callee accepts — invite/ringing/accept signaling all work, but a server-detected WebSocket disconnect (caller's or callee's, not consistently one side) fires `handleDisconnect`'s ringing-call-cancel path before either client ever reaches "connected." Root cause not isolated: app-level realtime reconnect bug vs. external proxy WS handling | verified | Live testing pass, 2026-08-27 |
+| [CROSS-044](#cross-044) | LOW | Backend | GraphQL `users(search)` is only session-gated, not role-gated — any authenticated user can already request another user's `role`/`status` (admin/banned/etc.) directly, bypassing any admin-only UI gating | verified | Found while fixing BE-007, 2026-08-27 |
 
 ## Details
 
@@ -578,22 +576,6 @@ interceptor in `api-client.ts`).
 the 401-retry cycle, not `AUTH_TOKEN_URL`.
 **Notes:** Not a bug — checked and cleared, same pattern as [FE-001](#fe-001). Flagged only because
 the names are confusable enough that a future reader might assume they're interchangeable.
-
-### BE-007
-
-**Severity:** MED · **Area:** Backend · **Status:** verified
-**Summary:** Two real, working, role-gated `AdminResolver` mutations — `setUserStatus` (ban/suspend a
-user, revokes all their sessions and sockets) and `resetMfa` (`SUPERADMIN`-only, strips a target
-user's MFA without requiring their TOTP code) — have zero UI consumer on either platform. Unlike
-`setUserTier`, which the `/admin` page fully wires up (`UserTierRow.tsx`), these two have no caller
-anywhere in frontend or mobile source.
-**Evidence:** `grep -rn "setUserStatus" next-js-boilerplate/src flutter-boilerplate/lib` and the same
-for `resetMfa` both return zero matches outside the resolver itself. [`nest-js-boilerplate/src/authorization/admin.resolver.ts#L174-204`](../nest-js-boilerplate/src/authorization/admin.resolver.ts)
-(`setUserStatus`), `#L235-261` (`resetMfa`).
-**Notes:** The `/admin` page exists and works for tier changes — it just never got a ban/suspend or
-MFA-reset action added. Documented in
-[backend/identity-access/authorization/README.md](./backend/identity-access/authorization/README.md#known-issues)
-and its `endpoints.md`.
 
 ### CROSS-012
 
@@ -1431,30 +1413,6 @@ object-storage foldering/traceability defect; a future feature relying on per-sc
 silently miss every mobile-uploaded room attachment. Documented in
 [chat-room/api.md](./mobile/v1/chat-room/api.md#-attachment-upload-never-sends-an-upload-scope).
 
-### CROSS-029
-
-**Severity:** HIGH · **Area:** Frontend + Mobile + Backend · **Status:** verified
-**Summary:** No code path anywhere lets a logged-out visitor see real pricing/plan data — the
-acquisition funnel's own top-of-funnel page fails at its one job, on **both** web and mobile.
-**Evidence:** `next-js-boilerplate/src/app/(marketing)/pricing/page.tsx` → `views/pricing/PageContent.tsx`
-is a `"use client"` component whose entire body is a `useEffect` that calls
-`router.replace(plansPath(lang))` — it renders nothing itself. The destination,
-`next-js-boilerplate/src/app/v1/[lang]/layout.tsx`, opens with an unconditional
-`if (!user) redirect(LOGIN_PATH)` with no exception for `/plans`, and `getSessionUser()` genuinely
-returns `null` for a session-less visitor — no guest fallback. Independently, even if that redirect
-chain were fixed, `nest-js-boilerplate/src/billing/billing.resolver.ts` applies
-`@UseGuards(SessionAuthGuard)` at the class level with no per-method override and no `@Public()`
-decorator anywhere in the file — the `planPrices` query itself requires a full session.
-Mobile hits the identical wall via a different mechanism: `/pricing` (`views/pricing/page_content.dart`)
-isn't itself gated by the app's global router redirect, but its target, `/v1/en/plans`, is — so an
-unauthenticated user is bounced to `/auth/login` one hop later, same net effect.
-**Notes:** Three independent code locations on web (a frontend redirect, a frontend layout guard, a
-backend resolver guard), plus mobile's own redirect-into-a-redirect, combine to make this true on
-both platforms; fixing only one wouldn't fix the user-facing problem. Documented in
-[backend/billing-usage/billing/README.md](./backend/billing-usage/billing/README.md#known-issues),
-[frontend/pricing/page.md](./frontend/pricing/page.md), [frontend/v1/plans/page.md](./frontend/v1/plans/page.md),
-[mobile/pricing/screen.md](./mobile/pricing/screen.md).
-
 ### CROSS-030
 
 **Severity:** HIGH · **Area:** Frontend + Backend · **Status:** verified
@@ -1483,23 +1441,6 @@ there.
 FREE, so the check is skipped) work through this page today. Documented in
 [billing/endpoints.md](./backend/billing-usage/billing/endpoints.md#known-issues) and
 [frontend/v1/checkout/page.md](./frontend/v1/checkout/page.md#known-issues-affecting-this-page).
-
-### CROSS-031
-
-**Severity:** MED · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Tier feature-list copy is hardcoded independently in at least three places across the two
-platforms, with materially different wording each time and no single source of truth.
-**Evidence:** Web Plans page: `messages/en/pricing/messages.json`'s `featuresBasic`/`featuresMedium`/
-`featuresPremium`/`featuresPro` (localized). Web Checkout page:
-`next-js-boilerplate/src/lib/checkout/tier-features.ts`'s `TIER_FEATURES` — plain hardcoded English
-strings, never localized, textually unrelated to the Plans-page copy. Mobile Plans screen:
-`flutter-boilerplate/lib/views/plans/page_content.dart`'s `buildCards()` — inline Dart literals, also
-never localized.
-**Notes:** Same drift shape as [CROSS-008](#cross-008) (hardcoded OAuth provider lists) — but note
-this is specifically about *feature copy*; the underlying *price* data is correctly treated as a
-loading placeholder everywhere on both platforms, not duplicated this way. Documented in
-[frontend/v1/plans/page.md](./frontend/v1/plans/page.md) and
-[frontend/v1/checkout/components/plan-summary-card.md](./frontend/v1/checkout/components/plan-summary-card.md).
 
 ### BE-020
 
@@ -1560,35 +1501,6 @@ nothing in `lib/views/messages/` reads them.
 [frontend/v1/messages/components/storage-limit-notice.md](./frontend/v1/messages/components/storage-limit-notice.md)
 ("worth a look during Phase 4"). Documented there and in
 [usage/README.md](./backend/billing-usage/usage/README.md).
-
-### CROSS-034
-
-**Severity:** MED · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Web's billing-settings `PaymentMethods` is 100% read-only; mobile's equivalent has a
-fully working add/remove/set-default flow. Mobile is ahead of web here — the reverse of this effort's
-usual direction.
-**Evidence:** `next-js-boilerplate/src/views/settings/billing/PaymentMethods.tsx` renders only
-`<Card>`s, no button/menu anywhere. `src/api/client/billing/payment-methods.ts`'s
-`useSetDefaultPaymentMethod()`/`useRemovePaymentMethod()` are fully built, correctly-invalidating
-mutation hooks with zero callers anywhere in the app. Mobile's `page_view.dart`'s
-`_PaymentMethodsSectionState` has working `_removeMethod`/`_setDefault`/`_showAddCardDialog` (using
-`flutter_stripe`'s `confirmSetupIntent` with a native card-entry widget).
-**Notes:** Documented in both settings/billing page/screen docs and both settings vertical READMEs.
-
-### MOB-023
-
-**Severity:** MED · **Area:** Mobile · **Status:** verified
-**Summary:** Mobile's live Premium growth-stats view permanently shows 0/0.0% for two invented fields
-with no backend counterpart; two real backend fields it does fetch are never shown.
-**Evidence:** `GrowthStats.fromJson` (`lib/api/server/premium/growth_stats.dart`) reads
-`newSubscriptionsThisMonth`/`growthRate` from JSON keys the `growthStats` query never requests and
-the backend schema doesn't have — both silently default to `0`/`0.0`. Meanwhile `totalPosts`/
-`totalFriendships` (real, fetched) are parsed by nothing. `newUsersLast7Days` is also mislabeled "New
-Users (Month)" (web's label is correct).
-**Notes:** Live, paying-tier-visible, permanently-wrong data on a real dashboard — found in the *live*
-code path, unrelated to [MOB-022](#mob-022)'s dead-code finding in the same vertical. Documented in
-[mobile/v1/premium/screen.md](./mobile/v1/premium/screen.md) and
-[api.md](./mobile/v1/premium/api.md).
 
 ### FE-013
 
@@ -1668,7 +1580,7 @@ its one call site never populates.
 `PlanSummaryCard(tierLabel: ..., price: ..., alreadySubscribed: ...)` — `features` always defaults to
 `const []`.
 **Notes:** Purely cosmetic vs. web's equivalent card, which does show features (sourced from
-[CROSS-031](#cross-031)'s hardcoded copy). Documented in
+CROSS-031's hardcoded copy). Documented in
 [mobile/v1/checkout/widgets/plan-summary-card.md](./mobile/v1/checkout/widgets/plan-summary-card.md).
 
 ### MOB-019
@@ -2033,3 +1945,75 @@ but never wired to a feature. Column-level rather than table-level, so it doesn'
 `_reference/excluded-modules.md` entry, but a consumer of this boilerplate building phone-verification,
 referral tracking, or quiet-hours notification suppression should know these columns are placeholders,
 not partially-built features. See [schema.md § User](./schema.md#user).
+
+### CROSS-040
+
+**Severity:** HIGH · **Area:** Backend + Frontend + Infra(?) · **Status:** verified
+**Summary:** Every 1:1 RTC call attempted during a live testing pass (real Chromium browser
+sessions against the deployed stack, two separate real user accounts) reproduced the same failure:
+the caller's invite and the callee's ringing/accept all signal correctly, but within ~5-10 seconds
+of the callee accepting, the backend logs a call cancellation caused by a detected WebSocket
+disconnect — and neither client ever reaches the `connected` phase. Confirmed via
+`RtcCallService`'s own structured logs:
+```
+{"event":"call.invited","phase":"RINGING", ...}
+... (accept sent client-side; no corresponding "call.accepted"/"connected" log ever appears)
+{"event":"call.cancelled","reason":"socket_disconnect","phase":"CANCELLED", ...}
+```
+On a second attempt, the same shape reproduced but with the *callee's* socket implicated instead
+(`"reason":"callee_socket_disconnect"`, `"event":"call.missed"`) — the disconnect isn't consistently
+one particular role, which points at general realtime-connection instability around this code path
+rather than a caller-specific or callee-specific bug.
+**Evidence:** [`nest-js-boilerplate/src/rtc/rtc-call.service.ts`](../nest-js-boilerplate/src/rtc/rtc-call.service.ts)
+`handleDisconnect()` (~L526-579) is the code path that fired both times — it cancels/misses any
+`RINGING` call the moment either party's gateway socket disconnects, which is reasonable logic *if*
+the disconnect is real, but Playwright's own WebSocket instrumentation (`page.on("websocket")`,
+listening for the `close` event on the actual browser-level `WebSocket` object) shows **no close
+event ever fired on either client** during the exact window the backend believed a disconnect
+happened — i.e. from the browser's own vantage point, the connection never dropped. Separately,
+and possibly related: the callee's page, immediately after the realtime WS authenticates, sends
+repeated `{"type":"unwatch","topic":"feed"}` / `{"type":"watch","topic":"feed"}` frame pairs for the
+same topic in rapid succession (5-6 cycles observed in under a second right after page load) —
+consistent with a `useEffect` dependency bug causing the realtime feed-subscription hook to
+re-subscribe far more than it should, in `next-js-boilerplate/src/lib/realtime/` (exact hook not yet
+isolated). Testing was done against the real deployed domains (`https://app.eys.gen.tr` /
+`wss://api.eys.gen.tr/ws`), routed through this environment's external OpenResty proxy — a prior
+session's notes flag that this exact proxy's WebSocket handling has needed special-cased handling
+before (`/ws` probes requiring forced HTTP/1.1), so an infra-layer explanation (the proxy
+recycling/resetting the long-lived WS connection under some condition) has not been ruled out
+either, and could produce exactly this symptom (server-side TCP disconnect the browser's JS
+`WebSocket` object never gets a clean chance to report before the underlying socket is gone).
+**Notes:** Not root-caused — genuinely unclear whether this is an application bug (most likely
+candidate: whatever causes the watch/unwatch churn also destabilizes the same connection during a
+call) or an infrastructure/proxy issue specific to the external domain path. **This blocks 100% of
+RTC calls from ever connecting** — meetings and live-streaming, which share the same realtime
+signaling substrate, are suspected to be affected identically but weren't independently verified
+before this was logged (deprioritized per user direction to move to other work). Whoever picks this
+up next should first determine whether it reproduces when testing purely inside the docker network
+(bypassing the external proxy entirely) — that single test would cleanly separate the two
+hypotheses.
+
+### CROSS-044
+
+**Severity:** LOW · **Area:** Backend · **Status:** verified
+**Summary:** The general GraphQL `users(search: String)` query — used by web's own general
+users-search/find-friends feature, not just the admin page — is gated only by
+`@UseGuards(SessionAuthGuard)` at the resolver class level
+([`messaging.resolver.ts`](../nest-js-boilerplate/src/messaging/messaging.resolver.ts), no
+role check). Since it returns the full generated `User` GraphQL type, **any authenticated user**
+can already request `role`/`status` for an arbitrary other user directly against the GraphQL
+endpoint today (`{ users(search: "x") { role status } }`) — whether they're an ADMIN/SUPERADMIN, or
+BANNED/SUSPENDED — regardless of any admin-only gating the frontend puts in front of its own UI for
+that data.
+**Evidence:** Found while building BE-007's admin ban/MFA-reset UI: the new admin-only BFF
+route deliberately avoids reusing the general `/api/users/search` route specifically to not leak
+these two fields to a non-admin caller through the *intended* UI surface — but that only protects
+the BFF-mediated path. A direct GraphQL request (or a compromised/malicious frontend bundle) bypasses
+the BFF and this class-level guard entirely.
+**Notes:** Not fixed this pass — pre-existing, and not something this session's admin-UI work made
+worse (the fields were already selectable on `User` by any caller of `users()`; the admin UI change
+only made the *value* visible through one new, correctly-gated surface). A real fix needs
+per-field GraphQL authorization (e.g. a viewer-aware `@ResolveField()` override on `User.role`/
+`User.status` that redacts for anyone other than the record's own owner or an admin/superadmin,
+the same shape as the existing `hideAvatar` redaction pattern used elsewhere) — a small but real new
+pattern, not a one-line fix, so flagged here rather than built under this task's scope.

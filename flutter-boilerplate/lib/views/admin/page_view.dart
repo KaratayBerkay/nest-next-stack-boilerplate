@@ -7,6 +7,8 @@ import '../../api/client/admin/actions.dart';
 import '../../api/client/admin/query.dart';
 import '../../api/server/admin/search_users.dart';
 import '../../constants/theme.dart';
+import '../../features/statics/index.dart';
+import '../../hooks/use_auth.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/admin/audit_types.dart';
 
@@ -67,6 +69,16 @@ class _AdminPageContentState extends ConsumerState<AdminPageContent> {
 
   @override
   Widget build(BuildContext context) {
+    // Defense in depth alongside the router's own `requireAdmin` redirect
+    // (app/router.dart) — that check runs before this widget is even built,
+    // this one covers the case where cached role state changes underneath
+    // an already-mounted screen (e.g. a live tier/role downgrade pushed
+    // over the realtime socket) without a full navigation to re-trigger it.
+    final role = ref.watch(currentUserProvider)?.role;
+    if (role != 'ADMIN' && role != 'SUPERADMIN') {
+      return const AccessDeniedPage();
+    }
+
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final query = ref.watch(_adminSearchQueryProvider);

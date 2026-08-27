@@ -18,12 +18,16 @@ import type { StripeCardFormProps } from "@/types/billing/StripeCardForm-types";
 import type { SubscribeResult } from "@/api/server/billing/stripe";
 import { useBillingActions } from "@/api/client/billing/actions";
 import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { tierLabel } from "@/lib/tier";
+import type { I18nMessages } from "@/generated/i18n-messages";
 
 export function StripeCardForm({
   tier,
   onSuccess,
   onError,
 }: StripeCardFormProps) {
+  const t = useMessages("checkout");
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const { createSetupIntent } = useBillingActions();
@@ -32,15 +36,15 @@ export function StripeCardForm({
     createSetupIntent(tier)
       .then((data) => setClientSecret(data.clientSecret))
       .catch((err) => {
-        onError((err as Error).message ?? "Failed to initialize payment");
+        onError((err as Error).message ?? t.initializePaymentFailed);
         setLoading(false);
       });
-  }, [tier, onError, createSetupIntent]);
+  }, [tier, onError, createSetupIntent, t.initializePaymentFailed]);
 
   if (!clientSecret) {
     return (
       <div className="text-muted text-sm">
-        {loading ? "Initializing payment..." : ""}
+        {loading ? t.initializingPayment : ""}
       </div>
     );
   }
@@ -73,6 +77,7 @@ async function handleStripeSubmit(
   ) => Promise<SubscribeResult>,
   retryKeyRef: React.MutableRefObject<string | null>,
   currency: string,
+  t: I18nMessages["checkout"],
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -81,7 +86,7 @@ async function handleStripeSubmit(
 
   const { error: submitError } = await elements.submit();
   if (submitError) {
-    onError(submitError.message ?? "Validation failed");
+    onError(submitError.message ?? t.validationFailed);
     setSubmitting(false);
     return;
   }
@@ -95,13 +100,13 @@ async function handleStripeSubmit(
   });
 
   if (error) {
-    onError(error.message ?? "Payment failed");
+    onError(error.message ?? t.paymentFailedGeneric);
     setSubmitting(false);
     return;
   }
 
   if (!setupIntent?.payment_method) {
-    onError("No payment method returned");
+    onError(t.noPaymentMethodReturned);
     setSubmitting(false);
     return;
   }
@@ -123,7 +128,7 @@ async function handleStripeSubmit(
     retryKeyRef.current = null;
     onSuccess(result);
   } catch (err) {
-    onError((err as Error).message ?? "Subscription failed");
+    onError((err as Error).message ?? t.subscriptionFailed);
   } finally {
     setSubmitting(false);
   }
@@ -134,6 +139,7 @@ function StripeCardFormInner({
   onSuccess,
   onError,
 }: StripeCardFormProps) {
+  const t = useMessages("checkout");
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
@@ -159,6 +165,7 @@ function StripeCardFormInner({
           subscribe,
           retryKeyRef,
           currency,
+          t,
         )
       }
       className="flex flex-col gap-4"
@@ -169,7 +176,9 @@ function StripeCardFormInner({
         disabled={!stripe || submitting}
         className="mt-2 w-full"
       >
-        {submitting ? "Processing..." : "Subscribe"}
+        {submitting
+          ? t.processing
+          : t.subscribeTo.replace("{tier}", tierLabel(tier))}
       </Button>
     </form>
   );

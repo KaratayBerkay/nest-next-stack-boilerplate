@@ -1,12 +1,14 @@
 "use client";
 
 import type { StatsSectionProps } from "@/types/views/premium/StatsSection-types";
+import { formatCurrency } from "@/lib/currency";
 
 export function StatsSection({
   stats,
   loadingStats,
   onLoadStats,
   onExportCSV,
+  hasGrowthStats,
   t,
 }: StatsSectionProps) {
   return (
@@ -19,7 +21,7 @@ export function StatsSection({
         >
           {loadingStats ? t.loading : t.loadStats}
         </button>
-        {stats && onExportCSV && (
+        {stats && hasGrowthStats && onExportCSV && (
           <button
             onClick={onExportCSV}
             className="border-border text-muted hover:bg-surface-hover self-start rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
@@ -48,7 +50,7 @@ export function StatsSection({
               {t.revenue}
             </p>
             <p className="mt-1 text-2xl font-bold">
-              ${stats.revenue.toLocaleString()}
+              {formatCurrency(Math.round(stats.revenue * 100), "USD")}
             </p>
           </div>
         </div>

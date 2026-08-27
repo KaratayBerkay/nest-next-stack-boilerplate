@@ -23,5 +23,11 @@ export async function sendMessageServer(
       body: JSON.stringify(body),
     },
   );
+  // apiFetch never throws on a non-2xx response — unlike its siblings here
+  // (fetchConversationMessagesServer etc.), this call site returned the
+  // error body as if it were a sent Message, so the optimistic bubble it
+  // replaces got marked "sent" (no error, no retry) for a message the
+  // backend actually rejected (rate limit, blocked user, validation).
+  if (!res.ok) throw new Error("Failed to send message");
   return res.json();
 }

@@ -1,6 +1,18 @@
+import { IconAlertCircle } from "@tabler/icons-react";
 import type { MessageTickProps } from "@/types/components/MessageTick-types";
 
-export function MessageTick({ status }: MessageTickProps) {
+export function MessageTick({ status, failedLabel }: MessageTickProps) {
+  if (status === "failed") {
+    return (
+      <IconAlertCircle
+        size={12}
+        className="text-error shrink-0"
+        data-testid="tick-failed"
+        role={failedLabel ? "img" : undefined}
+        aria-label={failedLabel}
+      />
+    );
+  }
   if (status === "read") {
     return (
       <svg

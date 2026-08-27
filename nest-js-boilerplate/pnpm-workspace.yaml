@@ -34,3 +34,4 @@ allowBuilds:
   # prebuilt binary (or compile). Used only by hermetic :memory: e2e tests, not the app.
   better-sqlite3: true
   sqlite3: true
+  '@firebase/util': true

@@ -4,7 +4,11 @@ import type { RowStatus } from "@/views/forms/editable-table/EditableTable-const
 export interface EditableTableRowActionsProps {
   field: any;
   index: number;
+  rowKey: string;
   status: RowStatus;
-  onSaveRow: (idx: number) => void;
+  onSaveRow: (rowKey: string) => void;
+  onDuplicateRow: (idx: number) => void;
+  onMoveRow: (from: number, to: number) => void;
+  onRemoveRow: (idx: number) => void;
   t: any;
 }

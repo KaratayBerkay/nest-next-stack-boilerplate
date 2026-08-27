@@ -39,10 +39,12 @@ export class MailTransport {
       // first byte, so there's no plaintext window for a STARTTLS-stripping MITM
       // to exploit. Not configurable — SMTP_PORT/SMTP_SECURE are intentionally
       // ignored here. Same rule applies to the per-send pool transport below.
+      // The one exception is the literal docker-compose service name
+      // `mailpit` — it only resolves inside this stack's own network, is
+      // never a real external host, and only speaks plaintext SMTP on 1025.
       this.smtpTransport = nodemailer.createTransport({
         host: this.smtpHost,
-        port: 465,
-        secure: true,
+        ...MailTransport.smtpConnectionOptions(this.smtpHost),
         auth:
           smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
       } as nodemailer.TransportOptions) as nodemailer.Transporter;
@@ -59,6 +61,19 @@ export class MailTransport {
     this.replyTo = config.get<string>('MAIL_REPLY_TO') || undefined;
   }
 
+  /** `mailpit` is this stack's own dev SMTP catcher (docker-compose service
+   *  name, unresolvable outside the stack's network) — plaintext on 1025.
+   *  Every other host gets the hardened 465/implicit-TLS pairing described
+   *  above, unconditionally. */
+  private static smtpConnectionOptions(host: string): {
+    port: number;
+    secure: boolean;
+  } {
+    return host === 'mailpit'
+      ? { port: 1025, secure: false }
+      : { port: 465, secure: true };
+  }
+
   async send(opts: SendMailOptions): Promise<SentMail> {
     const text = opts.text ?? opts.subject;
     const html = opts.html ?? `<p>${text}</p>`;
@@ -70,8 +85,7 @@ export class MailTransport {
       opts.from && this.smtpHost
         ? (nodemailer.createTransport({
             host: this.smtpHost,
-            port: 465,
-            secure: true,
+            ...MailTransport.smtpConnectionOptions(this.smtpHost),
             auth: { user: opts.from.email, pass: opts.from.password },
           } as nodemailer.TransportOptions) as nodemailer.Transporter)
         : null;

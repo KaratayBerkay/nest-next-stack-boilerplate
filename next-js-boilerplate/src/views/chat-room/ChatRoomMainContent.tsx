@@ -47,6 +47,7 @@ export function ChatRoomMainContent({
   hasNextPage,
   onFetchNextPage,
   input,
+  messageError,
   attaching,
   uploadItems,
   bottomRef,
@@ -132,6 +133,12 @@ export function ChatRoomMainContent({
             bottomRef.current?.scrollIntoView({ behavior: "smooth" })
           }
         />
+      )}
+
+      {messageError && (
+        <p className="text-error border-t px-4 py-1.5 text-xs">
+          {messageError}
+        </p>
       )}
 
       <div className="flex gap-2 border-t p-2">

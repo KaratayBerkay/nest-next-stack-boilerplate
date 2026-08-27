@@ -9,4 +9,5 @@ export interface ChatRoomMessage {
   attachments?: MessageAttachment[];
   createdAt: string;
   pending?: boolean;
+  failed?: boolean;
 }

@@ -171,13 +171,13 @@ export class NotificationService {
 
   /**
    * The caller awaits this before responding — the client immediately
-   * refetches /notifications/unread-count after a mark-read call resolves
-   * (invalidateQueries), and that endpoint trusts this cached Redis value
-   * over a live DB count (see NotificationController.unreadCount). Awaiting
-   * here closes that read-your-own-writes race: without it, the REST
-   * response (and thus the client's refetch) could return before this
-   * Redis write landed, so the refetch would read the pre-mark-read count.
-   * A Redis write failure is still swallowed rather than failing the
+   * refetches unreadNotificationCount after a mark-read call resolves
+   * (invalidateQueries), and that query trusts this cached Redis value over
+   * a live DB count (see NotificationResolver.unreadNotificationCount).
+   * Awaiting here closes that read-your-own-writes race: without it, the
+   * mutation response (and thus the client's refetch) could return before
+   * this Redis write landed, so the refetch would read the pre-mark-read
+   * count. A Redis write failure is still swallowed rather than failing the
    * request — worst case the badge lags until next login.
    */
   private async syncUnreadToSession(

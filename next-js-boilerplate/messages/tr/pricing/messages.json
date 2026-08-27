@@ -1,19 +1,22 @@
 {
   "heading": "Fiyatlandırma",
   "subtitle": "İhtiyacınıza uygun planı seçin.",
+  "free": "Ücretsiz",
   "currentPlan": "Mevcut plan",
   "included": "Dahil",
   "upgrade": "Yükselt",
-  "featuresBasic": ["Temel erişim", "Topluluk desteği"],
-  "featuresMedium": ["Tümü Ücretsiz", "Öncelikli destek", "Temel analitik"],
-  "featuresPremium": [
-    "Tümü Medium",
+  "getStarted": "Başlayın",
+  "guestSubtitle": "İhtiyacınıza uygun planı seçin. Başlamak için kaydolun — Ücretsiz plan için kredi kartı gerekmez.",
+  "featuresFree": ["Temel erişim", "Topluluk desteği"],
+  "featuresBasic": ["Tümü Ücretsiz", "Öncelikli destek", "Temel analitik"],
+  "featuresMedium": [
+    "Tümü Basic",
     "Gönderi istatistikleri ve tepki dağılımı",
     "VIP oda erişimi",
     "Önerilen arkadaşlar"
   ],
-  "featuresPro": [
-    "Tümü Premium",
+  "featuresPremium": [
+    "Tümü Medium",
     "Tepki verenler listesi",
     "Veri dışa aktarma",
     "Taç rozeti",
@@ -24,5 +27,6 @@
   "priceMedium": "$19.99/ay",
   "pricePremium": "$49.99/ay",
   "changePending": "Değişiklik bekliyor",
-  "planChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek."
+  "planChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
+  "downgrade": "Düşür"
 }

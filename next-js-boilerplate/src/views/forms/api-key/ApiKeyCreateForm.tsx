@@ -1,29 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useState, useCallback } from "react";
-import { IconX } from "@tabler/icons-react";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { IconButton } from "@/components/ui/button/icon-button";
-import { Badge } from "@/components/ui/Badge";
 import { FormLevelError } from "@/components/ui/FormLevelError";
 import type { ApiKeyCreateFormProps } from "@/types/views/forms/ApiKeyCreateForm-types";
-
-const IPV4_RE =
-  /^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/;
-
-function getPermissionOptions(t: Record<string, string>) {
-  return [
-    { value: "read:users", label: t.permissionReadUsers },
-    { value: "write:users", label: t.permissionWriteUsers },
-    { value: "read:posts", label: t.permissionReadPosts },
-    { value: "write:posts", label: t.permissionWritePosts },
-    { value: "read:billing", label: t.permissionReadBilling },
-    { value: "write:billing", label: t.permissionWriteBilling },
-    { value: "admin", label: t.permissionAdmin },
-  ];
-}
 
 function getExpiryOptions(t: Record<string, string>) {
   return [
@@ -40,27 +19,6 @@ export function ApiKeyCreateForm({
   t,
   onSubmit,
 }: ApiKeyCreateFormProps) {
-  const [ipInput, setIpInput] = useState("");
-  const [ipWhitelist, setIpWhitelist] = useState<string[]>([]);
-  const [ipError, setIpError] = useState<string | null>(null);
-
-  const handleAddIp = useCallback(() => {
-    const ip = ipInput.trim();
-    if (!ip) return;
-    if (!IPV4_RE.test(ip)) {
-      setIpError(t.apiKey.ipInvalid);
-      return;
-    }
-    setIpError(null);
-    if (ipWhitelist.includes(ip)) return;
-    setIpWhitelist((prev) => [...prev, ip]);
-    setIpInput("");
-  }, [ipInput, ipWhitelist, t]);
-
-  const handleRemoveIp = useCallback((ip: string) => {
-    setIpWhitelist((prev) => prev.filter((v) => v !== ip));
-  }, []);
-
   return (
     <form
       onSubmit={onSubmit}
@@ -104,61 +62,10 @@ export function ApiKeyCreateForm({
           />
         )}
       </form.AppField>
-      <form.AppField name="permissions">
-        {(field: any) => (
-          <field.CheckboxField
-            label={t.apiKey.permissionsLabel}
-            options={getPermissionOptions(t.apiKey)}
-          />
-        )}
-      </form.AppField>
-
-      <div className="flex flex-col gap-1">
-        <span className="text-xxs text-muted font-medium">
-          {t.apiKey.ipWhitelistLabel}
-        </span>
-        <div className="flex gap-2">
-          <Input
-            className="flex-1 text-xs"
-            placeholder={t.apiKey.ipPlaceholder}
-            value={ipInput}
-            onChange={(e) => {
-              setIpInput(e.target.value);
-              if (ipError) setIpError(null);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleAddIp();
-              }
-            }}
-          />
-          <Button
-            size="sm"
-            variant="outline"
-            type="button"
-            onClick={handleAddIp}
-          >
-            {t.apiKey.addIp}
-          </Button>
-        </div>
-        {ipError && <span className="text-xxs text-error">{ipError}</span>}
-        <div className="flex flex-wrap gap-1.5">
-          {ipWhitelist.map((ip) => (
-            <Badge key={ip} variant="secondary" className="gap-1">
-              {ip}
-              <IconButton
-                icon={<IconX size={12} />}
-                variant="ghost"
-                size="icon-xs"
-                className="text-error"
-                onClick={() => handleRemoveIp(ip)}
-                label={`${t.apiKey.removeIp} ${ip}`}
-              />
-            </Badge>
-          ))}
-        </div>
-      </div>
+      {/* No permissions/IP-whitelist inputs: the backend's key-creation
+          mutation only accepts name/expiresInDays and never enforces scopes
+          or source IPs, so collecting them here would silently promise a
+          restriction the key doesn't actually have. */}
 
       <form.AppForm>
         <form.SubmitButton

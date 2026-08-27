@@ -3,6 +3,10 @@ import { graphqlErrorBody, graphqlFetch } from "@/lib/backend";
 import { ME_ID_QUERY } from "@/lib/graphql/queries";
 import { getAccessToken } from "@/store/ssr-cookies";
 
+// Mirrors the backend's own getUsers() hard cap (messaging-friend.service.ts)
+// — items can never actually be fetched past this many matches.
+const FETCH_CAP = 50;
+
 const SEARCH_USERS_QUERY = `
   query SearchUsers($search: String) {
     users(search: $search) {
@@ -10,6 +14,7 @@ const SEARCH_USERS_QUERY = `
       name
       email
     }
+    usersCount(search: $search)
   }
 `;
 
@@ -45,6 +50,7 @@ export async function GET(request: NextRequest) {
     graphqlFetch<{ me: { id: string } }>(ME_ID_QUERY, undefined, accessToken),
     graphqlFetch<{
       users: { id: string; name: string; email: string }[];
+      usersCount: number;
     }>(SEARCH_USERS_QUERY, { search: q }, accessToken),
   ]);
 
@@ -57,8 +63,11 @@ export async function GET(request: NextRequest) {
   const allUsers = currentUserId
     ? usersRes.data.users.filter((u) => u.id !== currentUserId)
     : usersRes.data.users;
-  const total = allUsers.length;
   const items = allUsers.slice(skip, skip + take);
+  // total/pagination is capped to what's actually fetchable; `truncated` lets the UI say "there's more, refine your search" instead of silently under-reporting.
+  const rawTotal = usersRes.data.usersCount;
+  const total = Math.min(rawTotal, FETCH_CAP);
+  const truncated = rawTotal > FETCH_CAP;
 
-  return NextResponse.json({ items, total });
+  return NextResponse.json({ items, total, truncated });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
 
@@ -73,6 +74,15 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
     final listener = room.createListener();
     _listener = listener;
 
+    logRtcEvent(
+      event: 'call.livekit.connecting',
+      rtcKind: 'call',
+      rtcId: state.callId,
+      roomName: livekit.roomName,
+      mediaType: state.hasVideo ? 'video' : 'audio',
+      phase: 'connecting',
+    );
+
     listener
       ..on<lk.TrackSubscribedEvent>((event) {
         if (event.track is lk.VideoTrack && mounted) {
@@ -90,8 +100,69 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
       ..on<lk.ParticipantDisconnectedEvent>((_) {
         if (mounted) setState(() => _remoteConnected = false);
       })
-      ..on<lk.RoomDisconnectedEvent>((_) {
+      ..on<lk.RoomDisconnectedEvent>((event) {
+        logRtcEvent(
+          event: 'call.livekit.disconnected',
+          rtcKind: 'call',
+          rtcId: state.callId,
+          roomName: livekit.roomName,
+          mediaType: state.hasVideo ? 'video' : 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'reason': event.reason?.name},
+        );
         if (mounted) setState(() => _connected = false);
+        // clientInitiated means our own _teardownRoom() called disconnect()
+        // — already being handled by the phase-change teardown in build()
+        // below. Any other reason is an involuntary media-transport death
+        // (LiveKit's own reconnect gave up) with the WS control channel
+        // possibly still up, so nothing else would ever move state.phase
+        // off `connected`: isConnected/showVideo in _ActiveCallScreen are
+        // driven by state.phase (not this widget's local _connected), so
+        // without this the UI shows a frozen last frame with a
+        // "Connecting…" subtitle that nothing is actually retrying.
+        // Proactively hang up so the provider, the peer, and the backend's
+        // CallSession row all agree the call is over — same as a manual
+        // End tap.
+        if (event.reason != null &&
+            event.reason != lk.DisconnectReason.clientInitiated) {
+          ref.read(rtcCallProvider.notifier).hangupCall();
+        }
+      })
+      ..on<lk.RoomReconnectingEvent>((_) {
+        logRtcEvent(
+          event: 'call.livekit.reconnecting',
+          rtcKind: 'call',
+          rtcId: state.callId,
+          roomName: livekit.roomName,
+          mediaType: state.hasVideo ? 'video' : 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+        );
+      })
+      ..on<lk.RoomReconnectedEvent>((_) {
+        logRtcEvent(
+          event: 'call.livekit.reconnected',
+          rtcKind: 'call',
+          rtcId: state.callId,
+          roomName: livekit.roomName,
+          mediaType: state.hasVideo ? 'video' : 'audio',
+          phase: 'connected',
+        );
+      })
+      ..on<lk.ParticipantConnectionQualityUpdatedEvent>((event) {
+        if (event.connectionQuality == lk.ConnectionQuality.poor) {
+          logRtcEvent(
+            event: 'call.livekit.connection_quality_poor',
+            rtcKind: 'call',
+            rtcId: state.callId,
+            roomName: livekit.roomName,
+            mediaType: state.hasVideo ? 'video' : 'audio',
+            exceptionType: 'CLIENT_ERROR',
+            phase: 'connected',
+            metadata: {'participantId': event.participant.identity},
+          );
+        }
       });
 
     try {
@@ -104,18 +175,65 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
         _connected = true;
         _remoteConnected = room.remoteParticipants.isNotEmpty;
       });
-      await room.localParticipant?.setMicrophoneEnabled(true);
+      logRtcEvent(
+        event: 'call.livekit.connected',
+        rtcKind: 'call',
+        rtcId: state.callId,
+        roomName: livekit.roomName,
+        mediaType: state.hasVideo ? 'video' : 'audio',
+        phase: 'connected',
+      );
+      try {
+        await room.localParticipant?.setMicrophoneEnabled(true);
+      } catch (error, stackTrace) {
+        logRtcEvent(
+          event: 'call.media.microphone_enable_failed',
+          rtcKind: 'call',
+          rtcId: state.callId,
+          roomName: livekit.roomName,
+          mediaType: state.hasVideo ? 'video' : 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+      }
       if (state.hasVideo) {
-        final pub = await room.localParticipant?.setCameraEnabled(true);
-        final track = pub?.track;
-        if (mounted && track is lk.VideoTrack) {
-          final videoTrack = track as lk.VideoTrack;
-          setState(() => _localVideoTrack = videoTrack);
+        try {
+          final pub = await room.localParticipant?.setCameraEnabled(true);
+          final track = pub?.track;
+          if (mounted && track is lk.VideoTrack) {
+            final videoTrack = track as lk.VideoTrack;
+            setState(() => _localVideoTrack = videoTrack);
+          }
+        } catch (error, stackTrace) {
+          logRtcEvent(
+            event: 'call.media.camera_enable_failed',
+            rtcKind: 'call',
+            rtcId: state.callId,
+            roomName: livekit.roomName,
+            mediaType: 'video',
+            exceptionType: 'CLIENT_ERROR',
+            error: error,
+            stackTrace: stackTrace,
+            phase: 'connected',
+          );
         }
       } else if (mounted) {
         setState(() => _cameraEnabled = false);
       }
-    } catch (_) {
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'call.livekit.connection_failed',
+        rtcKind: 'call',
+        rtcId: state.callId,
+        roomName: livekit.roomName,
+        mediaType: state.hasVideo ? 'video' : 'audio',
+        exceptionType: 'CLIENT_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'connecting',
+      );
       // Connection failed — `_connected` stays false; the hangup control
       // lets the user bail out, and server-side duration cap / LiveKit
       // webhook cleanup aren't affected either way.
@@ -127,7 +245,24 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
     if (room == null) return;
     final next = !_micEnabled;
     setState(() => _micEnabled = next);
-    room.localParticipant?.setMicrophoneEnabled(next);
+    room.localParticipant?.setMicrophoneEnabled(next).then<void>(
+      (_) {},
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'call.media.microphone_toggle_failed',
+          rtcKind: 'call',
+          rtcId: _connectedForCallId,
+          mediaType: ref.read(rtcCallProvider).hasVideo ? 'video' : 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state.
+        if (mounted) setState(() => _micEnabled = !next);
+      },
+    );
   }
 
   void _toggleCamera() {
@@ -135,13 +270,30 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
     if (room == null) return;
     final next = !_cameraEnabled;
     setState(() => _cameraEnabled = next);
-    room.localParticipant?.setCameraEnabled(next).then((pub) {
-      final track = pub?.track;
-      if (next && mounted && track is lk.VideoTrack) {
-        final videoTrack = track as lk.VideoTrack;
-        setState(() => _localVideoTrack = videoTrack);
-      }
-    });
+    room.localParticipant?.setCameraEnabled(next).then<void>(
+      (pub) {
+        final track = pub?.track;
+        if (next && mounted && track is lk.VideoTrack) {
+          final videoTrack = track as lk.VideoTrack;
+          setState(() => _localVideoTrack = videoTrack);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'call.media.camera_toggle_failed',
+          rtcKind: 'call',
+          rtcId: _connectedForCallId,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state.
+        if (mounted) setState(() => _cameraEnabled = !next);
+      },
+    );
   }
 
   @override

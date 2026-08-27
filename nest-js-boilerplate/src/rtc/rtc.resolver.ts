@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, UseInterceptors } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -26,6 +26,7 @@ import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
 import { RtcReportService } from './rtc-report.service';
 import { RtcRecordingService } from './rtc-recording.service';
+import { RtcErrorInterceptor } from './rtc-error.interceptor';
 import {
   FREE_CALL_MAX_DURATION_MINUTES,
   MIN_TIER_TO_GO_LIVE,
@@ -114,6 +115,7 @@ class LiveStreamJoinResult {
 // Mutation fields unrelated to LiveStream (see post.resolver.ts's identical
 // @Resolver(() => Post) shape, which mixes both).
 @UseGuards(SessionAuthGuard)
+@UseInterceptors(RtcErrorInterceptor)
 @Resolver(() => LiveStream)
 export class RtcResolver {
   constructor(

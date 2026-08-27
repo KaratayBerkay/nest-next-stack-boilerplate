@@ -11,6 +11,13 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ user: mockAuth.user }),
 }));
 
+// The default AccessDenied fallback renders a Button, which goes through
+// useComponentVariant — that needs a ThemeProvider this unit test doesn't
+// set up. Stub it to the default variant.
+vi.mock("@/hooks/useComponentVariant", () => ({
+  useComponentVariant: () => "default",
+}));
+
 describe("TierGate", () => {
   it("renders children when the user meets the minimum tier", () => {
     mockAuth.user = { tier: "PREMIUM" };

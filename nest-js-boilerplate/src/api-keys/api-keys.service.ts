@@ -40,29 +40,39 @@ export class ApiKeysService {
     const keyPrefix = fullKey.slice(0, PREFIX_CHARS);
     const keyHash = await hash(fullKey);
 
-    const existing = await this.prisma.apiKey.findFirst({
-      where: { userId, name, deletedAt: null },
-    });
-    if (existing) {
-      throw new ConflictException({
-        exc: 'EX_API_KEY_NAME_EXISTS',
-        msg: `An API key named "${name}" already exists`,
-        key: 'apiKeys.errors.nameExists',
-      });
-    }
+    // The (userId, name) uniqueness this endpoint promises has no backing DB
+    // constraint (only non-unique @@index([userId])), so the check-then-act
+    // below is a TOCTOU race: two concurrent `generate()` calls for the same
+    // name can both pass the findFirst and both create a row. Serialize with
+    // the same advisory-lock pattern already used for reactions/comment
+    // races in this codebase, rather than trusting the plain read.
+    const apiKey = await this.prisma.$transaction(async (tx) => {
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`apikey-name:${userId}:${name}`}))`;
 
-    const apiKey = await this.prisma.apiKey.create({
-      data: {
-        name,
-        keyPrefix,
-        keyHash,
-        userId,
-        role: (options?.role as never) ?? undefined,
-        tier: (options?.tier as never) ?? undefined,
-        expiresAt: options?.expiresInDays
-          ? new Date(Date.now() + options.expiresInDays * 86400000)
-          : undefined,
-      },
+      const existing = await tx.apiKey.findFirst({
+        where: { userId, name, deletedAt: null },
+      });
+      if (existing) {
+        throw new ConflictException({
+          exc: 'EX_API_KEY_NAME_EXISTS',
+          msg: `An API key named "${name}" already exists`,
+          key: 'apiKeys.errors.nameExists',
+        });
+      }
+
+      return tx.apiKey.create({
+        data: {
+          name,
+          keyPrefix,
+          keyHash,
+          userId,
+          role: (options?.role as never) ?? undefined,
+          tier: (options?.tier as never) ?? undefined,
+          expiresAt: options?.expiresInDays
+            ? new Date(Date.now() + options.expiresInDays * 86400000)
+            : undefined,
+        },
+      });
     });
 
     this.logger.log(`API key created: ${keyPrefix} for user ${userId}`);

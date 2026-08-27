@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { IconChevronRight } from "@tabler/icons-react";
 import { formatDateByPreference } from "@/lib/date-time";
 import { useDateDisplayCookie } from "@/hooks/useDateDisplayCookie";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
 
 export function NotificationList({
   notifications,
@@ -15,6 +16,7 @@ export function NotificationList({
   onSeeMore,
   lang = "en",
 }: NotificationListProps) {
+  const t = useMessages("notification");
   const router = useRouter();
   const unread = notifications.filter((n) => !n.readAt);
   const dateDisplay = useDateDisplayCookie();
@@ -36,7 +38,7 @@ export function NotificationList({
     <div className="flex flex-col gap-0.5">
       <div className="flex items-center justify-between px-3 py-2">
         <p className="text-muted text-xs font-semibold tracking-wider uppercase">
-          Notifications
+          {t.title}
         </p>
         {unread.length > 0 && (
           <button
@@ -45,14 +47,14 @@ export function NotificationList({
             }}
             className="text-brand text-[10px] font-medium hover:underline"
           >
-            Mark all read
+            {t.markAllRead}
           </button>
         )}
       </div>
 
       {sorted.length === 0 ? (
         <p className="text-muted px-3 py-4 text-center text-xs">
-          No notifications yet
+          {t.noNotifications}
         </p>
       ) : (
         <div className="flex max-h-80 flex-col gap-0.5 overflow-y-auto">
@@ -99,7 +101,7 @@ export function NotificationList({
           }}
           className="text-muted hover:bg-surface-hover flex w-full items-center justify-between rounded-lg px-3 py-2 text-xs font-medium"
         >
-          See more
+          {t.seeMore}
           <IconChevronRight size={14} stroke={1.5} />
         </button>
       </div>

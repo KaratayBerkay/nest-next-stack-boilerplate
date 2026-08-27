@@ -12,6 +12,7 @@ export function PlanDetailsActions({
   cancelAtPeriodEnd,
   onCancel,
   onCancelPendingChange,
+  cancelingPendingChange,
   upgradePlanLabel,
   cancelPendingChangeLabel,
   cancelSubscriptionLabel,
@@ -26,6 +27,8 @@ export function PlanDetailsActions({
           variant="outline"
           className="w-full"
           onClick={onCancelPendingChange}
+          disabled={cancelingPendingChange}
+          loading={cancelingPendingChange}
         >
           {cancelPendingChangeLabel}
         </Button>

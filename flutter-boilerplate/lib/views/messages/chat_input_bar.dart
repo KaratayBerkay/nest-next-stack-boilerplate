@@ -11,16 +11,23 @@ import '../../components/ui/toast/toast.dart';
 import '../../constants/chat.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/messages/message.dart';
 import '../../types/messages/message_attachment.dart';
 
 class ChatInputBar extends ConsumerStatefulWidget {
   final String conversationId;
   final VoidCallback? onSent;
+  final ChatMessage? replyTarget;
+  final String replyTargetLabel;
+  final VoidCallback? onCancelReply;
 
   const ChatInputBar({
     super.key,
     required this.conversationId,
     this.onSent,
+    this.replyTarget,
+    this.replyTargetLabel = '',
+    this.onCancelReply,
   });
 
   @override
@@ -148,10 +155,12 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
           widget.conversationId,
           text,
           attachment: _pendingAttachment,
+          replyToId: widget.replyTarget?.id,
         );
     if (!mounted) return;
     _controller.clear();
     setState(() => _pendingAttachment = null);
+    widget.onCancelReply?.call();
     widget.onSent?.call();
   }
 
@@ -171,6 +180,53 @@ class _ChatInputBarState extends ConsumerState<ChatInputBar> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.replyTarget != null)
+            Container(
+              margin: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: colors.surfaceAlt,
+                borderRadius: BorderRadius.circular(8),
+                border: Border(
+                  left: BorderSide(color: colors.brand, width: 3),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          t.messagesReplyingTo(widget.replyTargetLabel),
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: colors.brand,
+                          ),
+                        ),
+                        Text(
+                          widget.replyTarget!.deletedAt != null
+                              ? t.messagesDeletedMessage
+                              : widget.replyTarget!.content.isNotEmpty
+                                  ? widget.replyTarget!.content
+                                  : t.messagesAttachmentLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12, color: colors.fgMuted),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 16),
+                    visualDensity: VisualDensity.compact,
+                    onPressed: widget.onCancelReply,
+                  ),
+                ],
+              ),
+            ),
           if (_emojiOpen)
             SizedBox(
               height: 260,

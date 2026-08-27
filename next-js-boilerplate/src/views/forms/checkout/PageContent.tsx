@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useMessages, useAllMessages } from "@/lib/i18n/MessagesProvider";
 import { useAppForm } from "@/features/forms/form-hook";
 import { useStore } from "@tanstack/react-form";
@@ -44,15 +44,21 @@ export default function CheckoutPage() {
   });
 
   const sameAsShipping = useStore(form.store, (s) => s.values.sameAsShipping);
+  const shippingAddress = useStore(form.store, (s) => s.values.shippingAddress);
 
   const handleToggleSame = useCallback(() => {
-    const next = !form.state.values.sameAsShipping;
-    form.setFieldValue("sameAsShipping", next as false);
-    if (next) {
-      const sa = form.state.values.shippingAddress;
-      form.setFieldValue("billingAddress", { ...sa });
-    }
+    form.setFieldValue("sameAsShipping", (v) => !v);
   }, [form]);
+
+  // Previously only copied shippingAddress into billingAddress at the instant
+  // the toggle flipped on — editing shipping afterward (while still toggled
+  // on, so the billing fields stay hidden) left billing silently stale.
+  // Keeps mirroring for as long as the toggle is on, not just once.
+  useEffect(() => {
+    if (sameAsShipping) {
+      form.setFieldValue("billingAddress", { ...shippingAddress });
+    }
+  }, [sameAsShipping, shippingAddress, form]);
 
   return (
     <div className="flex flex-col gap-6">

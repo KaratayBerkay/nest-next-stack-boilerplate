@@ -33,5 +33,12 @@
   "paymentFailedGeneric": "Ödeme başarısız oldu. Lütfen tekrar deneyin.",
   "scheduledAtRenewal": "Planınız bir sonraki yenilemede değişecek. Bugün ücret alınmaz.",
   "changeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
-  "confirmChange": "{tier} planına geçişi onaylayın"
+  "confirmChange": "{tier} planına geçişi onaylayın",
+  "initializingPayment": "Ödeme başlatılıyor...",
+  "initializePaymentFailed": "Ödeme başlatılamadı",
+  "validationFailed": "Doğrulama başarısız oldu",
+  "noPaymentMethodReturned": "Ödeme yöntemi alınamadı",
+  "subscriptionFailed": "Abonelik başarısız oldu",
+  "upgradeToTier": "{tier} planına yükselt",
+  "changeToTier": "{tier} planına geç"
 }

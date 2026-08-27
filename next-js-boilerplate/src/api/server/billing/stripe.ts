@@ -6,8 +6,13 @@ import {
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
+// `tier` is optional: the backend mutation this proxies
+// (createBillingSetupIntent) takes no arguments at all — a SetupIntent isn't
+// tied to any particular plan, it's just "save a card for this customer".
+// The checkout flow still passes its target tier through for context/future
+// use; a plain "add a card in Settings" flow (no tier involved) omits it.
 export async function createSetupIntentServer(
-  tier: string,
+  tier?: string,
 ): Promise<{ clientSecret: string }> {
   return apiFetchJson<{ clientSecret: string }>(
     STRIPE_CREATE_SETUP_INTENT_URL,

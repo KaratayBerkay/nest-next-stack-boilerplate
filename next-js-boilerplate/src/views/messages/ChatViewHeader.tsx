@@ -11,7 +11,7 @@ import {
 import { initials } from "@/lib/initials";
 import { cn } from "@/lib/cn";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { useRtcCall } from "@/lib/rtc/RtcCallProvider";
+import { useRtcCall, type RtcCallPeer } from "@/lib/rtc/RtcCallProvider";
 import type { ChatViewHeaderProps } from "@/types/messages/ChatViewHeader-types";
 
 function handleBack(
@@ -20,6 +20,21 @@ function handleBack(
 ) {
   setSelectedUser(null);
   setSidebarOpen(true);
+}
+
+function startPeerCall(
+  startCall: (peer: RtcCallPeer, hasVideo: boolean) => void,
+  selectedUser: ChatViewHeaderProps["selectedUser"],
+  hasVideo: boolean,
+): void {
+  startCall(
+    {
+      id: selectedUser.id,
+      name: selectedUser.name ?? selectedUser.email ?? "?",
+      avatarUrl: selectedUser.avatarUrl ?? null,
+    },
+    hasVideo,
+  );
 }
 
 export function ChatViewHeader({
@@ -35,21 +50,12 @@ export function ChatViewHeader({
   const isOnline = onlineUsers.has(selectedUser.id);
   const { state, startCall } = useRtcCall();
   const canCall = isOnline && state.phase === "idle";
-  const startCallWithPeer = (hasVideo: boolean) =>
-    startCall(
-      {
-        id: selectedUser.id,
-        name: selectedUser.name ?? selectedUser.email ?? "?",
-        avatarUrl: selectedUser.avatarUrl ?? null,
-      },
-      hasVideo,
-    );
 
   return (
     <div className="flex items-center gap-3 border-b px-5 py-3">
       <IconButton
         icon={<IconChevronLeft size={20} />}
-        label="Back to conversations"
+        label={t.backToConversations}
         variant="ghost"
         size="icon-sm"
         onClick={() => handleBack(setSelectedUser, setSidebarOpen)}
@@ -82,28 +88,32 @@ export function ChatViewHeader({
           )}
         </p>
       </div>
-      <IconButton
-        icon={<IconPhone size={18} />}
-        label={tRtc.voiceCallLabel}
-        variant="ghost"
-        size="icon-sm"
-        disabled={!canCall}
-        onClick={() => startCallWithPeer(false)}
-      />
-      <IconButton
-        icon={<IconVideo size={18} />}
-        label={tRtc.videoCallLabel}
-        variant="ghost"
-        size="icon-sm"
-        disabled={!canCall}
-        onClick={() => startCallWithPeer(true)}
-      />
+      <div className="border-border/70 bg-surface/60 flex items-center gap-0.5 rounded-lg border p-0.5">
+        <IconButton
+          icon={<IconPhone size={18} />}
+          label={tRtc.voiceCallLabel}
+          variant="ghost"
+          size="icon"
+          disabled={!canCall}
+          onClick={() => startPeerCall(startCall, selectedUser, false)}
+          className="text-success hover:bg-success/10 hover:text-success"
+        />
+        <IconButton
+          icon={<IconVideo size={18} />}
+          label={tRtc.videoCallLabel}
+          variant="ghost"
+          size="icon"
+          disabled={!canCall}
+          onClick={() => startPeerCall(startCall, selectedUser, true)}
+          className="text-brand hover:bg-brand/10 hover:text-brand"
+        />
+      </div>
       {onOpenGallery ? (
         <IconButton
           icon={<IconFolder size={18} />}
           label={t.allUploadsTitle}
           variant="ghost"
-          size="icon-sm"
+          size="icon"
           onClick={onOpenGallery}
         />
       ) : null}

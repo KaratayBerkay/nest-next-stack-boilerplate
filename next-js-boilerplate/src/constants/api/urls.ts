@@ -87,7 +87,13 @@ export const SESSIONS_REVOKE_OTHERS_URL =
   "/api/sessions/revoke-others" as const;
 
 export const ADMIN_SET_TIER_URL = "/api/admin/set-tier" as const;
+export const ADMIN_SET_STATUS_URL = "/api/admin/set-status" as const;
+export const ADMIN_RESET_MFA_URL = "/api/admin/reset-mfa" as const;
 export const ADMIN_AUDIT_LOGS_URL = "/api/admin/audit-logs" as const;
+// Deliberately separate from the general USERS_SEARCH_PREFIX below: this one
+// is admin-gated and returns role/status, which the general search (used by
+// find-friends/users-directory) must never expose to a non-admin caller.
+export const ADMIN_SEARCH_USERS_URL = "/api/admin/search-users" as const;
 
 export const MESSAGES_FRIENDS_URL = "/api/messages/friends" as const;
 export const FRIENDS_URL = "/api/friends" as const;

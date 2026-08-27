@@ -28,8 +28,12 @@ import { useLiveKitStreamRoom } from "@/hooks/rtc/useLiveKitStreamRoom";
 import { StreamPlayer } from "@/components/rtc/StreamPlayer";
 import { RtcRecordingControl } from "@/components/rtc/RtcRecordingControl";
 import { useStreamActions } from "@/api/client/rtc/streams-actions";
-import { streamRecordingQueryOptions } from "@/api/client/rtc/streams-query";
+import {
+  streamChatQueryOptions,
+  streamRecordingQueryOptions,
+} from "@/api/client/rtc/streams-query";
 import type { LiveStreamJoinResult } from "@/api/server/rtc/streams/types";
+import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 export function RtcGoLiveView() {
   const t = useMessages("rtc");
@@ -133,6 +137,7 @@ function RtcGoLiveForm() {
   const [live, setLive] = useState<LiveStreamJoinResult | null>(null);
   const [viewerCount, setViewerCount] = useState(0);
   const [chat, setChat] = useState<ChatItem[]>([]);
+  const seededChat = useRef(false);
 
   const handleGoLive = async () => {
     if (!title.trim()) return;
@@ -142,8 +147,15 @@ function RtcGoLiveForm() {
       setLive(result);
       setViewerCount(result.stream.viewerCount);
     } catch (err) {
+      logRtcEvent({
+        event: "stream.start_failed",
+        rtcKind: "stream",
+        exceptionType: "CLIENT_REQUEST_ERROR",
+        error: err,
+        phase: "starting",
+      });
       toast({
-        title: err instanceof Error ? err.message : "Failed to go live",
+        title: err instanceof Error ? err.message : t.goLiveFailed,
         variant: "destructive",
       });
     } finally {
@@ -156,6 +168,31 @@ function RtcGoLiveForm() {
   const { data: recording, refetch: refetchRecording } = useQuery(
     streamRecordingQueryOptions(slug, Boolean(slug)),
   );
+
+  const { data: chatHistory } = useQuery(streamChatQueryOptions(slug));
+
+  useEffect(() => {
+    // The broadcaster's own view previously never loaded existing chat
+    // history at all (only appended new WS messages from an empty array),
+    // so going live into an already-running chat — or reconnecting after a
+    // gap — showed an empty pane even though the server had messages.
+    // Mirrors the merge-on-refetch fix in RtcLiveViewerView/RtcMeetingRoomView.
+    if (!chatHistory) return;
+    if (!seededChat.current) {
+      seededChat.current = true;
+      setChat([...chatHistory.messages].reverse());
+      return;
+    }
+    setChat((prev) => {
+      const known = new Set(prev.map((m) => m.id));
+      const missing = chatHistory.messages.filter((m) => !known.has(m.id));
+      if (missing.length === 0) return prev;
+      return [...prev, ...missing].sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    });
+  }, [chatHistory]);
 
   useEffect(() => {
     if (!realtime || realtimeStatus !== "open" || !slug) return;
@@ -188,6 +225,8 @@ function RtcGoLiveForm() {
     live?.token ?? null,
     live?.stream.broadcaster.id ?? "",
     true,
+    slug,
+    live?.roomName,
   );
 
   const [chatInput, setChatInput] = useState("");
@@ -200,8 +239,23 @@ function RtcGoLiveForm() {
 
   const handleEnd = async () => {
     if (!slug) return;
-    await endStream(slug);
-    router.push(`/v1/${lang}/rtc/live`);
+    try {
+      await endStream(slug);
+      router.push(`/v1/${lang}/rtc/live`);
+    } catch (error) {
+      logRtcEvent({
+        event: "stream.end_failed",
+        rtcKind: "stream",
+        rtcId: slug,
+        exceptionType: "CLIENT_REQUEST_ERROR",
+        error,
+        phase: "active",
+      });
+      toast({
+        title: error instanceof Error ? error.message : t.endStreamFailed,
+        variant: "destructive",
+      });
+    }
   };
 
   if (!live) {
@@ -319,12 +373,36 @@ function RtcGoLiveForm() {
                 <RtcRecordingControl
                   recording={recording}
                   onStart={async () => {
-                    await startRecording(slug);
-                    await refetchRecording();
+                    try {
+                      await startRecording(slug);
+                      await refetchRecording();
+                    } catch (error) {
+                      logRtcEvent({
+                        event: "stream.recording_start_failed",
+                        rtcKind: "stream",
+                        rtcId: slug,
+                        exceptionType: "CLIENT_REQUEST_ERROR",
+                        error,
+                        phase: "active",
+                      });
+                      throw error;
+                    }
                   }}
                   onStop={async () => {
-                    await stopRecording(slug);
-                    await refetchRecording();
+                    try {
+                      await stopRecording(slug);
+                      await refetchRecording();
+                    } catch (error) {
+                      logRtcEvent({
+                        event: "stream.recording_stop_failed",
+                        rtcKind: "stream",
+                        rtcId: slug,
+                        exceptionType: "CLIENT_REQUEST_ERROR",
+                        error,
+                        phase: "active",
+                      });
+                      throw error;
+                    }
                   }}
                 />
               </div>

@@ -49,6 +49,8 @@
   "counterDescription": "Sayaç bileşeni gösterimi",
   "datePickerTitle": "Tarih Seçici",
   "datePickerDescription": "Tarih Seçici bileşeni gösterimi",
+  "dateRangePickerTitle": "Tarih Aralığı Seçici",
+  "dateRangePickerDescription": "Tarih Aralığı Seçici bileşeni gösterimi",
   "dialogTitle": "Diyalog",
   "dialogDescription": "Diyalog bileşeni gösterimi",
   "drawerTitle": "Çekmece",

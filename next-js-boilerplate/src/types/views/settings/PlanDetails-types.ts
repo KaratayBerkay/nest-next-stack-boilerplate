@@ -16,6 +16,7 @@ export interface PlanDetailsActionsProps {
   cancelAtPeriodEnd: boolean;
   onCancel: () => void;
   onCancelPendingChange: () => void;
+  cancelingPendingChange: boolean;
   upgradePlanLabel: string;
   cancelPendingChangeLabel: string;
   cancelSubscriptionLabel: string;

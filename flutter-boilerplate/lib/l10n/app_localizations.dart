@@ -1136,6 +1136,36 @@ abstract class AppLocalizations {
   /// **'Password must be at least 8 characters'**
   String get authErrorsPasswordMin;
 
+  /// No description provided for @passwordRulesHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must contain:'**
+  String get passwordRulesHeading;
+
+  /// No description provided for @passwordRuleLength.
+  ///
+  /// In en, this message translates to:
+  /// **'8-128 characters'**
+  String get passwordRuleLength;
+
+  /// No description provided for @passwordRuleLowercase.
+  ///
+  /// In en, this message translates to:
+  /// **'One lowercase letter'**
+  String get passwordRuleLowercase;
+
+  /// No description provided for @passwordRuleUppercase.
+  ///
+  /// In en, this message translates to:
+  /// **'One uppercase letter'**
+  String get passwordRuleUppercase;
+
+  /// No description provided for @passwordRuleNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'One number'**
+  String get passwordRuleNumber;
+
   /// No description provided for @authErrorsPasswordMax.
   ///
   /// In en, this message translates to:
@@ -1231,6 +1261,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Email verification failed'**
   String get authErrorsVerifyEmailFailed;
+
+  /// No description provided for @allUploadsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'All uploads'**
+  String get allUploadsTitle;
+
+  /// No description provided for @allUploadsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No files uploaded here yet'**
+  String get allUploadsEmpty;
+
+  /// No description provided for @allUploadsFailedToLoad.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to load uploads'**
+  String get allUploadsFailedToLoad;
+
+  /// No description provided for @files.
+  ///
+  /// In en, this message translates to:
+  /// **'attachments'**
+  String get files;
+
+  /// No description provided for @storageLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'You have reached your storage limit.'**
+  String get storageLimitReached;
+
+  /// No description provided for @storageLimitUpgradeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Each plan upgrade doubles your message storage.'**
+  String get storageLimitUpgradeHint;
 
   /// No description provided for @chatRoomTitle.
   ///
@@ -6128,6 +6194,48 @@ abstract class AppLocalizations {
   /// **'Friends'**
   String get messagesFriends;
 
+  /// No description provided for @messagesFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get messagesFilterAll;
+
+  /// No description provided for @messagesFilterUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get messagesFilterUnread;
+
+  /// No description provided for @messagesFilterFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorites'**
+  String get messagesFilterFavorites;
+
+  /// No description provided for @messagesFilterGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'Groups'**
+  String get messagesFilterGroups;
+
+  /// No description provided for @messagesAddFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favorites'**
+  String get messagesAddFavorite;
+
+  /// No description provided for @messagesRemoveFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favorites'**
+  String get messagesRemoveFavorite;
+
+  /// No description provided for @messagesNoFavorites.
+  ///
+  /// In en, this message translates to:
+  /// **'No favorite conversations yet'**
+  String get messagesNoFavorites;
+
   /// No description provided for @messagesSearchUsers.
   ///
   /// In en, this message translates to:
@@ -6296,6 +6404,30 @@ abstract class AppLocalizations {
   /// **'Cancel'**
   String get messagesCancel;
 
+  /// No description provided for @messagesReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply'**
+  String get messagesReply;
+
+  /// No description provided for @messagesReplyingTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Replying to {name}'**
+  String messagesReplyingTo(Object name);
+
+  /// No description provided for @messagesYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get messagesYou;
+
+  /// No description provided for @messagesAttachmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachment'**
+  String get messagesAttachmentLabel;
+
   /// No description provided for @notificationTitle.
   ///
   /// In en, this message translates to:
@@ -6455,7 +6587,7 @@ abstract class AppLocalizations {
   /// No description provided for @premiumNewUsers7d.
   ///
   /// In en, this message translates to:
-  /// **'New Users (7d)'**
+  /// **'New Users (Last 7 Days)'**
   String get premiumNewUsers7d;
 
   /// No description provided for @premiumTotalPosts.
@@ -8948,6 +9080,36 @@ abstract class AppLocalizations {
   /// **'Send'**
   String get postsSend;
 
+  /// No description provided for @postsReactionsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reactions'**
+  String get postsReactionsHeading;
+
+  /// No description provided for @postsReactionsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load reactions'**
+  String get postsReactionsFailed;
+
+  /// No description provided for @postsNoReactionsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No reactions yet'**
+  String get postsNoReactionsYet;
+
+  /// No description provided for @postsUnknownUser.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get postsUnknownUser;
+
+  /// No description provided for @postsAndNOthers.
+  ///
+  /// In en, this message translates to:
+  /// **'and {count} others'**
+  String postsAndNOthers(Object count);
+
   /// No description provided for @checkoutSelectedPlan.
   ///
   /// In en, this message translates to:
@@ -9085,6 +9247,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Offline'**
   String get usersOffline;
+
+  /// No description provided for @usersDetailUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile details aren\'t available here — go back and open this profile from a list.'**
+  String get usersDetailUnavailable;
 
   /// No description provided for @usersProfile.
   ///

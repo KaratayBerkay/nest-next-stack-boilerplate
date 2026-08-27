@@ -14,6 +14,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { PulseBlockFallback } from "@/fallbacks";
 import { friendsQueryOptions } from "@/api/client/friends/query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 
 interface RtcInviteDialogProps {
   onInvite: (userId: string) => Promise<unknown>;
@@ -24,6 +25,7 @@ interface RtcInviteDialogProps {
  *  (server-side enforces the target actually is a friend). */
 export function RtcInviteDialog({ onInvite, children }: RtcInviteDialogProps) {
   const t = useMessages("rtc");
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [invitedIds, setInvitedIds] = useState<Set<string>>(new Set());
   const { data: friends, isLoading } = useQuery({
@@ -32,8 +34,12 @@ export function RtcInviteDialog({ onInvite, children }: RtcInviteDialogProps) {
   });
 
   const handleInvite = async (userId: string) => {
-    await onInvite(userId);
-    setInvitedIds((prev) => new Set(prev).add(userId));
+    try {
+      await onInvite(userId);
+      setInvitedIds((prev) => new Set(prev).add(userId));
+    } catch {
+      toast({ title: t.inviteFailed, variant: "destructive" });
+    }
   };
 
   return (

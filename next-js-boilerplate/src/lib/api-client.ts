@@ -69,11 +69,28 @@ export function refreshSessionResponse(): Promise<Response> {
   return attemptRefresh();
 }
 
+/**
+ * This module assumes a browser (relative paths resolve against
+ * document.location). It also runs server-side whenever a "use client"
+ * component that calls it is part of Next.js's initial SSR pass (e.g. a
+ * useSuspenseQuery fetcher) — Node's fetch has no implicit origin, so a bare
+ * "/api/..." path throws "Failed to parse URL". Resolve against this app's
+ * own origin in that case; every route these helpers call is this app's own
+ * BFF route, never the backend directly.
+ */
+function resolveServerSideUrl(input: RequestInfo | URL): RequestInfo | URL {
+  if (typeof window !== "undefined" || typeof input !== "string") return input;
+  if (!input.startsWith("/")) return input;
+  const base = process.env.NEXT_PUBLIC_APP_URL;
+  return base ? new URL(input, base).toString() : input;
+}
+
 export async function apiFetch(
   input: RequestInfo | URL,
   init?: RequestInit,
   options?: { suppressGlobalLogout?: boolean },
 ): Promise<Response> {
+  const resolvedInput = resolveServerSideUrl(input);
   const mergedInit = { ...init };
   if (typeof window !== "undefined") {
     try {
@@ -89,7 +106,7 @@ export async function apiFetch(
       /* non-critical — proceed without device header */
     }
   }
-  let res = await fetch(input, mergedInit);
+  let res = await fetch(resolvedInput, mergedInit);
 
   if (res.status === 401 && typeof window !== "undefined") {
     // One silent refresh-and-retry before declaring the session dead. The 401
@@ -97,7 +114,7 @@ export async function apiFetch(
     // request is safe to re-issue exactly as-is (it never reached a handler).
     const refreshed = await attemptRefresh();
     if (refreshed.ok) {
-      res = await fetch(input, mergedInit);
+      res = await fetch(resolvedInput, mergedInit);
     }
     // Background/best-effort widgets (unread badges, etc.) opt out: a single
     // failed poll shouldn't nuke a session that's otherwise fine — this was

@@ -93,6 +93,7 @@ function MessagesPageContent({
       <div className="hidden min-h-0 flex-1 md:flex">
         {selectedUser ? (
           <ChatView
+            key={selectedUser.id}
             selectedUser={selectedUser}
             user={messagesUser}
             setSelectedUser={setSelectedUser}
@@ -108,6 +109,7 @@ function MessagesPageContent({
       <div className="flex min-h-0 flex-1 md:hidden">
         {selectedUser ? (
           <ChatView
+            key={selectedUser.id}
             selectedUser={selectedUser}
             user={messagesUser}
             setSelectedUser={setSelectedUser}

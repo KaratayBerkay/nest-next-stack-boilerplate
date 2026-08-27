@@ -9,6 +9,30 @@ export function trackTempId(tempId: string): void {
   sentTempIds.add(tempId);
 }
 
+// Optimistic WS sends (direct-message, room-message) previously relied
+// entirely on the server echoing the frame back to clear the pending temp
+// id — if that echo was ever dropped (WS hiccup, server-side error that
+// never reaches the client), the message stayed "pending" forever with no
+// way for the user to tell it never actually sent, and the id stayed in
+// sentTempIds forever too. Mirrors the bounded-wait pattern already used
+// for call-action acks in RtcCallProvider. Callers that have their own
+// synchronous success/failure signal (e.g. an awaited REST fallback) don't
+// need this — it's specifically for the fire-and-forget `realtime.send`
+// path, which otherwise has no failure signal at all.
+const DEFAULT_SEND_TIMEOUT_MS = 15_000;
+
+export function scheduleSendTimeout(
+  tempId: string,
+  onTimeout: () => void,
+  timeoutMs: number = DEFAULT_SEND_TIMEOUT_MS,
+): void {
+  setTimeout(() => {
+    if (!sentTempIds.has(tempId)) return;
+    sentTempIds.delete(tempId);
+    onTimeout();
+  }, timeoutMs);
+}
+
 export function setActivePeerId(peerId: string | null): void {
   activePeerId = peerId;
 }
@@ -62,15 +86,13 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
       const echoTempId = (msg as Record<string, unknown>)._tempId as
-        | string
-        | undefined;
+        string | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
         sentTempIds.delete(echoTempId);
         first.messages = first.messages.map((m) =>
@@ -106,8 +128,7 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -129,8 +150,7 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -163,8 +183,7 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -210,8 +229,7 @@ export async function dispatchEvent(
     // recently fetched, newest-messages page) ever needs a live append.
     qc.setQueryData(["room", room], (old: unknown) => {
       const data = old as
-        | { pages: { messages: Record<string, unknown>[] }[] }
-        | undefined;
+        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };

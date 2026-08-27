@@ -22,6 +22,10 @@
       "mfaResendCode": "Resend code",
       "mfaResendCooldown": "Resend in",
       "mfaResending": "Sending...",
+      "mfaBackupCodeLabel": "Backup code",
+      "mfaBackupCodePlaceholder": "Enter your backup code",
+      "mfaUseBackupCode": "Use a backup code instead",
+      "mfaUseCode": "Use authenticator code instead",
       "trustDevice": "Trust this device",
       "useDifferentAccount": "Use a different account"
     },

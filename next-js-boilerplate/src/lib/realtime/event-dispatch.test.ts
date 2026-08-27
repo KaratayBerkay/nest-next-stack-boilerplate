@@ -1,6 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { dispatchEvent, trackTempId, setActivePeerId } from "./event-dispatch";
+import {
+  dispatchEvent,
+  trackTempId,
+  scheduleSendTimeout,
+  setActivePeerId,
+} from "./event-dispatch";
 
 vi.mock("@/api/server/messages/mark-read", () => ({
   markMessagesReadServer: vi.fn().mockResolvedValue({}),
@@ -718,5 +723,55 @@ describe("dispatchEvent", () => {
     );
 
     expect(invalidateSpy).not.toHaveBeenCalled();
+  });
+});
+
+describe("scheduleSendTimeout", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("fires onTimeout when no echo clears the tempId in time", async () => {
+    vi.useFakeTimers();
+    trackTempId("temp-timeout-1");
+    const onTimeout = vi.fn();
+
+    scheduleSendTimeout("temp-timeout-1", onTimeout, 1000);
+    vi.advanceTimersByTime(1000);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(onTimeout).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not fire onTimeout once a matching echo has already cleared the tempId", async () => {
+    vi.useFakeTimers();
+    const qc = createQueryClient();
+    trackTempId("temp-timeout-2");
+    const onTimeout = vi.fn();
+    scheduleSendTimeout("temp-timeout-2", onTimeout, 1000);
+
+    qc.setQueryData(["messages", "peer-1"], {
+      pages: [
+        { messages: [{ id: "temp-timeout-2", body: "hi", pending: true }] },
+      ],
+    });
+    await dispatchEvent(
+      qc,
+      {
+        type: "direct-message",
+        message: {
+          id: "real-id",
+          senderId: "user-1",
+          recipientId: "peer-1",
+          _tempId: "temp-timeout-2",
+        },
+      },
+      "user-1",
+    );
+
+    vi.advanceTimersByTime(1000);
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(onTimeout).not.toHaveBeenCalled();
   });
 });

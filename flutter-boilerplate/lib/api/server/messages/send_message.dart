@@ -27,6 +27,13 @@ const _mutation = '''
       createdAt
       readAt
       deletedAt
+      replyTo {
+        id
+        senderId
+        body
+        deletedAt
+        hasAttachments
+      }
     }
   }
 ''';
@@ -39,8 +46,9 @@ class SendMessageServer {
   Future<ChatMessage> call(
     String recipientId,
     String text,
-    List<MessageAttachment> attachments,
-  ) async {
+    List<MessageAttachment> attachments, {
+    String? replyToId,
+  }) async {
     final response = await _dio.post<dynamic>(
       '/graphql',
       data: {
@@ -50,6 +58,7 @@ class SendMessageServer {
             'recipientId': recipientId,
             'text': text,
             'attachments': attachments.map((a) => a.toJson()).toList(),
+            if (replyToId != null) 'replyToId': replyToId,
           },
         },
       },
@@ -76,6 +85,9 @@ class SendMessageServer {
           .toList(),
       createdAt: DateTime.parse(result['createdAt'] as String),
       isRead: result['readAt'] != null,
+      replyTo: result['replyTo'] != null
+          ? ReplyPreview.fromJson(result['replyTo'] as Map<String, dynamic>)
+          : null,
       deletedAt: result['deletedAt'] != null
           ? DateTime.parse(result['deletedAt'] as String)
           : null,

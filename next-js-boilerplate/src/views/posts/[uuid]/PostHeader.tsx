@@ -54,7 +54,7 @@ export function PostHeader({
           <>
             <IconButton
               icon={<IconPencil size={14} stroke={1.5} />}
-              label="Edit post"
+              label={t.editPost}
               onClick={onStartEdit}
             />
             <ConfirmDialog
@@ -65,7 +65,7 @@ export function PostHeader({
               {(open) => (
                 <IconButton
                   icon={<IconTrash size={14} stroke={1.5} />}
-                  label="Delete post"
+                  label={t.deletePost}
                   onClick={open}
                   className="hover:text-red-500"
                 />

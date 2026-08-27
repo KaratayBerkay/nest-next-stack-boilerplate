@@ -15,6 +15,7 @@
   "awaiting": "Awaiting response",
   "sentByYou": "(sent by you)",
   "usersFound": "{count} users found",
+  "searchTruncated": "There are more matches than shown — refine your search to narrow it down",
   "suggestedFriends": "Suggested Friends",
   "suggestedFriendsDesc": "People you may know",
   "loadSuggestions": "Load suggestions",
@@ -22,5 +23,10 @@
   "noSuggestions": "No suggestions yet",
   "mutualFriends": "{count} mutual friends",
   "failedToLoadSuggestions": "Failed to load suggestions",
+  "searchFailed": "Failed to search users. Try again.",
+  "failedToSendRequest": "Failed to send friend request",
+  "failedToAcceptRequest": "Failed to accept friend request",
+  "failedToDeclineRequest": "Failed to decline friend request",
+  "requestSent": "Request sent",
   "signInRequired": "Sign in to find friends"
 }

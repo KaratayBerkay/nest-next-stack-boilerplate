@@ -3,7 +3,6 @@ import { MessagingWsGateway } from './messaging-ws.gateway';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { PrismaService } from '../prisma/prisma.service';
 import { MessagingService } from './messaging.service';
-import { PushNotificationService } from '../push-notification/push-notification.service';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 
 interface MockWs {
@@ -122,7 +121,6 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         { provide: RealtimeGateway, useValue: mockRealtime },
         { provide: PrismaService, useValue: {} },
         { provide: MessagingService, useValue: mockMs },
-        { provide: PushNotificationService, useValue: {} },
         {
           provide: WireCryptoService,
           useValue: {

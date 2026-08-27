@@ -8,7 +8,7 @@ vi.mock("@/lib/i18n/MessagesProvider", () => ({
     invoices: "Invoices",
     loading: "Loading...",
     billingHistoryEmpty: "No invoices yet",
-    invoiceNumber: "Invoice {number}",
+    invoiceDescription: "Description",
     date: "Date",
     price: "Price",
     status: "Status",
@@ -21,6 +21,12 @@ vi.mock("@/lib/i18n/MessagesProvider", () => ({
   }),
 }));
 
+// Badge renders through useComponentVariant, which needs a ThemeProvider
+// this unit test doesn't set up — stub it to the default variant.
+vi.mock("@/hooks/useComponentVariant", () => ({
+  useComponentVariant: () => "default",
+}));
+
 function tx(overrides: Partial<Transaction> = {}): Transaction {
   return {
     id: "tx_1",
@@ -28,7 +34,7 @@ function tx(overrides: Partial<Transaction> = {}): Transaction {
     status: "COMPLETED",
     amount: 1999,
     currency: "USD",
-    reference: "subscription:MEDIUM #1",
+    reference: "subscription:MEDIUM",
     createdAt: "2026-08-01T00:00:00.000Z",
     ...overrides,
   };
@@ -66,5 +72,28 @@ describe("InvoiceTable currency display", () => {
     );
     expect(screen.getByText("—")).toBeTruthy();
     expect(screen.queryByText(/\$0\.00/)).toBeNull();
+  });
+});
+
+describe("InvoiceTable invoice description", () => {
+  it("shows the plan name instead of the raw internal reference string", () => {
+    render(
+      <InvoiceTable
+        transactions={[tx({ reference: "subscription:PREMIUM" })]}
+        isLoading={false}
+      />,
+    );
+    expect(screen.getByText("Premium")).toBeTruthy();
+    expect(screen.queryByText("subscription:PREMIUM")).toBeNull();
+  });
+
+  it("falls back to the raw reference for a reference shape it doesn't recognize", () => {
+    render(
+      <InvoiceTable
+        transactions={[tx({ reference: "manual-adjustment" })]}
+        isLoading={false}
+      />,
+    );
+    expect(screen.getByText("manual-adjustment")).toBeTruthy();
   });
 });

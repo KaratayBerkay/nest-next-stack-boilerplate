@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import '../../../api/client/auth/actions.dart';
 import '../../../components/auth/auth_layout.dart';
 import '../../../components/auth/labeled_field.dart';
+import '../../../components/auth/password_requirements.dart';
+import '../../../components/auth/social_login_buttons.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../constants/theme.dart';
 import '../../../hooks/use_auth.dart';
@@ -199,10 +201,14 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
           required: true,
           controller: _passwordCtrl,
           obscureText: true,
+          showVisibilityToggle: true,
           errorText: _fieldErrors['password'],
           textInputAction: TextInputAction.done,
           onSubmitted: _submit,
+          onChanged: (_) => setState(() {}),
         ),
+        const SizedBox(height: 6),
+        PasswordRequirements(password: _passwordCtrl.text),
         if (_fieldErrors['form'] != null) ...[
           const SizedBox(height: 12),
           Text(
@@ -223,6 +229,8 @@ class _RegisterPageContentState extends ConsumerState<RegisterPageContent> {
             ),
           ),
         ),
+        const SizedBox(height: 20),
+        const SocialLoginButtons(),
         const SizedBox(height: 16),
         Text.rich(
           TextSpan(

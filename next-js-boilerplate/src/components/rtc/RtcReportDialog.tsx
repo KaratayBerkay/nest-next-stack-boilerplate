@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/Button";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import type { RtcReportReason } from "@/api/server/rtc/shared-types";
 
 interface RtcReportDialogProps {
@@ -23,6 +24,7 @@ interface RtcReportDialogProps {
  *  persisted server-side. No review UI reads this yet (Phase 5 scope). */
 export function RtcReportDialog({ onSubmit, children }: RtcReportDialogProps) {
   const t = useMessages("rtc");
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState<RtcReportReason>("HARASSMENT");
   const [details, setDetails] = useState("");
@@ -40,6 +42,8 @@ export function RtcReportDialog({ onSubmit, children }: RtcReportDialogProps) {
     try {
       await onSubmit(reason, details.trim() || undefined);
       setDone(true);
+    } catch {
+      toast({ title: t.reportFailed, variant: "destructive" });
     } finally {
       setSubmitting(false);
     }

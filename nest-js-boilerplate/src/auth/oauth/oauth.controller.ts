@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Controller,
   Get,
-  HttpCode,
   HttpStatus,
   Logger,
   Param,
@@ -56,12 +55,6 @@ export class OAuthController {
 
   private get allowedRedirectOrigins(): string[] {
     return [this.frontendOrigin, this.mobileRedirectOrigin];
-  }
-
-  /** GET /auth/oauth/providers — returns list of configured provider names */
-  @Get('providers')
-  listProviders() {
-    return this.oauth.getConfiguredProviders();
   }
 
   /**
@@ -156,16 +149,5 @@ export class OAuthController {
       this.logger.error(`OAuth callback failed for ${provider}: ${msg}`);
       return res.redirect(HttpStatus.FOUND, safeLoginErrorUrl(msg));
     }
-  }
-
-  /**
-   * GET /auth/oauth/:provider/profile — retrieve the OAuth profile
-   * that was stored during the callback. Requires an authenticated
-   * session so the state token cannot be used by unauthorized parties.
-   */
-  @Get(':provider/profile')
-  @HttpCode(HttpStatus.OK)
-  async getProfile(@Query('state') state: string) {
-    return this.oauth.retrieveProfile(state);
   }
 }

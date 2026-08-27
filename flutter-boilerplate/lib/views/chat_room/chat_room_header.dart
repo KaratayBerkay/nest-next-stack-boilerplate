@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../components/ui/avatar/avatar.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 
 class ChatRoomHeader extends StatelessWidget {
   final String userName;
@@ -9,6 +10,7 @@ class ChatRoomHeader extends StatelessWidget {
   final String connectionState;
   final bool showPageInfo;
   final VoidCallback? onPageInfo;
+  final VoidCallback? onOpenGallery;
 
   const ChatRoomHeader({
     super.key,
@@ -17,6 +19,7 @@ class ChatRoomHeader extends StatelessWidget {
     this.connectionState = 'online',
     this.showPageInfo = false,
     this.onPageInfo,
+    this.onOpenGallery,
   });
 
   @override
@@ -54,7 +57,7 @@ class ChatRoomHeader extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Text(
-            'Chat Rooms',
+            AppLocalizations.of(context).chatRoomTitle,
             style: TextStyle(
               color: colors.brand,
               fontSize: 18,
@@ -62,6 +65,16 @@ class ChatRoomHeader extends StatelessWidget {
             ),
           ),
           const Spacer(),
+          if (onOpenGallery != null)
+            IconButton(
+              icon: Icon(
+                Icons.folder_outlined,
+                size: 18,
+                color: colors.fgMuted,
+              ),
+              tooltip: AppLocalizations.of(context).allUploadsTitle,
+              onPressed: onOpenGallery,
+            ),
           if (showPageInfo && onPageInfo != null)
             IconButton(
               icon: Icon(Icons.info_outline, size: 18, color: colors.fgMuted),

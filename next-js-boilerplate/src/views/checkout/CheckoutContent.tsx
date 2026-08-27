@@ -59,9 +59,7 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
   const router = useRouter();
   const t = useMessages("checkout");
   const currency = useCurrencyCookie();
-  const { data: priceData } = useQuery(
-    planPricesQueryOptions(currency, user?.id),
-  );
+  const { data: priceData } = useQuery(planPricesQueryOptions(currency));
   const priceCents =
     priceData?.find((p) => p.tier === targetTier)?.priceCents ??
     TIER_PRICES_CENTS[targetTier as Tier] ??
@@ -103,8 +101,10 @@ export default function CheckoutPage({ params, className }: CheckoutPageProps) {
     <div className={cn("flex h-full w-full flex-col gap-6 py-8", className)}>
       <div>
         <h1 className="text-xl font-bold">
-          {changeType === "immediate" ? t.upgrade : t.changePlan} to{" "}
-          {tierLabel(targetTier)}
+          {(changeType === "immediate"
+            ? t.upgradeToTier
+            : t.changeToTier
+          ).replace("{tier}", tierLabel(targetTier))}
         </h1>
         <p className="text-muted mt-1 text-sm">
           {changeType === "immediate"

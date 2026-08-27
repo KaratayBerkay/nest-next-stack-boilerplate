@@ -1,49 +1,16 @@
 "use client";
 
-import {
-  useState,
-  type Dispatch,
-  type SetStateAction,
-  type ReactNode,
-} from "react";
+import { useState } from "react";
 import { useToast } from "@/components/ui/Toast";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import { fetchPremiumStatsServer } from "@/api/server/premium/stats";
-
-async function loadStats(
-  setLoadingStats: Dispatch<SetStateAction<boolean>>,
-  setStats: Dispatch<
-    SetStateAction<{
-      totalUsers: number;
-      activeUsers: number;
-      revenue: number;
-    } | null>
-  >,
-  toast: (opts: {
-    description?: ReactNode;
-    variant?: "default" | "destructive" | "success";
-  }) => string,
-  t: Record<string, string>,
-) {
-  setLoadingStats(true);
-  try {
-    const data = await fetchPremiumStatsServer();
-    setStats(data);
-  } catch {
-    toast({ description: t.networkError, variant: "destructive" });
-  } finally {
-    setLoadingStats(false);
-  }
-}
+import { formatCurrency } from "@/lib/currency";
+import { loadPremiumStats } from "@/views/premium/premium-handlers";
+import type { PremiumStats } from "@/types/premium/PremiumPageView-types";
 
 export function BasicPageView() {
   const { toast } = useToast();
   const t = useMessages("premium");
-  const [stats, setStats] = useState<{
-    totalUsers: number;
-    activeUsers: number;
-    revenue: number;
-  } | null>(null);
+  const [stats, setStats] = useState<PremiumStats | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
   return (
@@ -52,7 +19,7 @@ export function BasicPageView() {
 
       <div className="flex flex-col gap-4">
         <button
-          onClick={() => loadStats(setLoadingStats, setStats, toast, t)}
+          onClick={() => loadPremiumStats(setLoadingStats, setStats, toast, t)}
           disabled={loadingStats}
           className="bg-brand text-brand-fg self-start rounded-lg px-4 py-2 text-sm font-medium transition-opacity hover:opacity-90 disabled:opacity-50"
         >
@@ -78,7 +45,7 @@ export function BasicPageView() {
                 {t.revenue}
               </p>
               <p className="mt-1 text-2xl font-bold">
-                ${stats.revenue.toLocaleString()}
+                {formatCurrency(Math.round(stats.revenue * 100), "USD")}
               </p>
             </div>
           </div>

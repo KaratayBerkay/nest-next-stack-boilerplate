@@ -2,7 +2,8 @@ export interface UserSearchCardProps {
   userId: string;
   name: string;
   isPending: boolean;
-  onSendRequest: () => void;
+  onSendRequest: () => Promise<boolean>;
   pendingLabel: string;
   addFriendLabel: string;
+  sendFailedMessage: string;
 }

@@ -27,6 +27,9 @@ export async function chatViewHandleSend(
   setInput: Dispatch<SetStateAction<string>>,
   setMessageError: Dispatch<SetStateAction<string | null>>,
   scrollToBottom: () => void,
+  messageTooLongError: string,
+  emptyMessageError: string,
+  sendFailedError: string,
   attachments: MessageAttachment[] = [],
   replyTo?: ReplyPreview | null,
   clearReply?: () => void,
@@ -34,11 +37,14 @@ export async function chatViewHandleSend(
   if (!selectedUser) return;
   const parsed = sendMessageSchema.safeParse({ text: input });
   if (!parsed.success) {
-    setMessageError(parsed.error.issues[0]?.message ?? "Invalid message");
+    // Ignore the schema's own built-in message — it's a raw, untranslated
+    // English literal (see sendMessageSchema) and would otherwise leak
+    // straight through to the UI regardless of locale.
+    setMessageError(messageTooLongError);
     return;
   }
   if (!parsed.data.text && attachments.length === 0) {
-    setMessageError("Message cannot be empty");
+    setMessageError(emptyMessageError);
     return;
   }
   setMessageError(null);
@@ -53,7 +59,7 @@ export async function chatViewHandleSend(
     clearReply?.();
     scrollToBottom();
   } catch {
-    setMessageError("Failed to send message. Try again.");
+    setMessageError(sendFailedError);
   }
 }
 

@@ -23,6 +23,33 @@ describe("apiFetch", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("resolves a relative path against NEXT_PUBLIC_APP_URL when called server-side", async () => {
+    vi.stubGlobal("window", undefined);
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
+    const fetchMock = vi.fn(async () => response(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiFetch("/api/billing/subscription");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://localhost:3100/api/billing/subscription",
+      expect.anything(),
+    );
+  });
+
+  it("leaves a relative path as-is in the browser (window defined)", async () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "http://localhost:3100");
+    const fetchMock = vi.fn(async () => response(200, { ok: true }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await apiFetch("/api/billing/subscription");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/billing/subscription",
+      expect.anything(),
+    );
+  });
+
   it("dispatches auth:logout on 401", async () => {
     const onLogout = vi.fn();
     window.addEventListener("auth:logout", onLogout);

@@ -1,7 +1,7 @@
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
-import type { Post } from "@/types/posts/Post-types";
+import { EMOJIS } from "@/components/feed/ReactionButtons";
 import type { WhoReactedProps } from "@/types/views/posts/WhoReacted-types";
 
 export function WhoReacted({ post }: WhoReactedProps) {
@@ -27,7 +27,7 @@ export function WhoReacted({ post }: WhoReactedProps) {
               className="bg-brand text-brand-fg h-6 w-6 text-[9px]"
             />
             <span className="text-fg text-sm">{r.name ?? t.unknown}</span>
-            <span className="text-sm">{r.type}</span>
+            <span className="text-sm">{EMOJIS[r.type] ?? r.type}</span>
           </div>
         ))}
       </div>

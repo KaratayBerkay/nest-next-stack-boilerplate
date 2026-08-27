@@ -11,6 +11,7 @@ import { useRealtime } from "@/lib/realtime/RealtimeProvider";
 import { CommentSection } from "@/components/feed/CommentSection";
 import { ErrorBoundary } from "@/components/ui/ErrorBoundary";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useToast } from "@/components/ui/Toast";
 import { useMarkPostNotificationsRead } from "@/lib/notifications/useMarkPostNotificationsRead";
 import { PostDetailFallback } from "@/fallbacks";
 import { singlePostQueryOptions } from "@/api/client/posts/query";
@@ -32,6 +33,7 @@ function PostDetailContent({
   className,
 }: PostDetailBaseViewProps) {
   const t = useMessages("posts");
+  const { toast } = useToast();
   const params = useParams<{ lang: string; uuid: string }>();
   const uuid = params?.uuid ?? "";
   const router = useRouter();
@@ -60,8 +62,12 @@ function PostDetailContent({
 
   async function handleSave() {
     if (!editTitle.trim() || !editContent.trim()) return;
-    await updatePost(post.id, editTitle.trim(), editContent.trim());
-    setEditing(false);
+    try {
+      await updatePost(post.id, editTitle.trim(), editContent.trim());
+      setEditing(false);
+    } catch {
+      toast({ title: t.editPostFailed, variant: "destructive" });
+    }
   }
 
   function handleStartEdit() {
@@ -71,8 +77,12 @@ function PostDetailContent({
   }
 
   async function handleDelete() {
-    await deletePost(post.id);
-    router.push(`/v1/${params?.lang ?? "en"}/feed`);
+    try {
+      await deletePost(post.id);
+      router.push(`/v1/${params?.lang ?? "en"}/feed`);
+    } catch {
+      toast({ title: t.deletePostFailed, variant: "destructive" });
+    }
   }
 
   return (

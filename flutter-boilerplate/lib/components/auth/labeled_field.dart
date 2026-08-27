@@ -4,13 +4,14 @@ import 'package:flutter/services.dart';
 import '../../constants/theme.dart';
 import '../ui/input/input.dart';
 
-class LabeledField extends StatelessWidget {
+class LabeledField extends StatefulWidget {
   final String label;
   final bool required;
   final String? hint;
   final String? errorText;
   final TextEditingController? controller;
   final bool obscureText;
+  final bool showVisibilityToggle;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
   final VoidCallback? onSubmitted;
@@ -27,6 +28,7 @@ class LabeledField extends StatelessWidget {
     this.errorText,
     this.controller,
     this.obscureText = false,
+    this.showVisibilityToggle = false,
     this.keyboardType,
     this.textInputAction,
     this.onSubmitted,
@@ -37,9 +39,18 @@ class LabeledField extends StatelessWidget {
   });
 
   @override
+  State<LabeledField> createState() => _LabeledFieldState();
+}
+
+class _LabeledFieldState extends State<LabeledField> {
+  late bool _obscured = widget.obscureText;
+
+  @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final theme = Theme.of(context);
+    final effectiveObscure =
+        widget.showVisibilityToggle ? _obscured : widget.obscureText;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,14 +59,14 @@ class LabeledField extends StatelessWidget {
         Row(
           children: [
             Text(
-              label,
+              widget.label,
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: colors.fg,
               ),
             ),
-            if (required)
+            if (widget.required)
               Text(
                 ' *',
                 style: TextStyle(color: colors.danger, fontSize: 14),
@@ -64,17 +75,27 @@ class LabeledField extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Input(
-          controller: controller,
-          hintText: hint,
-          errorText: errorText,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          textInputAction: textInputAction,
-          onSubmitted: onSubmitted,
-          autofocus: autofocus,
-          maxLength: maxLength,
-          inputFormatters: inputFormatters,
-          onChanged: onChanged,
+          controller: widget.controller,
+          hintText: widget.hint,
+          errorText: widget.errorText,
+          obscureText: effectiveObscure,
+          suffixIcon: widget.showVisibilityToggle
+              ? IconButton(
+                  icon: Icon(
+                    _obscured
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                  onPressed: () => setState(() => _obscured = !_obscured),
+                )
+              : null,
+          keyboardType: widget.keyboardType,
+          textInputAction: widget.textInputAction,
+          onSubmitted: widget.onSubmitted,
+          autofocus: widget.autofocus,
+          maxLength: widget.maxLength,
+          inputFormatters: widget.inputFormatters,
+          onChanged: widget.onChanged,
         ),
       ],
     );

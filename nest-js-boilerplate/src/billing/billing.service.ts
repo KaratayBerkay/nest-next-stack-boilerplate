@@ -42,6 +42,7 @@ const SUBSCRIBER_SELECT = {
   pendingTier: true,
   pendingTierEffectiveAt: true,
   stripeSubscriptionScheduleId: true,
+  cancelAtPeriodEnd: true,
 } as const satisfies Prisma.UserSelect;
 
 type SubscriberState = Prisma.UserGetPayload<{
@@ -171,7 +172,7 @@ export class BillingService {
         const retryKey =
           idempotencyKey?.trim() ||
           this.generateIdempotencyKey(userId, targetTier);
-        const prior = await this.findRetryResult(tx, retryKey);
+        const prior = await this.findRetryResult(tx, userId, retryKey);
         if (prior) {
           result = prior;
           return;
@@ -213,17 +214,42 @@ export class BillingService {
           ? `stripe_invoice:${chargeResult.latestInvoiceId}`
           : retryKey;
 
-        const wallet = await this.wallet.ensureWallet(userId, tx);
+        // From here on, Stripe has ALREADY charged the customer and created
+        // a live subscription — nothing below this point can be "undone" by
+        // a transaction rollback the way a plain DB write could. If
+        // persistUpgrade (or ensureWallet) throws, Prisma rolls back every
+        // write in this callback, but the Stripe side effect stands: the
+        // customer is billed with zero corresponding local record. That
+        // failure mode is loudly, actionably logged here (rather than
+        // surfacing as just another error) specifically so it can be found
+        // and reconciled — a retry of this same mutation with the same
+        // retryKey is safe (Stripe dedupes on it, and findRetryResult above
+        // would see nothing yet persisted) and is the fastest recovery path.
+        try {
+          const wallet = await this.wallet.ensureWallet(userId, tx);
 
-        provisioned = await this.persistUpgrade(
-          tx,
-          userId,
-          targetTier,
-          chargeResult,
-          rowKey,
-          retryKey,
-          wallet.id,
-        );
+          provisioned = await this.persistUpgrade(
+            tx,
+            userId,
+            targetTier,
+            chargeResult,
+            rowKey,
+            retryKey,
+            wallet.id,
+          );
+        } catch (err) {
+          this.logger.error({
+            category: 'billing',
+            event: 'billing.charged_but_not_persisted',
+            userId,
+            targetTier,
+            stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+            latestInvoiceId: chargeResult.latestInvoiceId,
+            retryKey,
+            error: (err as Error).message,
+          });
+          throw err;
+        }
 
         result = { success: true, periodEnd: chargeResult.periodEnd };
       },
@@ -243,10 +269,21 @@ export class BillingService {
 
   private async findRetryResult(
     tx: Prisma.TransactionClient,
+    userId: string,
     retryKey: string,
   ): Promise<{ success: boolean; reason?: string } | null> {
+    // `idempotencyKey` is a client-suppliable GraphQL argument (see
+    // billing.resolver.ts), so the lookup MUST be scoped to the caller's own
+    // wallet — without this, one user supplying (or guessing/reusing)
+    // another user's idempotency key could pull up that other user's
+    // transaction: a COMPLETED one leaks a misleading "success" for a
+    // no-op that never charged or provisioned them, and a failed one leaks
+    // that other user's decline reason.
     const existing = await tx.walletTransaction.findFirst({
-      where: { clientIdempotencyKey: retryKey },
+      where: {
+        clientIdempotencyKey: retryKey,
+        OR: [{ fromWallet: { userId } }, { toWallet: { userId } }],
+      },
     });
     if (!existing) return null;
     const meta = existing.metadata as Record<string, unknown> | null;
@@ -404,28 +441,57 @@ export class BillingService {
   ): Promise<SubscribeOutcome> {
     // Paid -> FREE: keep access through the paid period. The tier stays until
     // the `customer.subscription.deleted` webhook flips it at period end.
-    if (user.stripeSubscriptionId) {
-      const idempotencyKey = this.generateIdempotencyKey(
-        userId,
-        SubscriptionTier.FREE,
-      );
-      const wallet = await this.wallet.ensureWallet(userId);
+    if (!user.stripeSubscriptionId) {
+      // No Stripe subscription on record — fall back to a local tier change.
+      return this.applyLocalTierChange(userId, SubscriptionTier.FREE);
+    }
 
-      const { currency } = await this.provider.cancelSubscription(
-        user.stripeSubscriptionId,
-      );
+    // Unlike handleFirstSubscribe/handleTierChange, this path previously ran
+    // with no advisory lock at all and used the CALLER's pre-lock `user`
+    // snapshot throughout — a concurrent cancel (double-click, or racing a
+    // tier-change/upgrade for the same user) could both read the same stale
+    // stripeSubscriptionId and both call Stripe, and the second's
+    // walletTransaction.create() would collide on the deterministic
+    // idempotencyKey (userId+FREE) with an uncaught P2002. Locking here also
+    // makes this path consistent with every other subscription mutation,
+    // which all serialize on the same per-user lock.
+    let alreadyCancelled = false;
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
 
-      // A pending scheduled change is now moot — release the schedule back to
-      // normal subscription management (the cancellation itself is expressed
-      // via cancel_at_period_end above, so releasing, not cancelling, is the
-      // right call) and clear its local bookkeeping in the same write.
-      if (user.stripeSubscriptionScheduleId) {
-        await this.provider.releaseSubscriptionSchedule(
-          user.stripeSubscriptionScheduleId,
+        const lockedUser = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: SUBSCRIBER_SELECT,
+        });
+        if (lockedUser.cancelAtPeriodEnd || !lockedUser.stripeSubscriptionId) {
+          // Already cancelled (or never had a live subscription anymore) by
+          // a concurrent request — nothing left to do.
+          alreadyCancelled = true;
+          return;
+        }
+
+        const idempotencyKey = this.generateIdempotencyKey(
+          userId,
+          SubscriptionTier.FREE,
         );
-      }
+        const wallet = await this.wallet.ensureWallet(userId, tx);
 
-      await this.prisma.$transaction(async (tx) => {
+        const { currency } = await this.provider.cancelSubscription(
+          lockedUser.stripeSubscriptionId,
+        );
+
+        // A pending scheduled change is now moot — release the schedule back
+        // to normal subscription management (the cancellation itself is
+        // expressed via cancel_at_period_end above, so releasing, not
+        // cancelling, is the right call) and clear its local bookkeeping in
+        // the same write.
+        if (lockedUser.stripeSubscriptionScheduleId) {
+          await this.provider.releaseSubscriptionSchedule(
+            lockedUser.stripeSubscriptionScheduleId,
+          );
+        }
+
         await tx.user.update({
           where: { id: userId },
           data: {
@@ -442,10 +508,10 @@ export class BillingService {
             amount: 0,
             currency,
             idempotencyKey,
-            reference: `subscription:${user.subscriptionTier}`,
+            reference: `subscription:${lockedUser.subscriptionTier}`,
             fromWalletId: wallet.id,
             metadata: {
-              tier: user.subscriptionTier,
+              tier: lockedUser.subscriptionTier,
               provider: 'stripe',
               scheduledCancel: true,
             },
@@ -459,12 +525,18 @@ export class BillingService {
             action: 'UPDATE',
             actorId: userId,
             summary: 'Subscription cancellation scheduled at period end',
-            after: { tier: user.subscriptionTier, cancelAtPeriodEnd: true },
+            after: {
+              tier: lockedUser.subscriptionTier,
+              cancelAtPeriodEnd: true,
+            },
           },
           tx,
         );
-      });
+      },
+      { maxWait: 15_000, timeout: 120_000 },
+    );
 
+    if (!alreadyCancelled) {
       await this.sendBillingNotification(
         userId,
         `Subscription cancelled`,
@@ -479,12 +551,9 @@ export class BillingService {
           `Billing notification failed: ${err.message}`,
         ),
       );
-
-      return { success: true };
     }
 
-    // No Stripe subscription on record — fall back to a local tier change.
-    return this.applyLocalTierChange(userId, SubscriptionTier.FREE);
+    return { success: true };
   }
 
   /**
@@ -591,51 +660,72 @@ export class BillingService {
           return;
         }
 
-        const wallet = await this.wallet.ensureWallet(userId, tx);
-        const idempotencyKey = this.generateIdempotencyKey(userId, targetTier);
+        // From here on, Stripe already has a live Subscription Schedule —
+        // if any write below throws, the transaction rolls back locally but
+        // that schedule keeps existing on Stripe's side with no local
+        // reference to release or reconcile it. Loudly logged for the same
+        // reason as the analogous point in handleFirstSubscribe.
+        try {
+          const wallet = await this.wallet.ensureWallet(userId, tx);
+          const idempotencyKey = this.generateIdempotencyKey(
+            userId,
+            targetTier,
+          );
 
-        await tx.user.update({
-          where: { id: userId },
-          data: {
-            pendingTier: targetTier,
-            pendingTierEffectiveAt: scheduleResult.effectiveAt,
+          await tx.user.update({
+            where: { id: userId },
+            data: {
+              pendingTier: targetTier,
+              pendingTierEffectiveAt: scheduleResult.effectiveAt,
+              stripeSubscriptionScheduleId:
+                scheduleResult.stripeSubscriptionScheduleId,
+            },
+          });
+          await tx.walletTransaction.create({
+            data: {
+              type: 'ADJUSTMENT',
+              status: 'COMPLETED',
+              amount: 0,
+              currency: scheduleResult.currency ?? 'USD',
+              idempotencyKey,
+              reference: `subscription:${targetTier}`,
+              fromWalletId: wallet.id,
+              metadata: {
+                tier: targetTier,
+                provider: 'stripe',
+                scheduledChange: true,
+                switchedFrom: lockedUser.subscriptionTier,
+                effectiveAt: scheduleResult.effectiveAt,
+              },
+            },
+          });
+          await this.outbox.emit(
+            {
+              aggregateType: 'User',
+              aggregateId: userId,
+              eventType: 'billing.tier_change_scheduled',
+              action: 'UPDATE',
+              actorId: userId,
+              summary: `Subscription change to ${targetTier} scheduled for ${scheduleResult.effectiveAt?.toISOString() ?? 'next renewal'}`,
+              after: {
+                tier: lockedUser.subscriptionTier,
+                pendingTier: targetTier,
+              },
+            },
+            tx,
+          );
+        } catch (err) {
+          this.logger.error({
+            category: 'billing',
+            event: 'billing.schedule_created_but_not_persisted',
+            userId,
+            targetTier,
             stripeSubscriptionScheduleId:
               scheduleResult.stripeSubscriptionScheduleId,
-          },
-        });
-        await tx.walletTransaction.create({
-          data: {
-            type: 'ADJUSTMENT',
-            status: 'COMPLETED',
-            amount: 0,
-            currency: scheduleResult.currency ?? 'USD',
-            idempotencyKey,
-            reference: `subscription:${targetTier}`,
-            fromWalletId: wallet.id,
-            metadata: {
-              tier: targetTier,
-              provider: 'stripe',
-              scheduledChange: true,
-              switchedFrom: lockedUser.subscriptionTier,
-              effectiveAt: scheduleResult.effectiveAt,
-            },
-          },
-        });
-        await this.outbox.emit(
-          {
-            aggregateType: 'User',
-            aggregateId: userId,
-            eventType: 'billing.tier_change_scheduled',
-            action: 'UPDATE',
-            actorId: userId,
-            summary: `Subscription change to ${targetTier} scheduled for ${scheduleResult.effectiveAt?.toISOString() ?? 'next renewal'}`,
-            after: {
-              tier: lockedUser.subscriptionTier,
-              pendingTier: targetTier,
-            },
-          },
-          tx,
-        );
+            error: (err as Error).message,
+          });
+          throw err;
+        }
 
         scheduled = true;
         result = {

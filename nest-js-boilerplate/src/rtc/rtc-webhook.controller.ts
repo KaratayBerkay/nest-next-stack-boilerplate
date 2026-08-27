@@ -7,6 +7,7 @@ import { LiveKitService } from './livekit.service';
 import { RtcCallService } from './rtc-call.service';
 import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
+import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
@@ -32,6 +33,12 @@ export class RtcWebhookController {
   async handleWebhook(@Req() req: Request, @Res() res: Response) {
     const rawBody = (req as unknown as { rawBody: Buffer }).rawBody;
     if (rawBody?.length > MAX_WEBHOOK_BODY_BYTES) {
+      this.logger.warn(
+        rtcLog('webhook.rejected', {
+          reason: 'body_too_large',
+          bodyBytes: rawBody.length,
+        }),
+      );
       return res.status(413).json({ error: 'Request body too large' });
     }
 
@@ -41,16 +48,21 @@ export class RtcWebhookController {
         rawBody?.toString() ?? '',
         req.headers.authorization,
       );
-    } catch {
+    } catch (error) {
+      this.logger.warn(
+        rtcErrorLog('webhook.rejected', error, {
+          reason: 'invalid_signature',
+        }),
+      );
       return res.status(400).json({ error: 'Invalid signature' });
     }
 
-    this.logger.log({
-      category: 'rtc',
-      event: 'webhook.received',
-      type: event.event,
-      room: event.room?.name,
-    });
+    this.logger.log(
+      rtcLog('webhook.received', {
+        type: event.event,
+        roomName: event.room?.name,
+      }),
+    );
 
     try {
       switch (event.event) {
@@ -74,7 +86,12 @@ export class RtcWebhookController {
           break;
       }
     } catch (err) {
-      this.logger.error('RTC webhook handler error', err as Error);
+      this.logger.error(
+        rtcErrorLog('webhook.handler_failed', err, {
+          type: event.event,
+          roomName: event.room?.name,
+        }),
+      );
     }
 
     return res.status(200).json({ received: true });
@@ -95,10 +112,19 @@ export class RtcWebhookController {
       select: { id: true, kind: true },
     });
     if (!room) return;
-    await this.prisma.rtcRoom.update({
-      where: { id: room.id },
-      data: { state: RtcRoomState.ENDED, endedAt: new Date() },
-    });
+    // Deliberately NOT updating RtcRoom.state here — each kind-specific
+    // handler below already transitions it to ENDED as part of its own
+    // cleanup (endCall/finishMeeting/finishStream), guarded by its own
+    // idempotency check. Doing it here too used to race ahead of that:
+    // RtcMeetingService.handleRoomEndedByLiveKit guards on this exact same
+    // RtcRoom.state field, so its "already ended, nothing to do" check was
+    // always true by the time it ran — finishMeeting (participant leftAt
+    // backfill + the rtc:meeting-ended broadcast) never fired for a meeting
+    // that ended via LiveKit noticing an empty room, only for one ended via
+    // an explicit endMeeting() call or the duration sweep. Calls/streams
+    // happened to be immune (they guard on CallSession.state/LiveStream
+    // .isLive, separate columns this update never touched), which is why
+    // this was invisible outside meetings specifically.
     if (room.kind === RtcRoomKind.CALL) {
       // Safety net for whenever handleParticipantLeft's early-close didn't
       // already end the CallSession (e.g. both sides drop near-

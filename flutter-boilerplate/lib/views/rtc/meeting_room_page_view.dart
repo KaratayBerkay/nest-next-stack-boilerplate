@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/meeting_signal.dart';
+import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:livekit_client/livekit_client.dart' as lk;
@@ -98,17 +99,34 @@ class _RtcMeetingRoomPageContentState
           .read(realtimeProvider)
           .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
       _sentJoinChat = true;
-      await _connectRoom(result.token);
-    } catch (_) {
+      await _connectRoom(result.token, result.roomName);
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.join_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'joining',
+      );
       if (mounted) setState(() => _phase = _RoomPhase.notFound);
     }
   }
 
-  Future<void> _connectRoom(String token) async {
+  Future<void> _connectRoom(String token, String roomName) async {
     final room = lk.Room();
     _room = room;
     final listener = room.createListener();
     _listener = listener;
+
+    logRtcEvent(
+      event: 'meeting.livekit.connecting',
+      rtcKind: 'meeting',
+      rtcId: widget.slug,
+      roomName: roomName,
+      phase: 'connecting',
+    );
 
     listener
       ..on<lk.ParticipantConnectedEvent>((_) => _rebuildParticipants())
@@ -120,11 +138,59 @@ class _RtcMeetingRoomPageContentState
       ..on<lk.LocalTrackPublishedEvent>((_) => _rebuildParticipants())
       ..on<lk.LocalTrackUnpublishedEvent>((_) => _rebuildParticipants())
       ..on<lk.RoomReconnectingEvent>((_) {
-        debugPrint('[MeetingRoom] Reconnecting…');
+        logRtcEvent(
+          event: 'meeting.livekit.reconnecting',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+        );
       })
       ..on<lk.RoomReconnectedEvent>((_) {
-        debugPrint('[MeetingRoom] Reconnected');
+        logRtcEvent(
+          event: 'meeting.livekit.reconnected',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          roomName: roomName,
+          phase: 'connected',
+        );
         _rebuildParticipants();
+      })
+      ..on<lk.RoomDisconnectedEvent>((event) {
+        logRtcEvent(
+          event: 'meeting.livekit.disconnected',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          roomName: roomName,
+          exceptionType: 'CLIENT_ERROR',
+          phase: 'connected',
+          metadata: {'reason': event.reason?.name},
+        );
+        // clientInitiated means our own _teardownRoom() called disconnect()
+        // — already an intentional exit. Any other reason is an involuntary
+        // death (LiveKit's own reconnect gave up) nothing else would ever
+        // recover from client-side — without this, the participant grid
+        // just sits frozen with no video/audio and no indication anything
+        // is wrong. Treat it the same as the user tapping Leave.
+        if (mounted &&
+            event.reason != null &&
+            event.reason != lk.DisconnectReason.clientInitiated) {
+          _leave();
+        }
+      })
+      ..on<lk.ParticipantConnectionQualityUpdatedEvent>((event) {
+        if (event.connectionQuality == lk.ConnectionQuality.poor) {
+          logRtcEvent(
+            event: 'meeting.livekit.connection_quality_poor',
+            rtcKind: 'meeting',
+            rtcId: widget.slug,
+            roomName: roomName,
+            exceptionType: 'CLIENT_ERROR',
+            phase: 'connected',
+            metadata: {'participantId': event.participant.identity},
+          );
+        }
       });
 
     try {
@@ -133,10 +199,55 @@ class _RtcMeetingRoomPageContentState
         await room.disconnect();
         return;
       }
-      await room.localParticipant?.setMicrophoneEnabled(true);
-      await room.localParticipant?.setCameraEnabled(true);
+      logRtcEvent(
+        event: 'meeting.livekit.connected',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        roomName: roomName,
+        phase: 'connected',
+      );
+      try {
+        await room.localParticipant?.setMicrophoneEnabled(true);
+      } catch (error, stackTrace) {
+        logRtcEvent(
+          event: 'meeting.media.microphone_enable_failed',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          roomName: roomName,
+          mediaType: 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+      }
+      try {
+        await room.localParticipant?.setCameraEnabled(true);
+      } catch (error, stackTrace) {
+        logRtcEvent(
+          event: 'meeting.media.camera_enable_failed',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          roomName: roomName,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+      }
       _rebuildParticipants();
-    } catch (_) {
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.livekit.connection_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        roomName: roomName,
+        exceptionType: 'CLIENT_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'connecting',
+      );
       // Connection failed — the room UI's own leave control lets the user
       // bail out.
     }
@@ -190,9 +301,24 @@ class _RtcMeetingRoomPageContentState
     if (room == null) return;
     final next = !_localMicEnabled;
     setState(() => _localMicEnabled = next);
-    room.localParticipant
-        ?.setMicrophoneEnabled(next)
-        .then((_) => _rebuildParticipants());
+    room.localParticipant?.setMicrophoneEnabled(next).then<void>(
+      (_) => _rebuildParticipants(),
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'meeting.media.microphone_toggle_failed',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          mediaType: 'audio',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state, matching _toggleScreenShare below.
+        if (mounted) setState(() => _localMicEnabled = !next);
+      },
+    );
   }
 
   void _toggleCamera() {
@@ -200,9 +326,24 @@ class _RtcMeetingRoomPageContentState
     if (room == null) return;
     final next = !_localCameraEnabled;
     setState(() => _localCameraEnabled = next);
-    room.localParticipant
-        ?.setCameraEnabled(next)
-        .then((_) => _rebuildParticipants());
+    room.localParticipant?.setCameraEnabled(next).then<void>(
+      (_) => _rebuildParticipants(),
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'meeting.media.camera_toggle_failed',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // Revert the optimistic toggle rather than leaving the icon showing
+        // the opposite of actual state, matching _toggleScreenShare below.
+        if (mounted) setState(() => _localCameraEnabled = !next);
+      },
+    );
   }
 
   void _toggleScreenShare() {
@@ -210,12 +351,22 @@ class _RtcMeetingRoomPageContentState
     if (room == null) return;
     final next = !_localScreenShareEnabled;
     setState(() => _localScreenShareEnabled = next);
-    room.localParticipant
-        ?.setScreenShareEnabled(next)
-        .then((_) => _rebuildParticipants())
-        .catchError((_) {
-      if (mounted) setState(() => _localScreenShareEnabled = false);
-    });
+    room.localParticipant?.setScreenShareEnabled(next).then<void>(
+      (_) => _rebuildParticipants(),
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'meeting.media.screen_share_failed',
+          rtcKind: 'meeting',
+          rtcId: widget.slug,
+          mediaType: 'screen',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        if (mounted) setState(() => _localScreenShareEnabled = false);
+      },
+    );
   }
 
   void _sendChat() {
@@ -230,8 +381,20 @@ class _RtcMeetingRoomPageContentState
   }
 
   Future<void> _leave() async {
-    await ref.read(meetingActionsProvider).leave(widget.slug);
-    if (mounted) context.pop();
+    try {
+      await ref.read(meetingActionsProvider).leave(widget.slug);
+      if (mounted) context.pop();
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.leave_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+    }
   }
 
   Future<void> _end() async {
@@ -254,8 +417,25 @@ class _RtcMeetingRoomPageContentState
       ),
     );
     if (confirmed != true) return;
-    await ref.read(meetingActionsProvider).end(widget.slug);
-    if (mounted) context.pop();
+    try {
+      await ref.read(meetingActionsProvider).end(widget.slug);
+      if (mounted) context.pop();
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.end_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
+    }
   }
 
   Future<void> _invite() async {
@@ -285,6 +465,21 @@ class _RtcMeetingRoomPageContentState
           ? await actions.stopRecording(widget.slug)
           : await actions.startRecording(widget.slug);
       if (mounted) setState(() => _recording = next);
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.recording_toggle_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'active',
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
     } finally {
       if (mounted) setState(() => _recordingBusy = false);
     }
@@ -297,7 +492,19 @@ class _RtcMeetingRoomPageContentState
           .read(realtimeProvider)
           .send({'type': 'rtc:leave-room-chat', 'slug': widget.slug});
     }
-    ref.read(meetingActionsProvider).leave(widget.slug);
+    ref
+        .read(meetingActionsProvider)
+        .leave(widget.slug)
+        .catchError((Object error) {
+      logRtcEvent(
+        event: 'meeting.leave_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        phase: 'dispose',
+      );
+    });
     _teardownRoom();
     _chatController.dispose();
     super.dispose();
@@ -316,8 +523,13 @@ class _RtcMeetingRoomPageContentState
       _lastHandledSignalSeq = next.seq;
       if (next.ended) {
         setState(() => _phase = _RoomPhase.ended);
+        // The LiveKit Room (incl. the local participant's camera/mic) was
+        // only ever torn down from dispose() — a remote end/removal left it
+        // connected indefinitely until the user happened to navigate away.
+        _teardownRoom();
       } else if (next.removed) {
         setState(() => _phase = _RoomPhase.removed);
+        _teardownRoom();
       } else if (next.forceMuted && _localMicEnabled) {
         _toggleMic();
       } else if (next.warningSecondsRemaining != null) {
@@ -664,16 +876,40 @@ class _ParticipantsPanel extends ConsumerWidget {
                     IconButton(
                       icon: const Icon(Icons.mic_off, size: 18),
                       tooltip: t.rtcMuteParticipant,
-                      onPressed: () => ref
-                          .read(meetingActionsProvider)
-                          .muteParticipant(slug, p.identity, true),
+                      onPressed: () {
+                        ref
+                            .read(meetingActionsProvider)
+                            .muteParticipant(slug, p.identity, true)
+                            .catchError((Object error) {
+                          logRtcEvent(
+                            event: 'meeting.participant_mute_failed',
+                            rtcKind: 'meeting',
+                            rtcId: slug,
+                            exceptionType: 'CLIENT_REQUEST_ERROR',
+                            error: error,
+                            metadata: {'participantId': p.identity},
+                          );
+                        });
+                      },
                     ),
                     IconButton(
                       icon: const Icon(Icons.person_remove, size: 18),
                       tooltip: t.rtcRemoveParticipant,
-                      onPressed: () => ref
-                          .read(meetingActionsProvider)
-                          .removeParticipant(slug, p.identity),
+                      onPressed: () {
+                        ref
+                            .read(meetingActionsProvider)
+                            .removeParticipant(slug, p.identity)
+                            .catchError((Object error) {
+                          logRtcEvent(
+                            event: 'meeting.participant_remove_failed',
+                            rtcKind: 'meeting',
+                            rtcId: slug,
+                            exceptionType: 'CLIENT_REQUEST_ERROR',
+                            error: error,
+                            metadata: {'participantId': p.identity},
+                          );
+                        });
+                      },
                     ),
                   ],
                 )
@@ -700,8 +936,20 @@ class _InviteFriendsSheetState extends ConsumerState<_InviteFriendsSheet> {
   final Set<String> _invitedIds = {};
 
   Future<void> _invite(String userId) async {
-    await ref.read(meetingActionsProvider).invite(widget.slug, userId);
-    if (mounted) setState(() => _invitedIds.add(userId));
+    try {
+      await ref.read(meetingActionsProvider).invite(widget.slug, userId);
+      if (mounted) setState(() => _invitedIds.add(userId));
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.invite_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        exceptionType: 'CLIENT_REQUEST_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        metadata: {'participantId': userId},
+      );
+    }
   }
 
   @override

@@ -13,6 +13,7 @@ import { createTableRowFieldSchemas } from "@/validators/forms/table";
 import type { ExceptionResponse } from "@/lib/api-client";
 import { EMPTY_ROW, INITIAL_ROWS, TAX_RATES } from "./EditableTable-constants";
 import type { InvoiceRow, RowStatus } from "./EditableTable-constants";
+import { insertRowKey, moveRowKey, removeRowKey } from "./EditableTable-utils";
 import { EditableTableRow } from "./EditableTableRow";
 import { EditableTableTotals } from "./EditableTableTotals";
 import { EditableTableSaveAlert } from "./EditableTableSaveAlert";
@@ -21,12 +22,21 @@ const tableFormOpts = formOptions({
   defaultValues: { rows: structuredClone(INITIAL_ROWS) },
 });
 
+let rowKeyCounter = 0;
+function nextRowKey(): string {
+  return `row-${++rowKeyCounter}`;
+}
+
 export default function EditableTablePage() {
   const t = useMessages("forms");
   const allMessages = useAllMessages();
   const { toast } = useToast();
   const { simulateError } = useFormsDemoActions();
-  const [rowStatus, setRowStatus] = useState<Record<number, RowStatus>>({});
+  const [rowStatus, setRowStatus] = useState<Record<string, RowStatus>>({});
+  // Stable per-row identity so a pending "Saved" badge can't end up on the wrong row after a duplicate/move/remove.
+  const [rowKeys, setRowKeys] = useState<string[]>(() =>
+    INITIAL_ROWS.map(() => nextRowKey()),
+  );
   const [savingAll, setSavingAll] = useState(false);
   const [saveResult, setSaveResult] = useState<EditableTableSaveResult | null>(
     null,
@@ -52,16 +62,49 @@ export default function EditableTablePage() {
     return { subtotal, tax, total: subtotal + tax };
   }, [rows]);
 
-  const handleSaveRow = useCallback((idx: number) => {
-    setRowStatus((prev) => ({ ...prev, [idx]: "saved" }));
+  const handleSaveRow = useCallback((key: string) => {
+    setRowStatus((prev) => ({ ...prev, [key]: "saved" }));
     setTimeout(() => {
       setRowStatus((prev) => {
         const next = { ...prev };
-        delete next[idx];
+        delete next[key];
         return next;
       });
     }, 2000);
   }, []);
+
+  const handleAddRow = useCallback(() => {
+    form.pushFieldValue("rows", { ...EMPTY_ROW });
+    setRowKeys((prev) => [...prev, nextRowKey()]);
+  }, [form]);
+
+  const handleDuplicateRow = useCallback(
+    (i: number) => {
+      const row = form.state.values.rows[i] as InvoiceRow;
+      void form.insertFieldValue("rows", i + 1, {
+        ...row,
+        description: `${row.description} ${t.editableTable.copySuffix}`,
+      });
+      setRowKeys((prev) => insertRowKey(prev, i + 1, nextRowKey()));
+    },
+    [form, t],
+  );
+
+  const handleMoveRow = useCallback(
+    (from: number, to: number) => {
+      form.moveFieldValues("rows", from, to);
+      setRowKeys((prev) => moveRowKey(prev, from, to));
+    },
+    [form],
+  );
+
+  const handleRemoveRow = useCallback(
+    (i: number) => {
+      void form.removeFieldValue("rows", i);
+      setRowKeys((prev) => removeRowKey(prev, i));
+    },
+    [form],
+  );
 
   const handleSaveAll = useCallback(async () => {
     setSavingAll(true);
@@ -132,21 +175,28 @@ export default function EditableTablePage() {
             <form.AppField name="rows" mode="array">
               {(field) => (
                 <>
-                  {field.state.value.map((_: InvoiceRow, i: number) => (
-                    <EditableTableRow
-                      key={i}
-                      form={form}
-                      field={field}
-                      index={i}
-                      status={i in rowStatus ? rowStatus[i] : "idle"}
-                      rowSchemas={rowSchemas}
-                      onSaveRow={handleSaveRow}
-                      t={t}
-                      simulateError={simulateError}
-                      toast={toast}
-                      allMessages={allMessages}
-                    />
-                  ))}
+                  {field.state.value.map((_: InvoiceRow, i: number) => {
+                    const rowKey = rowKeys[i];
+                    return (
+                      <EditableTableRow
+                        key={rowKey}
+                        form={form}
+                        field={field}
+                        index={i}
+                        rowKey={rowKey}
+                        status={rowStatus[rowKey] ?? "idle"}
+                        rowSchemas={rowSchemas}
+                        onSaveRow={handleSaveRow}
+                        onDuplicateRow={handleDuplicateRow}
+                        onMoveRow={handleMoveRow}
+                        onRemoveRow={handleRemoveRow}
+                        t={t}
+                        simulateError={simulateError}
+                        toast={toast}
+                        allMessages={allMessages}
+                      />
+                    );
+                  })}
                 </>
               )}
             </form.AppField>
@@ -155,11 +205,7 @@ export default function EditableTablePage() {
       </div>
 
       <div className="flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => form.pushFieldValue("rows", { ...EMPTY_ROW })}
-        >
+        <Button variant="outline" size="sm" onClick={handleAddRow}>
           {t.editableTable.addRow}
         </Button>
       </div>

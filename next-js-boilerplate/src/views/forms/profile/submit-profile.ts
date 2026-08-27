@@ -20,11 +20,20 @@ export async function submitProfile(
   },
 ) {
   try {
+    // Only a completed upload's server URL is safe to persist — a
+    // "pending"/"uploading" file's `.preview` is a local blob: URL that's
+    // revoked once ImageUpload unmounts and meaningless to anyone else.
+    // Submitting mid-upload (or after a failed one) would otherwise
+    // silently corrupt avatarUrl with that ephemeral value; omitting it
+    // here just leaves the previously-saved avatar in place.
+    const avatarFile = value.avatar[0];
+    const avatarUrl =
+      avatarFile?.status === "done" ? avatarFile.preview : undefined;
     await deps.updateProfile({
       name: `${value.firstName} ${value.lastName}`.trim(),
       username: value.username || undefined,
       bio: value.bio || undefined,
-      avatarUrl: value.avatar[0]?.preview || undefined,
+      avatarUrl: avatarUrl || undefined,
     });
     deps.toast({ description: deps.saveSuccess, variant: "default" });
     return null;

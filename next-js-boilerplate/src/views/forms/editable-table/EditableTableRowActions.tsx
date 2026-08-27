@@ -15,8 +15,12 @@ import type { EditableTableRowActionsProps } from "@/types/forms/EditableTableRo
 export function EditableTableRowActions({
   field,
   index: i,
+  rowKey,
   status,
   onSaveRow,
+  onDuplicateRow,
+  onMoveRow,
+  onRemoveRow,
   t,
 }: EditableTableRowActionsProps) {
   return (
@@ -25,13 +29,7 @@ export function EditableTableRowActions({
         icon={<IconCopy size={14} />}
         variant="ghost"
         size="icon-xs"
-        onClick={() => {
-          const r = field.state.value[i];
-          field.insertValue(i + 1, {
-            ...r,
-            description: `${r.description} ${t.editableTable.copySuffix}`,
-          });
-        }}
+        onClick={() => onDuplicateRow(i)}
         label={t.editableTable.duplicateRow}
       />
       <IconButton
@@ -39,7 +37,7 @@ export function EditableTableRowActions({
         variant="ghost"
         size="icon-xs"
         disabled={i === 0}
-        onClick={() => field.moveValue(i, i - 1)}
+        onClick={() => onMoveRow(i, i - 1)}
         label={t.editableTable.moveUp}
       />
       <IconButton
@@ -47,14 +45,14 @@ export function EditableTableRowActions({
         variant="ghost"
         size="icon-xs"
         disabled={i >= field.state.value.length - 1}
-        onClick={() => field.moveValue(i, i + 1)}
+        onClick={() => onMoveRow(i, i + 1)}
         label={t.editableTable.moveDown}
       />
       <ConfirmDialog
         title={t.editableTable.removeRow}
         description={t.editableTable.removeRowConfirm}
         confirmLabel={t.editableTable.removeRow}
-        onConfirm={() => field.removeValue(i)}
+        onConfirm={() => onRemoveRow(i)}
       >
         {(open) => (
           <IconButton
@@ -70,7 +68,7 @@ export function EditableTableRowActions({
         icon={<IconCheck size={14} />}
         variant="ghost"
         size="icon-xs"
-        onClick={() => onSaveRow(i)}
+        onClick={() => onSaveRow(rowKey)}
         label={t.editableTable.saveRow}
       />
       {status === "saved" && (

@@ -117,8 +117,13 @@ describe("LoginForm", () => {
     });
 
     expect(resendLoginCodeServerMock).toHaveBeenCalledWith("token-1");
-    const cooldownButton = screen.getByText(/Resend in 60s/);
-    expect((cooldownButton as HTMLButtonElement).disabled).toBe(true);
+    // Button wraps its label in an inner `display:contents` span (so
+    // icon+label share the flex layout), so getByText resolves to that span,
+    // not the <button> itself — walk up to the real element before checking
+    // .disabled.
+    const cooldownLabel = screen.getByText(/Resend in 60s/);
+    const cooldownButton = cooldownLabel.closest("button");
+    expect(cooldownButton?.disabled).toBe(true);
 
     await act(async () => {
       vi.advanceTimersByTime(60000);

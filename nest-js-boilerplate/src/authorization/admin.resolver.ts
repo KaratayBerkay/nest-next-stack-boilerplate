@@ -1,4 +1,4 @@
-import { UseGuards, Logger } from '@nestjs/common';
+import { UseGuards } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -12,15 +12,16 @@ import {
 import { UserRole } from '../@generated/prisma/user-role.enum';
 import { UserStatus } from '../@generated/prisma/user-status.enum';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
+import { User } from '../@generated/user/user.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TokenStoreService } from '../auth/token-store.service';
-import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { MfaService } from '../mfa/mfa.service';
 import { OutboxService } from '../outbox/outbox.service';
+import { displayName } from '../common/utils/display-name';
 import { MinTier } from './min-tier.decorator';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
@@ -79,8 +80,6 @@ export class GrowthStatsPayload {
 @UseGuards(SessionAuthGuard, RolesGuard)
 @Resolver()
 export class AdminResolver {
-  private readonly logger = new Logger(AdminResolver.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly tokenStore: TokenStoreService,
@@ -102,29 +101,38 @@ export class AdminResolver {
     return target.role;
   }
 
-  private async createAuditLog(data: Prisma.AuditLogUncheckedCreateInput) {
-    try {
-      return await this.prisma.auditLog.create({ data });
-    } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2003' &&
-        data.actorId
-      ) {
-        this.logger.warn(
-          `actorId ${JSON.stringify(data.actorId)} no longer exists — retrying with null`,
-        );
-        return await this.prisma.auditLog.create({
-          data: { ...data, actorId: null },
-        });
-      }
-      throw err;
-    }
-  }
-
   @Query(() => String, { name: 'whoAmI' })
   whoAmI(@CurrentUser() user: JwtUser): string {
     return `${user.email}:${user.role}`;
+  }
+
+  /**
+   * Admin user search. Deliberately separate from `MessagingResolver.users`
+   * (which backs the find-friends search) — that query excludes anyone not
+   * ACTIVE/PENDING_VERIFICATION and anyone already friended/pending/blocked
+   * with the caller, both of which are exactly the users an admin most needs
+   * to find (to reactivate a banned account, reset MFA for a friend, etc).
+   */
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
+  @Query(() => [User], { name: 'adminSearchUsers' })
+  async adminSearchUsers(
+    @CurrentUser() admin: JwtUser,
+    @Args('search', { nullable: true }) search?: string,
+  ) {
+    const users = await this.prisma.user.findMany({
+      where: {
+        id: { not: admin.userId },
+        ...(search && {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { email: { contains: search, mode: 'insensitive' } },
+          ],
+        }),
+      },
+      orderBy: { name: 'asc' },
+      take: 50,
+    });
+    return users.map((u) => ({ ...u, name: displayName(u) }));
   }
 
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)

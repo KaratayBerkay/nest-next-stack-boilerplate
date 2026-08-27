@@ -1,7 +1,7 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { friendsQueryOptions } from "@/api/client/friends/query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { Avatar } from "@/components/ui/Avatar";
@@ -17,6 +17,7 @@ import { FriendsPageSkeleton } from "./FriendsPageSkeleton";
 export function FriendsPageContent({ className }: FriendsPageContentProps) {
   const t = useMessages("friends");
   const router = useRouter();
+  const { lang } = useParams<{ lang: string }>();
   const { data: friends = [] } = useSuspenseQuery(friendsQueryOptions());
 
   if (friends.length === 0) {
@@ -29,7 +30,7 @@ export function FriendsPageContent({ className }: FriendsPageContentProps) {
             <Button
               variant="primary"
               size="md"
-              onClick={() => router.push("/v1/en/find-friends")}
+              onClick={() => router.push(`/v1/${lang}/find-friends`)}
             >
               {t.findFriends}
             </Button>
@@ -46,7 +47,7 @@ export function FriendsPageContent({ className }: FriendsPageContentProps) {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => router.push("/v1/en/find-friends")}
+          onClick={() => router.push(`/v1/${lang}/find-friends`)}
         >
           {t.findFriends}
         </Button>
@@ -57,7 +58,9 @@ export function FriendsPageContent({ className }: FriendsPageContentProps) {
           {friends.map((friend, i) => (
             <button
               key={friend.id}
-              onClick={() => router.push(`/v1/en/messages?user=${friend.id}`)}
+              onClick={() =>
+                router.push(`/v1/${lang}/messages?user=${friend.id}`)
+              }
               className="hover:bg-surface/50 flex w-full items-center gap-4 px-4 py-3 text-left transition-colors"
               style={{ animationDelay: `${i * 15}ms` }}
             >

@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { LANG_COOKIE, LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { InputOTP } from "@/components/ui/input-otp/input-otp";
+import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -107,6 +108,10 @@ export function MfaChallengeForm({
   const [trustDevice, setTrustDevice] = useState(false);
   const [cooldownEnd, setCooldownEnd] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // Backend's verifyLoginMfa tries TOTP first, falling back to a one-time
+  // backup code — but only TOTP has a backup-code recovery path (email OTP
+  // doesn't), so the toggle only makes sense for that method.
+  const [backupCodeMode, setBackupCodeMode] = useState(false);
 
   const cooldownRemaining = cooldownEnd
     ? Math.max(0, Math.ceil((cooldownEnd - now) / 1000))
@@ -166,24 +171,56 @@ export function MfaChallengeForm({
       >
         <div className="flex flex-col gap-1 text-left">
           <Label htmlFor="mfa-code-input" required>
-            {t.form.login.mfaCodeLabel}
+            {backupCodeMode
+              ? t.form.login.mfaBackupCodeLabel
+              : t.form.login.mfaCodeLabel}
           </Label>
-          <InputOTP
-            id="mfa-code-input"
-            maxLength={6}
-            value={mfaCode}
-            onChange={setMfaCode}
-            // Sole field on a freshly-revealed MFA challenge screen, not initial page load.
-            // eslint-disable-next-line jsx-a11y/no-autofocus
-            autoFocus
-            data-testid="mfa-code"
-          />
+          {backupCodeMode ? (
+            <Input
+              id="mfa-code-input"
+              value={mfaCode}
+              onChange={(e) => setMfaCode(e.target.value)}
+              placeholder={t.form.login.mfaBackupCodePlaceholder}
+              maxLength={10}
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              data-testid="mfa-code"
+            />
+          ) : (
+            <InputOTP
+              id="mfa-code-input"
+              maxLength={6}
+              value={mfaCode}
+              onChange={setMfaCode}
+              // Sole field on a freshly-revealed MFA challenge screen, not initial page load.
+              // eslint-disable-next-line jsx-a11y/no-autofocus
+              autoFocus
+              data-testid="mfa-code"
+            />
+          )}
         </div>
 
         {mfaError && (
           <p className="text-error text-sm" data-testid="mfa-error">
             {mfaError}
           </p>
+        )}
+
+        {!isEmailMethod && (
+          <Button
+            type="button"
+            variant="link"
+            size="xs"
+            onClick={() => {
+              setBackupCodeMode((v) => !v);
+              setMfaCode("");
+              setMfaError(null);
+            }}
+          >
+            {backupCodeMode
+              ? t.form.login.mfaUseCode
+              : t.form.login.mfaUseBackupCode}
+          </Button>
         )}
 
         {isEmailMethod && (

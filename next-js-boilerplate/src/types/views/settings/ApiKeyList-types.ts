@@ -5,6 +5,7 @@ import type { useApiKeyActions } from "@/api/client/api-keys/actions";
 type ApiKey = ApiKeyInfo;
 type ToastFn = ReturnType<typeof useToast>["toast"];
 type RevokeApiKey = ReturnType<typeof useApiKeyActions>["revokeApiKey"];
+type UpdateApiKey = ReturnType<typeof useApiKeyActions>["updateApiKey"];
 
 export interface ApiKeyListProps {
   keys: ApiKey[];
@@ -12,4 +13,5 @@ export interface ApiKeyListProps {
   toast: ToastFn;
   loadKeys: () => Promise<void>;
   revokeApiKey: RevokeApiKey;
+  updateApiKey: UpdateApiKey;
 }

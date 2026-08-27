@@ -13,15 +13,28 @@ class UploadAttachmentServer {
 
   UploadAttachmentServer(this._dio);
 
-  Future<MessageAttachment> call(String filePath, String fileName) async {
+  Future<MessageAttachment> call(
+    String filePath,
+    String fileName, {
+    String? scopeKind,
+    String? scopeId,
+  }) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(
         filePath,
         filename: fileName,
       ),
     });
-    final response =
-        await _dio.post<dynamic>('/upload/attachment', data: formData);
+    final response = await _dio.post<dynamic>(
+      '/upload/attachment',
+      data: formData,
+      options: Options(
+        headers: {
+          if (scopeKind != null) 'x-scope-kind': scopeKind,
+          if (scopeId != null) 'x-scope-id': scopeId,
+        },
+      ),
+    );
     final data = response.data as Map<String, dynamic>;
     return MessageAttachment(
       url: data['url'] as String,

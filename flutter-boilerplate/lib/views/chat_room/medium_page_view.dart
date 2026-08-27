@@ -18,7 +18,4 @@ class MediumPageView extends ChatRoomBaseView {
 class _MediumPageViewState extends ChatRoomBaseViewState {
   @override
   List<String> get vipRooms => ChatConstants.vipRooms;
-
-  @override
-  bool get useNativeControls => true;
 }

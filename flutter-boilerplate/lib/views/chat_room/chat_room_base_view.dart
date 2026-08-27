@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/messages/actions.dart';
 import '../../api/client/messages/query.dart';
+import '../../api/server/messages/room_attachments.dart';
+import '../../components/ui/attachment_preview/attachment_gallery_sheet.dart';
 import '../../components/ui/toast/toast.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
@@ -44,7 +46,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
   bool _emojiOpen = false;
 
   List<String> get vipRooms => const [];
-  bool get useNativeControls => false;
   bool get showSelfCrown => false;
   String get _connectionState => 'online';
 
@@ -185,9 +186,13 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
 
     setState(() => _attaching = true);
     try {
-      final attachment = await ref
-          .read(messageActionsProvider)
-          .uploadAttachment(path, file.name);
+      final attachment =
+          await ref.read(messageActionsProvider).uploadAttachment(
+                path,
+                file.name,
+                scopeKind: 'chat-room',
+                scopeId: _room,
+              );
       if (!mounted) return;
       setState(() {
         _pendingAttachment = attachment;
@@ -290,12 +295,18 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final allRooms = [...ChatConstants.chatRooms, ...vipRooms];
+    // Real room list from the backend (matches web's `roomsQueryOptions()`);
+    // falls back to the compile-time default while loading or on error so a
+    // slow/broken `/api/rooms` call never blocks the room from being usable.
+    final baseRooms = ref.watch(roomsProvider).maybeWhen(
+          data: (rooms) => rooms.where((r) => !r.startsWith('vip-')).toList(),
+          orElse: () => ChatConstants.chatRooms,
+        );
+    final allRooms = [...baseRooms, ...vipRooms];
 
     final t = AppLocalizations.of(context);
 
     final sidebar = ChatRoomSidebar(
-      useNativeControls: useNativeControls,
       sidebarOpen: _sidebarOpen,
       rooms: allRooms,
       room: _room,
@@ -317,7 +328,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
       );
     } else {
       messagesContent = ChatRoomMainContent(
-        useNativeControls: useNativeControls,
         room: _room,
         roomCounts: roomCounts,
         connectionState: _connectionState,
@@ -347,6 +357,12 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView> {
           userEmail: user.email,
           connectionState: connected ? 'online' : 'disconnected',
           showPageInfo: widget.showPageInfo,
+          onOpenGallery: () => AttachmentGallerySheet.show(
+            context,
+            fetchPage: ({before, take = 30}) => ref
+                .read(roomAttachmentsServerProvider)
+                .call(_room, before: before, take: take),
+          ),
           onPageInfo: widget.showPageInfo
               ? () => showDialog<void>(
                     context: context,

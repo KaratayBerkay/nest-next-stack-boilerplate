@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/api/client/billing/query.dart';
+import 'package:flutter_boilerplate/components/ui/stripe_card_form.dart';
 import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_boilerplate/hooks/use_auth.dart';
 import 'package:flutter_boilerplate/hooks/use_billing.dart';
@@ -8,7 +9,6 @@ import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_boilerplate/views/checkout/checkout_success_view.dart';
 import 'package:flutter_boilerplate/views/checkout/downgrade_section.dart';
 import 'package:flutter_boilerplate/views/checkout/page_content.dart';
-import 'package:flutter_boilerplate/views/checkout/stripe_card_form.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';

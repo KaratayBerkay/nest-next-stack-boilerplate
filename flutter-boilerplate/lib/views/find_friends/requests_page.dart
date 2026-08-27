@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/friends/actions.dart';
@@ -9,20 +8,17 @@ import '../../components/ui/empty/empty.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
-class FindFriendsRequestsPage extends ConsumerWidget {
+class FindFriendsRequestsPage extends StatelessWidget {
   final String lang;
 
   const FindFriendsRequestsPage({super.key, required this.lang});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    return TierGate(
-      freeWidget: Center(child: Text(t.findFriendsUpgradeToSee)),
-      basicWidget: _RequestsView(),
-      mediumWidget: _RequestsView(),
-      premiumWidget: _RequestsView(),
-    );
+  Widget build(BuildContext context) {
+    // Backend has no tier gate on friend-request handling (users(search) and
+    // every friend-request REST handler carry none) — every tier gets the
+    // real requests view, not an upgrade wall.
+    return _RequestsView();
   }
 }
 
@@ -60,11 +56,13 @@ class _RequestsView extends ConsumerWidget {
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    IconButton(
-                      icon: Icon(Icons.check_circle, color: colors.success),
-                      onPressed: () =>
-                          ref.read(friendActionsProvider).acceptRequest(req.id),
-                    ),
+                    if (req.isIncoming)
+                      IconButton(
+                        icon: Icon(Icons.check_circle, color: colors.success),
+                        onPressed: () => ref
+                            .read(friendActionsProvider)
+                            .acceptRequest(req.id),
+                      ),
                     IconButton(
                       icon: Icon(Icons.cancel, color: colors.danger),
                       onPressed: () => ref

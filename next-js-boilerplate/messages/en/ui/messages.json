@@ -49,6 +49,8 @@
   "counterDescription": "Counter component demo",
   "datePickerTitle": "Date Picker",
   "datePickerDescription": "Date Picker component demo",
+  "dateRangePickerTitle": "Date Range Picker",
+  "dateRangePickerDescription": "Date Range Picker component demo",
   "dialogTitle": "Dialog",
   "dialogDescription": "Dialog component demo",
   "drawerTitle": "Drawer",

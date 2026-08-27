@@ -10,8 +10,9 @@ import cookieParser from 'cookie-parser';
 import { parse as parseQuerystring } from 'node:querystring';
 import zlib from 'zlib';
 import helmet from 'helmet';
+import type { NextFunction, Request, Response } from 'express';
 import { Logger } from 'nestjs-pino';
-import { AppModule } from './app.module';
+import { AppModule, isDemoEnabled } from './app.module';
 import { internalGrpcOptions } from './grpc/grpc.module';
 import { requestContextMiddleware } from './logging/request-context';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
@@ -116,7 +117,48 @@ async function bootstrap() {
   app.enableCors({ origin: corsOrigin, credentials: true });
 
   // Stripe webhook needs the raw body buffer for signature verification.
-  // rawBody: true in NestFactory options exposes req.rawBody as a Buffer.
+  // rawBody: true in NestFactory options exposes req.rawBody as a Buffer —
+  // but only for requests whose Content-Type matches Nest's default
+  // json/urlencoded/text parsers (in practice, `application/json` for a JSON
+  // body). Stripe sends `application/json`, so that's sufficient for it.
+  //
+  // LiveKit does NOT: its webhook deliveries use `application/webhook+json`
+  // specifically so generic JSON middleware won't silently re-serialize the
+  // body before a signature check can run. That non-standard type never
+  // matches Nest's default parser, so req.rawBody was silently left
+  // undefined for every real LiveKit webhook call — RtcWebhookController's
+  // `rawBody?.toString() ?? ''` fell back to an empty string, whose sha256
+  // never matches the real payload's, so every LiveKit webhook was rejected
+  // "sha256 checksum of body does not match" (confirmed live: 100%
+  // rejected, 0 ever accepted). Manually buffer the raw body for that one
+  // route instead — Nest's own parser never touches this content-type, so
+  // there's no double-read risk regardless of registration order.
+  const RTC_WEBHOOK_MAX_BODY_BYTES = 1024 * 1024; // 1 MB — mirrors RtcWebhookController's own check
+  app.use(
+    '/rtc/webhook/livekit',
+    (req: Request, res: Response, next: NextFunction) => {
+      const chunks: Buffer[] = [];
+      let bytes = 0;
+      let rejected = false;
+      req.on('data', (chunk: Buffer) => {
+        if (rejected) return;
+        bytes += chunk.length;
+        if (bytes > RTC_WEBHOOK_MAX_BODY_BYTES) {
+          rejected = true;
+          res.status(413).json({ error: 'Request body too large' });
+          req.destroy();
+          return;
+        }
+        chunks.push(chunk);
+      });
+      req.on('end', () => {
+        if (rejected) return;
+        (req as Request & { rawBody?: Buffer }).rawBody = Buffer.concat(chunks);
+        next();
+      });
+      req.on('error', next);
+    },
+  );
 
   // Trust the first proxy so req.ip reflects the real client IP from X-Forwarded-For.
   // Required when running behind Nginx, Cloudflare, or any reverse proxy.
@@ -171,9 +213,12 @@ async function bootstrap() {
   }
 
   // Hybrid app: HTTP (GraphQL/REST/WS) + a gRPC microservice for internal service-to-service
-  // calls. Handlers live in GrpcModule's controllers and share this app's DI container.
-  app.connectMicroservice(internalGrpcOptions(), { inheritAppConfig: true });
-  await app.startAllMicroservices();
+  // calls. Handlers live in GrpcModule's controllers, which are demo-gated — only start this
+  // transport when that module is actually loaded, or it'd listen with zero registered handlers.
+  if (isDemoEnabled) {
+    app.connectMicroservice(internalGrpcOptions(), { inheritAppConfig: true });
+    await app.startAllMicroservices();
+  }
 
   await app.listen(process.env.PORT ?? 3000);
 }

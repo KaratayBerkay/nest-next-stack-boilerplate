@@ -36,6 +36,14 @@ export class MessagingResolver {
     return this.ms.getUsers(user.userId, search);
   }
 
+  @Query(() => Int, { name: 'usersCount' })
+  async usersCount(
+    @CurrentUser() user: JwtUser,
+    @Args('search', { nullable: true }) search?: string,
+  ) {
+    return this.ms.getUsersCount(user.userId, search);
+  }
+
   @Query(() => [Conversation])
   async conversations(@CurrentUser() user: JwtUser) {
     return this.ms.getConversations(user.userId);

@@ -1,5 +1,37 @@
 import 'message_attachment.dart';
 
+/// Mirrors the backend's `ReplyPreview` GraphQL type — deliberately a small,
+/// separate shape from the full `Message`, never a nested full message (the
+/// server hides `Message.replyTo`'s auto-generated field specifically to
+/// avoid a client pulling raw ciphertext/full sender objects into a quote).
+class ReplyPreview {
+  final String id;
+  final String senderId;
+  final String? body;
+  final DateTime? deletedAt;
+  final bool hasAttachments;
+
+  const ReplyPreview({
+    required this.id,
+    required this.senderId,
+    this.body,
+    this.deletedAt,
+    required this.hasAttachments,
+  });
+
+  factory ReplyPreview.fromJson(Map<String, dynamic> json) {
+    return ReplyPreview(
+      id: json['id'] as String,
+      senderId: json['senderId'] as String,
+      body: json['body'] as String?,
+      deletedAt: json['deletedAt'] != null
+          ? DateTime.parse(json['deletedAt'] as String)
+          : null,
+      hasAttachments: json['hasAttachments'] as bool? ?? false,
+    );
+  }
+}
+
 class ChatMessage {
   final String id;
   final String conversationId;
@@ -15,6 +47,7 @@ class ChatMessage {
   // on. Null means not deleted. "Delete for me" never surfaces here at all
   // — the server excludes those rows from the response entirely.
   final DateTime? deletedAt;
+  final ReplyPreview? replyTo;
 
   const ChatMessage({
     required this.id,
@@ -27,6 +60,7 @@ class ChatMessage {
     required this.createdAt,
     this.isRead = false,
     this.deletedAt,
+    this.replyTo,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -42,6 +76,9 @@ class ChatMessage {
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['isRead'] as bool? ?? false,
+      replyTo: json['replyTo'] != null
+          ? ReplyPreview.fromJson(json['replyTo'] as Map<String, dynamic>)
+          : null,
       deletedAt: json['deletedAt'] != null
           ? DateTime.parse(json['deletedAt'] as String)
           : null,
@@ -67,6 +104,9 @@ class ChatMessage {
           .toList(),
       createdAt: DateTime.parse(json['createdAt'] as String),
       isRead: json['readAt'] != null,
+      replyTo: json['replyTo'] != null
+          ? ReplyPreview.fromJson(json['replyTo'] as Map<String, dynamic>)
+          : null,
       deletedAt: json['deletedAt'] != null
           ? DateTime.parse(json['deletedAt'] as String)
           : null,
