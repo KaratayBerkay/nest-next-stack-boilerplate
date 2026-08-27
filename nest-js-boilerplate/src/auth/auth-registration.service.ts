@@ -61,40 +61,59 @@ export class AuthRegistrationService {
     const rawToken = this.crypto.randomToken();
     const tokenHash = this.crypto.sha256(rawToken);
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const created = await tx.user.create({
-        data: {
-          email,
-          name: input.name ?? null,
-          passwordHash,
-          passwordSetAt: new Date(),
-          status: 'PENDING_VERIFICATION',
-          ...(input.timezone ? { timezone: input.timezone } : {}),
-        },
+    let user: User;
+    try {
+      user = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.user.create({
+          data: {
+            email,
+            name: input.name ?? null,
+            passwordHash,
+            passwordSetAt: new Date(),
+            status: 'PENDING_VERIFICATION',
+            ...(input.timezone ? { timezone: input.timezone } : {}),
+          },
+        });
+        await tx.verificationToken.create({
+          data: {
+            userId: created.id,
+            type: 'EMAIL_VERIFICATION',
+            tokenHash,
+            identifier: email,
+            expiresAt: new Date(Date.now() + EMAIL_TOKEN_TTL_MS),
+          },
+        });
+        await this.outbox.emit(
+          {
+            aggregateType: 'User',
+            aggregateId: created.id,
+            eventType: 'user.signup',
+            action: 'SIGNUP',
+            actorId: created.id,
+            summary: `User ${email} registered with credentials`,
+            after: { email, status: created.status },
+          },
+          tx,
+        );
+        return created;
       });
-      await tx.verificationToken.create({
-        data: {
-          userId: created.id,
-          type: 'EMAIL_VERIFICATION',
-          tokenHash,
-          identifier: email,
-          expiresAt: new Date(Date.now() + EMAIL_TOKEN_TTL_MS),
-        },
-      });
-      await this.outbox.emit(
-        {
-          aggregateType: 'User',
-          aggregateId: created.id,
-          eventType: 'user.signup',
-          action: 'SIGNUP',
-          actorId: created.id,
-          summary: `User ${email} registered with credentials`,
-          after: { email, status: created.status },
-        },
-        tx,
-      );
-      return created;
-    });
+    } catch (err) {
+      // The findUnique pre-check above is a TOCTOU race — two concurrent
+      // submits of the same registration form can both pass it, and the
+      // loser's create hits the email @unique constraint. Map that to the
+      // same friendly conflict the pre-check produces instead of a raw 500.
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException({
+          exc: 'EX_AUTH_EMAIL_TAKEN',
+          msg: 'Email already registered',
+          key: 'auth.errors.emailTaken',
+        });
+      }
+      throw err;
+    }
 
     const verifyUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/verify-email?token=${rawToken}`;
     await this.mail.enqueue({
@@ -323,7 +342,8 @@ export class AuthRegistrationService {
   ): Promise<void> {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     const valid =
-      !!user?.passwordHash && (await verify(user.passwordHash, currentPassword));
+      !!user?.passwordHash &&
+      (await verify(user.passwordHash, currentPassword));
     if (!valid) {
       throw new UnauthorizedException({
         exc: 'EX_AUTH_INVALID_CREDENTIALS',

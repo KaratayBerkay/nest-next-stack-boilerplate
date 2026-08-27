@@ -28,6 +28,7 @@ import {
   deepEncryptIds,
 } from '../common/id-codec/id-codec.util';
 import { decryptTokenOrNull } from '../common/token-codec/token-codec';
+import { toExceptionResponse } from '../common/exceptions/to-exception-response';
 
 import type { ExceptionCode } from '../common/exceptions/exception-code';
 import type { RealtimeRateLimiterConfig } from './realtime-rate-limiter';
@@ -342,10 +343,22 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
       const replaced = this.replaceDeviceSocket(authWs);
       while (sockets.size > RealtimeGateway.MAX_SOCKETS_PER_USER) {
         const oldest = sockets.values().next().value as AuthWs;
-        sockets.delete(oldest);
         this.logger.warn(
           `WS per-user connection limit for ${session.userId}, closing oldest`,
         );
+        // Full teardown NOW, mirroring replaceDeviceSocket: cleanupSocket is
+        // what removes the socket from `sockets` (identity-gated), decrements
+        // onlineCount, and untracks the IP. Deleting from the Set directly
+        // here (as this used to) made the close handler's own cleanupSocket
+        // early-return on the failed Set delete — permanently inflating the
+        // user's online count (a presence ghost that never went away) and
+        // leaking the IP refcount on every limit eviction. `detached` stops
+        // the close event from running cleanup a second time; the disconnect
+        // handlers (RTC ring auto-end) still run since, unlike a device
+        // replacement, this socket is going away for real.
+        oldest.detached = true;
+        this.runDisconnectHandlers(oldest);
+        this.cleanupSocket(oldest);
         oldest.close(1013, 'Connection limit reached');
       }
 
@@ -357,10 +370,9 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
         JSON.stringify({ type: 'authenticated', sessionId: authWs.sessionId }),
       );
       authWs.send(JSON.stringify({ type: 'room-counts', rooms: {} }));
-      const onlineUsers = Array.from(this.onlineCount.keys())
-        .filter((id) => id !== session.userId)
-        .map((id) => ({ id }));
-      authWs.send(JSON.stringify({ type: 'online-users', users: onlineUsers }));
+      // handleOnline sends the initial `online-users` snapshot itself —
+      // sending one here too made every connection receive the identical
+      // frame twice back-to-back.
       this.handleOnline(authWs, { silent: !!replaced });
 
       ws.on('message', (raw: Buffer) => {
@@ -820,7 +832,38 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     }
 
     const handler = this.handlers.get(data.type as string);
-    if (handler) await handler(authWs, data);
+    if (!handler) return;
+    try {
+      await handler(authWs, data);
+    } catch (err) {
+      // A handler rejection used to be swallowed by the frame chain's
+      // catch-all logger with NOTHING sent back — the client's optimistic
+      // message just hung forever with no way to know the send was rejected
+      // (friendship gate, usage limit, invalid reply target...). Surface the
+      // app's own exception shape so the UI can react; echo tempId so the
+      // sender can mark that exact optimistic entry as failed.
+      const unified = toExceptionResponse(err);
+      this.logger.warn({
+        category: 'websocket-exception',
+        event: 'ws.handler_error',
+        frameType: data.type,
+        userId: authWs.userId,
+        socketId: authWs.socketId,
+        exc: unified.exc,
+        error: unified.msg,
+      });
+      authWs.send(
+        JSON.stringify({
+          type: 'error',
+          exc: unified.exc,
+          msg: unified.msg,
+          message: unified.msg,
+          key: unified.key,
+          frameType: data.type,
+          ...(typeof data.tempId === 'string' ? { tempId: data.tempId } : {}),
+        }),
+      );
+    }
   }
 
   // ==================== Register, Online, Cleanup ====================
@@ -876,6 +919,12 @@ export class RealtimeGateway implements OnModuleInit, OnModuleDestroy {
     this.cleanupServiceConnections(ws);
     this.pageManager.cleanupPageClaim(ws);
     this.pageManager.cleanupTopicWatches(ws);
+    // Drop the device's Redis presence entry now instead of letting it sit
+    // until the 120s TTL lapses — readers (e.g. quiet-hours/push logic)
+    // otherwise see a disconnected device as "on page X" for up to 2 minutes.
+    void this.safeRedis('removePresence', () =>
+      this.presence.removePresenceFromRedis(ws),
+    );
     this.leaveAllRoomSockets(ws.socketId);
     this.unregisterSocketRegistry(ws);
     this.frameLimiter.releaseSocket(ws.socketId);

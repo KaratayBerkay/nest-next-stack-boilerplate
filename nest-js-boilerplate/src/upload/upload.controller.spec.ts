@@ -102,6 +102,10 @@ describe('UploadController', () => {
         expect.objectContaining({
           'Content-Type': 'image/png',
           'Content-Length': String(Buffer.from('plaintext').length),
+          // Regression: this was `public`, inviting shared caches to store
+          // (and replay to other users) decrypted per-user content served
+          // from behind an auth check.
+          'Cache-Control': expect.stringContaining('private') as string,
         }),
       );
       expect(mockRes.end).toHaveBeenCalledWith(Buffer.from('plaintext'));
@@ -121,6 +125,40 @@ describe('UploadController', () => {
         controller.serve(user, mockRes as unknown as Response, 'a/b.png'),
       ).rejects.toThrow('Attachment not found');
       expect(mockRes.end).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('attachmentStream', () => {
+    function fakeStreamReq(chunks: Buffer[], contentLength?: number) {
+      return {
+        headers: contentLength
+          ? { 'content-length': String(contentLength) }
+          : {},
+        async *[Symbol.asyncIterator]() {
+          await Promise.resolve();
+          for (const c of chunks) yield c;
+        },
+      } as never;
+    }
+
+    it('rejects a disallowed file type — regression: the unawaited FileTypeValidator promise was always truthy, so `!isValid(...)` never fired and EVERY type sailed through this endpoint', async () => {
+      // 'MZ' executable magic bytes with an executable mimetype — nowhere
+      // near the image/pdf/doc allow-list.
+      const exe = Buffer.from('4d5a90000300000004000000ffff', 'hex');
+
+      await expect(
+        controller.attachmentStream(
+          user,
+          fakeStreamReq([exe]),
+          'evil.exe',
+          'application/x-msdownload',
+          undefined,
+          undefined,
+        ),
+      ).rejects.toThrow();
+
+      expect(mockS3bucket.upload).not.toHaveBeenCalled();
+      expect(mockPrisma.pendingUpload.upsert).not.toHaveBeenCalled();
     });
   });
 

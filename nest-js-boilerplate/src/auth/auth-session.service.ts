@@ -54,6 +54,21 @@ async function resolveRefreshContext(
       'auth.errors.accountInactive',
     );
   }
+  // Suspension/ban normally revokes every Redis session outright (admin
+  // setUserStatus → revokeAllForUser), but that call is best-effort — if it
+  // exhausted its retries, the surviving refresh index would let a suspended
+  // account renew itself indefinitely. login() re-checks status on every
+  // password login; refresh is the same trust boundary and must too.
+  // PENDING_VERIFICATION deliberately stays refreshable: register() issues a
+  // real session before the email is verified, and a slow verifier must not
+  // be stranded (login() rejects that status, so they couldn't re-enter).
+  if (user.status !== 'ACTIVE' && user.status !== 'PENDING_VERIFICATION') {
+    throw unauthorized(
+      'EX_AUTH_ACCOUNT_INACTIVE',
+      'Account is not active',
+      'auth.errors.accountInactive',
+    );
+  }
 
   return { refreshToken, session, user };
 }

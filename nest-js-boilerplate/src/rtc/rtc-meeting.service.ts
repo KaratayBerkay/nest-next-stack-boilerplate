@@ -167,7 +167,7 @@ export class RtcMeetingService {
     const meeting = await this.mustFindActiveMeeting(slug);
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: { name: true, email: true, avatarUrl: true },
+      select: { name: true, email: true, avatarUrl: true, hideAvatar: true },
     });
     if (!user) throw new NotFoundException('User not found');
 
@@ -241,7 +241,8 @@ export class RtcMeetingService {
       slug,
       userId,
       name: displayName(user),
-      avatarUrl: user.avatarUrl ?? null,
+      // hideAvatar contract: this frame reaches every meeting member.
+      avatarUrl: user.hideAvatar ? null : (user.avatarUrl ?? null),
       role,
     });
 

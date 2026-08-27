@@ -11,6 +11,9 @@ describe('AuthSessionService.refresh', () => {
     avatarUrl: null,
     role: 'USER',
     subscriptionTier: 'FREE',
+    // refresh() now rejects suspended/banned accounts — the happy-path user
+    // must carry a refreshable status.
+    status: 'ACTIVE',
   };
 
   const fakeSession: SessionUser = {
@@ -93,6 +96,31 @@ describe('AuthSessionService.refresh', () => {
     );
     return { service, tokenStore, authTokens, prisma, realtime };
   }
+
+  it('rejects refresh for a suspended account even when its Redis session survived', async () => {
+    const { service, prisma, authTokens } = buildService();
+    prisma.user.findUnique.mockResolvedValue({
+      ...fakeUser,
+      status: 'SUSPENDED',
+    });
+
+    await expect(service.refresh(buildCtx())).rejects.toThrow(
+      UnauthorizedException,
+    );
+    expect(authTokens.issueTokens).not.toHaveBeenCalled();
+  });
+
+  it('still refreshes a PENDING_VERIFICATION account (register issues a session pre-verification)', async () => {
+    const { service, prisma, authTokens } = buildService();
+    prisma.user.findUnique.mockResolvedValue({
+      ...fakeUser,
+      status: 'PENDING_VERIFICATION',
+    });
+
+    await service.refresh(buildCtx());
+
+    expect(authTokens.issueTokens).toHaveBeenCalled();
+  });
 
   it('carries the renewing device identity into issueTokens', async () => {
     const { service, authTokens } = buildService();

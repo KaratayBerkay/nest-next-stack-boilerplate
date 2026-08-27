@@ -136,6 +136,52 @@ describe('MessagingFriendService', () => {
       expect(mockCache.del).toHaveBeenCalledWith('friends:u1:');
     });
 
+    it('re-requesting after a decline in the SAME direction revives the row as PENDING with that direction', async () => {
+      prisma.friendship.findFirst.mockResolvedValue({
+        id: 'f1',
+        requesterId: 'u1',
+        addresseeId: 'u2',
+        status: 'DECLINED',
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        name: 'Bob',
+        email: 'b@b.com',
+      });
+
+      await service.sendFriendRequest('u1', 'u2');
+
+      expect(prisma.friendship.update).toHaveBeenCalledWith({
+        where: { id: 'f1' },
+        data: { status: 'PENDING', requesterId: 'u1', addresseeId: 'u2' },
+      });
+    });
+
+    // Regression: reviving a DECLINED row with only a status flip kept the
+    // OLD direction. When the previously-declined addressee was the one now
+    // asking (u1 asked u2, u2 declined, u2 now asks u1), the row stayed
+    // requester=u1/addressee=u2 — u1 saw a phantom OUTGOING request they
+    // never sent, and could never accept the real one (acceptFriendRequest
+    // looks the row up by the current direction and 404s).
+    it('re-requesting after a decline in the REVERSED direction rewrites requester/addressee to the new asker', async () => {
+      prisma.friendship.findFirst.mockResolvedValue({
+        id: 'f1',
+        requesterId: 'u1',
+        addresseeId: 'u2',
+        status: 'DECLINED',
+      });
+      prisma.user.findUnique.mockResolvedValue({
+        name: 'Ann',
+        email: 'a@a.com',
+      });
+
+      await service.sendFriendRequest('u2', 'u1');
+
+      expect(prisma.friendship.update).toHaveBeenCalledWith({
+        where: { id: 'f1' },
+        data: { status: 'PENDING', requesterId: 'u2', addresseeId: 'u1' },
+      });
+    });
+
     it('rejects sending a request to someone who blocked you', async () => {
       prisma.friendship.findFirst.mockResolvedValue({
         id: 'f1',

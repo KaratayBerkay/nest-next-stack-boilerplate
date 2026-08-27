@@ -64,7 +64,12 @@ export class RtcChatService {
         id: saved.id,
         senderId: saved.senderId,
         senderName: displayName(saved.sender),
-        senderAvatarUrl: saved.sender.avatarUrl ?? null,
+        // hideAvatar contract: these frames reach every room member, so the
+        // avatar is withheld outright when the sender hides it (same rule the
+        // realtime gateway applies to chat-room member lists).
+        senderAvatarUrl: saved.sender.hideAvatar
+          ? null
+          : (saved.sender.avatarUrl ?? null),
         text,
         createdAt: saved.createdAt.toISOString(),
       },
@@ -93,7 +98,10 @@ export class RtcChatService {
         id: row.id,
         senderId: row.senderId,
         senderName: displayName(row.sender),
-        senderAvatarUrl: row.sender.avatarUrl ?? null,
+        // Same hideAvatar withholding as the live broadcast above.
+        senderAvatarUrl: row.sender.hideAvatar
+          ? null
+          : (row.sender.avatarUrl ?? null),
         text: this.decryptText(row),
         createdAt: row.createdAt.toISOString(),
       })),

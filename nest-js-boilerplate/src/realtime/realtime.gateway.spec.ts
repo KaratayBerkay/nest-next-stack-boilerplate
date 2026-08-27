@@ -89,9 +89,12 @@ function makeWs(overrides: Record<string, unknown> = {}): MockWs {
 
 function mockPresenceService(): RealtimePresenceService {
   return {
-    syncPresenceToRedis: jest.fn(),
-    removePresenceFromRedis: jest.fn(),
-    refreshPresenceTTL: jest.fn(),
+    // Resolved promises, not bare jest.fn(): the gateway invokes these
+    // through safeRedis, which chains .catch() onto the return value —
+    // an undefined return would crash the very cleanup paths under test.
+    syncPresenceToRedis: jest.fn().mockResolvedValue(undefined),
+    removePresenceFromRedis: jest.fn().mockResolvedValue(undefined),
+    refreshPresenceTTL: jest.fn().mockResolvedValue(undefined),
   } as unknown as RealtimePresenceService;
 }
 

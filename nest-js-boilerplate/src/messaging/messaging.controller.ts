@@ -28,6 +28,18 @@ import type { JwtUser } from '../auth/auth.types';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
 import { decryptMessageBody } from './message-body.util';
 
+/** Clamp a client-supplied page size to [1, 100], defaulting to 30. A bare
+ *  `Math.min(parseInt(take), 100)` let `?take=abc` (NaN) and `?take=-5`
+ *  through to Prisma, where NaN throws a query-validation 500 and a negative
+ *  take silently flips the query to "last N rows". Mirrors RtcController's
+ *  own guarded parsing. */
+function parseTake(take: string | undefined, fallback = 30): number {
+  if (!take) return fallback;
+  const parsed = parseInt(take, 10);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(Math.max(parsed, 1), 100);
+}
+
 @ApiTags('Messaging')
 @ApiBearerAuth()
 @Controller('api')
@@ -181,7 +193,7 @@ export class MessagingController {
       user.userId,
       otherUserId,
       before,
-      take ? Math.min(parseInt(take, 10), 100) : 30,
+      parseTake(take),
     );
     return {
       ...result,
@@ -233,7 +245,7 @@ export class MessagingController {
       user.userId,
       otherUserId,
       before,
-      take ? Math.min(parseInt(take, 10), 100) : 30,
+      parseTake(take),
       search,
       from,
       to,
@@ -355,7 +367,7 @@ export class MessagingController {
       roomId,
       user.tier,
       before,
-      take ? Math.min(parseInt(take, 10), 100) : 30,
+      parseTake(take),
     );
     return {
       ...result,
@@ -407,7 +419,7 @@ export class MessagingController {
       roomId,
       user.tier,
       before,
-      take ? Math.min(parseInt(take, 10), 100) : 30,
+      parseTake(take),
       search,
       from,
       to,

@@ -20,6 +20,29 @@ import { resolveAttachmentEnvelopes } from './attachment-envelopes.util';
  *  special-case in the sidebar. */
 export const DELETED_PREVIEW_SENTINEL = '[Deleted]';
 
+/**
+ * Wire-safe sender block for the `direct-message` WS frame. Rebuilt to the
+ * declared shape rather than spread through: `message.sender` arrives as the
+ * SENDER's own view of themselves (avatarUrl intact — correct in the
+ * send-mutation response), but the frame also goes to the RECIPIENT, where a
+ * hideAvatar sender's avatarUrl must not ride along. No client reads
+ * avatarUrl off this frame (they render the `avatar` initials), so it's
+ * dropped outright.
+ */
+function toWireSender(
+  sender:
+    | { id?: string; name?: string | null; email?: string; avatar?: string }
+    | undefined,
+): Record<string, unknown> | undefined {
+  if (!sender) return undefined;
+  return {
+    id: sender.id,
+    name: sender.name ?? null,
+    email: sender.email,
+    avatar: sender.avatar ?? '',
+  };
+}
+
 export class MessagingDmService {
   private readonly logger = new Logger(MessagingDmService.name);
 
@@ -641,7 +664,9 @@ export class MessagingDmService {
       id: message.id,
       senderId: message.senderId,
       recipientId: message.recipientId,
-      sender: message.sender,
+      // See toWireSender — strips the sender's avatarUrl before the frame
+      // fans out to the recipient.
+      sender: toWireSender(message.sender),
       body: deliveryPlaintext?.text ?? null,
       createdAt: message.createdAt,
       ...(message._tempId ? { _tempId: message._tempId } : {}),

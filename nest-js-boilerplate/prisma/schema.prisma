@@ -266,6 +266,7 @@ model User {
 
   /// @Validator.IsEmail()
   email           String    @unique
+  /// @HideField()
   emailVerifiedAt DateTime? @db.Timestamptz(6)
 
   /// @Validator.IsOptional()
@@ -293,6 +294,7 @@ model User {
   // credentials auth (null for social-only users)
   /// @HideField()
   passwordHash  String?
+  /// @HideField()
   passwordSetAt DateTime? @db.Timestamptz(6)
 
   status           UserStatus       @default(PENDING_VERIFICATION)
@@ -303,14 +305,23 @@ model User {
   stripeCustomerId        String?   @unique
   /// @HideField()
   stripeSubscriptionId    String?
+  // Billing internals — the owner reads them through the BillingSubscription
+  // type (billing.resolver.ts), never off the shared User type, where they'd
+  // otherwise be queryable on any surface that returns another user (friend
+  // search, meeting host, stream broadcaster).
+  /// @HideField()
   subscriptionPeriodStart DateTime? @db.Timestamptz(6)
+  /// @HideField()
   subscriptionPeriodEnd   DateTime? @db.Timestamptz(6)
+  /// @HideField()
   cancelAtPeriodEnd       Boolean   @default(false)
 
   /// A paid<->paid tier change already scheduled with Stripe (subscription
   /// schedule) but not yet effective — access/features stay on
   /// `subscriptionTier` until `pendingTierEffectiveAt`.
+  /// @HideField()
   pendingTier                  SubscriptionTier?
+  /// @HideField()
   pendingTierEffectiveAt       DateTime?         @db.Timestamptz(6)
   /// @HideField()
   stripeSubscriptionScheduleId String?
@@ -325,7 +336,14 @@ model User {
   /// @HideField()
   hideAvatar      Boolean   @default(false)
   bio             String?   @db.Text
+  // Personal data below is deliberately absent from the GraphQL User type —
+  // that type is returned to OTHER users (friend search, meeting host,
+  // stream broadcaster), where none of this is anyone's business. The
+  // owner-facing read surfaces are SessionUserPayload (`me`) and the REST
+  // profile endpoints, which select what they need straight from Prisma.
+  /// @HideField()
   birthDate       DateTime? @db.Date
+  /// @HideField()
   quietHoursStart DateTime? @db.Time(6)
 
   locale   String @default("en")
@@ -333,23 +351,34 @@ model User {
 
   /// @Validator.IsOptional()
   /// @Validator.IsPhoneNumber()
+  /// @HideField()
   phoneNumber   String? @unique
+  /// @HideField()
   phoneVerified Boolean @default(false)
 
+  /// @HideField()
   mfaEnabled Boolean @default(false)
 
+  /// @HideField()
   lastLoginAt      DateTime? @db.Timestamptz(6)
   /// @HideField()
   lastLoginIp      String?   @db.Inet
+  /// @HideField()
   failedLoginCount Int       @default(0)
+  /// @HideField()
   lockedUntil      DateTime? @db.Timestamptz(6)
 
+  /// @HideField()
   reputation  BigInt   @default(0)
+  /// @HideField()
   interests   String[] @default([])
+  /// @HideField()
   metadata    Json?    @db.JsonB
+  /// @HideField()
   preferences Json?    @db.JsonB
 
   // self-relation: referral graph
+  /// @HideField()
   referredById String? @db.Uuid
   referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
   referrals    User[]  @relation("UserReferrals")

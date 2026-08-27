@@ -470,7 +470,12 @@ export class UploadController {
     const validator = new ChatAttachmentTypeValidator({
       fileType: ALLOWED_ATTACHMENT_TYPES,
     });
-    if (!validator.isValid(fake)) {
+    // isValid returns a Promise on the magic-bytes path — unawaited, the
+    // Promise object was always truthy, so `!validator.isValid(...)` never
+    // rejected anything: this endpoint accepted every file type while its
+    // multipart sibling (which runs the same validator via ParseFilePipe,
+    // awaited) enforced the allow-list.
+    if (!(await validator.isValid(fake))) {
       throw new BadRequestException(validator.buildErrorMessage(fake));
     }
 
@@ -582,7 +587,12 @@ export class UploadController {
     res.set({
       'Content-Type': contentType,
       'Content-Length': String(plain.length),
-      'Cache-Control': 'public, max-age=31536000, immutable',
+      // `private`, not `public`: this response is DECRYPTED per-user content
+      // behind an auth check. `public` invited any shared cache (corporate
+      // proxy, misconfigured CDN) to store the plaintext and replay it to a
+      // different user requesting the same objectName. The browser's own
+      // cache still applies, so repeat views stay instant.
+      'Cache-Control': 'private, max-age=31536000, immutable',
     });
     res.end(Buffer.from(plain));
   }

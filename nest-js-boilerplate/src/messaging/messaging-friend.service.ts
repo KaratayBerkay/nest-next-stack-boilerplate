@@ -283,9 +283,19 @@ export class MessagingFriendService {
             msg: 'Cannot send friend request',
             key: 'friends.errors.blocked',
           });
+        // Re-request after a DECLINED row. The old row may point the OTHER
+        // way (A→B declined, now B re-requests): reviving it with only a
+        // status flip kept the stale direction, so the new addressee saw a
+        // phantom *outgoing* request they never sent — and could never
+        // accept the real one (acceptFriendRequest looks the row up by the
+        // current direction and 404s). Rewrite both direction columns so the
+        // revived row always matches who is actually asking now. Only one
+        // row can exist per pair (creation is findFirst-guarded under the
+        // pair advisory lock), so the @@unique([requesterId, addresseeId])
+        // swap can't collide.
         await tx.friendship.update({
           where: { id: existing.id },
-          data: { status: 'PENDING' },
+          data: { status: 'PENDING', requesterId, addresseeId },
         });
         return 'requested' as const;
       }

@@ -7,15 +7,46 @@ import {
   WebhookReceiver,
   type VideoGrant,
 } from 'livekit-server-sdk';
+import { decryptId, encryptId } from '../common/id-codec/id-codec';
 import { rtcErrorLog } from './rtc-logger';
 
 interface MintTokenOptions {
+  /** Raw user uuid — encrypted into the id-codec token form before it ever
+   *  reaches LiveKit (see toLivekitIdentity below). */
   identity: string;
   name?: string;
   roomName: string;
   canPublish: boolean;
   canSubscribe: boolean;
   ttlSeconds?: number;
+}
+
+/**
+ * LiveKit participant identities travel THROUGH the clients: they ride the
+ * signed access token, and every room peer can read every other peer's
+ * identity off the LiveKit room object. Raw database uuids must never reach
+ * a client (the id-codec transport-boundary rule), so identities are the
+ * deterministic encryptId() form of the userId. This is also what makes the
+ * clients actually work: both web and Flutter compare LiveKit identities
+ * against ids they got from GraphQL (stream viewers look the broadcaster up
+ * by `stream.broadcaster.id`; meeting hosts pass `participant.identity` back
+ * as the mute/remove target, where the arg decryptor expects an encrypted
+ * token) — with raw uuids on the LiveKit side those comparisons could never
+ * match and the mute/remove args failed decryption outright.
+ */
+export function toLivekitIdentity(userId: string): string {
+  return encryptId(userId);
+}
+
+/** Reverse of toLivekitIdentity for webhook payloads. Tolerates identities
+ *  minted before encryption existed (older live sessions during a deploy):
+ *  a value that doesn't decrypt is returned as-is. */
+export function fromLivekitIdentity(identity: string): string {
+  try {
+    return decryptId(identity);
+  } catch {
+    return identity;
+  }
 }
 
 /**
@@ -52,7 +83,7 @@ export class LiveKitService {
 
   async mintToken(opts: MintTokenOptions): Promise<string> {
     const token = new AccessToken(this.apiKey, this.apiSecret, {
-      identity: opts.identity,
+      identity: toLivekitIdentity(opts.identity),
       name: opts.name,
       ttl: opts.ttlSeconds ?? 4 * 60 * 60,
     });
@@ -90,9 +121,14 @@ export class LiveKitService {
     }
   }
 
+  /** `identity` is the raw userId — translated to the LiveKit-side encrypted
+   *  identity here, so callers never handle the codec themselves. */
   async removeParticipant(roomName: string, identity: string): Promise<void> {
     try {
-      await this.roomService.removeParticipant(roomName, identity);
+      await this.roomService.removeParticipant(
+        roomName,
+        toLivekitIdentity(identity),
+      );
     } catch (error) {
       this.logger.error(
         rtcErrorLog('livekit.participant_remove_failed', error, {
@@ -130,9 +166,10 @@ export class LiveKitService {
     muted: boolean,
   ): Promise<void> {
     try {
+      const livekitIdentity = toLivekitIdentity(identity);
       const participant = await this.roomService.getParticipant(
         roomName,
-        identity,
+        livekitIdentity,
       );
       const audioTrack = participant.tracks.find(
         (t) => t.type === TrackType.AUDIO,
@@ -140,7 +177,7 @@ export class LiveKitService {
       if (!audioTrack) return;
       await this.roomService.mutePublishedTrack(
         roomName,
-        identity,
+        livekitIdentity,
         audioTrack.sid,
         muted,
       );

@@ -1,4 +1,5 @@
 import { RtcWebhookController } from './rtc-webhook.controller';
+import { encryptId, _resetKeysForTests } from '../common/id-codec/id-codec';
 
 function buildController() {
   const rtcRoom = {
@@ -92,6 +93,62 @@ describe('RtcWebhookController', () => {
 
     expect(rtcRoom.update).not.toHaveBeenCalled();
     expect(rtcCallService.handleRoomEndedByLiveKit).toHaveBeenCalledWith('r2');
+  });
+
+  // Regression for the LiveKit identity codec: tokens are minted with the
+  // encryptId() form of the userId (raw db uuids must never reach a client,
+  // and both frontends match LiveKit identities against ids they got from
+  // GraphQL — which are encrypted). The webhook therefore reports the
+  // ENCRYPTED identity, and this controller must map it back to the raw
+  // userId that RtcParticipant.livekitIdentity stores.
+  it('participant_left decrypts the LiveKit identity back to the raw userId before touching the DB or notifying', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, rtcMeetingService, liveKit } =
+      buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_left',
+      room: { name: 'meeting-r4' },
+      participant: { identity: encryptId(rawUserId) },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r4', kind: 'MEETING' });
+    rtcParticipant.updateMany.mockResolvedValue({ count: 1 });
+
+    const { req, res } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcParticipant.updateMany).toHaveBeenCalledWith({
+      where: { roomId: 'r4', livekitIdentity: rawUserId, leftAt: null },
+      data: { leftAt: expect.any(Date) as Date },
+    });
+    expect(
+      rtcMeetingService.notifyParticipantLeftByLiveKit,
+    ).toHaveBeenCalledWith('r4', rawUserId);
+  });
+
+  it('participant_left tolerates a pre-codec raw identity (sessions live through a deploy)', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, liveKit } = buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_left',
+      room: { name: 'call-r5' },
+      participant: { identity: rawUserId },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r5', kind: 'CALL' });
+    rtcParticipant.updateMany.mockResolvedValue({ count: 1 });
+
+    const { req, res } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcParticipant.updateMany).toHaveBeenCalledWith({
+      where: { roomId: 'r5', livekitIdentity: rawUserId, leftAt: null },
+      data: { leftAt: expect.any(Date) as Date },
+    });
   });
 
   it('returns 200 even when a handler throws — a bad webhook payload must never make LiveKit retry-storm the endpoint', async () => {

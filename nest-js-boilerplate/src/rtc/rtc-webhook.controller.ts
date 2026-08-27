@@ -3,7 +3,7 @@ import type { Request, Response } from 'express';
 // Native @prisma/client enums — see rtc-call.service.ts's import comment for why.
 import { RtcRoomKind, RtcRoomState } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
-import { LiveKitService } from './livekit.service';
+import { LiveKitService, fromLivekitIdentity } from './livekit.service';
 import { RtcCallService } from './rtc-call.service';
 import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
@@ -152,8 +152,12 @@ export class RtcWebhookController {
       select: { id: true, kind: true },
     });
     if (!room) return;
+    // LiveKit reports the encrypted identity the token was minted with
+    // (see toLivekitIdentity) — map it back to the raw userId that
+    // RtcParticipant.livekitIdentity stores and the notify handlers expect.
+    const userId = fromLivekitIdentity(identity);
     await this.prisma.rtcParticipant.updateMany({
-      where: { roomId: room.id, livekitIdentity: identity, leftAt: null },
+      where: { roomId: room.id, livekitIdentity: userId, leftAt: null },
       data: { leftAt: new Date() },
     });
     if (room.kind === RtcRoomKind.CALL) {
@@ -164,9 +168,9 @@ export class RtcWebhookController {
       // The DB leftAt update already happened above (kind-agnostic) — this
       // only notifies peers still in the meeting so a hard-crash/dropped
       // connection isn't silent until someone else's join/leave fires.
-      this.rtcMeetingService.notifyParticipantLeftByLiveKit(room.id, identity);
+      this.rtcMeetingService.notifyParticipantLeftByLiveKit(room.id, userId);
     } else if (room.kind === RtcRoomKind.STREAM) {
-      this.rtcStreamService.notifyViewerLeftByLiveKit(room.id, identity);
+      this.rtcStreamService.notifyViewerLeftByLiveKit(room.id, userId);
     }
   }
 }

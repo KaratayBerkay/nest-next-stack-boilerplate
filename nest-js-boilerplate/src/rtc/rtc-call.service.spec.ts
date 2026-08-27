@@ -3,12 +3,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LiveKitService } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { NotificationService } from '../notification/notification.service';
+import { FriendsService } from '../friends/friends.service';
 import type { AuthWs } from '../realtime/realtime.types';
 
 describe('RtcCallService.invite error codes', () => {
   let service: RtcCallService;
   let mockPrisma: { callSession: { count: jest.Mock } };
   let mockRealtime: { onlineCount: Map<string, number> };
+  let mockFriends: { areFriends: jest.Mock };
   let ws: { userId: string; send: jest.Mock };
 
   beforeEach(() => {
@@ -16,6 +18,7 @@ describe('RtcCallService.invite error codes', () => {
       callSession: { count: jest.fn().mockResolvedValue(0) },
     };
     mockRealtime = { onlineCount: new Map([['callee-1', 1]]) };
+    mockFriends = { areFriends: jest.fn().mockResolvedValue(true) };
     ws = { userId: 'caller-1', send: jest.fn() };
 
     service = new RtcCallService(
@@ -23,6 +26,7 @@ describe('RtcCallService.invite error codes', () => {
       {} as LiveKitService,
       mockRealtime as unknown as RealtimeGateway,
       {} as NotificationService,
+      mockFriends as unknown as FriendsService,
     );
   });
 
@@ -39,6 +43,22 @@ describe('RtcCallService.invite error codes', () => {
     expect(ws.send).toHaveBeenCalledWith(
       JSON.stringify({ type: 'rtc:error', reason: 'self_call' }),
     );
+  });
+
+  // Regression for the friendship gate: any authenticated user could
+  // previously ring ANY online user id — the invite path enforced no
+  // relationship at all, unlike DMs.
+  it('sends the not_friends code when the parties are not friends', async () => {
+    mockFriends.areFriends.mockResolvedValue(false);
+
+    await service.invite(ws as unknown as AuthWs, 'callee-1', true);
+
+    expect(mockFriends.areFriends).toHaveBeenCalledWith('caller-1', 'callee-1');
+    expect(ws.send).toHaveBeenCalledWith(
+      JSON.stringify({ type: 'rtc:error', reason: 'not_friends' }),
+    );
+    // No CallSession row must ever be probed/created for a non-friend pair.
+    expect(mockPrisma.callSession.count).not.toHaveBeenCalled();
   });
 
   it('sends the callee_offline code when the callee is not connected', async () => {
@@ -83,6 +103,9 @@ describe('RtcCallService.accept error codes', () => {
       {} as LiveKitService,
       { onlineCount: new Map() } as unknown as RealtimeGateway,
       {} as NotificationService,
+      {
+        areFriends: jest.fn().mockResolvedValue(true),
+      } as unknown as FriendsService,
     );
   });
 

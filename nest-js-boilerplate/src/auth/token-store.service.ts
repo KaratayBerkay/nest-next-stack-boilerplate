@@ -452,6 +452,33 @@ export class TokenStoreService {
     await this.redis.del(key);
   }
 
+  /**
+   * Record a failed code attempt against a live MFA challenge and return the
+   * new attempt count (0 when the challenge no longer exists). The email-OTP
+   * path tracks attempts on the OTP itself; this covers the TOTP/backup-code
+   * path, which previously had no per-challenge counter at all — a stolen
+   * mfaToken could be hammered with codes for its whole TTL, throttled only
+   * by the global HTTP limiter. KEEPTTL preserves the challenge's original
+   * 5-minute window; the plain read-modify-write is deliberate (a lost
+   * update under concurrency only ever undercounts by one — the cap still
+   * lands within an attempt or two).
+   */
+  async recordMfaChallengeFailure(tokenHash: string): Promise<number> {
+    const key = `${MFA_CHALLENGE_PREFIX}${tokenHash}`;
+    const raw = await this.redis.get(key);
+    if (!raw) return 0;
+    let data: Record<string, unknown>;
+    try {
+      data = JSON.parse(raw) as Record<string, unknown>;
+    } catch {
+      return 0;
+    }
+    const attempts = (Number(data.attempts) || 0) + 1;
+    data.attempts = attempts;
+    await this.redis.set(key, JSON.stringify(data), 'KEEPTTL');
+    return attempts;
+  }
+
   /** Store a 6-digit email OTP hash with purpose-scoped key. */
   async writeEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',

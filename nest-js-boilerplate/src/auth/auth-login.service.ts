@@ -22,6 +22,8 @@ import type { OAuthProfile } from './auth.service';
 const MAX_FAILED_LOGINS = 5;
 const LOCK_MINUTES = 15;
 const MAX_USERNAME_RACE_ATTEMPTS = 3;
+/** Wrong TOTP/backup codes allowed per MFA challenge before it's burned. */
+const MAX_MFA_CODE_ATTEMPTS = 5;
 
 // Postgres reports a P2002's `meta.target` as either the constraint name
 // (a string) or a column-name array, depending on Prisma version — checked
@@ -224,12 +226,29 @@ export class AuthLoginService {
       const totpVerified = await this.verifyTotpCode(user.id, code);
       if (!totpVerified) {
         const backupUsed = await this.verifyBackupCode(user.id, code);
-        if (!backupUsed)
+        if (!backupUsed) {
+          // Bound guessing per challenge — the email-OTP path enforces its
+          // own attempt cap inside emailOtp.verify, but nothing capped the
+          // TOTP/backup path: with a stolen mfaToken, the whole 5-minute
+          // window was open to code brute-forcing limited only by the
+          // global HTTP throttle. Burning the challenge forces a fresh
+          // password login to try again.
+          const attempts =
+            await this.tokenStore.recordMfaChallengeFailure(tokenHash);
+          if (attempts >= MAX_MFA_CODE_ATTEMPTS) {
+            await this.tokenStore.deleteMfaChallenge(tokenHash);
+            throw new UnauthorizedException({
+              exc: 'EX_AUTH_MFA_EXPIRED',
+              msg: 'Too many incorrect codes — sign in again',
+              key: 'auth.errors.mfaChallengeExpired',
+            });
+          }
           throw new UnauthorizedException({
             exc: 'EX_AUTH_MFA_INVALID_CODE',
             msg: 'Invalid MFA code',
             key: 'auth.errors.mfaInvalidCode',
           });
+        }
       }
     }
 

@@ -19,6 +19,7 @@ import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { displayName } from '../common/utils/display-name';
 import { callMaxDurationMinutes } from './rtc-tier-limits.constants';
 import { NotificationService } from '../notification/notification.service';
+import { FriendsService } from '../friends/friends.service';
 import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 // Ported from voice-call-system's own client-side ring convention (the
@@ -38,6 +39,17 @@ interface CallPeer {
   id: string;
   name: string;
   avatarUrl: string | null;
+}
+
+/** hideAvatar contract (see the schema field's doc): another user must never
+ *  receive this user's avatarUrl when the toggle is on. Every payload here is
+ *  peer-facing (invite frames, snapshots, history rows), so redaction applies
+ *  unconditionally — the owner's own UI never renders their avatar from these. */
+function visibleAvatarUrl(user: {
+  avatarUrl: string | null;
+  hideAvatar: boolean;
+}): string | null {
+  return user.hideAvatar ? null : (user.avatarUrl ?? null);
 }
 
 export interface CallHistoryEntry {
@@ -82,6 +94,7 @@ export class RtcCallService {
     private readonly liveKit: LiveKitService,
     private readonly realtime: RealtimeGateway,
     private readonly notifications: NotificationService,
+    private readonly friends: FriendsService,
   ) {}
 
   async invite(
@@ -100,6 +113,21 @@ export class RtcCallService {
         }),
       );
       this.sendError(ws, 'self_call');
+      return;
+    }
+    // Same gate DMs enforce: only friends can ring each other. Without it,
+    // any authenticated user could pop a full-screen incoming-call UI (with
+    // ringtone) on any online user id they picked — a harassment vector the
+    // rest of the messaging product already closes off.
+    if (!(await this.friends.areFriends(callerId, calleeId))) {
+      this.logger.warn(
+        rtcLog('call.invite_rejected', {
+          callerId,
+          calleeId,
+          reason: 'not_friends',
+        }),
+      );
+      this.sendError(ws, 'not_friends');
       return;
     }
     if (!this.realtime.onlineCount.has(calleeId)) {
@@ -171,7 +199,7 @@ export class RtcCallService {
       callId: call.id,
       callerId,
       callerName: displayName(call.caller),
-      callerAvatarUrl: call.caller.avatarUrl ?? null,
+      callerAvatarUrl: visibleAvatarUrl(call.caller),
       hasVideo: call.hasVideo,
     });
   }
@@ -681,7 +709,7 @@ export class RtcCallService {
         callId: call.id,
         callerId: call.callerId,
         callerName: displayName(call.caller),
-        callerAvatarUrl: call.caller.avatarUrl ?? null,
+        callerAvatarUrl: visibleAvatarUrl(call.caller),
         hasVideo: call.hasVideo,
       };
     }
@@ -703,7 +731,7 @@ export class RtcCallService {
       callId: call.id,
       peerId: peer.id,
       peerName: displayName(peer),
-      peerAvatarUrl: peer.avatarUrl ?? null,
+      peerAvatarUrl: visibleAvatarUrl(peer),
       token,
       roomName: call.room.livekitRoomName,
       maxDurationMinutes: call.maxDurationMinutes ?? undefined,
@@ -736,12 +764,12 @@ export class RtcCallService {
             ? {
                 id: c.calleeId,
                 name: displayName(c.callee),
-                avatarUrl: c.callee.avatarUrl ?? null,
+                avatarUrl: visibleAvatarUrl(c.callee),
               }
             : {
                 id: c.callerId,
                 name: displayName(c.caller),
-                avatarUrl: c.caller.avatarUrl ?? null,
+                avatarUrl: visibleAvatarUrl(c.caller),
               },
         direction: c.callerId === userId ? 'outgoing' : 'incoming',
         hasVideo: c.hasVideo,

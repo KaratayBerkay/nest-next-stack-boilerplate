@@ -89,6 +89,7 @@ const mockTokenStore = {
   consumeMfaChallenge: jest.fn(),
   peekMfaChallenge: jest.fn(),
   deleteMfaChallenge: jest.fn(),
+  recordMfaChallengeFailure: jest.fn().mockResolvedValue(1),
 };
 
 describe('AuthService', () => {
@@ -435,6 +436,36 @@ describe('AuthService', () => {
 
       await service.verifyLoginMfa('mfa-token', '111111');
 
+      expect(mockTokenStore.deleteMfaChallenge).toHaveBeenCalledWith(
+        'sha256(mfa-token)',
+      );
+    });
+
+    it('records the failed attempt against the challenge on a wrong code', async () => {
+      mockedVerifyTotp.mockReturnValue({ valid: false });
+      mockTokenStore.recordMfaChallengeFailure.mockResolvedValue(1);
+
+      await expect(
+        service.verifyLoginMfa('mfa-token', '000000'),
+      ).rejects.toThrow(UnauthorizedException);
+
+      expect(mockTokenStore.recordMfaChallengeFailure).toHaveBeenCalledWith(
+        'sha256(mfa-token)',
+      );
+      expect(mockTokenStore.deleteMfaChallenge).not.toHaveBeenCalled();
+    });
+
+    it('burns the challenge after the attempt cap so a stolen mfaToken cannot be brute-forced', async () => {
+      mockedVerifyTotp.mockReturnValue({ valid: false });
+      mockTokenStore.recordMfaChallengeFailure.mockResolvedValue(5);
+
+      await expect(
+        service.verifyLoginMfa('mfa-token', '000000'),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          exc: 'EX_AUTH_MFA_EXPIRED',
+        }) as object,
+      });
       expect(mockTokenStore.deleteMfaChallenge).toHaveBeenCalledWith(
         'sha256(mfa-token)',
       );
