@@ -10,8 +10,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
-import { PulseBlockFallback } from "@/fallbacks";
+import { FriendPickList } from "@/components/rtc/FriendPickList";
 import { friendsQueryOptions } from "@/api/client/friends/query";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useToast } from "@/components/ui/Toast";
@@ -55,31 +54,26 @@ export function RtcInviteDialog({ onInvite, children }: RtcInviteDialogProps) {
         <DialogHeader>
           <DialogTitle>{t.inviteToMeeting}</DialogTitle>
         </DialogHeader>
-        {isLoading ? (
-          <PulseBlockFallback />
-        ) : !friends || friends.length === 0 ? (
-          <p className="text-muted text-sm">{t.noFriendsToInvite}</p>
-        ) : (
-          <div className="flex max-h-72 flex-col gap-1 overflow-y-auto">
-            {friends.map((friend) => (
-              <div
-                key={friend.id}
-                className="flex items-center gap-2.5 rounded-lg px-2 py-2"
+        <div className="px-6 pt-3 pb-2">
+          <FriendPickList
+            friends={friends}
+            isLoading={isLoading}
+            emptyText={t.noFriendsToInvite}
+            noMatchText={t.noFriendsMatch}
+            searchPlaceholder={t.searchFriendsPlaceholder}
+            listClassName="max-h-72"
+            trailing={(friend) => (
+              <Button
+                size="sm"
+                variant={invitedIds.has(friend.id) ? "ghost" : "outline"}
+                disabled={invitedIds.has(friend.id)}
+                onClick={() => void handleInvite(friend.id)}
               >
-                <Avatar fallback={friend.name || friend.email} size="sm" />
-                <span className="flex-1 truncate text-sm">{friend.name}</span>
-                <Button
-                  size="sm"
-                  variant={invitedIds.has(friend.id) ? "ghost" : "outline"}
-                  disabled={invitedIds.has(friend.id)}
-                  onClick={() => void handleInvite(friend.id)}
-                >
-                  {invitedIds.has(friend.id) ? t.invited : t.invite}
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+                {invitedIds.has(friend.id) ? t.invited : t.invite}
+              </Button>
+            )}
+          />
+        </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => setOpen(false)}>
             {t.close}

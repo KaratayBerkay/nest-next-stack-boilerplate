@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { backendFetch } from "@/lib/backend";
 import { FRIENDS_URL } from "@/constants/api/urls";
 import { FreePageView } from "@/views/messages/FreePageView";
@@ -24,7 +24,7 @@ const VIEWS = {
 export default async function MessagesPage({
   searchParams,
 }: MessagesPageProps) {
-  const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
+  const [user, sp] = await Promise.all([requireSessionUser(), searchParams]);
   const initialUser = (sp.user as string) || null;
 
   let initialFriends: Array<{
@@ -38,5 +38,5 @@ export default async function MessagesPage({
     if (res.ok) initialFriends = res.data as typeof initialFriends;
   } catch {}
 
-  return getTierView(user!.tier, VIEWS, { initialUser, initialFriends });
+  return getTierView(user.tier, VIEWS, { initialUser, initialFriends });
 }

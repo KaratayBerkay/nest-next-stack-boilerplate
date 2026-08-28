@@ -2,21 +2,35 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { IconPhoneCall, IconUsers, IconBroadcast } from "@tabler/icons-react";
-import { Badge } from "@/components/ui/Badge";
 import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/Card";
+  IconPhoneCall,
+  IconUsers,
+  IconBroadcast,
+  IconChevronRight,
+} from "@tabler/icons-react";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 
+/** Fixed accent per surface — calls wear the brand, meetings the calm info
+ *  hue, live the broadcast red used by every LIVE badge in the app. */
 const SECTIONS = [
-  { key: "calls", Icon: IconPhoneCall, href: "calls", live: true },
-  { key: "meetings", Icon: IconUsers, href: "meetings", live: true },
-  { key: "live", Icon: IconBroadcast, href: "live", live: true },
+  {
+    key: "calls",
+    Icon: IconPhoneCall,
+    href: "calls",
+    chip: "bg-brand/10 text-brand",
+  },
+  {
+    key: "meetings",
+    Icon: IconUsers,
+    href: "meetings",
+    chip: "bg-info/10 text-info",
+  },
+  {
+    key: "live",
+    Icon: IconBroadcast,
+    href: "live",
+    chip: "bg-error/10 text-error",
+  },
 ] as const;
 
 export function RtcHubView() {
@@ -32,33 +46,32 @@ export function RtcHubView() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {SECTIONS.map(({ key, Icon, href, live }) => {
-          const card = (
-            <Card
-              className={
-                live ? "hover:border-brand/50 transition-colors" : undefined
-              }
+        {SECTIONS.map(({ key, Icon, href, chip }) => (
+          <Link
+            key={key}
+            href={`/v1/${lang}/rtc/${href}`}
+            className="group border-border bg-surface hover:border-brand/50 focus-visible:ring-brand flex flex-col gap-3 rounded-xl border p-4 transition-all hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:outline-none"
+          >
+            <span
+              className={`flex size-11 items-center justify-center rounded-lg ${chip}`}
             >
-              <CardHeader>
-                <Icon className="text-muted size-6" aria-hidden />
-                <CardTitle>{t[`${key}Title` as const]}</CardTitle>
-                <CardDescription>
-                  {t[`${key}Description` as const]}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!live && <Badge>{t.comingSoon}</Badge>}
-              </CardContent>
-            </Card>
-          );
-          return live ? (
-            <Link key={key} href={`/v1/${lang}/rtc/${href}`}>
-              {card}
-            </Link>
-          ) : (
-            <div key={key}>{card}</div>
-          );
-        })}
+              <Icon size={22} aria-hidden />
+            </span>
+            <span className="flex items-center justify-between gap-2">
+              <span className="text-base font-semibold">
+                {t[`${key}Title` as const]}
+              </span>
+              <IconChevronRight
+                size={16}
+                aria-hidden
+                className="text-muted transition-transform group-hover:translate-x-0.5"
+              />
+            </span>
+            <span className="text-muted text-sm">
+              {t[`${key}Description` as const]}
+            </span>
+          </Link>
+        ))}
       </div>
     </div>
   );

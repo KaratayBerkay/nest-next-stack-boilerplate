@@ -335,9 +335,7 @@ describe('TokenStoreService', () => {
       exec: () => Promise.reject(new Error('still down')),
     }));
 
-    await expect(service.revokeAllForUser('u6')).rejects.toThrow(
-      'still down',
-    );
+    await expect(service.revokeAllForUser('u6')).rejects.toThrow('still down');
   });
 
   describe('revokeSessionBySessionId', () => {

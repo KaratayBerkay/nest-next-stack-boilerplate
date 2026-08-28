@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { FreePageView } from "@/views/chat-room/FreePageView";
 import { BasicPageView } from "@/views/chat-room/BasicPageView";
 import { MediumPageView } from "@/views/chat-room/MediumPageView";
@@ -22,8 +22,8 @@ const VIEWS = {
 export default async function ChatRoomPage({
   searchParams,
 }: ChatRoomPageProps) {
-  const [user, sp] = await Promise.all([getSessionUser(), searchParams]);
+  const [user, sp] = await Promise.all([requireSessionUser(), searchParams]);
   const room = (sp.room as string) || "general";
 
-  return getTierView(user!.tier, VIEWS, { initialRoom: room });
+  return getTierView(user.tier, VIEWS, { initialRoom: room });
 }

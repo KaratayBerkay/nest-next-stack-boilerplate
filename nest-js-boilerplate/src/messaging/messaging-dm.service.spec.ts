@@ -1,5 +1,10 @@
 import { MessagingDmService } from './messaging-dm.service';
 
+/** expect.objectContaining, typed away from `any` so nesting it inside
+ *  object literals doesn't trip no-unsafe-assignment. */
+const objContaining = (o: Record<string, unknown>): unknown =>
+  expect.objectContaining(o);
+
 describe('MessagingDmService', () => {
   let service: MessagingDmService;
   let mockRealtime: {
@@ -275,7 +280,7 @@ describe('MessagingDmService', () => {
       });
       expect(mockPrisma.message.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          data: objContaining({
             attachments: {
               create: [
                 {
@@ -417,7 +422,7 @@ describe('MessagingDmService', () => {
 
       expect(mockPrisma.message.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({
+          data: objContaining({
             attachments: {
               create: [
                 {
@@ -506,7 +511,7 @@ describe('MessagingDmService', () => {
 
       expect(delivery.recipientPayload).toEqual({
         type: 'direct-message',
-        message: expect.objectContaining({
+        message: objContaining({
           id: 'm1',
           senderId: 'u1',
           recipientId: 'u2',
@@ -516,7 +521,7 @@ describe('MessagingDmService', () => {
       });
       expect(delivery.senderPayload).toEqual({
         type: 'direct-message',
-        message: expect.objectContaining({
+        message: objContaining({
           id: 'm1',
           senderId: 'u1',
           recipientId: 'u2',
@@ -603,7 +608,7 @@ describe('MessagingDmService', () => {
         expect.objectContaining({
           renew: 'Messages',
           type: 'Conversation',
-          conversation: expect.objectContaining({
+          conversation: objContaining({
             lastMessage: '',
             hasAttachments: true,
           }),
@@ -695,8 +700,10 @@ describe('MessagingDmService', () => {
 
       await service.getConversations('u1', () => Promise.resolve(['u2']));
 
-      const [sentSql] = mockPrisma.$queryRawUnsafe.mock.calls[0];
-      const [receivedSql] = mockPrisma.$queryRawUnsafe.mock.calls[1];
+      const [sentSql] = mockPrisma.$queryRawUnsafe.mock.calls[0] as [string];
+      const [receivedSql] = mockPrisma.$queryRawUnsafe.mock.calls[1] as [
+        string,
+      ];
       expect(sentSql).toContain('NOT EXISTS');
       expect(sentSql).toContain('"MessageDeletion"');
       expect(receivedSql).toContain('NOT EXISTS');
@@ -808,7 +815,7 @@ describe('MessagingDmService', () => {
 
       expect(mockPrisma.message.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
+          where: objContaining({
             deletions: { none: { userId: 'u1' } },
           }),
         }),
@@ -908,7 +915,9 @@ describe('MessagingDmService', () => {
       });
       // No v/ct/nonce anywhere in the select — the full file ciphertext must
       // never leave the DB on a list call.
-      const [[call]] = mockPrisma.messageAttachment.findMany.mock.calls;
+      const [[call]] = mockPrisma.messageAttachment.findMany.mock.calls as [
+        [{ select: Record<string, unknown> }],
+      ];
       expect(call.select).not.toHaveProperty('v');
       expect(call.select).not.toHaveProperty('ct');
       expect(call.select).not.toHaveProperty('nonce');
@@ -940,7 +949,7 @@ describe('MessagingDmService', () => {
 
       expect(mockPrisma.messageAttachment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({
+          where: objContaining({
             createdAt: { lt: new Date('2026-08-07T09:00:00Z') },
           }),
           take: 5,
@@ -1191,7 +1200,7 @@ describe('MessagingDmService', () => {
 
       expect(mockPrisma.message.update).toHaveBeenCalledWith({
         where: { id: 'm1' },
-        data: { deletedAt: expect.any(Date) },
+        data: { deletedAt: expect.any(Date) as unknown },
       });
       expect(mockCache.del).toHaveBeenCalledWith('conversations:u1');
       expect(mockCache.del).toHaveBeenCalledWith('conversations:u2');
@@ -1212,7 +1221,10 @@ describe('MessagingDmService', () => {
         'u2',
         expectedFrame,
       );
-      expect(result).toEqual({ id: 'm1', deletedAt: expect.any(String) });
+      expect(result).toEqual({
+        id: 'm1',
+        deletedAt: expect.any(String) as unknown,
+      });
     });
 
     it('is idempotent — a second call on an already-tombstoned message is a harmless no-op', async () => {

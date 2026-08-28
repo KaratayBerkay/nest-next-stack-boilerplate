@@ -46,10 +46,18 @@ export function RtcRecordingControl({
         onClick={() => void handleClick()}
         disabled={busy}
       >
+        <span
+          aria-hidden
+          className={`size-2 rounded-full ${
+            isRecording ? "bg-error-fg animate-pulse" : "bg-error"
+          }`}
+        />
         {isRecording ? t.stopRecording : t.startRecording}
       </Button>
       {isRecording && (
-        <span className="text-muted text-xs">{t.recordingComingSoonNote}</span>
+        <span className="bg-warning/10 border-warning/30 text-warning max-w-56 truncate rounded-full border px-2.5 py-1 text-[10px]">
+          {t.recordingComingSoonNote}
+        </span>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 import { POSTS_QUERY } from "@/lib/graphql/queries";
 import { FreePageView } from "@/views/feed/FreePageView";
@@ -26,7 +26,7 @@ const VIEWS = {
 export default async function FeedPage() {
   const token = await getAccessToken();
   const [user, feedRes] = await Promise.all([
-    getSessionUser(),
+    requireSessionUser(),
     graphqlFetch<{ postList: Array<{ id: string }> }>(
       POSTS_QUERY,
       {
@@ -45,7 +45,7 @@ export default async function FeedPage() {
   const posts = hasMore ? all.slice(0, PAGE_SIZE) : all;
   const nextCursor = hasMore ? posts[posts.length - 1]?.id : null;
 
-  return getTierView(user!.tier, VIEWS, {
+  return getTierView(user.tier, VIEWS, {
     initialFeedData: { posts, hasMore, nextCursor },
   });
 }

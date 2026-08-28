@@ -340,7 +340,9 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         text: 'hello',
         tempId: 'temp-123',
       });
-      const delivered = mockMs.deliverDirectMessage.mock.calls[0][0];
+      const delivered = (
+        mockMs.deliverDirectMessage.mock.calls as [[Record<string, unknown>]]
+      )[0][0];
       expect(delivered).toHaveProperty('_tempId', 'temp-123');
       expect(mockMs.deliverDirectMessage).toHaveBeenCalledWith(
         expect.objectContaining({ _tempId: 'temp-123' }),

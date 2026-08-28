@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { FreePageView } from "@/views/friends/FreePageView";
 import { BasicPageView } from "@/views/friends/BasicPageView";
 import { MediumPageView } from "@/views/friends/MediumPageView";
@@ -19,7 +19,7 @@ const VIEWS = {
 };
 
 export default async function FriendsPage() {
-  const user = await getSessionUser();
+  const user = await requireSessionUser();
 
-  return getTierView(user!.tier, VIEWS);
+  return getTierView(user.tier, VIEWS);
 }

@@ -78,11 +78,15 @@ export class RtcWebhookController {
             event.participant?.identity,
           );
           break;
+        case 'participant_joined':
+          await this.handleParticipantJoined(
+            event.room?.name,
+            event.participant?.identity,
+          );
+          break;
         default:
-          // participant_joined/egress_*/ingress_*/track_* — no-op until a
-          // later phase creates RtcParticipant rows to update (call/meeting/
-          // stream services do that at invite/join time, not this webhook)
-          // and wires recording/streaming-out.
+          // egress_*/ingress_*/track_* — no-op until a later phase wires
+          // recording/streaming-out.
           break;
       }
     } catch (err) {
@@ -99,9 +103,39 @@ export class RtcWebhookController {
 
   private async handleRoomStarted(livekitRoomName?: string) {
     if (!livekitRoomName) return;
+    // `state: { not: ENDED }` — a reconnecting client whose join races the
+    // room teardown makes LiveKit auto-recreate the room (the token still
+    // grants roomJoin for that name), firing a fresh room_started for a
+    // call/meeting that is already over. That zombie room dies on its own
+    // via empty/departure timeout; it must not resurrect the DB row to
+    // ACTIVE (observed live during the participant_left reconnect storm).
     await this.prisma.rtcRoom.updateMany({
-      where: { livekitRoomName },
+      where: { livekitRoomName, state: { not: RtcRoomState.ENDED } },
       data: { state: RtcRoomState.ACTIVE, startedAt: new Date() },
+    });
+  }
+
+  /** A rejoin (livekit-client's full reconnect creates a brand-new session
+   *  for the same identity) must clear the leftAt its own participant_left
+   *  just stamped — the row means "currently in the room". */
+  private async handleParticipantJoined(
+    livekitRoomName?: string,
+    identity?: string,
+  ) {
+    if (!livekitRoomName || !identity) return;
+    const room = await this.prisma.rtcRoom.findUnique({
+      where: { livekitRoomName },
+      select: { id: true },
+    });
+    if (!room) return;
+    const userId = fromLivekitIdentity(identity);
+    await this.prisma.rtcParticipant.updateMany({
+      where: {
+        roomId: room.id,
+        livekitIdentity: userId,
+        leftAt: { not: null },
+      },
+      data: { leftAt: null },
     });
   }
 
@@ -161,9 +195,15 @@ export class RtcWebhookController {
       data: { leftAt: new Date() },
     });
     if (room.kind === RtcRoomKind.CALL) {
-      // A 1:1 call is over the moment either side leaves — don't wait for
-      // LiveKit's own ~60s departureTimeout to notice via room_finished.
-      await this.rtcCallService.handlePeerLeft(room.id);
+      // A 1:1 call is over when either side genuinely leaves — but the
+      // service first has to rule out livekit-client's leave+rejoin full
+      // reconnect, so it gets the room name + identity to probe LiveKit
+      // with (see RtcCallService.handlePeerLeft's grace window).
+      await this.rtcCallService.handlePeerLeft(
+        room.id,
+        livekitRoomName,
+        userId,
+      );
     } else if (room.kind === RtcRoomKind.MEETING) {
       // The DB leftAt update already happened above (kind-agnostic) — this
       // only notifies peers still in the meeting so a hard-crash/dropped

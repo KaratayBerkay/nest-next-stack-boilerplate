@@ -28,9 +28,8 @@ import { RtcReportService } from './rtc-report.service';
 import { RtcRecordingService } from './rtc-recording.service';
 import { RtcErrorInterceptor } from './rtc-error.interceptor';
 import {
-  FREE_CALL_MAX_DURATION_MINUTES,
   MIN_TIER_TO_GO_LIVE,
-  RTC_TIER_MULTIPLIER,
+  callMaxDurationForTier,
   meetingMaxDurationMinutes,
   meetingMaxParticipants,
 } from './rtc-tier-limits.constants';
@@ -63,6 +62,32 @@ class JoinMeetingResult {
 
   @Field(() => Meeting)
   meeting: Meeting;
+}
+
+// Deliberately NOT the generated RtcParticipant/User pair: participants of a
+// meeting are arbitrary users, and exposing the generated User model here
+// would hand every list row the full public-User surface. This summary is
+// the whole contract — display name resolved server-side, avatarUrl already
+// hideAvatar-filtered (see RtcMeetingService.participantSummaries).
+@ObjectType()
+class MeetingParticipantSummary {
+  @Field()
+  userId: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => String, { nullable: true })
+  avatarUrl: string | null;
+
+  @Field()
+  role: string;
+
+  @Field()
+  joinedAt: Date;
+
+  @Field(() => Date, { nullable: true })
+  leftAt: Date | null;
 }
 
 @ObjectType()
@@ -133,8 +158,7 @@ export class RtcResolver {
       // be known once a callee is chosen — this is the caller's own best
       // case (calling a same-or-higher-tier user); RtcCallService computes
       // the real, possibly lower, cap at accept-time.
-      callMaxDurationMinutes:
-        FREE_CALL_MAX_DURATION_MINUTES * (RTC_TIER_MULTIPLIER[tier] ?? 1),
+      callMaxDurationMinutes: callMaxDurationForTier(tier),
       meetingMaxParticipants: meetingMaxParticipants(tier),
       meetingMaxDurationMinutes: meetingMaxDurationMinutes(tier),
       canGoLive:
@@ -378,5 +402,23 @@ export class RtcResolver {
     @Args('slug') slug: string,
   ) {
     return this.recordings.stopRecording(user.userId, 'stream', slug);
+  }
+}
+
+// Separate class because RtcResolver is already type-argument'd to
+// LiveStream (for viewerCount) and a class can only anchor ResolveFields to
+// one parent type.
+@UseGuards(SessionAuthGuard)
+@UseInterceptors(RtcErrorInterceptor)
+@Resolver(() => Meeting)
+export class RtcMeetingResolver {
+  constructor(private readonly meetings: RtcMeetingService) {}
+
+  @ResolveField(() => [MeetingParticipantSummary])
+  participants(
+    @Parent()
+    meeting: Meeting & Parameters<RtcMeetingService['participantSummaries']>[0],
+  ) {
+    return this.meetings.participantSummaries(meeting);
   }
 }

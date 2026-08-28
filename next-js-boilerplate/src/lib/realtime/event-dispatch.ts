@@ -1,9 +1,9 @@
 import type { useQueryClient } from "@tanstack/react-query";
 import { markMessagesReadServer } from "@/api/server/messages/mark-read";
+import { getActivePeerId } from "@/lib/realtime/active-peer";
 import { patchConversationList } from "@/lib/realtime/renew-dispatch";
 
 const sentTempIds = new Set<string>();
-let activePeerId: string | null = null;
 
 export function trackTempId(tempId: string): void {
   sentTempIds.add(tempId);
@@ -33,10 +33,6 @@ export function scheduleSendTimeout(
   }, timeoutMs);
 }
 
-export function setActivePeerId(peerId: string | null): void {
-  activePeerId = peerId;
-}
-
 export async function dispatchEvent(
   qc: ReturnType<typeof useQueryClient>,
   frame: Record<string, unknown>,
@@ -57,7 +53,9 @@ export async function dispatchEvent(
     // senderId (+ recipientId since the deliverDirectMessage fix), so the
     // recipient side never has to wait for the cache or a recipientId.
     const isMine = msg.senderId === ownUserId;
-    const peerId = isMine ? (msg.recipientId ?? activePeerId) : msg.senderId;
+    const peerId = isMine
+      ? (msg.recipientId ?? getActivePeerId())
+      : msg.senderId;
 
     // Recipient-side delivery semantics fire regardless of cache state —
     // the server expects the delivered-ack and the auto mark-read even when
@@ -65,7 +63,7 @@ export async function dispatchEvent(
     if (!isMine && sendFrame) {
       sendFrame({ type: "delivered-ack", messageId: msg.id });
     }
-    if (!isMine && msg.senderId === activePeerId) {
+    if (!isMine && msg.senderId === getActivePeerId()) {
       qc.setQueryData(["conversations"], (old: unknown) => {
         const list = (old ?? []) as Record<string, unknown>[];
         return list.map((c) => {

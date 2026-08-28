@@ -2,6 +2,8 @@
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ChatLinkCard } from "@/components/ChatLinkCard";
+import { extractLinks } from "@/lib/chat/link-preview";
 import { useAutoScroll } from "@/hooks/useAutoScroll";
 import type { RoomChatMessage } from "@/hooks/rtc/useRoomChat";
 
@@ -54,6 +56,11 @@ export function StreamChatPanel({
             <div key={m.id} className="py-1 text-sm leading-snug">
               <span className="font-semibold text-white">{m.senderName}</span>
               <span className="ml-1.5 text-neutral-300">{m.text}</span>
+              {extractLinks(m.text).map((link) => (
+                <div key={link.url} className="mt-1">
+                  <ChatLinkCard url={link.url} clickable={link.clickable} />
+                </div>
+              ))}
             </div>
           ))
         )}

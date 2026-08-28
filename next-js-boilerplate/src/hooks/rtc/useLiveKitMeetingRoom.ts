@@ -6,6 +6,7 @@ import {
   RoomEvent,
   Track,
   ConnectionQuality,
+  DisconnectReason,
   type Participant,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
@@ -28,6 +29,10 @@ export interface MeetingParticipantView {
 
 export interface UseLiveKitMeetingRoomResult {
   connected: boolean;
+  /** The server kicked THIS connection because the same user joined the
+   *  room again elsewhere (second tab/window/device). LiveKit allows one
+   *  live connection per identity per room — the newest join wins. */
+  duplicateKicked: boolean;
   participants: MeetingParticipantView[];
   localMicEnabled: boolean;
   localCameraEnabled: boolean;
@@ -81,6 +86,7 @@ export function useLiveKitMeetingRoom(
 ): UseLiveKitMeetingRoomResult {
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
+  const [duplicateKicked, setDuplicateKicked] = useState(false);
   const [participants, setParticipants] = useState<MeetingParticipantView[]>(
     [],
   );
@@ -152,12 +158,16 @@ export function useLiveKitMeetingRoom(
         activeSpeakerIdsRef.current = new Set(speakers.map((s) => s.identity));
         rebuildParticipants();
       })
-      .on(RoomEvent.Disconnected, () => {
+      .on(RoomEvent.Disconnected, (reason) => {
         if (disposed) return;
         telemetry("meeting.livekit.disconnected", {
           exceptionType: "CLIENT_ERROR",
           phase: "connected",
+          metadata: { reason: reason ?? null },
         });
+        if (reason === DisconnectReason.DUPLICATE_IDENTITY) {
+          setDuplicateKicked(true);
+        }
         setConnected(false);
       })
       .on(RoomEvent.Reconnecting, () => {
@@ -200,6 +210,7 @@ export function useLiveKitMeetingRoom(
           return;
         }
         setConnected(true);
+        setDuplicateKicked(false);
         telemetry("meeting.livekit.connected", { phase: "connected" });
         try {
           await room.localParticipant.setMicrophoneEnabled(true);
@@ -327,6 +338,7 @@ export function useLiveKitMeetingRoom(
 
   return {
     connected,
+    duplicateKicked,
     participants,
     localMicEnabled,
     localCameraEnabled,

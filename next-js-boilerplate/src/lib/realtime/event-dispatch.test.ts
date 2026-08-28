@@ -4,8 +4,8 @@ import {
   dispatchEvent,
   trackTempId,
   scheduleSendTimeout,
-  setActivePeerId,
 } from "./event-dispatch";
+import { setActivePeerId } from "./active-peer";
 
 vi.mock("@/api/server/messages/mark-read", () => ({
   markMessagesReadServer: vi.fn().mockResolvedValue({}),

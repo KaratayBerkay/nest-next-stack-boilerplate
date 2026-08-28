@@ -1303,6 +1303,11 @@ export type I18nMessages = {
       "noFriendsToChat": string;
       "startChatting": string;
       "attachmentLimitReached": string;
+      "openLinkHint": string;
+      "linkBlocked": string;
+      "copyLinkAction": string;
+      "chatLinkCopied": string;
+      "chatLinkCopyFailed": string;
     }
 
   "notification": {
@@ -11575,6 +11580,18 @@ export type I18nMessages = {
       "cannotCallSelf": string;
       "myMeetingsTitle": string;
       "noMeetings": string;
+      "activeMeetingsTitle": string;
+      "meetingHistoryTitle": string;
+      "noActiveMeetings": string;
+      "inMeetingCount": string;
+      "attendedCount": string;
+      "hostedByYou": string;
+      "hostedBy": string;
+      "joinedAtTime": string;
+      "meetingTimerLabel": string;
+      "shareMeeting": string;
+      "micOnStatus": string;
+      "micOffStatus": string;
       "createMeetingFailed": string;
       "newMeeting": string;
       "newMeetingTitle": string;
@@ -11612,6 +11629,7 @@ export type I18nMessages = {
       "meetingEndedNotice": string;
       "meetingRemovedNotice": string;
       "meetingLimitWarning": string;
+      "meetingOpenedElsewhere": string;
       "youLabel": string;
       "backToMeetings": string;
       "goLive": string;
@@ -11642,8 +11660,16 @@ export type I18nMessages = {
       "invite": string;
       "invited": string;
       "inviteFailed": string;
+      "inviteFriendsLabel": string;
+      "searchFriendsPlaceholder": string;
+      "noFriendsMatch": string;
+      "createAndJoin": string;
+      "inviteSomeFailed": string;
+      "removeInvitee": string;
       "close": string;
       "reportTitle": string;
+      "reportSubtitle": string;
+      "reportDetailsLabel": string;
       "reportReasonLabel": string;
       "reportReasonHarassment": string;
       "reportReasonSpam": string;

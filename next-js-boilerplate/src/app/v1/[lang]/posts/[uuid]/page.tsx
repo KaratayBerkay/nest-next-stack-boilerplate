@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { graphqlFetch } from "@/lib/backend";
 import { POST_QUERY } from "@/lib/graphql/queries";
 import { FreePageView } from "@/views/posts/[uuid]/FreePageView";
@@ -44,7 +44,7 @@ export default async function PostPage({ params }: PostPageProps) {
   const { uuid } = await params;
   const token = await getAccessToken();
   const [user, postRes] = await Promise.all([
-    getSessionUser(),
+    requireSessionUser(),
     graphqlFetch<{ post: unknown }>(
       POST_QUERY,
       { id: uuid },
@@ -58,7 +58,7 @@ export default async function PostPage({ params }: PostPageProps) {
     notFound();
   }
 
-  return getTierView(user!.tier, VIEWS, {
+  return getTierView(user.tier, VIEWS, {
     initialPostData: postRes.data.post,
   });
 }

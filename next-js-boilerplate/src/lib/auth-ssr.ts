@@ -1,6 +1,8 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { LOGIN_PATH } from "@/constants/routes";
 import { SESSION_USER_COOKIE } from "@/lib/cookie";
 import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
 import { ME_QUERY } from "@/lib/graphql/queries";
@@ -60,3 +62,16 @@ export const getSessionUser = cache(async (): Promise<User | null> => {
 
   return cookieUser ? { ...cookieUser, ...me } : me;
 });
+
+/**
+ * getSessionUser for pages that cannot render without a session: a missing
+ * session redirects to the login page instead of returning null. The
+ * tier-gated pages previously did `user!.tier`, which turned every
+ * logged-out visit into a server-side crash — the redirect is the answer
+ * all of them intended.
+ */
+export async function requireSessionUser(): Promise<User> {
+  const user = await getSessionUser();
+  if (!user) redirect(LOGIN_PATH);
+  return user;
+}

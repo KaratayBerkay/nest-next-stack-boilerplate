@@ -1,5 +1,6 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHash } from 'node:crypto';
 import { StorageCryptoService } from './storage-crypto.service';
 
 function buildService(masterKey?: string) {
@@ -21,6 +22,27 @@ describe('StorageCryptoService', () => {
     expect(service.decryptFromStorage('u1', envelope)).toEqual({
       text: 'hello at rest',
       nested: { n: 1 },
+    });
+  });
+
+  it('explicit sha256("<ENCRYPTION_KEY>:storage") hex key decrypts fallback-encrypted data', () => {
+    // Locks in the production migration: MESSAGE_STORAGE_MASTER_KEY set to the
+    // hex the dev fallback was deriving must be byte-identical to that
+    // fallback, so pre-existing ciphertext survives the env change.
+    const ek = 'test-encryption-key-123';
+    const fallback = new StorageCryptoService(
+      new ConfigService({ ENCRYPTION_KEY: ek }),
+    );
+    const derivedHex = createHash('sha256')
+      .update(`${ek}:storage`)
+      .digest('hex');
+    const explicit = buildService(derivedHex);
+
+    const envelope = fallback.encryptForStorage('u1', {
+      text: 'survives the env migration',
+    });
+    expect(explicit.decryptFromStorage('u1', envelope)).toEqual({
+      text: 'survives the env migration',
     });
   });
 

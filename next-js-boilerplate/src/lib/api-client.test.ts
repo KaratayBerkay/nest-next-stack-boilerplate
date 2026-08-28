@@ -64,6 +64,48 @@ describe("apiFetch", () => {
       window.removeEventListener("auth:logout", onLogout);
     }
   });
+
+  it("dispatches auth:logout despite suppressGlobalLogout when the refresh endpoint rejects the session", async () => {
+    const onLogout = vi.fn();
+    window.addEventListener("auth:logout", onLogout);
+    // request 401 → refresh answers a definitive 401 (dead refresh token)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response(401))
+      .mockResolvedValueOnce(response(401));
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      const res = await apiFetch("/api/thing", undefined, {
+        suppressGlobalLogout: true,
+      });
+      expect(res.status).toBe(401);
+      expect(onLogout).toHaveBeenCalledTimes(1);
+    } finally {
+      window.removeEventListener("auth:logout", onLogout);
+    }
+  });
+
+  it("honors suppressGlobalLogout when the refresh failure is transient", async () => {
+    const onLogout = vi.fn();
+    window.addEventListener("auth:logout", onLogout);
+    // request 401 → refresh fails with a 500 (backend hiccup, not a dead session)
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(response(401))
+      .mockResolvedValueOnce(response(500));
+    vi.stubGlobal("fetch", fetchMock);
+
+    try {
+      const res = await apiFetch("/api/thing", undefined, {
+        suppressGlobalLogout: true,
+      });
+      expect(res.status).toBe(401);
+      expect(onLogout).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener("auth:logout", onLogout);
+    }
+  });
 });
 
 describe("apiFetchJson", () => {

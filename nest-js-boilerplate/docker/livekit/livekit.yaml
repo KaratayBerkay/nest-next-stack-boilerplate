@@ -10,6 +10,14 @@ rtc:
   # with real devices, set to true and provide node_ip with the host's real
   # LAN/public IP so clients receive routable ICE candidates.
   use_external_ip: false
+  # network_mode: host means LiveKit sees every host interface — including
+  # the docker bridges (docker0 + per-compose br-* at 172.17-19.0.1). Those
+  # addresses are unreachable for every real client, yet they were being
+  # advertised as ICE candidates, producing constant "ice reconnected or
+  # switched pair" flapping across the four interfaces during live calls.
+  # Only advertise addresses a client could actually route to.
+  ips:
+    excludes: ["172.16.0.0/12"]
 # livekit runs with network_mode: host (see docker-compose.yml), so it has
 # no Docker-internal DNS — every other service must be addressed via
 # localhost + its published host port, not its compose service name.

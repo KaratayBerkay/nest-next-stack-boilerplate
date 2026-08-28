@@ -1,4 +1,5 @@
 import type { useQueryClient } from "@tanstack/react-query";
+import { getActivePeerId } from "@/lib/realtime/active-peer";
 
 type ConversationPatch = Record<string, unknown> & {
   user?: { id?: string };
@@ -11,6 +12,20 @@ export function patchConversationList(
 ): void {
   const peerId = (conversation.user as { id?: string } | undefined)?.id;
   if (!peerId) return;
+
+  // A row for the thread the user is looking at is never unread: incoming
+  // messages there are auto-marked read on arrival (event-dispatch), but the
+  // server's Conversation renew is emitted at send time with the incremented
+  // count and can land after the local unread:0 patch — without this clamp
+  // the header/sidebar badges flash on until the mark-read round-trip's
+  // reset renew catches up.
+  if (
+    peerId === getActivePeerId() &&
+    typeof conversation.unread === "number" &&
+    conversation.unread > 0
+  ) {
+    conversation = { ...conversation, unread: 0 };
+  }
 
   // Never decrypt previews here — the server delivers plaintext
   // bodies in the conversation list. Encrypted envelopes stay as
@@ -75,8 +90,7 @@ export async function dispatchRenew(
         } else {
           qc.setQueryData(["notifications", "list"], (old: unknown) => {
             const data = old as
-              | { pages: { items: Record<string, unknown>[] }[] }
-              | undefined;
+              { pages: { items: Record<string, unknown>[] }[] } | undefined;
             if (!data?.pages?.length) return old;
             const item = frame.item as Record<string, unknown>;
             if (data.pages[0].items.some((n) => n.id === item.id)) return old;

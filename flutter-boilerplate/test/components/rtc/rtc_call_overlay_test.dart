@@ -28,4 +28,20 @@ void main() {
       );
     });
   });
+
+  // Mirror of the web overlay's formatCallTimer: the tier-scaled duration
+  // cap (10/25/45/120 min, min of the two parties) must be visible during
+  // the call as "elapsed / limit".
+  group('formatCallTimer', () {
+    test('formats elapsed / limit when a cap is known', () {
+      expect(formatCallTimer(137, 10), '2:17 / 10:00');
+      expect(formatCallTimer(0, 25), '0:00 / 25:00');
+      expect(formatCallTimer(3599, 120), '59:59 / 120:00');
+    });
+
+    test('falls back to elapsed alone without a cap', () {
+      expect(formatCallTimer(137, null), '2:17');
+      expect(formatCallTimer(137, 0), '2:17');
+    });
+  });
 }

@@ -168,9 +168,7 @@ export class StripeWebhookController {
             subscriptionPeriodEnd: periodEnd,
             // Never null out an existing subscription with a non-subscription
             // invoice (e.g. a setup intent invoice).
-            ...(subscriptionId
-              ? { stripeSubscriptionId: subscriptionId }
-              : {}),
+            ...(subscriptionId ? { stripeSubscriptionId: subscriptionId } : {}),
           },
         });
       }

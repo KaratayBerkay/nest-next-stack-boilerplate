@@ -116,11 +116,18 @@ export async function apiFetch(
     if (refreshed.ok) {
       res = await fetch(resolvedInput, mergedInit);
     }
-    // Background/best-effort widgets (unread badges, etc.) opt out: a single
-    // failed poll shouldn't nuke a session that's otherwise fine — this was
-    // observed forcing a full logout seconds after a successful login when
-    // the conversations badge's very first fetch raced the fresh session.
-    if (res.status === 401 && !options?.suppressGlobalLogout) {
+    // The refresh endpoint itself answering 401/403 is a *definitive* dead
+    // session — no retry can revive it, so it must end the session even for
+    // opted-out callers below (observed live: a stale tab's active-call and
+    // usage polls suppressed logout and kept hammering the backend with a
+    // dead session for minutes on end).
+    const sessionDead = refreshed.status === 401 || refreshed.status === 403;
+    // Background/best-effort widgets (unread badges, etc.) opt out of the
+    // ambiguous case only: a single failed poll shouldn't nuke a session
+    // that's otherwise fine — this was observed forcing a full logout seconds
+    // after a successful login when the conversations badge's very first
+    // fetch raced the fresh session.
+    if (res.status === 401 && (sessionDead || !options?.suppressGlobalLogout)) {
       window.dispatchEvent(new CustomEvent("auth:logout"));
     }
   }

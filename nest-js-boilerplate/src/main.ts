@@ -15,6 +15,7 @@ import { Logger } from 'nestjs-pino';
 import { AppModule, isDemoEnabled } from './app.module';
 import { internalGrpcOptions } from './grpc/grpc.module';
 import { requestContextMiddleware } from './logging/request-context';
+import { scannerFilterMiddleware } from './common/scanner-filter/scanner-filter.middleware';
 import { DeviceIpMiddleware } from './devices/device-ip-middleware';
 import { PerformanceInterceptor } from './interceptors/performance.interceptor';
 import { IdCodecInterceptor } from './common/id-codec/id-codec.interceptor';
@@ -95,6 +96,11 @@ async function bootstrap() {
   // First in the chain: mint/propagate the per-request correlation id (x-request-id) and put
   // it in AsyncLocalStorage before anything logs, so every line for the request shares it.
   app.use(requestContextMiddleware);
+
+  // Answer vulnerability-scanner probes (root-level *.php, wp-*, /.env …)
+  // with a bare 404 before they cost helmet/cookie/compression/guard work or
+  // pollute the request logs — ~300/day observed from cloud-hosted scanners.
+  app.use(scannerFilterMiddleware);
 
   // Global middleware. NOTE: under module:nodenext + esModuleInterop these CommonJS packages
   // must use default imports (`import x from 'x'`) — `import * as x` is not callable (TS2349).

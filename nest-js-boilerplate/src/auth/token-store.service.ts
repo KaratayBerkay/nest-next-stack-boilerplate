@@ -176,12 +176,7 @@ export class TokenStoreService {
 
   /** Extend TTL on the session key (sliding expiration — called on each authenticated request). */
   async extendTTL(key: string): Promise<void> {
-    const [sessionId, userId, deviceId] = await this.redis.hmget(
-      key,
-      'sessionId',
-      'userId',
-      'deviceId',
-    );
+    const [sessionId] = await this.redis.hmget(key, 'sessionId');
     const pipe = this.redis.multi();
     pipe.expire(key, this.ttl);
     if (sessionId) {

@@ -13,20 +13,44 @@ function transformLeaf(value: unknown, fn: (s: string) => string): unknown {
   return value;
 }
 
+/**
+ * `ancestors` tracks the CURRENT recursion path (entries are added before
+ * descending and removed after), so a true cycle — an object that contains
+ * itself — is cut by returning the reference untransformed, while a shared
+ * "diamond" reference (the same object reachable via two sibling paths) is
+ * still transformed everywhere it appears. A cyclic graph can never be a
+ * serializable payload anyway; before this guard the walker recursed until
+ * RangeError. Hit live by Express's req<->res<->socket graph: a @Res()
+ * controller (LiveKit/Stripe webhooks) returns the Response object for
+ * chaining, and the response-side deepEncryptIds walked it after the real
+ * body had already been flushed — every webhook logged a phantom 500.
+ */
 function walk(
   value: unknown,
   safeNames: Set<string>,
   fn: (s: string) => string,
+  ancestors: WeakSet<object>,
 ): unknown {
   if (value === null || value === undefined || value instanceof Date) {
     return value;
   }
-  if (Array.isArray(value)) return value.map((v) => walk(v, safeNames, fn));
+  if (Array.isArray(value)) {
+    if (ancestors.has(value)) return value;
+    ancestors.add(value);
+    const out = value.map((v) => walk(v, safeNames, fn, ancestors));
+    ancestors.delete(value);
+    return out;
+  }
   if (typeof value === 'object') {
+    if (ancestors.has(value)) return value;
+    ancestors.add(value);
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      out[k] = safeNames.has(k) ? transformLeaf(v, fn) : walk(v, safeNames, fn);
+      out[k] = safeNames.has(k)
+        ? transformLeaf(v, fn)
+        : walk(v, safeNames, fn, ancestors);
     }
+    ancestors.delete(value);
     return out;
   }
   return value;
@@ -44,7 +68,7 @@ function walk(
  */
 export function deepDecryptIds(value: unknown): unknown {
   const { globalSafeNames } = getUuidFieldSets();
-  return walk(value, globalSafeNames, decryptId);
+  return walk(value, globalSafeNames, decryptId, new WeakSet());
 }
 
 /**
@@ -60,13 +84,18 @@ export function deepDecryptIds(value: unknown): unknown {
  */
 export function bestEffortDecryptIds(value: unknown): unknown {
   const { globalSafeNames } = getUuidFieldSets();
-  return walk(value, globalSafeNames, (s) => {
-    try {
-      return decryptId(s);
-    } catch {
-      return s;
-    }
-  });
+  return walk(
+    value,
+    globalSafeNames,
+    (s) => {
+      try {
+        return decryptId(s);
+      } catch {
+        return s;
+      }
+    },
+    new WeakSet(),
+  );
 }
 
 /**
@@ -77,7 +106,7 @@ export function bestEffortDecryptIds(value: unknown): unknown {
  */
 export function deepEncryptIds(value: unknown): unknown {
   const { globalSafeNames } = getUuidFieldSets();
-  return walk(value, globalSafeNames, encryptId);
+  return walk(value, globalSafeNames, encryptId, new WeakSet());
 }
 
 /**

@@ -64,5 +64,10 @@
   "newMessage": "New message",
   "noFriendsToChat": "No friends to message yet",
   "startChatting": "Say hi to start chatting",
-  "attachmentLimitReached": "Only {count} attachments can be sent at once"
+  "attachmentLimitReached": "Only {count} attachments can be sent at once",
+  "openLinkHint": "Opens in a new tab",
+  "linkBlocked": "Link disabled for safety",
+  "copyLinkAction": "Copy link",
+  "chatLinkCopied": "Link copied",
+  "chatLinkCopyFailed": "Couldn't copy the link"
 }

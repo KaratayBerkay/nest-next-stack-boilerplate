@@ -33,12 +33,7 @@ interface CookieCarrier {
 }
 
 type PrismaDeviceType =
-  | 'WEB'
-  | 'MOBILE_IOS'
-  | 'MOBILE_ANDROID'
-  | 'DESKTOP'
-  | 'API'
-  | 'CLI';
+  'WEB' | 'MOBILE_IOS' | 'MOBILE_ANDROID' | 'DESKTOP' | 'API' | 'CLI';
 
 @Injectable()
 export class DeviceService {

@@ -6,8 +6,9 @@ import { RedisModule } from '../redis/redis.module';
 import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
 import { NotificationModule } from '../notification/notification.module';
 import { FriendsModule } from '../friends/friends.module';
+import { MailModule } from '../mail/mail.module';
 import { LiveKitService } from './livekit.service';
-import { RtcResolver } from './rtc.resolver';
+import { RtcMeetingResolver, RtcResolver } from './rtc.resolver';
 import { RtcController } from './rtc.controller';
 import { RtcWebhookController } from './rtc-webhook.controller';
 import { RtcCallService } from './rtc-call.service';
@@ -30,11 +31,13 @@ import { RtcErrorInterceptor } from './rtc-error.interceptor';
     WireCryptoModule,
     NotificationModule,
     FriendsModule,
+    MailModule,
   ],
   controllers: [RtcWebhookController, RtcController],
   providers: [
     LiveKitService,
     RtcResolver,
+    RtcMeetingResolver,
     RtcCallService,
     RtcCallWsGateway,
     RtcMeetingService,

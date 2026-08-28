@@ -646,7 +646,9 @@ export class UploadController {
   private async readBodyStream(req: Request): Promise<Buffer> {
     const chunks: Buffer[] = [];
     let size = 0;
-    for await (const chunk of req) {
+    // Readable's async iterator is typed `any`; a body stream with no
+    // encoding set yields Buffers (string only if one were ever set).
+    for await (const chunk of req as AsyncIterable<Buffer | string>) {
       const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
       size += buf.length;
       if (size > MAX_FILE_SIZE_BYTES) {

@@ -61,7 +61,13 @@ services:
   # LiveKit's own rtc.* config below is its built-in TURN/STUN.
   # ──────────────────────────────────────────────────────
   livekit:
-    image: livekit/livekit-server:v1.8
+    # v1.8 predates the data-track feature the current JS SDK (livekit-client
+    # 2.22, protocol 17) negotiates at join — the server warned "unsupported
+    # datachannel added: _data_track" on every publisher connection, and each
+    # client bailed into a full reconnect exactly 15s (the SDK's
+    # peerConnectionTimeout) after joining. Data tracks are served natively
+    # since v1.11.
+    image: livekit/livekit-server:v1.13.6
     restart: unless-stopped
     # host networking, not bridge+ports like this file's other services:
     # the 10k-port UDP media range below can't be reliably bridge-mapped

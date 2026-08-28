@@ -8,6 +8,8 @@ import {
   formatDateTimeShort,
   formatDateByPreference,
   formatDateTimeByPreference,
+  formatDurationShort,
+  formatTimeShort,
   getCurrentLocale,
   type DateDisplayPreference,
 } from "./date-time";
@@ -136,5 +138,38 @@ describe("formatDateTimeByPreference", () => {
     expect(formatDateTimeByPreference(d, "short", "en-US")).toBe(
       formatDateTimeShort(d, "en-US"),
     );
+  });
+});
+
+describe("formatTimeShort", () => {
+  it("formats using Intl's short time style, no date part", () => {
+    const d = new Date(2026, 6, 9, 14, 5);
+    const expected = new Intl.DateTimeFormat("en-US", {
+      timeStyle: "short",
+    }).format(d);
+    expect(formatTimeShort(d, "en-US")).toBe(expected);
+    expect(formatTimeShort(d, "en-US")).not.toContain("2026");
+  });
+});
+
+describe("formatDurationShort", () => {
+  const start = new Date("2026-08-28T10:00:00Z");
+  const at = (ms: number) => new Date(start.getTime() + ms);
+
+  it("renders sub-minute spans in seconds", () => {
+    expect(formatDurationShort(start, at(45_000))).toBe("45s");
+  });
+
+  it("renders minute spans", () => {
+    expect(formatDurationShort(start, at(42 * 60_000))).toBe("42m");
+  });
+
+  it("renders hour spans with and without a minute remainder", () => {
+    expect(formatDurationShort(start, at(72 * 60_000))).toBe("1h 12m");
+    expect(formatDurationShort(start, at(120 * 60_000))).toBe("2h");
+  });
+
+  it("clamps a negative span to 0s instead of rendering nonsense", () => {
+    expect(formatDurationShort(at(5_000), start)).toBe("0s");
   });
 });

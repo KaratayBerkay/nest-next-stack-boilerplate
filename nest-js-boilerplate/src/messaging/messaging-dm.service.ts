@@ -91,7 +91,9 @@ export class MessagingDmService {
         text?: string;
       };
       return decrypted.text ?? '';
-    } catch {}
+    } catch {
+      // Not room-keyed — fall through to the sender-key candidate.
+    }
     try {
       const senderId = msg.senderId || userId;
       const decrypted = this.storageCrypto.decryptFromStorage(
@@ -99,14 +101,18 @@ export class MessagingDmService {
         envelope,
       ) as { text?: string };
       return decrypted.text ?? '';
-    } catch {}
+    } catch {
+      // Not sender-keyed — fall through to the reader-key candidate.
+    }
     try {
       const decrypted = this.storageCrypto.decryptFromStorage(
         userId,
         envelope,
       ) as { text?: string };
       return decrypted.text ?? '';
-    } catch {}
+    } catch {
+      // Last candidate exhausted — handled by the logging below.
+    }
     // All three keys (room, sender, reader) failed. Falling back through
     // legacy envelope formats is expected to fail once or twice on old
     // messages, but exhausting every candidate key is not — it almost always

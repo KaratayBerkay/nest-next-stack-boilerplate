@@ -8,6 +8,6 @@ export interface IconButtonProps extends Omit<
   icon: React.ReactNode;
   label: string;
   variant?: Variant;
-  size?: Extract<Size, "icon" | "icon-sm" | "icon-xs">;
+  size?: Extract<Size, "icon" | "icon-lg" | "icon-sm" | "icon-xs">;
   loading?: boolean;
 }

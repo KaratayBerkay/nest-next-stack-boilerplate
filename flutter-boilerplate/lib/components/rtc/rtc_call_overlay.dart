@@ -36,6 +36,23 @@ String callErrorMessage(String reason, AppLocalizations t) {
   }
 }
 
+/// In-call timer readout — mirror of the web overlay's formatCallTimer.
+/// Calls are duration-capped by the lower of the two parties' tiers
+/// (10/25/45/120 min, backend CALL_MAX_DURATION_MINUTES), and the cap
+/// arrives on rtc:accepted as maxDurationMinutes — when present the timer
+/// reads "2:17 / 10:00" so the remaining allowance stays visible.
+String formatCallTimer(int elapsedSeconds, int? maxDurationMinutes) {
+  final elapsed = _formatMmSs(elapsedSeconds);
+  if (maxDurationMinutes == null || maxDurationMinutes <= 0) return elapsed;
+  return '$elapsed / ${_formatMmSs(maxDurationMinutes * 60)}';
+}
+
+String _formatMmSs(int totalSeconds) {
+  final mins = totalSeconds ~/ 60;
+  final secs = totalSeconds % 60;
+  return '$mins:${secs.toString().padLeft(2, '0')}';
+}
+
 /// Global overlay for the whole 1:1-call lifecycle — incoming-ring sheet,
 /// outgoing-ring/connecting screen, and the in-call video/audio + controls.
 /// Mounted once at the app root (app.dart), same level as the biometric-lock
@@ -583,14 +600,8 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
     super.dispose();
   }
 
-  static String _formatDuration(int totalSeconds) {
-    final mins = totalSeconds ~/ 60;
-    final secs = totalSeconds % 60;
-    return '$mins:${secs.toString().padLeft(2, '0')}';
-  }
-
   /// Same status ladder as the web overlay: cancelling → calling → connecting
-  /// → waiting for peer → running duration.
+  /// → waiting for peer → running "elapsed / limit" timer.
   String _statusText() {
     final state = widget.state;
     final t = widget.t;
@@ -603,7 +614,7 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
     if (!widget.remoteConnected) {
       return t.rtcWaitingForPeer(state.peer?.name ?? '');
     }
-    return _formatDuration(_durationSeconds);
+    return formatCallTimer(_durationSeconds, state.livekit?.maxDurationMinutes);
   }
 
   @override

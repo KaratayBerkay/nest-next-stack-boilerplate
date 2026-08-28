@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LiveKitService } from './livekit.service';
+import { LiveKitService, toLivekitRoomName } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs } from '../realtime/realtime.types';
 import { RtcChatService } from './rtc-chat.service';
@@ -98,7 +98,7 @@ export class RtcStreamService {
       return room.id;
     });
 
-    const livekitRoomName = `stream-${roomId}`;
+    const livekitRoomName = toLivekitRoomName('stream', roomId);
     try {
       await this.liveKit.createRoom(livekitRoomName);
     } catch (error) {
@@ -245,16 +245,26 @@ export class RtcStreamService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    await this.prisma.rtcParticipant.upsert({
-      where: { roomId_userId: { roomId: stream.roomId, userId } },
-      create: {
-        roomId: stream.roomId,
-        userId,
-        role: RtcParticipantRole.VIEWER,
-        livekitIdentity: userId,
-      },
-      update: { leftAt: null, joinedAt: new Date() },
-    });
+    // The broadcaster opening their own stream's viewer page must not run
+    // the viewer side effects: the upsert would overwrite their BROADCASTER
+    // row's joinedAt, the viewer-joined broadcast/peak bump would count them
+    // as their own audience, and the leaveStreamAsViewer that follows that
+    // page would stamp their leftAt — silently cutting them off from their
+    // own chat (isActiveParticipant guards every chat op on leftAt).
+    const isBroadcaster = userId === stream.broadcasterId;
+
+    if (!isBroadcaster) {
+      await this.prisma.rtcParticipant.upsert({
+        where: { roomId_userId: { roomId: stream.roomId, userId } },
+        create: {
+          roomId: stream.roomId,
+          userId,
+          role: RtcParticipantRole.VIEWER,
+          livekitIdentity: userId,
+        },
+        update: { leftAt: null, joinedAt: new Date() },
+      });
+    }
 
     let token: string;
     try {
@@ -278,31 +288,33 @@ export class RtcStreamService {
       throw error;
     }
 
-    const viewerCount = await this.getViewerCount(stream);
-    if (viewerCount > stream.peakViewerCount) {
-      await this.prisma.liveStream.update({
-        where: { id: stream.id },
-        data: { peakViewerCount: viewerCount },
-      });
-    }
+    if (!isBroadcaster) {
+      const viewerCount = await this.getViewerCount(stream);
+      if (viewerCount > stream.peakViewerCount) {
+        await this.prisma.liveStream.update({
+          where: { id: stream.id },
+          data: { peakViewerCount: viewerCount },
+        });
+      }
 
-    this.realtime.broadcastToRoom(chatChannel(slug), {
-      type: 'rtc:stream-viewer-joined',
-      slug,
-      userId,
-      name: displayName(user),
-      viewerCount,
-    });
-
-    this.logger.log(
-      rtcLog('stream.viewer_joined', {
-        roomId: stream.roomId,
+      this.realtime.broadcastToRoom(chatChannel(slug), {
+        type: 'rtc:stream-viewer-joined',
         slug,
         userId,
+        name: displayName(user),
         viewerCount,
-        phase: RtcRoomState.ACTIVE,
-      }),
-    );
+      });
+
+      this.logger.log(
+        rtcLog('stream.viewer_joined', {
+          roomId: stream.roomId,
+          slug,
+          userId,
+          viewerCount,
+          phase: RtcRoomState.ACTIVE,
+        }),
+      );
+    }
 
     return { token, roomName: stream.room.livekitRoomName!, stream };
   }
@@ -313,6 +325,10 @@ export class RtcStreamService {
       include: { room: true },
     });
     if (!stream) return;
+    // Mirror of joinStreamAsViewer's broadcaster guard: the viewer-leave
+    // path must never stamp leftAt on the broadcaster's own row while
+    // they're live — that row is what keeps their own chat working.
+    if (stream.broadcasterId === userId) return;
     await this.chat.markParticipantLeft(stream.roomId, userId);
     const viewerCount = await this.getViewerCount(stream);
     this.realtime.broadcastToRoom(chatChannel(slug), {
@@ -340,6 +356,10 @@ export class RtcStreamService {
     if (stream.broadcasterId !== userId) {
       throw new ForbiddenException('Only the broadcaster can end this stream');
     }
+    // Already over (LiveKit's room_finished safety net, or a double end-click
+    // racing it) — succeed silently instead of re-running finishStream, which
+    // would re-broadcast rtc:stream-ended to the chat channel.
+    if (!stream.isLive) return;
     await this.finishStream(stream);
   }
 
@@ -453,12 +473,21 @@ export class RtcStreamService {
   ): Promise<void> {
     const stream = await this.prisma.liveStream.findUnique({
       where: { roomId },
+      include: { room: true },
     });
     if (!stream) return;
+    // Must carry viewerCount like leaveStreamAsViewer's broadcast does: the
+    // web hook reads the count off every joined/left frame, and this webhook
+    // path used to omit it — one hard-dropped viewer (tab crash, network cut)
+    // zeroed the visible count for everyone still watching. The departed
+    // viewer is already out of LiveKit's participant list by the time the
+    // participant_left webhook lands, so the read-time count is accurate.
+    const viewerCount = await this.getViewerCount(stream);
     this.realtime.broadcastToRoom(chatChannel(stream.slug), {
       type: 'rtc:stream-viewer-left',
       slug: stream.slug,
       userId: identity,
+      viewerCount,
     });
   }
 

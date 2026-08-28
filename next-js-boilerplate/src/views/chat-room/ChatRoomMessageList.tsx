@@ -4,6 +4,8 @@ import { forwardRef } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { ChatLinkCard } from "@/components/ChatLinkCard";
+import { extractLinks } from "@/lib/chat/link-preview";
 import { LoadEarlierButton } from "@/components/LoadEarlierButton";
 import { initials } from "@/lib/initials";
 import type { ChatRoomMessageListProps } from "@/types/views/chat-room/ChatRoomMessageList-types";
@@ -100,13 +102,20 @@ export const ChatRoomMessageList = forwardRef<
                 </div>
               ) : null}
               {msg.body != null && msg.body !== "" ? (
-                <span
-                  className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
-                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
-                  }`}
-                >
-                  {msg.body}
-                </span>
+                <>
+                  <span
+                    className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
+                      isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                    }`}
+                  >
+                    {msg.body}
+                  </span>
+                  {extractLinks(msg.body).map((link) => (
+                    <div key={link.url} className="mt-1">
+                      <ChatLinkCard url={link.url} clickable={link.clickable} />
+                    </div>
+                  ))}
+                </>
               ) : decryptionFailed ? (
                 <span className="bg-warning/10 text-warning inline-block rounded-xl px-3 py-1.5 text-sm">
                   <span className="inline-flex items-center gap-1.5 text-xs italic">

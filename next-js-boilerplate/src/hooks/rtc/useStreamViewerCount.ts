@@ -24,7 +24,12 @@ export function useStreamViewerCount(slug: string, initial: number) {
     if (!realtime || !slug) return;
     const onCount = (data: Record<string, unknown>) => {
       if (data.slug !== slug) return;
-      setViewerCount(Number(data.viewerCount ?? 0));
+      // Only trust frames that actually carry a count — a joined/left frame
+      // without one (older backend builds omitted it on the webhook-driven
+      // leave path) used to coerce to 0 and zero the visible count for
+      // everyone still watching.
+      if (typeof data.viewerCount !== "number") return;
+      setViewerCount(data.viewerCount);
     };
     const unsubscribers = [
       realtime.subscribe("rtc:stream-viewer-joined", onCount),

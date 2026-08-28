@@ -5,7 +5,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { deepDecryptIds, deepEncryptIds } from './id-codec.util';
@@ -29,7 +29,9 @@ export class IdCodecInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') return next.handle();
 
-    const request = context.switchToHttp().getRequest<Request>();
+    const httpCtx = context.switchToHttp();
+    const request = httpCtx.getRequest<Request>();
+    const response = httpCtx.getResponse<Response>();
     try {
       if (request.body && typeof request.body === 'object') {
         request.body = deepDecryptIds(request.body);
@@ -43,6 +45,17 @@ export class IdCodecInterceptor implements NestInterceptor {
       throw new BadRequestException('Invalid id');
     }
 
-    return next.handle().pipe(map((data) => deepEncryptIds(data)));
+    return next.handle().pipe(
+      map((data: unknown) => {
+        // A @Res() controller (LiveKit/Stripe webhooks) returns the Express
+        // Response object itself — `res.json()` returns `res` for chaining.
+        // That's not a payload (the real body is already flushed by the time
+        // this map runs), and walking it means recursing through the
+        // req<->res<->socket object graph. walk() is cycle-safe now, but
+        // there's still nothing to encode — pass it through untouched.
+        if (data === response) return data;
+        return deepEncryptIds(data);
+      }),
+    );
   }
 }

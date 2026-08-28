@@ -55,6 +55,35 @@ describe('id-codec.util', () => {
     expect(deepDecryptIds(out)).toEqual(input);
   });
 
+  it('cuts a true cycle instead of overflowing the stack — regression for every LiveKit webhook logging a phantom 500: the @Res() controller returns the Express Response, whose req<->res cycle the old walker recursed into until RangeError', () => {
+    const res: Record<string, unknown> = { statusCode: 200 };
+    const req: Record<string, unknown> = { url: '/rtc/webhook/livekit', res };
+    res.req = req;
+    const arr: unknown[] = [UUID_A];
+    arr.push(arr);
+
+    const out = deepEncryptIds(res) as { req: { res: unknown } };
+    // The cyclic back-edge is returned as the original reference, untransformed.
+    expect(out.req.res).toBe(res);
+    expect(() => deepEncryptIds(arr)).not.toThrow();
+    // The decrypt-side walker (request bodies/params) is the same function —
+    // must be equally cycle-safe.
+    expect(() => deepDecryptIds(res)).not.toThrow();
+  });
+
+  it('still transforms a shared (diamond) reference everywhere it appears — cycle-cutting must not skip repeat visits that are not cycles', () => {
+    const author = { id: UUID_A };
+    const input = { post: { author }, comment: { author } };
+    const out = deepEncryptIds(input) as {
+      post: { author: { id: string } };
+      comment: { author: { id: string } };
+    };
+    expect(out.post.author.id).not.toBe(UUID_A);
+    expect(out.comment.author.id).not.toBe(UUID_A);
+    // encryptId is deterministic — both occurrences encode identically.
+    expect(out.post.author.id).toBe(out.comment.author.id);
+  });
+
   it('encryptFieldIfId only transforms a field the given GraphQL type actually owns as a uuid', () => {
     expect(encryptFieldIfId('Post', 'authorId', UUID_A)).not.toBe(UUID_A);
     expect(encryptFieldIfId('RoomMessage', 'roomId', 'general')).toBe(

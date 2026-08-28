@@ -10,6 +10,7 @@ import { useClickOutside } from "@/hooks/useClickOutside";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { conversationPreviewText } from "@/lib/messages/conversation-preview";
 import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { getActivePeerId } from "@/lib/realtime/active-peer";
 import { routeToPageClaim } from "@/lib/realtime/route-mapping";
 import { Avatar } from "@/components/ui/Avatar";
 import { initials } from "@/lib/initials";
@@ -61,6 +62,14 @@ export function MessageDropdown({ conversations, lang }: MessageDropdownProps) {
       const msg = frame.message as
         { id?: string; senderId?: string } | undefined;
       if (!msg?.id || !msg.senderId || msg.senderId === ownUserId) return;
+
+      // Never auto-pop for a thread the user is already looking at: that
+      // message is auto-marked read on arrival (see event-dispatch), so the
+      // popup would open onto "No unread messages". The live signal is
+      // activePeerId — sidebar clicks select a peer without touching the
+      // URL, so the ?user= claim below only covers the deep-link window
+      // before the messages page has resolved the param into a selection.
+      if (getActivePeerId() === msg.senderId) return;
 
       const claim = routeToPageClaim(
         pathnameRef.current,

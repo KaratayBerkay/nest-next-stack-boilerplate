@@ -27,12 +27,20 @@ for svc in $SERVICES; do
   if [ "$http_code" != "200" ]; then
     echo "vault-init: $svc returned HTTP $http_code — writing empty file"
     : > "$outfile"
-    rm -f /tmp/vault_response.json
-    continue
+  else
+    jq -r '.data.data | to_entries | .[] | "\(.key)=\(.value)"' \
+      /tmp/vault_response.json > "$outfile"
   fi
 
-  jq -r '.data.data | to_entries | .[] | "\(.key)=\(.value)"' \
-    /tmp/vault_response.json > "$outfile"
+  # Local, non-Vault overrides: <svc>.env.local is appended after the Vault
+  # values so its keys win (docker env_file: the last occurrence of a key is
+  # the one that counts). For secrets this deploy box's read-only Vault token
+  # cannot write upstream — move them into Vault when a privileged token is
+  # at hand and delete the .local line.
+  if [ -f "/secrets/$svc.env.local" ]; then
+    cat "/secrets/$svc.env.local" >> "$outfile"
+    echo "vault-init: appended $svc.env.local overrides"
+  fi
 
   count=$(wc -l < "$outfile")
   echo "vault-init: wrote $outfile ($count vars)"

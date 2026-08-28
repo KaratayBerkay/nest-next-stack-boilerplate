@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LiveKitService } from './livekit.service';
+import { LiveKitService, toLivekitRoomName } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs } from '../realtime/realtime.types';
 import { RtcChatService } from './rtc-chat.service';
@@ -21,6 +21,8 @@ import {
 } from './rtc-tier-limits.constants';
 import { NotificationService } from '../notification/notification.service';
 import { FriendsService } from '../friends/friends.service';
+import { MailService } from '../mail/mail.service';
+import { ConfigService } from '@nestjs/config';
 import { rtcErrorLog, rtcLog } from './rtc-logger';
 
 export type { RtcChatMessageView as MeetingChatMessageView } from './rtc-chat.service';
@@ -33,6 +35,47 @@ function chatChannel(slug: string): string {
   // Prefixed so this never collides with a chat-room Room.slug, which shares
   // RealtimeGateway's same flat roomSockets keyspace.
   return `rtc-meeting:${slug}`;
+}
+
+/** Shared include/orderBy for loading a room's participant rows with the
+ *  user fields participantSummaries needs — email only feeds the shared
+ *  displayName fallback, and hideAvatar drives the avatar-privacy
+ *  contract. */
+const PARTICIPANTS_WITH_USER = {
+  orderBy: { joinedAt: 'asc' },
+  include: {
+    user: {
+      select: {
+        name: true,
+        email: true,
+        avatarUrl: true,
+        hideAvatar: true,
+      },
+    },
+  },
+} as const;
+
+interface LoadedParticipantRow {
+  userId: string;
+  role: RtcParticipantRole;
+  joinedAt: Date;
+  leftAt: Date | null;
+  user: {
+    name: string | null;
+    email: string;
+    avatarUrl: string | null;
+    hideAvatar: boolean;
+  };
+}
+
+/** Client-safe participant shape exposed on the GraphQL Meeting type. */
+export interface MeetingParticipantSummaryView {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  role: string;
+  joinedAt: Date;
+  leftAt: Date | null;
 }
 
 function generateSlug(): string {
@@ -62,6 +105,8 @@ export class RtcMeetingService {
     private readonly chat: RtcChatService,
     private readonly notifications: NotificationService,
     private readonly friends: FriendsService,
+    private readonly mail: MailService,
+    private readonly config: ConfigService,
   ) {}
 
   async createMeeting(userId: string, title: string) {
@@ -109,7 +154,7 @@ export class RtcMeetingService {
       return room.id;
     });
 
-    const livekitRoomName = `meeting-${roomId}`;
+    const livekitRoomName = toLivekitRoomName('meeting', roomId);
     try {
       await this.liveKit.createRoom(livekitRoomName, maxParticipants);
     } catch (error) {
@@ -155,12 +200,63 @@ export class RtcMeetingService {
   }
 
   async myMeetings(userId: string) {
-    return this.prisma.meeting.findMany({
-      where: { hostId: userId },
+    // Hosted OR attended — the meetings page shows a history section, and a
+    // history that omits every meeting you joined but didn't host is useless
+    // to non-hosts. Participants come along preloaded so the list's
+    // `participants` GraphQL field (see participantSummaries) resolves
+    // without an N+1 per meeting.
+    const meetings = await this.prisma.meeting.findMany({
+      where: {
+        OR: [
+          { hostId: userId },
+          { room: { participants: { some: { userId } } } },
+        ],
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
-      include: { room: true, host: true },
+      include: {
+        room: { include: { participants: PARTICIPANTS_WITH_USER } },
+        host: true,
+      },
     });
+    // The preloaded rows must NOT ride out on `room.participants`: the
+    // generated RtcRoom GraphQL type exposes `participants { user { … } }`,
+    // so leaving them there hands any client that selects that path every
+    // co-attendee's email, their avatarUrl even with hideAvatar set, and the
+    // raw-uuid livekitIdentity column (not in the id-codec field set).
+    // Re-keyed onto a schema-invisible property that only the
+    // MeetingParticipantSummary ResolveField reads; `room.participants`
+    // stays unloaded, exactly as every other meeting query returns it.
+    return meetings.map(({ room, ...meeting }) => {
+      const { participants, ...roomRest } = room;
+      return { ...meeting, room: roomRest, participantRows: participants };
+    });
+  }
+
+  /** Maps a meeting's participant rows to the client-safe summary shape —
+   *  display name resolved server-side and the hideAvatar contract applied.
+   *  Reads rows preloaded by myMeetings when present (participantRows, a
+   *  deliberately non-GraphQL-visible key); any other parent
+   *  (join/create/bySlug results, where the web doesn't select
+   *  `participants` today) falls back to one query. */
+  async participantSummaries(meeting: {
+    roomId: string;
+    participantRows?: LoadedParticipantRow[];
+  }): Promise<MeetingParticipantSummaryView[]> {
+    const rows =
+      meeting.participantRows ??
+      (await this.prisma.rtcParticipant.findMany({
+        where: { roomId: meeting.roomId },
+        ...PARTICIPANTS_WITH_USER,
+      }));
+    return rows.map((p) => ({
+      userId: p.userId,
+      name: displayName(p.user),
+      avatarUrl: p.user.hideAvatar ? null : (p.user.avatarUrl ?? null),
+      role: p.role,
+      joinedAt: p.joinedAt,
+      leftAt: p.leftAt,
+    }));
   }
 
   async joinMeeting(userId: string, slug: string) {
@@ -274,7 +370,7 @@ export class RtcMeetingService {
     slug: string,
     targetUserId: string,
   ): Promise<void> {
-    const meeting = await this.activeParticipant(inviterId, slug);
+    const meeting = await this.activeParticipantOrHost(inviterId, slug);
     if (!meeting) {
       throw new NotFoundException('Meeting not found or already ended');
     }
@@ -288,14 +384,21 @@ export class RtcMeetingService {
       where: { id: inviterId },
       select: { name: true, email: true },
     });
+    const inviterName = displayName(
+      inviter ?? { name: null, email: 'Someone' },
+    );
     await this.notifications.create({
       userId: targetUserId,
       actorId: inviterId,
       type: 'MEETING_INVITE',
-      title: `${displayName(inviter ?? { name: null, email: 'Someone' })} invited you to a meeting`,
+      title: `${inviterName} invited you to a meeting`,
       body: meeting.title,
       payload: { kind: 'rtc-meeting-invite', slug },
     });
+    // Invite email rides the outbox queue, fire-and-forget: a mail hiccup
+    // must never fail the invite itself (the in-app notification above is
+    // the primary channel).
+    void this.sendInviteEmail(targetUserId, inviterName, meeting.title, slug);
     this.logger.log(
       rtcLog('meeting.invite_sent', {
         slug,
@@ -304,6 +407,37 @@ export class RtcMeetingService {
         phase: RtcRoomState.ACTIVE,
       }),
     );
+  }
+
+  private async sendInviteEmail(
+    targetUserId: string,
+    inviterName: string,
+    meetingTitle: string,
+    slug: string,
+  ): Promise<void> {
+    try {
+      const target = await this.prisma.user.findUnique({
+        where: { id: targetUserId },
+        select: { email: true },
+      });
+      if (!target?.email) return;
+      // Templates are English-only app-wide, so the /en/ route matches.
+      const url = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/v1/en/rtc/meetings/${slug}`;
+      await this.mail.enqueue({
+        to: target.email,
+        userId: targetUserId,
+        subject: `${inviterName} invited you to a meeting`,
+        template: 'meeting-invite',
+        variables: { url, inviterName, meetingTitle },
+      });
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('meeting.invite_email_failed', error, {
+          slug,
+          participantId: targetUserId,
+        }),
+      );
+    }
   }
 
   async leaveMeeting(userId: string, slug: string): Promise<void> {
@@ -545,12 +679,32 @@ export class RtcMeetingService {
   }
 
   private async mustFindActiveMeeting(slug: string) {
+    // `host` must be loaded here: joinMeeting returns this object through
+    // GraphQL, where Meeting.host is non-nullable — omitting the include
+    // made every join die with "Cannot return null for ... Meeting.host".
+    const meeting = await this.prisma.meeting.findUnique({
+      where: { slug },
+      include: { room: true, host: true },
+    });
+    if (meeting?.room.state !== RtcRoomState.ACTIVE) {
+      throw new NotFoundException('Meeting not found or already ended');
+    }
+    return meeting;
+  }
+
+  /** Invite guard: any active participant may invite, and so may the host
+   *  of a still-active meeting even before joining it — the create-meeting
+   *  flow sends its invites right after createMeeting resolves, before the
+   *  host's own join lands. */
+  private async activeParticipantOrHost(userId: string, slug: string) {
     const meeting = await this.prisma.meeting.findUnique({
       where: { slug },
       include: { room: true },
     });
-    if (meeting?.room.state !== RtcRoomState.ACTIVE) {
-      throw new NotFoundException('Meeting not found or already ended');
+    if (meeting?.room.state !== RtcRoomState.ACTIVE) return null;
+    if (meeting.hostId === userId) return meeting;
+    if (!(await this.chat.isActiveParticipant(meeting.roomId, userId))) {
+      return null;
     }
     return meeting;
   }

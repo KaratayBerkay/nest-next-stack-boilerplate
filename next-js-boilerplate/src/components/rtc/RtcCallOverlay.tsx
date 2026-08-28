@@ -14,8 +14,10 @@ import { Avatar } from "@/components/ui/Avatar";
 import { IconButton } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { useToast } from "@/components/ui/Toast";
+import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { useRtcCall } from "@/lib/rtc/RtcCallProvider";
+import { participantPalette } from "@/lib/rtc/participant-color";
 import { useLiveKitRoom } from "@/hooks/rtc/useLiveKitRoom";
 import type { I18nMessages } from "@/generated/i18n-messages";
 import type {
@@ -28,6 +30,20 @@ function formatDuration(totalSeconds: number): string {
   const mins = Math.floor(totalSeconds / 60);
   const secs = totalSeconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+/** In-call timer readout. Calls are duration-capped by the lower of the two
+ *  parties' tiers (10/25/45/120 min — see the backend's
+ *  CALL_MAX_DURATION_MINUTES), and the cap arrives on rtc:accepted as
+ *  maxDurationMinutes — when present the timer reads "2:17 / 10:00" so the
+ *  remaining allowance is always visible. Exported for tests. */
+export function formatCallTimer(
+  elapsedSeconds: number,
+  maxDurationMinutes?: number | null,
+): string {
+  const elapsed = formatDuration(elapsedSeconds);
+  if (!maxDurationMinutes) return elapsed;
+  return `${elapsed} / ${formatDuration(maxDurationMinutes * 60)}`;
 }
 
 type RtcMessages = I18nMessages["rtc"];
@@ -83,7 +99,8 @@ function toggleSpeaker(
   setSpeakerState({ callId, enabled: next });
 }
 
-function PulsingAvatar({ avatarUrl, name }: PulsingAvatarProps) {
+function PulsingAvatar({ avatarUrl, name, paletteKey }: PulsingAvatarProps) {
+  const palette = participantPalette(paletteKey);
   return (
     <div className="relative flex items-center justify-center">
       <span className="bg-success/20 absolute size-36 animate-ping rounded-full" />
@@ -93,13 +110,15 @@ function PulsingAvatar({ avatarUrl, name }: PulsingAvatarProps) {
         src={avatarUrl ?? undefined}
         fallback={name || "?"}
         size="xl"
-        className="bg-brand text-brand-fg ring-success/40 relative size-24 shadow-xl ring-4"
+        className="ring-success/40 relative size-24 shadow-xl ring-4"
+        style={{ background: palette.fill, color: palette.onFill }}
       />
     </div>
   );
 }
 
 function IncomingCallOverlay({
+  peerId,
   peerName,
   peerAvatarUrl,
   hasVideo,
@@ -108,11 +127,16 @@ function IncomingCallOverlay({
   onDecline,
 }: IncomingCallOverlayProps) {
   const t = useMessages("rtc");
+  const palette = participantPalette(peerId || peerName);
 
   return (
     <div className="animate-fade-in bg-overlay text-overlay-fg fixed inset-0 z-[100] flex min-h-dvh items-center justify-center overflow-hidden p-4">
       <div className="bg-bg/90 border-border/70 relative flex w-full max-w-md flex-col items-center gap-8 rounded-2xl border p-8 shadow-xl backdrop-blur-xl sm:p-10">
-        <div className="bg-brand/10 pointer-events-none absolute -top-24 size-48 rounded-full blur-3xl" />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-24 size-48 rounded-full blur-3xl"
+          style={{ background: palette.halo }}
+        />
         <div className="relative flex items-center gap-2 text-xs font-medium tracking-wide uppercase opacity-70">
           {hasVideo ? (
             <IconVideo size={15} aria-hidden />
@@ -123,7 +147,11 @@ function IncomingCallOverlay({
             {hasVideo ? t.incomingVideoCallTitle : t.incomingCallTitle}
           </span>
         </div>
-        <PulsingAvatar avatarUrl={peerAvatarUrl} name={peerName} />
+        <PulsingAvatar
+          avatarUrl={peerAvatarUrl}
+          name={peerName}
+          paletteKey={peerId || peerName}
+        />
         <div className="relative text-center">
           <p className="text-overlay-fg text-2xl font-semibold">{peerName}</p>
           <p
@@ -171,17 +199,22 @@ function IncomingCallOverlay({
 }
 
 function ActiveCallOverlay({
+  peerId,
   peerName,
   peerAvatarUrl,
+  selfName,
+  selfAvatarUrl,
   hasVideo,
   phase,
   micEnabled,
   cameraEnabled,
+  remoteCameraLive,
   speakerEnabled,
   actionPending,
   livekitConnected,
   livekitError,
   remoteConnected,
+  maxDurationMinutes,
   warningSecondsRemaining,
   remoteVideoRef,
   localVideoRef,
@@ -206,89 +239,133 @@ function ActiveCallOverlay({
 
   const isRinging = phase === "outgoing-ringing";
   const showVideo = phase === "connected" && hasVideo;
+  const palette = participantPalette(peerId || peerName);
   const mediaError = getMediaErrorMessage(livekitError, t);
 
+  // Media errors deliberately do NOT enter this ladder: they have their own
+  // banner below, and letting them occupy the readout hid the call timer for
+  // the whole call whenever mic/camera access was denied. A lost LiveKit
+  // connection still surfaces here naturally via !livekitConnected.
   const statusText = isRinging
     ? actionPending
       ? t.cancelling
       : t.callingTitle.replace("{name}", peerName)
-    : mediaError
-      ? mediaError
-      : !livekitConnected
-        ? t.connectingTitle
-        : !remoteConnected
-          ? t.waitingForPeer.replace("{name}", peerName)
-          : formatDuration(duration);
+    : !livekitConnected
+      ? t.connectingTitle
+      : !remoteConnected
+        ? t.waitingForPeer.replace("{name}", peerName)
+        : formatCallTimer(duration, maxDurationMinutes);
 
   return (
     <div className="bg-overlay text-overlay-fg fixed inset-0 z-[100] flex min-h-dvh flex-col overflow-hidden">
       {showVideo ? (
-        <div className="relative flex-1">
-          <div className="bg-bg absolute inset-0 flex flex-col items-center justify-center gap-4">
-            <Avatar
-              src={peerAvatarUrl ?? undefined}
-              fallback={peerName || "?"}
-              size="xl"
-              className="bg-brand text-brand-fg ring-brand/20 size-28 ring-4"
-            />
-            <p className="text-overlay-fg/70 text-sm">{statusText}</p>
-          </div>
-          {/* No background on the video element: while the remote camera
-              track hasn't attached yet (peer still joining, camera off), the
-              element must stay transparent so the avatar/status placeholder
-              behind it shows through — an opaque bg painted over it made
-              that placeholder dead weight. */}
-          {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live P2P call video, no caption track exists */}
-          <video
-            ref={remoteVideoRef}
-            autoPlay
-            playsInline
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="from-overlay/40 to-overlay/60 pointer-events-none absolute inset-0 bg-gradient-to-b via-transparent" />
-
-          <div className="absolute top-0 right-0 left-0 flex items-start justify-between gap-4 px-4 pt-4 pb-8 sm:px-6">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className="bg-overlay/45 border-overlay-fg/20 flex size-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md">
-                <IconVideo size={17} aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="text-overlay-fg truncate text-base font-semibold drop-shadow-lg">
-                  {peerName}
-                </p>
-              </div>
-            </div>
-            {/* Single status/duration readout — it was previously rendered
-                twice side by side (under the name AND in this pill). */}
+        <div className="flex min-h-0 flex-1 flex-col">
+          {/* Header in normal flow (not overlaid on the video) — the video
+              lives in a contained tile below, Meet-style. */}
+          <div className="flex items-center gap-3 px-4 pt-4 pb-3 sm:px-6">
+            <span className="bg-overlay/45 border-overlay-fg/20 flex size-9 shrink-0 items-center justify-center rounded-full border backdrop-blur-md">
+              <IconVideo size={17} aria-hidden />
+            </span>
+            <p className="text-overlay-fg min-w-0 truncate text-base font-semibold">
+              {peerName}
+            </p>
+            {/* Single status readout, right next to the name. While
+                connected it renders "elapsed / limit" (e.g. 2:17 / 10:00) —
+                the tier-scaled cap the backend sent on rtc:accepted. */}
             <span
-              className="bg-overlay/45 border-overlay-fg/20 text-overlay-fg shrink-0 rounded-full border px-3 py-1 text-xs font-medium backdrop-blur-md"
+              className="bg-overlay/45 border-overlay-fg/20 text-overlay-fg shrink-0 rounded-full border px-3 py-1 text-xs font-medium tabular-nums backdrop-blur-md"
               aria-live="polite"
             >
               {statusText}
             </span>
           </div>
 
-          <div className="absolute right-4 bottom-24 sm:right-6">
-            <video
-              ref={localVideoRef}
-              autoPlay
-              playsInline
-              muted
-              aria-label={t.youLabel}
-              className="bg-surface border-overlay-fg/25 h-28 w-44 rounded-xl border-2 object-cover shadow-xl sm:h-36 sm:w-56"
-            />
+          {/* Bordered stage tile. object-contain (not cover) so the whole
+              camera frame is visible — full-bleed cover cropped the top and
+              bottom of the feed. */}
+          <div className="min-h-0 flex-1 px-3 pb-3 sm:px-4 sm:pb-4">
+            <div className="border-overlay-fg/15 bg-bg relative h-full w-full overflow-hidden rounded-2xl border shadow-2xl">
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                <Avatar
+                  style={{ background: palette.fill, color: palette.onFill }}
+                  src={peerAvatarUrl ?? undefined}
+                  fallback={peerName || "?"}
+                  size="xl"
+                  className="bg-brand text-brand-fg ring-brand/20 size-28 ring-4"
+                />
+                <p className="text-overlay-fg text-lg font-semibold">
+                  {peerName}
+                </p>
+                <p className="text-overlay-fg/70 text-sm">{statusText}</p>
+              </div>
+              {/* Hidden (not unmounted — the track stays attached) whenever
+                  the peer has no live camera track: before they join, while
+                  their camera is off/denied, and after a mute. Left visible
+                  in those states it painted a black/frozen frame over the
+                  avatar + name placeholder behind it. */}
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption -- live P2P call video, no caption track exists */}
+              <video
+                ref={remoteVideoRef}
+                autoPlay
+                playsInline
+                className={`absolute inset-0 h-full w-full object-contain ${remoteCameraLive ? "" : "opacity-0"}`}
+              />
+
+              <div className="absolute right-3 bottom-3 sm:right-4 sm:bottom-4">
+                <div className="relative">
+                  <video
+                    ref={localVideoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    aria-label={t.youLabel}
+                    className={`bg-surface border-overlay-fg/25 h-28 w-44 rounded-xl border-2 object-cover shadow-xl sm:h-36 sm:w-56 ${cameraEnabled ? "" : "opacity-0"}`}
+                  />
+                  {/* Camera off/denied: own avatar instead of a black tile.
+                      The video element stays mounted so re-enabling
+                      reattaches to the same ref. */}
+                  {!cameraEnabled && (
+                    <div
+                      data-testid="self-camera-placeholder"
+                      className="bg-surface border-overlay-fg/25 absolute inset-0 flex items-center justify-center rounded-xl border-2 shadow-xl"
+                    >
+                      <Avatar
+                        src={selfAvatarUrl ?? undefined}
+                        fallback={selfName || "?"}
+                        size="lg"
+                        className="bg-brand text-brand-fg"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6">
+        <div className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6">
+          {/* Same identity wash the meeting tiles use — a voice call reads
+              as that person's color, not a void. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(60% 55% at 50% 42%, ${palette.tintStrong}, transparent 75%)`,
+            }}
+          />
           {isRinging ? (
-            <PulsingAvatar avatarUrl={peerAvatarUrl} name={peerName} />
+            <PulsingAvatar
+              avatarUrl={peerAvatarUrl}
+              name={peerName}
+              paletteKey={peerId || peerName}
+            />
           ) : (
             <Avatar
               src={peerAvatarUrl ?? undefined}
               fallback={peerName || "?"}
               size="xl"
-              className="bg-brand text-brand-fg ring-brand/20 size-28 shadow-xl ring-4"
+              className="ring-brand/20 relative size-28 shadow-xl ring-4"
+              style={{ background: palette.fill, color: palette.onFill }}
             />
           )}
           <div className="text-center">
@@ -420,6 +497,7 @@ export function RtcCallOverlay() {
   } = useRtcCall();
   const t = useMessages("rtc");
   const { toast } = useToast();
+  const { user } = useAuth();
   const isConnected = state.phase === "connected";
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
@@ -470,6 +548,7 @@ export function RtcCallOverlay() {
   if (state.phase === "incoming-ringing") {
     return (
       <IncomingCallOverlay
+        peerId={state.peer?.id ?? null}
         peerName={state.peer?.name || "?"}
         peerAvatarUrl={state.peer?.avatarUrl ?? null}
         hasVideo={state.hasVideo}
@@ -482,17 +561,22 @@ export function RtcCallOverlay() {
 
   return (
     <ActiveCallOverlay
+      peerId={state.peer?.id ?? null}
       peerName={state.peer?.name || "?"}
       peerAvatarUrl={state.peer?.avatarUrl ?? null}
+      selfName={user?.name || user?.username || user?.email || "?"}
+      selfAvatarUrl={user?.avatarUrl ?? null}
       hasVideo={state.hasVideo}
       phase={state.phase}
       micEnabled={livekit.micEnabled}
       cameraEnabled={livekit.cameraEnabled}
+      remoteCameraLive={livekit.remoteCameraLive}
       speakerEnabled={speakerEnabled}
       actionPending={state.actionPending !== null}
       remoteConnected={livekit.remoteConnected}
       livekitConnected={livekit.connected}
       livekitError={livekit.livekitError}
+      maxDurationMinutes={state.livekit?.maxDurationMinutes ?? null}
       warningSecondsRemaining={state.warningSecondsRemaining}
       remoteVideoRef={remoteVideoRef}
       localVideoRef={localVideoRef}

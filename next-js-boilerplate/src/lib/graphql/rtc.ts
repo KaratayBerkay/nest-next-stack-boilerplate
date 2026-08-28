@@ -23,6 +23,14 @@ export const MY_MEETINGS_QUERY = `
   query MyMeetings {
     myMeetings {
       ${MEETING_FIELDS}
+      participants {
+        userId
+        name
+        avatarUrl
+        role
+        joinedAt
+        leftAt
+      }
     }
   }
 `;

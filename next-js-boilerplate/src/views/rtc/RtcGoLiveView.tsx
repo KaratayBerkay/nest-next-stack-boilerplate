@@ -167,8 +167,9 @@ function RtcGoLiveForm() {
               showNoAudioIndicator={false}
             />
 
-            <div className="absolute right-0 bottom-0 left-0 flex items-center justify-center gap-2 bg-neutral-900/80 px-4 py-3 backdrop-blur-sm">
+            <div className="absolute right-0 bottom-0 left-0 flex items-center justify-center gap-2.5 bg-neutral-900/80 px-4 py-3.5 backdrop-blur-sm">
               <IconButton
+                size="icon-lg"
                 variant={livekit.localMicEnabled ? "secondary" : "destructive"}
                 icon={
                   livekit.localMicEnabled ? (
@@ -181,6 +182,7 @@ function RtcGoLiveForm() {
                 onClick={livekit.toggleMic}
               />
               <IconButton
+                size="icon-lg"
                 variant={
                   livekit.localCameraEnabled ? "secondary" : "destructive"
                 }
@@ -191,6 +193,7 @@ function RtcGoLiveForm() {
                 onClick={livekit.toggleCamera}
               />
               <IconButton
+                size="icon-lg"
                 variant={
                   livekit.localScreenShareEnabled ? "destructive" : "secondary"
                 }
@@ -217,6 +220,7 @@ function RtcGoLiveForm() {
               >
                 {(open) => (
                   <IconButton
+                    size="icon-lg"
                     variant="destructive"
                     icon={<IconPlayerStop />}
                     label={t.endStream}

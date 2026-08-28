@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useMessagesPage } from "@/hooks/messages/useMessagesPage";
-import { setActivePeerId } from "@/lib/realtime/event-dispatch";
+import { setActivePeerId } from "@/lib/realtime/active-peer";
 
 const mockUseMessagesData = vi.hoisted(() => vi.fn());
 
@@ -23,9 +23,9 @@ vi.mock("@/hooks/useConnectionState", () => ({
 vi.mock("@/hooks/usePresence", () => ({
   usePresence: () => new Set<string>(),
 }));
-vi.mock("@/lib/realtime/event-dispatch", async (importOriginal) => {
+vi.mock("@/lib/realtime/active-peer", async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import("@/lib/realtime/event-dispatch")>();
+    await importOriginal<typeof import("@/lib/realtime/active-peer")>();
   return {
     ...actual,
     setActivePeerId: vi.fn(actual.setActivePeerId),

@@ -61,6 +61,17 @@ export class RtcMeetingSweepService {
       return;
     }
 
+    // Prune warned entries whose meeting is no longer in the active scan —
+    // a meeting that ended inside its warning window (host ended it, or the
+    // room_finished webhook beat the expiry tick) otherwise left its slug in
+    // the set forever.
+    const activeSlugs = new Set(
+      rooms.flatMap((r) => (r.meeting ? [r.meeting.slug] : [])),
+    );
+    for (const slug of this.warned) {
+      if (!activeSlugs.has(slug)) this.warned.delete(slug);
+    }
+
     const now = Date.now();
     for (const room of rooms) {
       if (!room.meeting || !room.startedAt) continue;

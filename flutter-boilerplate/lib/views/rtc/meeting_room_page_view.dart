@@ -26,7 +26,22 @@ import '../../l10n/app_localizations.dart';
 import '../../types/rtc/meeting.dart';
 import '../../types/rtc/recording.dart';
 
-enum _RoomPhase { joining, active, ended, removed, notFound }
+enum RoomPhase { joining, active, ended, removed, notFound, joinFailed }
+
+/// Pure mapper for a failed join: 404 means the meeting is gone or already
+/// over (the not-found copy covers both); any other status is a join
+/// failure — never "the meeting has ended", which used to mask real server
+/// errors as a normal end. Same split the web view makes.
+RoomPhase roomPhaseForJoinFailure(int? statusCode) =>
+    statusCode == 404 ? RoomPhase.notFound : RoomPhase.joinFailed;
+
+/// Screen copy shown in place of the room for each non-active phase.
+String roomPhaseMessage(RoomPhase phase, AppLocalizations t) => switch (phase) {
+      RoomPhase.notFound => t.rtcMeetingNotFound,
+      RoomPhase.removed => t.rtcMeetingRemovedNotice,
+      RoomPhase.joinFailed => t.rtcJoinMeetingFailed,
+      _ => t.rtcMeetingEndedNotice,
+    };
 
 class _ParticipantView {
   final String identity;
@@ -80,7 +95,7 @@ class _RtcMeetingRoomPageContentState
   bool _localCameraEnabled = true;
   bool _localScreenShareEnabled = false;
 
-  _RoomPhase _phase = _RoomPhase.joining;
+  RoomPhase _phase = RoomPhase.joining;
   JoinMeetingResult? _join;
   bool _sentJoinChat = false;
   int _lastHandledSignalSeq = 0;
@@ -104,7 +119,7 @@ class _RtcMeetingRoomPageContentState
       if (!mounted) return;
       setState(() {
         _join = result;
-        _phase = _RoomPhase.active;
+        _phase = RoomPhase.active;
       });
       ref
           .read(realtimeProvider)
@@ -123,13 +138,8 @@ class _RtcMeetingRoomPageContentState
         phase: 'joining',
       );
       if (!mounted) return;
-      // 404 means the slug doesn't exist; anything else (already ended,
-      // tier rejection, network) reads better as "ended" — same split the
-      // web view makes off the error's statusCode.
       final status = error is DioException ? error.response?.statusCode : null;
-      setState(
-        () => _phase = status == 404 ? _RoomPhase.notFound : _RoomPhase.ended,
-      );
+      setState(() => _phase = roomPhaseForJoinFailure(status));
       final message =
           error is DioException && (error.message?.isNotEmpty ?? false)
               ? error.message!
@@ -596,14 +606,14 @@ class _RtcMeetingRoomPageContentState
       if (next.seq == _lastHandledSignalSeq) return;
       _lastHandledSignalSeq = next.seq;
       if (next.ended) {
-        setState(() => _phase = _RoomPhase.ended);
+        setState(() => _phase = RoomPhase.ended);
         // The LiveKit Room (incl. the local participant's camera/mic) was
         // only ever torn down from dispose() — a remote end/removal left it
         // connected indefinitely until the user happened to navigate away.
         _teardownRoom();
         unawaited(WakelockPlus.disable());
       } else if (next.removed) {
-        setState(() => _phase = _RoomPhase.removed);
+        setState(() => _phase = RoomPhase.removed);
         _teardownRoom();
         unawaited(WakelockPlus.disable());
       } else if (next.forceMuted && _localMicEnabled) {
@@ -633,7 +643,7 @@ class _RtcMeetingRoomPageContentState
     ref.listen<RealtimeStatus>(realtimeStatusProvider, (prev, next) {
       if (next == RealtimeStatus.open &&
           prev != RealtimeStatus.open &&
-          _phase == _RoomPhase.active &&
+          _phase == RoomPhase.active &&
           _sentJoinChat) {
         ref
             .read(realtimeProvider)
@@ -642,7 +652,7 @@ class _RtcMeetingRoomPageContentState
       }
     });
 
-    if (_phase == _RoomPhase.joining) {
+    if (_phase == RoomPhase.joining) {
       return Scaffold(
         body: Center(
           child: Column(
@@ -657,12 +667,8 @@ class _RtcMeetingRoomPageContentState
       );
     }
 
-    if (_phase != _RoomPhase.active) {
-      final message = switch (_phase) {
-        _RoomPhase.notFound => t.rtcMeetingNotFound,
-        _RoomPhase.removed => t.rtcMeetingRemovedNotice,
-        _ => t.rtcMeetingEndedNotice,
-      };
+    if (_phase != RoomPhase.active) {
+      final message = roomPhaseMessage(_phase, t);
       return Scaffold(
         body: Center(
           child: Column(

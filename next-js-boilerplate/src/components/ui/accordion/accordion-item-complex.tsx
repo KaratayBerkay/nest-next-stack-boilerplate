@@ -66,7 +66,7 @@ export const AccordionItemComplex = forwardRef<
         ref={ref}
         value={value}
         className={cn(
-          "border-border border-b",
+          "border-border border-b last:border-b-0",
           "bg-surface hover:bg-surface-hover data-[state=open]:bg-surface-hover",
           "transition-colors duration-200",
         )}

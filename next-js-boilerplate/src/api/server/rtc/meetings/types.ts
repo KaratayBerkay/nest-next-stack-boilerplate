@@ -12,6 +12,15 @@ export interface MeetingRoomInfo {
   endedAt: string | null;
 }
 
+export interface MeetingAttendee {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  role: "HOST" | "PARTICIPANT";
+  joinedAt: string;
+  leftAt: string | null;
+}
+
 export interface MeetingView {
   id: string;
   title: string;
@@ -21,6 +30,9 @@ export interface MeetingView {
   createdAt: string;
   room: MeetingRoomInfo;
   host: MeetingHost;
+  /** Everyone who ever joined (leftAt === null means currently in). Only
+   *  the meetings-list query selects this — absent elsewhere. */
+  participants?: MeetingAttendee[];
 }
 
 export interface JoinMeetingResult {

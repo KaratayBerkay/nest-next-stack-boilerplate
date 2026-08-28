@@ -160,6 +160,39 @@ const templates: Record<
     };
   },
 
+  'meeting-invite': (vars) => {
+    const url = str(vars.url);
+    const inviterName = str(vars.inviterName, 'A friend');
+    const meetingTitle = str(vars.meetingTitle, 'a meeting');
+    return {
+      subject: inviterName + ' invited you to a meeting',
+      html: layout(
+        '<p>Hi,</p>' +
+          '<p><strong>' +
+          escape(inviterName) +
+          '</strong> invited you to join the meeting <strong>&ldquo;' +
+          escape(meetingTitle) +
+          '&rdquo;</strong> — it&#39;s live right now.</p>' +
+          '<p style="text-align:center;margin:24px 0">' +
+          '<a href="' +
+          escape(url) +
+          '" style="display:inline-block;padding:12px 24px;background-color:#2563eb;color:#fff;text-decoration:none;border-radius:6px;font-weight:600">Join Meeting</a>' +
+          '</p>' +
+          '<p>Or copy this link into your browser:</p>' +
+          '<p style="word-break:break-all;font-size:12px;color:#666">' +
+          escape(url) +
+          '</p>' +
+          '<p>Meetings are time-limited, so the link may stop working once it ends. If you don&#39;t know this person, you can ignore this email.</p>',
+      ),
+      text:
+        inviterName +
+        ' invited you to the meeting "' +
+        meetingTitle +
+        '". Join here: ' +
+        url,
+    };
+  },
+
   'password-changed': (vars) => {
     const url = str(vars.url);
     const name = str(vars.name, '');
@@ -171,7 +204,7 @@ const templates: Record<
           greeting +
           '</p>' +
           '<p>Your password was just changed. If this was you, no action is needed.</p>' +
-          '<p><strong>If this wasn\'t you</strong>, click the button below to undo the change and restore your previous password:</p>' +
+          "<p><strong>If this wasn't you</strong>, click the button below to undo the change and restore your previous password:</p>" +
           '<p style="text-align:center;margin:24px 0">' +
           '<a href="' +
           escape(url) +
@@ -183,7 +216,8 @@ const templates: Record<
           '</p>' +
           '<p>This link expires in 24 hours and can only be used once.</p>',
       ),
-      text: "Your password was changed. If this wasn't you, undo it here: " + url,
+      text:
+        "Your password was changed. If this wasn't you, undo it here: " + url,
     };
   },
 };

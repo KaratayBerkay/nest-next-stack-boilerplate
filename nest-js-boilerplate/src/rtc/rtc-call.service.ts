@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { LiveKitService } from './livekit.service';
+import { LiveKitService, toLivekitRoomName } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs } from '../realtime/realtime.types';
 // Native @prisma/client enums here, NOT the @generated/prisma/*.enum
@@ -28,6 +28,17 @@ import { rtcErrorLog, rtcLog } from './rtc-logger';
 const RING_TIMEOUT_SECONDS = 45;
 // How long before the tier-scaled duration cap a warning frame fires.
 const CALL_LIMIT_WARNING_LEAD_SECONDS = 60;
+// Grace window between LiveKit reporting a call participant gone and the
+// call actually being torn down. livekit-client recovers a broken
+// connection with a FULL reconnect — it sends a LeaveRequest, then rejoins
+// the same room (observed live: ~40ms later) — and LiveKit dutifully fires
+// participant_left for the old session. Ending the call on that webhook
+// alone destroyed healthy calls mid-reconnect: the room got deleted out
+// from under the freshly rejoined participant and both sides received
+// rtc:hangup. Kept below the room's own 15s departureTimeout
+// (livekit.service.ts) so a genuine silent drop still ends the call before
+// LiveKit's room_finished safety net would.
+const PEER_LEFT_GRACE_SECONDS = 10;
 
 const ACTIVE_STATES = [
   CallEndState.RINGING,
@@ -88,6 +99,8 @@ export class RtcCallService {
   private readonly logger = new Logger(RtcCallService.name);
   private readonly ringTimers = new Map<string, NodeJS.Timeout>();
   private readonly durationTimers = new Map<string, NodeJS.Timeout[]>();
+  /** Pending participant_left grace checks, keyed `${callId}:${userId}`. */
+  private readonly peerLeftTimers = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -260,7 +273,7 @@ export class RtcCallService {
       (callee?.subscriptionTier ?? SubscriptionTier.FREE) as SubscriptionTier,
     );
 
-    const livekitRoomName = `call-${call.id}`;
+    const livekitRoomName = toLivekitRoomName('call', call.id);
     try {
       await this.liveKit.createRoom(livekitRoomName, 2);
       const [callerToken, calleeToken] = await Promise.all([
@@ -616,13 +629,55 @@ export class RtcCallService {
   }
 
   /** LiveKit `participant_left` for a CALL-kind room: one side leaving a
-   *  2-party call means the call is over — don't wait for LiveKit's own
-   *  60s departureTimeout to notice. */
-  async handlePeerLeft(roomId: string): Promise<void> {
+   *  2-party call means the call is over — but "left" must first be told
+   *  apart from the SDK's own leave+rejoin full reconnect (see
+   *  PEER_LEFT_GRACE_SECONDS). The call ends only once the participant is
+   *  verifiably absent after the grace window; a rejoin cancels teardown. */
+  async handlePeerLeft(
+    roomId: string,
+    livekitRoomName: string,
+    userId: string,
+  ): Promise<void> {
     const call = await this.prisma.callSession.findUnique({
       where: { roomId },
     });
     if (call?.state !== CallEndState.CONNECTED) return;
+    // Already back — full reconnects rejoin within milliseconds, often
+    // before this webhook is even processed. Reconnect noise, not a hangup.
+    if (await this.liveKit.isParticipantConnected(livekitRoomName, userId)) {
+      return;
+    }
+    const key = `${call.id}:${userId}`;
+    if (this.peerLeftTimers.has(key)) return;
+    const timer = setTimeout(() => {
+      this.peerLeftTimers.delete(key);
+      void this.confirmPeerLeft(call.id, livekitRoomName, userId).catch(
+        (error) => {
+          this.logger.error(
+            rtcErrorLog('call.peer_left_check_failed', error, {
+              callId: call.id,
+            }),
+          );
+        },
+      );
+    }, PEER_LEFT_GRACE_SECONDS * 1000);
+    this.peerLeftTimers.set(key, timer);
+  }
+
+  /** Grace-window follow-up to handlePeerLeft: ends the call only if the
+   *  participant is still gone once the window has elapsed. */
+  private async confirmPeerLeft(
+    callId: string,
+    livekitRoomName: string,
+    userId: string,
+  ): Promise<void> {
+    const call = await this.prisma.callSession.findUnique({
+      where: { id: callId },
+    });
+    if (call?.state !== CallEndState.CONNECTED) return;
+    if (await this.liveKit.isParticipantConnected(livekitRoomName, userId)) {
+      return; // rejoined during the grace window — the call lives on
+    }
     const ended = await this.endCall(
       call.id,
       [CallEndState.CONNECTED],
@@ -812,6 +867,7 @@ export class RtcCallService {
   ): Promise<boolean> {
     this.clearRingTimeout(callId);
     this.clearDurationTimers(callId);
+    this.clearPeerLeftTimers(callId);
     const now = new Date();
     const claimed = await this.prisma.callSession.updateMany({
       where: { id: callId, state: { in: fromStates } },
@@ -840,6 +896,15 @@ export class RtcCallService {
       });
     }, RING_TIMEOUT_SECONDS * 1000);
     this.ringTimers.set(callId, timer);
+  }
+
+  private clearPeerLeftTimers(callId: string): void {
+    for (const [key, timer] of this.peerLeftTimers) {
+      if (key.startsWith(`${callId}:`)) {
+        clearTimeout(timer);
+        this.peerLeftTimers.delete(key);
+      }
+    }
   }
 
   private clearRingTimeout(callId: string): void {

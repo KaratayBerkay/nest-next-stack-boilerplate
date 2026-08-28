@@ -12,11 +12,18 @@ export const RTC_TIER_MULTIPLIER: Record<SubscriptionTier, number> = {
   [SubscriptionTier.PREMIUM]: 8,
 };
 
-/** 1:1 call max duration, FREE baseline (minutes) — doubles per tier:
- *  FREE 15 / BASIC 30 / MEDIUM 60 / PREMIUM 120. Applied against
+/** 1:1 call max duration per tier (minutes). Deliberately NOT on the
+ *  doubling convention: product-set values (2026-08-28) are
+ *  FREE 10 / BASIC 25 / MEDIUM 45 / PREMIUM 120, and these are also what
+ *  the in-call `elapsed / limit` timer displays. Applied against
  *  MIN(caller tier, callee tier) — a FREE caller can't inherit a PREMIUM
  *  callee's cap. */
-export const FREE_CALL_MAX_DURATION_MINUTES = 15;
+export const CALL_MAX_DURATION_MINUTES: Record<SubscriptionTier, number> = {
+  [SubscriptionTier.FREE]: 10,
+  [SubscriptionTier.BASIC]: 25,
+  [SubscriptionTier.MEDIUM]: 45,
+  [SubscriptionTier.PREMIUM]: 120,
+};
 
 /** Meeting participant cap, FREE baseline — the host's tier decides the cap
  *  for everyone in the room. Doubles per tier:
@@ -33,15 +40,24 @@ export const FREE_MEETING_MAX_DURATION_MINUTES = 40;
  *  as an audience member is NOT gated — free for every tier. */
 export const MIN_TIER_TO_GO_LIVE = SubscriptionTier.MEDIUM;
 
+/** Single-tier call cap — the caller's own best case, shown pre-call
+ *  (rtcTierLimits query). The binding cap for an actual call is
+ *  callMaxDurationMinutes() below. */
+export function callMaxDurationForTier(tier: SubscriptionTier): number {
+  return (
+    CALL_MAX_DURATION_MINUTES[tier] ??
+    CALL_MAX_DURATION_MINUTES[SubscriptionTier.FREE]
+  );
+}
+
 export function callMaxDurationMinutes(
   callerTier: SubscriptionTier,
   calleeTier: SubscriptionTier,
 ): number {
-  const lowerMultiplier = Math.min(
-    RTC_TIER_MULTIPLIER[callerTier] ?? 1,
-    RTC_TIER_MULTIPLIER[calleeTier] ?? 1,
+  return Math.min(
+    callMaxDurationForTier(callerTier),
+    callMaxDurationForTier(calleeTier),
   );
-  return FREE_CALL_MAX_DURATION_MINUTES * lowerMultiplier;
 }
 
 export function meetingMaxParticipants(hostTier: SubscriptionTier): number {

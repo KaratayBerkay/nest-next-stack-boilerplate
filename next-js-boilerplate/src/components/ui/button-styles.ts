@@ -29,6 +29,7 @@ export const sizes = {
   md: "h-9 gap-2 px-4",
   lg: "h-10 gap-2.5 px-5",
   icon: "size-9",
+  "icon-lg": "size-12",
   "icon-sm": "size-8",
   "icon-xs": "size-7",
 } as const;
@@ -39,6 +40,7 @@ export const sizeFonts = {
   md: "text-sm",
   lg: "text-base",
   icon: "text-sm",
+  "icon-lg": "text-base",
   "icon-sm": "text-sm",
   "icon-xs": "text-xs",
 } as const;

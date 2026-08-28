@@ -38,6 +38,23 @@ export function toLivekitIdentity(userId: string): string {
   return encryptId(userId);
 }
 
+/**
+ * LiveKit room names travel the same client-visible paths as identities:
+ * they ride the signed access token's grant, are readable off the client's
+ * Room object, and appear in every LiveKit webhook and log line. Embedding
+ * the raw database uuid (`call-<uuid>`) therefore leaked ids the id-codec
+ * carefully encrypts everywhere else. Room names are only ever resolved
+ * back to rows via the RtcRoom.livekitRoomName column (never parsed), so
+ * the id half is safe to replace with its deterministic encryptId() form —
+ * still operator-decryptable for debugging, opaque to everyone else.
+ */
+export function toLivekitRoomName(
+  kind: 'call' | 'meeting' | 'stream',
+  rawId: string,
+): string {
+  return `${kind}-${encryptId(rawId)}`;
+}
+
 /** Reverse of toLivekitIdentity for webhook payloads. Tolerates identities
  *  minted before encryption existed (older live sessions during a deploy):
  *  a value that doesn't decrypt is returned as-is. */
@@ -189,6 +206,26 @@ export class LiveKitService {
           muted,
         }),
       );
+    }
+  }
+
+  /** Whether `identity` (raw userId) currently has a live participant
+   *  session in `roomName`. Used to tell a genuine departure apart from
+   *  livekit-client's own leave-then-rejoin full reconnect. Any lookup
+   *  failure — participant gone, room gone, LiveKit unreachable — counts
+   *  as "not connected". */
+  async isParticipantConnected(
+    roomName: string,
+    identity: string,
+  ): Promise<boolean> {
+    try {
+      await this.roomService.getParticipant(
+        roomName,
+        toLivekitIdentity(identity),
+      );
+      return true;
+    } catch {
+      return false;
     }
   }
 

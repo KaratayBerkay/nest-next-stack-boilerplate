@@ -129,6 +129,15 @@ export function formatDateTimeShort(
   });
 }
 
+/** Time-of-day only ("14:02" / "2:02 PM" per locale) — for detail rows
+ *  whose surrounding context already says which day it was. */
+export function formatTimeShort(
+  input: DateInput,
+  locale: string = getCurrentLocale(),
+): string {
+  return toDate(input).toLocaleTimeString(locale, { timeStyle: "short" });
+}
+
 export function formatDateByPreference(
   input: DateInput,
   preference: DateDisplayPreference,
@@ -184,6 +193,18 @@ export function getRelativeTime(input: DateInput): string {
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
   return "just now";
+}
+
+/** Compact span between two instants, in getRelativeTime's unit style:
+ *  "45s", "42m", "1h 12m". Used for e.g. how long an ended meeting lasted. */
+export function formatDurationShort(start: DateInput, end: DateInput): string {
+  const ms = toDate(end).getTime() - toDate(start).getTime();
+  const totalMinutes = Math.floor(ms / 60_000);
+  if (totalMinutes < 1) return `${Math.max(0, Math.floor(ms / 1000))}s`;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
 }
 
 export function getDateParts(input: DateInput) {

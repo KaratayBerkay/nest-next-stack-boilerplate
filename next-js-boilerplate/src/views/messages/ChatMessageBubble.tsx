@@ -4,6 +4,8 @@ import { useState } from "react";
 import { Avatar } from "@/components/ui/Avatar";
 import { MessageTick } from "@/components/MessageTick";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
+import { ChatLinkCard } from "@/components/ChatLinkCard";
+import { extractLinks } from "@/lib/chat/link-preview";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import {
   DropdownMenu,
@@ -112,13 +114,22 @@ export function ChatMessageBubble({
               </div>
             ) : null}
             {msg.body != null && msg.body !== "" ? (
-              <span
-                className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                  isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
-                }`}
-              >
-                {msg.body}
-              </span>
+              <>
+                <span
+                  className={`inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                    isMe ? "bg-brand text-brand-fg" : "bg-surface text-fg"
+                  }`}
+                >
+                  {msg.body}
+                </span>
+                {extractLinks(msg.body).map((link) => (
+                  <ChatLinkCard
+                    key={link.url}
+                    url={link.url}
+                    clickable={link.clickable}
+                  />
+                ))}
+              </>
             ) : decryptionFailed ? (
               <span className="bg-warning/10 text-warning inline-block rounded-2xl px-4 py-2.5 text-sm leading-relaxed">
                 <span className="inline-flex items-center gap-1.5 text-xs italic">

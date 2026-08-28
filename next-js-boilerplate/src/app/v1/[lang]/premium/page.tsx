@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { getTierView } from "@/lib/tier-view";
-import { getSessionUser } from "@/lib/auth-ssr";
+import { requireSessionUser } from "@/lib/auth-ssr";
 import { getAllMessages } from "@/lib/i18n/get-all-messages";
 import { FreePageView } from "@/views/premium/FreePageView";
 import { BasicPageView } from "@/views/premium/BasicPageView";
@@ -25,7 +25,7 @@ export default async function PremiumPage({
 }: {
   params: Promise<{ lang: string }>;
 }) {
-  const user = await getSessionUser();
+  const user = await requireSessionUser();
   const { lang } = await params;
   const messages = getAllMessages<I18nMessages>(lang);
   const t = messages.premium;
@@ -33,7 +33,7 @@ export default async function PremiumPage({
   return (
     <div className="flex flex-col gap-6">
       <h2 className="text-brand text-sm font-semibold">{t.heading}</h2>
-      {getTierView(user!.tier, VIEWS)}
+      {getTierView(user.tier, VIEWS)}
     </div>
   );
 }

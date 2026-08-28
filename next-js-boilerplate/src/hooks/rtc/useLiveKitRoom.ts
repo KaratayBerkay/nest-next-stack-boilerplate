@@ -11,6 +11,7 @@ import {
   type RemoteTrack,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
+import { hasLiveRemoteCamera } from "@/lib/rtc/remote-camera";
 import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 import { useWakeLock } from "@/hooks/rtc/useWakeLock";
 import { useMediaSessionActive } from "@/hooks/rtc/useMediaSessionActive";
@@ -24,6 +25,11 @@ export interface UseLiveKitRoomElements {
 export interface UseLiveKitRoomResult {
   connected: boolean;
   remoteConnected: boolean;
+  /** True only while the peer has a camera track that is publishing and not
+   *  muted — the signal for showing their video element instead of the
+   *  avatar placeholder. A muted/withdrawn camera track otherwise renders
+   *  as a frozen or black rectangle. */
+  remoteCameraLive: boolean;
   livekitError: "connection" | "microphone" | "camera" | null;
   micEnabled: boolean;
   cameraEnabled: boolean;
@@ -76,6 +82,7 @@ export function useLiveKitRoom(
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
   const [remoteConnected, setRemoteConnected] = useState(false);
+  const [remoteCameraLive, setRemoteCameraLive] = useState(false);
   const [mediaState, setMediaState] = useState<LiveKitMediaState>({
     token: null,
     micEnabled: true,
@@ -143,6 +150,9 @@ export function useLiveKitRoom(
 
     telemetry("call.livekit.connecting", { phase: "connecting" });
 
+    const syncRemoteCamera = () =>
+      setRemoteCameraLive(hasLiveRemoteCamera(room));
+
     room
       .on(RoomEvent.TrackSubscribed, (track) => {
         attachRemoteTrack(
@@ -151,10 +161,17 @@ export function useLiveKitRoom(
             ? remoteAudioRef.current
             : remoteVideoRef.current,
         );
+        syncRemoteCamera();
       })
       .on(RoomEvent.TrackUnsubscribed, (track) => {
         track.detach();
+        syncRemoteCamera();
       })
+      // Mute/unmute don't unsubscribe the track — without these the peer
+      // turning their camera off left a frozen/black frame on screen
+      // instead of the avatar placeholder.
+      .on(RoomEvent.TrackMuted, syncRemoteCamera)
+      .on(RoomEvent.TrackUnmuted, syncRemoteCamera)
       .on(RoomEvent.TrackSubscriptionFailed, (trackSid) => {
         telemetry("call.livekit.track_subscription_failed", {
           exceptionType: "CLIENT_ERROR",
@@ -170,10 +187,14 @@ export function useLiveKitRoom(
           pub.track.detach();
         }
       })
-      .on(RoomEvent.ParticipantConnected, () => setRemoteConnected(true))
-      .on(RoomEvent.ParticipantDisconnected, () =>
-        setRemoteConnected(room.remoteParticipants.size > 0),
-      )
+      .on(RoomEvent.ParticipantConnected, () => {
+        setRemoteConnected(true);
+        syncRemoteCamera();
+      })
+      .on(RoomEvent.ParticipantDisconnected, () => {
+        setRemoteConnected(room.remoteParticipants.size > 0);
+        syncRemoteCamera();
+      })
       .on(RoomEvent.Disconnected, () => {
         if (disposed) return;
         telemetry("call.livekit.disconnected", {
@@ -182,6 +203,7 @@ export function useLiveKitRoom(
         });
         setConnected(false);
         setRemoteConnected(false);
+        setRemoteCameraLive(false);
         setMediaState((current) =>
           current.token === token
             ? { ...current, error: "connection" }
@@ -197,6 +219,7 @@ export function useLiveKitRoom(
       .on(RoomEvent.Reconnected, () => {
         telemetry("call.livekit.reconnected", { phase: "connected" });
         reattachRemoteTracks(room);
+        syncRemoteCamera();
       })
       .on(
         RoomEvent.ConnectionQualityChanged,
@@ -247,6 +270,7 @@ export function useLiveKitRoom(
         setConnected(true);
         telemetry("call.livekit.connected", { phase: "connected" });
         setRemoteConnected(room.remoteParticipants.size > 0);
+        syncRemoteCamera();
         setMediaState({
           token,
           micEnabled: true,
@@ -323,6 +347,7 @@ export function useLiveKitRoom(
       roomRef.current = null;
       setConnected(false);
       setRemoteConnected(false);
+      setRemoteCameraLive(false);
     };
   }, [callId, roomName, token, hasVideo, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
 
@@ -419,6 +444,7 @@ export function useLiveKitRoom(
   return {
     connected,
     remoteConnected,
+    remoteCameraLive,
     livekitError,
     micEnabled,
     cameraEnabled,

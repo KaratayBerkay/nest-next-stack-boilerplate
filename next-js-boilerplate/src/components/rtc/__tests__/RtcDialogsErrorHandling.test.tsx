@@ -10,6 +10,8 @@ const t = {
   invite: "Invite",
   invited: "Invited",
   inviteFailed: "INVITE_FAILED",
+  searchFriendsPlaceholder: "Search friends",
+  noFriendsMatch: "No friends match",
   close: "Close",
   reportTitle: "Report",
   reportReasonLabel: "Reason",

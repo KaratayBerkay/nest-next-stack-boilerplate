@@ -13,7 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMessageActions } from "@/api/client/messages/actions";
 import { useConnectionState } from "@/hooks/useConnectionState";
 import { usePresence } from "@/hooks/usePresence";
-import { setActivePeerId } from "@/lib/realtime/event-dispatch";
+import { setActivePeerId } from "@/lib/realtime/active-peer";
 import type { UserInfo } from "@/types/messages/FreePageView-types";
 import type { SidebarFilter } from "@/types/messages/MessagesSidebarFilterBar-types";
 import { openConversationAction } from "@/views/messages/FreePageView-utils";

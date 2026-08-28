@@ -4,7 +4,13 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { clientEnv } from "@/lib/env";
 import { RealtimeClient, type RealtimeStatus } from "./realtime-client";
-import { openBc, type Cmd } from "./tab-coordinator";
+import {
+  openBc,
+  leaderSnapshotReply,
+  presenceSnapshotFrame,
+  waitingFallback,
+  type Cmd,
+} from "./tab-coordinator";
 import { routeToPageClaim } from "./route-mapping";
 import { dispatchEvent } from "./event-dispatch";
 import { dispatchRenew } from "./renew-dispatch";
@@ -41,10 +47,24 @@ export function useRealtimeCoordination() {
   } | null>(null);
   const userIdRef = useRef(user?.id);
   const lockResolveRef = useRef<(() => void) | null>(null);
+  // Bumped on bfcache restore: pagehide already disconnected the client and
+  // released the leader lock, but React state (and this effect) survived the
+  // freeze — without a dep change the page would come back with no
+  // connection and no queued lock request. Re-running the effect rebuilds
+  // both.
+  const [wakeTick, setWakeTick] = useState(0);
 
   useEffect(() => {
     userIdRef.current = user?.id;
   }, [user?.id]);
+
+  useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) setWakeTick((t) => t + 1);
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -127,8 +147,10 @@ export function useRealtimeCoordination() {
 
       const ac = new AbortController();
       // Defer to avoid cascading-render lint warning; status will be
-      // overridden by the RealtimeClient once the lock is acquired.
-      setTimeout(() => setStatus("waiting"), 0);
+      // overridden by the RealtimeClient once the lock is acquired, or by
+      // the leader's snapshot reply to the "hi" below — waitingFallback
+      // keeps this from clobbering either if they land first.
+      setTimeout(() => setStatus(waitingFallback), 0);
 
       navigator.locks
         .request(
@@ -152,7 +174,13 @@ export function useRealtimeCoordination() {
                 resolve();
                 lockResolveRef.current = null;
               };
-              window.addEventListener("beforeunload", onUnload);
+              // pagehide, NOT beforeunload: beforeunload also fires for
+              // navigations/closes the user then CANCELS — tearing down the
+              // client and releasing the leader lock there left a live page
+              // with no connection and no queued lock request (dead until
+              // reload). pagehide only fires once the page is actually
+              // being hidden for unload/bfcache.
+              window.addEventListener("pagehide", onUnload);
             });
           },
         )
@@ -176,6 +204,23 @@ export function useRealtimeCoordination() {
               break;
             case "st":
               setStatus(m.status);
+              break;
+            case "hi":
+              // Only the leader answers — it's the one tab with a live
+              // client whose status/presence mean anything.
+              if (client) {
+                for (const reply of leaderSnapshotReply(
+                  client.getStatus(),
+                  onlineUsersRef.current,
+                )) {
+                  bc.postMessage(reply);
+                }
+              }
+              break;
+            case "presence":
+              // Through process(), not just the ref — see
+              // presenceSnapshotFrame's contract note.
+              process(presenceSnapshotFrame(m.users));
               break;
             case "cmd":
               if (client) {
@@ -201,6 +246,14 @@ export function useRealtimeCoordination() {
           }
         };
         bc.addEventListener("message", onMsg);
+        // Ask an already-running leader for its current status + presence.
+        // Status is otherwise only broadcast on CHANGES, so a tab joining
+        // while the leader sits stably "open" would report "waiting"
+        // forever (disabled chat input, "Call unavailable" on every call
+        // attempt) — the stuck-second-tab incident of 2026-08-28. Harmless
+        // when no leader exists yet: whoever wins the lock broadcasts its
+        // connect transitions anyway.
+        bc.postMessage({ type: "hi" } satisfies Cmd);
 
         return () => {
           alive = false;
@@ -213,7 +266,7 @@ export function useRealtimeCoordination() {
           bc.close();
           channelRef.current = null;
           if (onUnload) {
-            window.removeEventListener("beforeunload", onUnload);
+            window.removeEventListener("pagehide", onUnload);
             onUnload = null;
           }
           if (lockResolveRef.current) {
@@ -232,7 +285,7 @@ export function useRealtimeCoordination() {
         }
         clientRef.current = null;
         if (onUnload) {
-          window.removeEventListener("beforeunload", onUnload);
+          window.removeEventListener("pagehide", onUnload);
           onUnload = null;
         }
         if (lockResolveRef.current) {
@@ -271,7 +324,7 @@ export function useRealtimeCoordination() {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [token, queryClient]);
+  }, [token, queryClient, wakeTick]);
 
   useEffect(() => {
     if (!token) return;

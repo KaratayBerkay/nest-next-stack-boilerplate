@@ -32,6 +32,11 @@ export const validationSchema = Joi.object({
     then: Joi.required(),
     otherwise: Joi.optional(),
   }),
+  // At-rest master key for stored message bodies (StorageCryptoService).
+  // Optional: absent, the service derives a dev-fallback key from
+  // ENCRYPTION_KEY and warns at boot. 64-hex is used as raw key bytes; any
+  // other string is sha256'd first.
+  MESSAGE_STORAGE_MASTER_KEY: Joi.string().min(16).optional(),
 
   // ── Stripe ────────────────────────────────────────────────────────────────
   STRIPE_SECRET_KEY: Joi.string().optional(),

@@ -215,7 +215,7 @@ describe('CommentService', () => {
       expect(prisma.comment.create).not.toHaveBeenCalled();
     });
 
-    it("rejects a reply whose parent belongs to a different post than data.postId", async () => {
+    it('rejects a reply whose parent belongs to a different post than data.postId', async () => {
       prisma.post.findUnique.mockResolvedValue({
         authorId: 'post-author',
         title: 'My Post',

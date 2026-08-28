@@ -133,7 +133,8 @@ describe('RtcWebhookController', () => {
     _resetKeysForTests();
     const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
 
-    const { controller, rtcRoom, rtcParticipant, liveKit } = buildController();
+    const { controller, rtcRoom, rtcParticipant, rtcCallService, liveKit } =
+      buildController();
     liveKit.verifyWebhookEvent.mockResolvedValue({
       event: 'participant_left',
       room: { name: 'call-r5' },
@@ -148,6 +149,69 @@ describe('RtcWebhookController', () => {
     expect(rtcParticipant.updateMany).toHaveBeenCalledWith({
       where: { roomId: 'r5', livekitIdentity: rawUserId, leftAt: null },
       data: { leftAt: expect.any(Date) as Date },
+    });
+    // handlePeerLeft needs the LiveKit room name + identity so it can probe
+    // whether the "departed" participant already rejoined (full reconnect)
+    // before ruling the call over.
+    expect(rtcCallService.handlePeerLeft).toHaveBeenCalledWith(
+      'r5',
+      'call-r5',
+      rawUserId,
+    );
+  });
+
+  // Regression: livekit-client's full reconnect rejoins the same room as a
+  // brand-new session right after its own participant_left stamped leftAt.
+  // The row means "currently in the room" — a rejoin must clear it.
+  it('participant_joined clears a previously stamped leftAt for the rejoining identity', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, liveKit } = buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_joined',
+      room: { name: 'call-r7' },
+      participant: { identity: encryptId(rawUserId) },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r7' });
+    rtcParticipant.updateMany.mockResolvedValue({ count: 1 });
+
+    const { req, res, status } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcParticipant.updateMany).toHaveBeenCalledWith({
+      where: {
+        roomId: 'r7',
+        livekitIdentity: rawUserId,
+        leftAt: { not: null },
+      },
+      data: { leftAt: null },
+    });
+    expect(status).toHaveBeenCalledWith(200);
+  });
+
+  // Regression: a reconnecting client whose join races the call teardown
+  // makes LiveKit auto-recreate the just-deleted room and fire a fresh
+  // room_started — observed live flipping an ENDED room's DB row back to
+  // ACTIVE forever (the zombie room itself dies via empty timeout, which
+  // deliberately doesn't touch RtcRoom.state).
+  it('room_started never resurrects an ENDED room row', async () => {
+    const { controller, rtcRoom, liveKit } = buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'room_started',
+      room: { name: 'call-r8' },
+    });
+
+    const { req, res } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcRoom.updateMany).toHaveBeenCalledWith({
+      where: { livekitRoomName: 'call-r8', state: { not: 'ENDED' } },
+      data: {
+        state: 'ACTIVE',
+        startedAt: expect.any(Date) as Date,
+      },
     });
   });
 

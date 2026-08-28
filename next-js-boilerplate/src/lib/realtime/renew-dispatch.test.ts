@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { QueryClient } from "@tanstack/react-query";
-import { dispatchRenew } from "./renew-dispatch";
+import { dispatchRenew, patchConversationList } from "./renew-dispatch";
+import { setActivePeerId } from "./active-peer";
 
 function createQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -11,6 +12,7 @@ describe("dispatchRenew", () => {
 
   beforeEach(() => {
     qc = createQueryClient();
+    setActivePeerId(null);
   });
 
   describe("Notifications", () => {
@@ -174,6 +176,95 @@ describe("dispatchRenew", () => {
 
       const data = qc.getQueryData(["conversations"]) as unknown[];
       expect(data).toHaveLength(0);
+    });
+
+    it("Conversation: clamps unread to 0 for the active thread when the send-time renew races ahead of the mark-read reset", async () => {
+      setActivePeerId("u1");
+      qc.setQueryData(
+        ["conversations"],
+        [
+          {
+            user: { id: "u1", name: "Alice" },
+            lastMessage: "old",
+            lastTime: "2026-07-20T10:00:00Z",
+            unread: 0,
+          },
+        ],
+      );
+
+      await dispatchRenew(qc, {
+        renew: "Messages",
+        type: "Conversation",
+        conversation: {
+          user: { id: "u1" },
+          lastMessage: "new message",
+          lastTime: "2026-07-20T11:00:00Z",
+          unread: 1,
+        },
+      });
+
+      const data = qc.getQueryData(["conversations"]) as {
+        unread: number;
+        lastMessage: string;
+        lastTime: string;
+      }[];
+      expect(data[0].unread).toBe(0);
+      // Only the unread count is clamped — the preview still updates.
+      expect(data[0].lastMessage).toBe("new message");
+      expect(data[0].lastTime).toBe("2026-07-20T11:00:00Z");
+    });
+
+    it("Conversation: applies the renewed unread count for a peer whose thread is not open", async () => {
+      setActivePeerId("u1");
+      qc.setQueryData(
+        ["conversations"],
+        [
+          {
+            user: { id: "u2", name: "Bob" },
+            lastMessage: "old",
+            lastTime: "2026-07-20T10:00:00Z",
+            unread: 0,
+          },
+        ],
+      );
+
+      await dispatchRenew(qc, {
+        renew: "Messages",
+        type: "Conversation",
+        conversation: {
+          user: { id: "u2" },
+          lastMessage: "new message",
+          lastTime: "2026-07-20T11:00:00Z",
+          unread: 3,
+        },
+      });
+
+      const data = qc.getQueryData(["conversations"]) as {
+        unread: number;
+      }[];
+      expect(data[0].unread).toBe(3);
+    });
+
+    it("Conversation: inserts a first-ever conversation from the active peer with unread already 0", () => {
+      setActivePeerId("u1");
+      qc.setQueryData(["conversations"], []);
+
+      patchConversationList(
+        qc,
+        {
+          user: { id: "u1" },
+          lastMessage: "hello",
+          lastTime: "2026-07-20T11:00:00Z",
+          unread: 1,
+        },
+        { insertIfMissing: true },
+      );
+
+      const data = qc.getQueryData(["conversations"]) as {
+        unread: number;
+      }[];
+      expect(data).toHaveLength(1);
+      expect(data[0].unread).toBe(0);
     });
 
     it("ConversationRemoved: drops the peer row entirely (deleted-for-me on every message)", async () => {
