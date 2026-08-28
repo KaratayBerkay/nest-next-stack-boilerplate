@@ -26,6 +26,18 @@ the real environment either way, never blocking startup on Vault being reachable
 exported, fully functional, but **never actually injected anywhere** in the current app. See
 [Known issues](#known-issues).
 
+## Deploy-side note: `vault-init` and `.env.local` overrides
+
+Separate from both code paths above, the **compose-level**
+[`docker/vault-init/entrypoint.sh`](../../../../docker/vault-init/entrypoint.sh) (repo root, not
+the backend package) materializes each service's Vault secrets into an env file at container start —
+and (post-docs, 2026-08-28) appends an optional `/secrets/<svc>.env.local` **after** the Vault
+values, so its keys win (docker `env_file` semantics: last occurrence counts). That's the escape
+hatch for a deploy box whose `VAULT_TOKEN` is read-only: a secret that can't be written upstream
+(e.g. `MESSAGE_STORAGE_MASTER_KEY`) goes in the `.local` file until a privileged token can move it
+into Vault. Direct edits to the generated env file don't survive — `vault-init` rewrites it on every
+start.
+
 ## Interfaces
 
 None. Internal-only.

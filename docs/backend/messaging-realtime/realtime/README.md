@@ -9,7 +9,10 @@ The single WebSocket transport (`/ws`, raw `ws` library — **not** socket.io) a
 push-delivery primitives every other feature builds on. `RealtimeGateway` owns the connection
 lifecycle, auth, and emit routing; it does not itself know about messages, rooms, or notifications —
 feature modules ([messaging](../messaging/README.md), notification) register frame handlers into it
-via `registerHandler()`/`registerPageCallbacks()` rather than opening their own sockets.
+via `registerHandler()`/`registerPageCallbacks()` rather than opening their own sockets. Since the
+RTC phases (post-docs), [rtc](../rtc/README.md)'s `RtcCallWsGateway`/`RtcChatWsGateway` register the
+`rtc:*` frame family the same way — see
+[rtc/endpoints.md § WebSocket events](../rtc/endpoints.md#websocket-events-clientserver).
 
 ## Auth — WS upgrade, not a first-message protocol
 

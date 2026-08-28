@@ -34,8 +34,8 @@ layout).
 ## Known issues
 
 - [MOB-006](../../../../issues.md#mob-006) —
-  [`account_avatar_section.dart`](../../../../../flutter-boilerplate/lib/views/settings/account/account_avatar_section.dart)'s
-  `AccountAvatarSection` widget is fully built and never imported anywhere (`grep -rln
+  `account_avatar_section.dart`'s `AccountAvatarSection` widget — **resolved by deletion** (commit
+  `b98fac8a`) — was fully built and never imported anywhere (`grep -rln
   "AccountAvatarSection" flutter-boilerplate/lib` returns only its own definition file) — the real
   screen reimplements the same avatar-preview-plus-change-button UI inline instead. Same
   "scaffolded then inlined, original left behind" shape as

@@ -20,6 +20,10 @@ which buckets into date-headed groups; this list renders one flat sequence).
 
 ## Behavior notes
 
+- **Link cards** (added post-docs): every http(s) URL in a message body renders a
+  [ChatLinkCard](../../messages/components/chat-link-card.md) under the bubble — copyable always, clickable only when it passes the
+  strict https/public-domain policy documented there.
+
 - **No per-message actions at all** — no delete, no reply, no context menu of any kind. Contrast
   [ChatMessageBubble](../../messages/components/chat-message-bubble.md), which has a hover-revealed
   reply/delete menu. This isn't a missing affordance; the backend has nothing to call (see

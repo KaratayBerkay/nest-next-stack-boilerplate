@@ -25,7 +25,7 @@ Confirmed by reading every `route.ts` in both `app/api/notifications/` and `app/
 |---|---|---|
 | [`actions.ts`](../../../../next-js-boilerplate/src/api/client/notifications/actions.ts) | `useNotificationActions()` (`markRead`, `markAllRead`) | The mutation layer this page and `NotificationDropdown` actually call — see [hooks.md](./hooks.md) |
 | [`query.ts`](../../../../next-js-boilerplate/src/api/client/notifications/query.ts) | `notificationsQueryOptions`, `unreadCountQueryOptions`, `dmUnreadCountQueryOptions` | React Query option builders — all lazy-`import()` their matching `api/server` file |
-| [`mark-read.ts`](../../../../next-js-boilerplate/src/api/client/notifications/mark-read.ts) | `useMarkNotificationRead()` | ⚠ Dead duplicate of `useNotificationActions()` — see [FE-011](../../../issues.md#fe-011) and [hooks.md](./hooks.md) |
+| `mark-read.ts` | `useMarkNotificationRead()` | **Deleted** (dedup pass, commit `aa04a418`) — was a dead duplicate of `useNotificationActions()`; see [FE-011](../../../issues.md#fe-011) and [hooks.md](./hooks.md) |
 
 ## Server / BFF routes — notifications (`src/api/server/notifications/`)
 

@@ -15,6 +15,7 @@ own; each subdirectory below is documented as its own leaf, matching `src/common
 | [dataloader](./dataloader/) | [README](./dataloader/README.md) | Per-request `DataLoader` batching for GraphQL N+1 avoidance |
 | [exceptions](./exceptions/) | [README](./exceptions/README.md) | The app's one unified error shape (`{statusCode, exc, msg, key, ...}`) — every REST/GraphQL error funnels through this |
 | [id-codec](./id-codec/) | [README](./id-codec/README.md) | Encrypts/decrypts database uuids at the transport boundary — REST, GraphQL, WS |
+| [scanner-filter](./scanner-filter/) | [README](./scanner-filter/README.md) | Pre-pipeline 404s for vulnerability-scanner probes (`/*.php`, `wp-*`, `/.env`, …) — added post-docs (2026-08-28) |
 | [token-codec](./token-codec/) | [README](./token-codec/README.md) | Same idea as `id-codec`, for opaque session tokens instead of uuids |
 | [utils](./utils/) | [README](./utils/README.md) | Small stateless helpers: device-type sniffing, display names, letter counting, duration parsing, password strength |
 

@@ -259,22 +259,34 @@ When asked to read/show websocket logs, payment logs, billing logs, or any appli
 - **ES endpoint:** `http://localhost:9200`
 - **Kibana:** `http://10.10.2.175:5601`
 
-### Quick queries
+### Real indices (consolidated)
 
-| Log type | ES index | Query |
+Logs live in three consolidated indices — filter by field inside them. The old
+per-category index family (`*-exception-logs`, `session-logs`, `page-logs`,
+`payment-logs`, …) no longer exists.
+
+| Index | Contents | Query |
 |---|---|---|
-| WebSocket exceptions | `websocket-exception-logs` | `curl -s http://localhost:9200/websocket-exception-logs/_search?size=20` |
-| HTTP exceptions | `http-exception-logs` | `curl -s http://localhost:9200/http-exception-logs/_search?size=20` |
-| App exceptions | `application-exception-logs` | `curl -s http://localhost:9200/application-exception-logs/_search?size=20` |
-| Session logs | `session-logs` | `curl -s http://localhost:9200/session-logs/_search?size=20` |
-| Page logs | `page-logs` | `curl -s http://localhost:9200/page-logs/_search?size=20` |
-| Network logs | `network-logs` | `curl -s http://localhost:9200/network-logs/_search?size=20` |
-| Database logs | `database-logs` | `curl -s http://localhost:9200/database-logs/_search?size=20` |
-| Performance logs | `performance-logs` | `curl -s http://localhost:9200/performance-logs/_search?size=20` |
-| App logs (all backend) | `app-logs` | `curl -s http://localhost:9200/app-logs/_search?size=20` |
-| Payment logs | `payment-logs` | `curl -s http://localhost:9200/payment-logs/_search?size=20` |
-| Billing logs | `billing-logs` | `curl -s http://localhost:9200/billing-logs/_search?size=20` |
-| Frontend logs (all) | `frontend-logs` | `curl -s http://localhost:9200/frontend-logs/_search?size=20` |
+| `backend-logs` | Everything from the NestJS container (pino) | `curl -s 'http://localhost:9200/backend-logs/_search?size=20&sort=@timestamp:desc'` |
+| `web-logs` | Everything from the Next.js container | `curl -s 'http://localhost:9200/web-logs/_search?size=20&sort=@timestamp:desc'` |
+| `audit-logs` | Security audit events (logins, new devices, admin actions) | `curl -s 'http://localhost:9200/audit-logs/_search?size=20'` |
+
+`mobile-logs` is routed from backend records tagged `origin: "mobile"` and is
+auto-created on first mobile activity. The authoritative app-level audit trail
+is Postgres's `AuditLog` table; `audit-logs` mirrors those events for search.
+
+### Filtering within an index
+
+Pino numeric levels: `30` info, `40` warn, `50` error. Useful keyword fields:
+`event`, `category`, `context`, `level`, `userId`, `errorMessage`, `req.url`,
+`res.statusCode`.
+
+| Question | Filter |
+|---|---|
+| Backend errors, last 24h | `curl -s http://localhost:9200/backend-logs/_search -H 'Content-Type: application/json' -d '{"size":20,"sort":[{"@timestamp":"desc"}],"query":{"bool":{"filter":[{"range":{"@timestamp":{"gte":"now-24h"}}},{"term":{"level":50}}]}}}'` |
+| HTTP exceptions | add filter `{"term":{"category":"http-exception"}}` |
+| RTC activity | add filter `{"term":{"category":"rtc"}}` — events like `webhook.received`, `call.accepted`, `call.ended` |
+| Page views (web) | add filter `{"term":{"category":"page"}}` in `web-logs` |
 
 Always return the results formatted with `python3 -m json.tool` and summarize key fields like `event`, `context`, `service`, `level`, `userId`, `errorMessage`, `category`.
 

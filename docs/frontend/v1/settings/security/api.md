@@ -47,9 +47,8 @@ linked here as the exact call site this page depends on, not independently re-ve
 
 ## Known issues
 
-- [FE-007](../../../../issues.md#fe-007) — a sibling file,
-  [`views/settings/security/mfa-handlers.ts`](../../../../../next-js-boilerplate/src/views/settings/security/mfa-handlers.ts),
-  exports its own `handleEnroll`/`handleVerify`/`handleDisable` built on the same `mfa.ts` functions —
-  but `PageContent.tsx` never imports it (confirmed: `grep -rln "mfa-handlers"
-  next-js-boilerplate/src` returns nothing outside the file itself). Fully dead, functionally
+- [FE-007](../../../../issues.md#fe-007) — **resolved by deletion**: a sibling file,
+  `views/settings/security/mfa-handlers.ts`, exported its own
+  `handleEnroll`/`handleVerify`/`handleDisable` built on the same `mfa.ts` functions but was never
+  imported anywhere. The dedup pass (commit `aa04a418`) deleted it. Originally flagged as fully dead, functionally
   redundant with the real, inline handlers in `PageContent.tsx`.

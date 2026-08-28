@@ -56,9 +56,8 @@ run's six backend modules. See
 
 [change-password.md](./widgets/change-password.md) · [mfa-enroll.md](./widgets/mfa-enroll.md)
 
-A third file in this same source tree,
-[`csp/nonce_panel.dart`](../../../../../flutter-boilerplate/lib/views/security/csp/nonce_panel.dart),
-is **confirmed dead code** (CSP nonces are a web-only concept — see
+A third file that used to sit in this same source tree, `csp/nonce_panel.dart`, was **confirmed
+dead code and deleted** (commit `b98fac8a`) (CSP nonces are a web-only concept — see
 [MOB-001](../../../../issues.md#mob-001), already logged; not documented here as a real screen, per this
 run's brief).
 

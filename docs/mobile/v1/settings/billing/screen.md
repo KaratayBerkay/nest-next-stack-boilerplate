@@ -43,9 +43,9 @@ the [plans screen](../../plans/screen.md).
 
 ## ⚠ Payment methods: mobile has a real add/remove/set-default flow — web doesn't
 
-`_PaymentMethodsSection` is **not** a thin wrapper around the standalone
-[`payment_methods.dart`](../../../../../flutter-boilerplate/lib/views/settings/billing/payment_methods.dart)
-file (that file's `PaymentMethods` widget class is dead — see [Known issues](#known-issues)) — it's a
+`_PaymentMethodsSection` was **not** a thin wrapper around the standalone `payment_methods.dart`
+file (that file's dead `PaymentMethods` widget class was deleted in `b98fac8a` — see
+[Known issues](#known-issues)) — it's a
 separate, fully-wired inline implementation with three real actions:
 
 - **Remove** (`_removeMethod`) → `billingActionsProvider.removePaymentMethod(id)` → GraphQL
@@ -105,9 +105,8 @@ correctly shows for the exact same rows (web checks `=== "COMPLETED"`, the real 
 
 - ⚠ [CROSS-034](../../../../issues.md#cross-034) — mobile's payment-methods UI is materially
   more capable than web's (add/remove/set-default vs. read-only).
-- ⚠ [MOB-020](../../../../issues.md#mob-020) — this vertical's own
-  [`payment_methods.dart`](../../../../../flutter-boilerplate/lib/views/settings/billing/payment_methods.dart)
-  (`PaymentMethods` widget class) is dead code — `_PaymentMethodsSection` above reimplements the same
+- ⚠ [MOB-020](../../../../issues.md#mob-020) — **resolved by deletion** (commit `b98fac8a`): this
+  vertical's own `payment_methods.dart` (`PaymentMethods` widget class) was dead code — `_PaymentMethodsSection` above reimplements the same
   UI inline instead of using it. The same "scaffolded then inlined, original left behind" pattern this
   effort has found repeatedly elsewhere (e.g.
   [CROSS-013](../../../../issues.md#cross-013)/[MOB-006](../../../../issues.md#mob-006)).

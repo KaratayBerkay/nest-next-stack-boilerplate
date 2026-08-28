@@ -5,21 +5,21 @@ Flutter/mobile-specific (native share sheets, route-loading skeletons under a Go
 because it mirrors a *component* web has (static error/not-found/loading pages) rather than a route.
 None of the three areas below is a page or screen in its own right, so none gets a `screen.md`.
 
-## `share_sheet/`
+## `share_sheet/` — deleted
 
-**Real location:** [`lib/views/common/share_sheet/`](../../flutter-boilerplate/lib/views/common/share_sheet/)
-— confirmed by directory listing; it is **not** a top-level `lib/share_sheet/` as a naive guess from
-the name alone might assume.
+**Was at** `lib/views/common/share_sheet/` (not a top-level `lib/share_sheet/`). The whole folder —
+all three files below — was removed in the cross-stack dead-code pass (commit `b98fac8a`), closing
+[MOB-029](../issues.md#mob-029). Inventory kept for the record:
 
 Three files, all plain Dart/Flutter with no external service dependency:
 
 | File | Contents |
 |---|---|
-| [`share_content.dart`](../../flutter-boilerplate/lib/views/common/share_sheet/share_content.dart) | `ShareContent` — a `{title, description?, url?, imageUrl?, contentType?}` data model with `fromJson`/`toJson`. |
-| [`share_actions.dart`](../../flutter-boilerplate/lib/views/common/share_sheet/share_actions.dart) | `ShareActions` — a widget rendering a "Share" button (calls an `onShare` callback) and a "Copy link" button (writes `shareLink` to the clipboard via `Clipboard.setData`, shows a snackbar). |
-| [`share_platform.dart`](../../flutter-boilerplate/lib/views/common/share_sheet/share_platform.dart) | `SharePlatform` — a `{id, name, iconUrl?, isInstalled, packageName?}` data model, presumably meant to represent an installed share-target app. |
+| `share_content.dart` | `ShareContent` — a `{title, description?, url?, imageUrl?, contentType?}` data model with `fromJson`/`toJson`. |
+| `share_actions.dart` | `ShareActions` — a widget rendering a "Share" button (calls an `onShare` callback) and a "Copy link" button (clipboard + snackbar). |
+| `share_platform.dart` | `SharePlatform` — a `{id, name, iconUrl?, isInstalled, packageName?}` data model for an installed share-target app. |
 
-**⚠ All three are dead code** — `grep -rn "ShareContent(\|ShareActions(\|SharePlatform("
+**⚠ All three were dead code** — `grep -rn "ShareContent(\|ShareActions(\|SharePlatform("
 flutter-boilerplate/lib` matches only each file's own definition, nowhere else in the app. The real
 `v1/share` screen (documented in Phase 2b) does not import from this folder, and the app's actual
 native-share integration elsewhere (`mfa_enroll`, `attachment_preview`) uses the `share_plus` package

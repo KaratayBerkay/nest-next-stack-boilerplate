@@ -7,8 +7,9 @@ real feature modules. No REST API versioning exists — see
 
 ## Scope of this documentation
 
-`nest-js-boilerplate/src` has 104 top-level directories (verified count). **33 are real, always-on
-product modules** (wired into `app.module.ts`'s `CORE_MODULES`, directly or transitively); the rest are
+`nest-js-boilerplate/src` has 105 top-level directories (verified count 2026-08-29; was 104 before
+the RTC phases added `rtc/`). **34 are real, always-on product modules** (33 at the original count,
++`rtc`) (wired into `app.module.ts`'s `CORE_MODULES`, directly or transitively); the rest are
 NestJS's own bundled official recipe/sample code (`grpc`, `mvc`, `mongoose`, `sequelize`, `typeorm`,
 `mikro-orm`, GraphQL-federation samples, etc.) that ship gated behind `DEMO_MODULES`
 (`LOAD_DEMO_MODULES=true`, or on by default whenever `NODE_ENV=development`) or aren't wired into
@@ -36,7 +37,7 @@ re-established at time of writing).
 |---|---|---|
 | [Identity & Access](./identity-access/) | auth, authorization, mfa, devices, sessions, api-keys, csrf | ✅ Phase 1 |
 | [Social & Content](./social-content/) | profile, friends, post, comment, reactions, team-members, project-tasks | ✅ Phase 2 |
-| [Messaging & Realtime](./messaging-realtime/) | messaging, realtime, notification, push-notification, wire-crypto, upload | ✅ Phase 3 |
+| [Messaging & Realtime](./messaging-realtime/) | messaging, realtime, notification, push-notification, wire-crypto, upload, **rtc** (post-docs addition) | ✅ Phase 3 (+rtc) |
 | [Billing & Usage](./billing-usage/) | billing (+stripe), usage | ✅ Phase 4 |
 | [Platform / Core](./platform-core/) | activity-log, outbox, mail, vault, prisma, redis, health, logging, config, telemetry, common/* | ✅ Phase 5 |
 

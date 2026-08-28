@@ -25,7 +25,7 @@ screen's tier views and `v1_header.dart`'s bell badge.
 ### `dmUnreadNotificationsProvider` — wrong query, currently unreachable
 
 Same file — a `FutureProvider<int>` intended to mirror web's `useDmUnreadCount`, but its server layer
-([`dm_unread_count.dart`](../../../../flutter-boilerplate/lib/api/server/notifications/dm_unread_count.dart))
+([`dm_unread_count.dart`](../../../../flutter-boilerplate/lib/api/server/messages/dm_unread_count.dart) — moved from `api/server/notifications/` to `api/server/messages/` in a later pass)
 sends the **same** `unreadNotificationCount` GraphQL query as the provider above, not a DM-specific
 one — there is no GraphQL query for the DM-unread count at all (only the REST
 `GET /api/messages/unread-count` — see
@@ -57,7 +57,7 @@ actually reads.
 as [FE-007](../../../issues.md#fe-007)/[CROSS-013](../../../issues.md#cross-013), twice over in this
 one API layer:
 
-- [`mark_read.dart`](../../../../flutter-boilerplate/lib/api/client/notifications/mark_read.dart)'s
+- the since-deleted `api/client/notifications/mark_read.dart`'s
   `markReadNotificationsProvider`/`MarkReadNotifications` (client layer — a second, separate file
   from the server-layer file of the same name above) has zero callers anywhere; superseded by
   `NotificationActions.markRead` above, which reads the server file directly.

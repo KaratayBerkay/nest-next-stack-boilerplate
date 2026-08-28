@@ -1,5 +1,11 @@
 # RTC suite — 1:1 calls, group meetings, live streaming
 
+> **Progress tracker, not reference docs.** The shipped system is documented at
+> [backend/messaging-realtime/rtc/](../backend/messaging-realtime/rtc/README.md),
+> [frontend/v1/rtc/](../frontend/v1/rtc/README.md), and
+> [mobile/v1/rtc/](../mobile/v1/rtc/README.md) — read those for current behavior; this file records
+> how it got built.
+
 *Planned locally against the live tree (every file/line citation below was read directly
 from the repo, not assumed), refined via an independent design pass, then two rounds of
 user-directed scope decisions before Phase 1 implementation. This is a single running

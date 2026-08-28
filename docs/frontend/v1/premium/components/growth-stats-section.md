@@ -3,7 +3,8 @@
 **Source:** [`GrowthStatsSection.tsx`](../../../../../next-js-boilerplate/src/views/premium/GrowthStatsSection.tsx)
 **Used in:** [premium page](../page.md) (Medium and Premium tiers)
 **Mobile equivalent:** the *name* exists on mobile too
-([`growth_stats_section.dart`](../../../../../flutter-boilerplate/lib/views/premium/growth_stats_section.dart))
+(previously `growth_stats_section.dart`; mobile's premium tier views were consolidated into a single
+[`page_view.dart`](../../../../../flutter-boilerplate/lib/views/premium/page_view.dart) in `b98fac8a`)
 but is dead code there — mobile's live implementation is a different, inline private widget
 (`_GrowthStatsGrid`). See [mobile/v1/premium/screen.md § Known issues](../../../../mobile/v1/premium/screen.md#known-issues).
 

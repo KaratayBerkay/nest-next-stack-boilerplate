@@ -24,9 +24,13 @@ V1Shell                       (Scaffold; responsive Row-vs-Stack layout at 768px
 └─ child                        (the screen)
 ```
 
-## ⚠ Four of this inventory's files are dead code
+## ⚠ Four of this inventory's files were dead code — since deleted
 
-**`message_dropdown.dart`, `profile_dropdown.dart`, and `badge.dart` (`BadgeWidget`) are never
+**Resolved by deletion:** all four files below were removed in the cross-stack dead-code pass
+(commit `b98fac8a`), closing [MOB-026](../issues.md#mob-026). The analysis is kept because the
+inline-reimplementation pattern it documents is real and recurring.
+
+**`message_dropdown.dart`, `profile_dropdown.dart`, and `badge.dart` (`BadgeWidget`) were never
 imported anywhere** (`grep -rn "MessageDropdown(\|ProfileDropdown(\|BadgeWidget(" lib` matches only
 each file's own definition). `V1Header.dart` reimplements all three concerns **entirely inline**
 instead of composing them: a private `_ProfileAvatar` class (a `PopupMenuButton`, not a dropdown
@@ -57,10 +61,20 @@ imported and used by `V1Sidebar` — not every file in this folder is dead, just
 | [`profile_section.dart`](../../flutter-boilerplate/lib/views/v1/profile_section.dart) | Sidebar-footer account block — avatar, name/email/tier, expand/collapse to reveal settings-link + sign-out. Genuinely imported by `v1_sidebar.dart`. |
 | [`header_message_banner.dart`](../../flutter-boilerplate/lib/views/v1/header_message_banner.dart) | A transient "new message" toast shown ~3s under the header on DM/room-message arrival (`headerMessageBannerProvider`, read from [`realtime_provider.dart`](../../flutter-boilerplate/lib/lib/realtime/realtime_provider.dart)). Its own doc comment calls this a mirror of "the web's `HeaderMessageBanner`" — imprecise: web has no component by that name, the closest equivalent is the dead-on-mobile `MessageDropdown`'s own auto-pop-on-arrival behavior (see [frontend/app-shell.md](../frontend/app-shell.md)). Functionally this file *does* cover the same user-facing need, just via an independently-built mechanism rather than a port of a specific web file. |
 | [`missing_page.dart`](../../flutter-boilerplate/lib/views/v1/missing_page.dart) | The `/v1/:lang/missing` route's content — mirrors web's not-found demo fixture (see [v1/page.md](../frontend/v1/page.md)). Real, routed, alive. |
-| [`message_dropdown.dart`](../../flutter-boilerplate/lib/views/v1/message_dropdown.dart) | **Dead** — see above. Would-be `MessageDropdown` widget; never instantiated. |
-| [`profile_dropdown.dart`](../../flutter-boilerplate/lib/views/v1/profile_dropdown.dart) | **Dead** — see above. Would-be `ProfileDropdown` widget; never instantiated. |
-| [`badge.dart`](../../flutter-boilerplate/lib/views/v1/badge.dart) | **Dead** — see above. Defines `BadgeWidget`; never instantiated. |
-| [`page_nav_wrapper.dart`](../../flutter-boilerplate/lib/views/v1/page_nav_wrapper.dart) | **Dead** — see above. Defines `PageNavWrapper`; never instantiated, and not a port of web's same-named file regardless. |
+| `message_dropdown.dart` | **Deleted** (`b98fac8a`) — was a dead, never-instantiated would-be `MessageDropdown`; see above. |
+| `profile_dropdown.dart` | **Deleted** (`b98fac8a`) — was a dead, never-instantiated would-be `ProfileDropdown`; see above. |
+| `badge.dart` | **Deleted** (`b98fac8a`) — was a dead, never-instantiated `BadgeWidget`; see above. |
+| `page_nav_wrapper.dart` | **Deleted** (`b98fac8a`) — was dead, and not a port of web's same-named file regardless; see above. |
+
+## Global RTC call overlay (post-docs, RTC phases)
+
+Not part of the v1 shell tree above but shell-level all the same:
+[`app.dart`](../../flutter-boilerplate/lib/app/app.dart) mounts
+[`RtcCallOverlay`](../../flutter-boilerplate/lib/components/rtc/rtc_call_overlay.dart) as a
+`Positioned.fill` at the **app root** (same level as the biometric-lock overlay), so 1:1 calls ring
+and run on any screen. State machine + signaling:
+[`lib/rtc/rtc_call_provider.dart`](../../flutter-boilerplate/lib/lib/rtc/rtc_call_provider.dart) —
+see [v1/rtc/README.md](./v1/rtc/README.md).
 
 ## The admin nav-link gate
 
@@ -71,4 +85,4 @@ computed, not shared code, but agree with each other. See [CROSS-039](../issues.
 ## Known issues affecting this shell
 
 - [MOB-026](../issues.md#mob-026) — four dead files (`message_dropdown.dart`, `profile_dropdown.dart`,
-  `badge.dart`, `page_nav_wrapper.dart`); see above.
+  `badge.dart`, `page_nav_wrapper.dart`); **resolved by deletion** in `b98fac8a`, see above.

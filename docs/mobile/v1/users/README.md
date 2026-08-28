@@ -22,7 +22,7 @@ all. See [CROSS-016](../../../issues.md#cross-016) for the full comparison.
 
 | Route | Name | Widget | Real / dead |
 |---|---|---|---|
-| `/v1/:lang/users` | `v1Users` | [`UsersPageContent`](../../../../flutter-boilerplate/lib/views/users/page_view.dart) | Registered and admin-gated, but has **zero navigational callers anywhere in the app** and its list rows have no `onTap` — see [Known issues](#known-issues-affecting-this-vertical). Not documented as its own screen (no web equivalent, unreachable in practice); mentioned here for completeness. |
+| `/v1/:lang/users` | `v1Users` | [`UsersListPageContent`](../../../../flutter-boilerplate/lib/views/users/list/page_view.dart) (restructured into `users/list/` + `users/detail/` since this doc was written) | Registered and admin-gated, but has **zero navigational callers anywhere in the app** and its list rows have no `onTap` — see [Known issues](#known-issues-affecting-this-vertical). Not documented as its own screen (no web equivalent, unreachable in practice); mentioned here for completeness. |
 | `/v1/:lang/users/list` | `v1UsersList` | see [list/screen.md](./list/screen.md) | Real, reachable via admin nav |
 | `/v1/:lang/users/detail/:uuid` | `v1UserDetail` | see [detail/screen.md](./detail/screen.md) | Real, reachable — but see [MOB-003](../../../issues.md#mob-003) |
 | `/v1/:lang/users/:userId` | `v1UserDetailLegacy` | (redirect only, no widget) | Rewrites to `/users/detail/:userId` — a plain path alias, not a separate screen |

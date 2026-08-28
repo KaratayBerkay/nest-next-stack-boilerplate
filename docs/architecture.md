@@ -105,14 +105,34 @@ Detail: [backend/billing-usage/billing/README.md](./backend/billing-usage/billin
 ## Realtime transport — raw WebSocket, not socket.io
 
 Single `/ws` endpoint (`ws` library, not socket.io), one gateway (`RealtimeGateway`) that owns the
-transport, auth, and generic emit primitives; feature gateways (`MessagingWsGateway`) register frame
-handlers into it rather than opening their own connections. Authentication happens at the **WS
+transport, auth, and generic emit primitives; feature gateways (`MessagingWsGateway`, and since the
+RTC phases `RtcCallWsGateway`/`RtcChatWsGateway`) register frame handlers into it rather than
+opening their own connections. Authentication happens at the **WS
 upgrade** (cookie-based, before a socket exists), not via a post-connect message — see
 [issues.md#cross-005](./issues.md#cross-005) for why this is worth stating explicitly (older repo
 docs described a different, now-removed first-message protocol). One socket per device; a
 page-claim protocol (`{type:"page", page:"messages", params:{...}}`) scopes server-push delivery to
 whatever route the client is currently on. Full protocol detail:
 [backend/messaging-realtime/realtime/README.md](./backend/messaging-realtime/realtime/README.md).
+
+**Web multi-tab leadership (client side):** the browser holds **one WS per browser profile**, not
+per tab — tabs elect a leader via `navigator.locks` (`useRealtimeCoordination`); the leader owns the
+socket and relays frames/commands over a `BroadcastChannel`, and a joining tab syncs the leader's
+current status + presence snapshot via a `hi`/`st`/`presence` handshake. See
+[frontend/app-shell.md § Realtime](./frontend/app-shell.md).
+
+## RTC — LiveKit SFU for calls, meetings, live streams
+
+Added after the original architecture pass (RTC phases 1–4). Real-time audio/video does **not**
+ride the `/ws` gateway: media flows client ↔ **LiveKit** (`livekit/livekit-server` in
+[`docker-compose.yml`](../docker-compose.yml), host networking for its UDP media range). The
+backend orchestrates — it mints per-room LiveKit access tokens, drives lifecycle state in Postgres,
+and consumes LiveKit's signed webhook (`POST /rtc/webhook/livekit`) to stay truthful about what the
+SFU actually did. Signaling that must be push-driven (1:1 call ringing, room chat) rides the
+existing `/ws` gateway as `rtc:*` frames. LiveKit identities and room names carry
+[id-codec](./backend/platform-core/common/id-codec/README.md)-encrypted ids, never raw uuids.
+Tier caps (call/meeting duration, meeting size, go-live gate) are enforced server-side. Full
+detail: [backend/messaging-realtime/rtc/README.md](./backend/messaging-realtime/rtc/README.md).
 
 ## Wire encryption — trusted-server transport + at-rest encryption
 

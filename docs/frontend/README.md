@@ -26,6 +26,7 @@ indexed once in [_reference/showcase-index.md](./_reference/showcase-index.md).
 | [Users](./v1/users/) | `v1/users/{list,detail/[uuid]}` | ✅ Phase 2a |
 | [Billing](./billing-funnel.md) | `(marketing)/pricing → v1/plans → v1/checkout/[tier] → v1/settings/billing` — **not** `v1/premium`, see [billing-funnel.md](./billing-funnel.md#correction-to-this-efforts-own-original-plan) | ✅ Phase 4 |
 | [Admin](./v1/admin/README.md) | `v1/admin`, `v1/admin/audit-logs` | ✅ Phase 5 |
+| [RTC](./v1/rtc/README.md) | `v1/rtc` (hub), `v1/rtc/calls`, `v1/rtc/meetings(/[slug])`, `v1/rtc/live(/[slug], /go-live)` + the global call overlay in the app shell | ✅ post-docs addition (RTC phases) |
 | [Premium](./v1/premium/page.md) | `v1/premium` — **not** a subscription page, a live RBAC/tier-gate tech demo sharing nav placement with Billing, see [CROSS-035](../issues.md#cross-035) | ✅ Phase 4b |
 | [Settings](./v1/settings/) | `v1/settings/{account,api-keys,billing,general,privacy,security,sessions,usage}` | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing/usage ✅ Phase 4b (usage written post-Phase-5, see [usage/page.md](./v1/settings/usage/page.md)) |
 

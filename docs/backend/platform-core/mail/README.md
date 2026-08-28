@@ -65,12 +65,14 @@ backend modules (not exposed over REST/GraphQL/WS itself).
 
 ## Used by (who calls `MailService`, and why)
 
-Exclusively [identity-access/auth](../../identity-access/auth/README.md) — confirmed via grep, the
-only importers of `MailModule`/`MailService` anywhere in `src/` are `auth/auth.service.ts`,
-`auth/auth-login.service.ts`, `auth/auth-registration.service.ts`, and `auth/email-otp.service.ts`.
-Five templates are enqueued in total: `email-verification`, `password-reset`, `password-changed`,
-`email-otp`, and `welcome-social` (post-OAuth-signup welcome). No other feature module sends email
-today.
+Originally exclusively [identity-access/auth](../../identity-access/auth/README.md)
+(`auth.service.ts`, `auth-login.service.ts`, `auth-registration.service.ts`, `email-otp.service.ts`
+— templates `email-verification`, `password-reset`, `password-changed`, `email-otp`,
+`welcome-social`). Since the RTC phases, [rtc](../../messaging-realtime/rtc/README.md)'s
+`RtcMeetingService.inviteToMeeting` also enqueues a sixth template, **`meeting-invite`**
+([`templates/render.ts`](../../../../nest-js-boilerplate/src/mail/templates/render.ts) — join-link
+button + inviter/title), fire-and-forget so a mail hiccup never fails the invite itself (the in-app
+notification is the primary channel).
 
 ## Known issues
 

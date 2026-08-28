@@ -194,6 +194,21 @@ Also backfills `messageId`/`roomMessageId` onto its own rows once
 [Messaging](#messaging) saves the message the upload was attached to.
 See [messaging-realtime/upload](./backend/messaging-realtime/upload/README.md).
 
+#### RTC (calls, meetings, live streams)
+*(Added after the original schema pass — RTC phases 1–4.)*
+**Tables:** `RtcRoom` (the kind-agnostic hub: `kind` CALL/MEETING/STREAM, `state`, the
+LiveKit-facing `livekitRoomName`, `startedAt`/`endedAt`), `RtcParticipant` (one row per user per
+room; `leftAt: null` = currently in — the guard every chat op checks; `livekitIdentity` stores the
+**raw** userId), and one product table per kind: `CallSession` (1:1 call state machine +
+`ringingAt`/`acceptedAt`/`endedAt`), `Meeting` (slug, host, tier-snapshotted
+`maxParticipants`/`maxDurationMinutes`), `LiveStream` (slug, broadcaster, `isLive`,
+`peakViewerCount`). Shared sub-features: `RtcChatMessage` (encrypted at rest — `v`/`ct`/`nonce`
+envelope like [Wire Crypto](#wire-crypto)'s message columns), `RtcReport`, `RtcRecording`
+(⚠ scaffolding — `egressId`/`fileUrl` permanently null until LiveKit Egress is wired).
+**User columns:** `subscriptionTier` (all caps), `hideAvatar` (participant summaries).
+Schema block: [`prisma/schema.prisma#L1083-L1256`](../nest-js-boilerplate/prisma/schema.prisma).
+See [messaging-realtime/rtc](./backend/messaging-realtime/rtc/README.md).
+
 ### Billing & Usage
 
 #### Billing (+Stripe)

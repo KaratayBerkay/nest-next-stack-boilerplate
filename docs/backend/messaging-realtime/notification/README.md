@@ -113,20 +113,14 @@ of this page.
 
 | Kind | Source | Documented in |
 |---|---|---|
-| REST controller | [`notification.controller.ts`](../../../../nest-js-boilerplate/src/notification/notification.controller.ts) | [endpoints.md § REST](./endpoints.md#rest) |
+| REST controller | **removed** — the dead controller [BE-012](../../../issues.md#be-012) flagged was deleted in commit `b98fac8a`; GraphQL is now the only client surface | [endpoints.md § REST](./endpoints.md#rest) |
 | GraphQL resolver | [`notification.resolver.ts`](../../../../nest-js-boilerplate/src/notification/notification.resolver.ts) | [endpoints.md § GraphQL](./endpoints.md#graphql) |
 
-Unlike [messaging](../messaging/README.md) (REST/GraphQL/WS are 3 independent, actively-used entry
-points with a confirmed response-shape difference — [BE-003](../../../issues.md#be-003)) or
-[auth](../../identity-access/auth/README.md) (GraphQL-only, no REST equivalent at all for the
-credentialed flows), this module's REST and GraphQL surfaces cover **identical ground** — list /
-unread-count / mark-one-read / mark-all-read exist on both, backed by the same
-`NotificationService` calls, same behavior. The only shape difference is REST folding mark-one and
-mark-all into one endpoint (`POST /api/notifications/read`, body `{id}` vs `{all:true}`) where
-GraphQL keeps them as two distinct mutations.
-
-**The REST surface is, however, entirely dead** — neither frontend nor mobile calls it. Confirmed by
-reading every caller on both platforms: the frontend's BFF routes
+This module used to carry a parallel REST surface covering identical ground (list / unread-count /
+mark-read, same `NotificationService` calls) — it was **entirely dead**, and the cross-stack
+dead-code pass (commit `b98fac8a`) deleted the controller, resolving
+[BE-012](../../../issues.md#be-012). The dead-caller evidence that justified the deletion, kept for
+the record: the frontend's BFF routes
 ([`app/api/notifications/*/route.ts`](../../../frontend/v1/notification/api.md)) all use
 `graphqlFetch` against the resolver below, never the REST paths, despite one of them
 (`NOTIFICATIONS_URL`) coincidentally sharing the exact same path spelling as the backend's own REST

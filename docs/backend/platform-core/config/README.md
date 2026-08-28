@@ -41,6 +41,13 @@ Beyond the unconditionally-required basics (`NODE_ENV`, `PORT`, `DATABASE_URL`, 
 - `MAX_DEVICES_PER_USER`/`MAX_SAME_IP_SESSIONS` default here (10 / 5) but are consumed by
   [identity-access/devices](../../identity-access/devices/README.md) and
   [identity-access/sessions](../../identity-access/sessions/README.md), not this module.
+- `MESSAGE_STORAGE_MASTER_KEY` (added post-docs, 2026-08-28): optional, `min(16)` when present —
+  the at-rest master key for stored message bodies
+  ([wire-crypto](../../messaging-realtime/wire-crypto/README.md)'s `StorageCryptoService`); absent,
+  the service derives a dev-fallback key from `ENCRYPTION_KEY` and warns at boot. 64-hex is used as
+  raw key bytes; any other string is sha256'd first. On the deploy box it's supplied via the
+  `vault-init` `.env.local` override — see
+  [vault/README.md § Deploy-side note](../vault/README.md#deploy-side-note-vault-init-and-envlocal-overrides).
 
 ## Interfaces
 

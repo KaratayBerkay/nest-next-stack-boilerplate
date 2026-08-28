@@ -26,7 +26,7 @@ this vertical's own pages; its only caller is the out-of-scope `settings/securit
 | File | Exports | Real caller(s) among the 6 pages |
 |---|---|---|
 | [`actions.ts`](../../../next-js-boilerplate/src/api/client/auth/actions.ts) | `useAuthActions()` — all 15 server functions below, uniformly wrapped | **None.** Used only by [`SecurityChangePassword.tsx`](../../../next-js-boilerplate/src/views/settings/security/SecurityChangePassword.tsx) (`settings/security` page, out of scope for this pass) and re-exported from [`src/api/index.ts`](../../../next-js-boilerplate/src/api/index.ts). |
-| [`queries.ts`](../../../next-js-boilerplate/src/api/client/auth/queries.ts) | `meQueryOptions()` (React Query option builder around `getMeServer`) | **None — dead code.** Not imported anywhere in the app, not re-exported from `src/api/index.ts` either. See [Known issues](#known-issues). |
+| `queries.ts` | `meQueryOptions()` (React Query option builder around `getMeServer`) | **Deleted** (dedup pass, commit `aa04a418`) — was dead code, never imported anywhere. See [Known issues](#known-issues). |
 
 ## Server / BFF (`src/api/server/auth/`)
 

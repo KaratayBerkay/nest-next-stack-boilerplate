@@ -23,6 +23,10 @@ and a hover-revealed reply/delete action menu. Client component (`"use client"`)
 
 ## Behavior notes
 
+- **Link cards** (added post-docs): every http(s) URL in a message body renders a
+  [ChatLinkCard](./chat-link-card.md) under the bubble — copyable always, clickable only when it passes the
+  strict https/public-domain policy documented there.
+
 - **Decryption-failure state**: a non-deleted message with an empty `body` and no attachments
   renders a distinct "🔒 decryption failed" bubble instead of blank space — see
   [wire-crypto](../../../../backend/messaging-realtime/wire-crypto/README.md) for why a message

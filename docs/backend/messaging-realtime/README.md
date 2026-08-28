@@ -1,8 +1,9 @@
 # Messaging & Realtime
 
 Direct messages, group chat rooms, live delivery, the two crypto layers that protect message content
-in transit and at rest, in-app + push notifications, and attachment upload/storage. ✅ Complete
-(Phase 3).
+in transit and at rest, in-app + push notifications, attachment upload/storage — and, added after
+the original docs pass, the LiveKit-backed **RTC** suite (1:1 calls, group meetings, live streams).
+✅ Complete (Phase 3 + the post-docs RTC addition).
 
 | Module | Interfaces | Docs |
 |---|---|---|
@@ -12,6 +13,7 @@ in transit and at rest, in-app + push notifications, and attachment upload/stora
 | [notification](./notification/) | REST controller (dead, see [Known issues](./notification/README.md#known-issues)), GraphQL resolver | [README](./notification/README.md) · [endpoints](./notification/endpoints.md) |
 | [push-notification](./push-notification/) | GraphQL resolver only, no REST controller | [README](./push-notification/README.md) · [endpoints](./push-notification/endpoints.md) |
 | [upload](./upload/) | REST controller | [README](./upload/README.md) · [endpoints](./upload/endpoints.md) |
+| [rtc](./rtc/) | REST controller (call reads + LiveKit webhook), GraphQL resolver (meetings/streams/reports/recordings), WS frames (call signaling + room chat, registered into `realtime`) | [README](./rtc/README.md) · [endpoints](./rtc/endpoints.md) |
 
 ## How the pieces fit together
 

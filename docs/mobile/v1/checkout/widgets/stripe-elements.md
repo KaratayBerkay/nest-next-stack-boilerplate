@@ -43,7 +43,7 @@ security model for their native SDKs) plus an optional cardholder-name `TextFiel
 
 ## The checkout-local `stripe_card_form.dart` is a dead re-export
 
-A **third** file, [`views/checkout/stripe_card_form.dart`](../../../../../flutter-boilerplate/lib/views/checkout/stripe_card_form.dart),
+A **third** file, `views/checkout/stripe_card_form.dart` (**deleted** in the dedup/dead-code passes),
 sits in the checkout folder itself (one of the 6 files this pass's brief called out by name) — its
 entire content is one line:
 

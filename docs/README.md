@@ -20,9 +20,14 @@ click through from any doc straight to the code.
 
 ## Status
 
-Complete. Every real page/screen/module across all three apps has a doc — see each root README's
-index table (all rows ✅, none left `⬜`) and [issues.md](./issues.md) for the full bug/gap log
-(108+ entries, all triaged). Demo/showcase galleries are deliberately excluded and catalogued once
+Complete, including the post-docs additions. Every real page/screen/module across all three apps has
+a doc — see each root README's index table (all rows ✅, none left `⬜`) and
+[issues.md](./issues.md) for the full bug/gap log (108+ entries, all triaged). A 2026-08-29 sync
+pass added the RTC suite (backend module + web + mobile verticals + LiveKit architecture section),
+`common/scanner-filter`, the chat link cards, the web realtime multi-tab protocol, and updated every
+doc whose source files were moved/deleted by the late-August dedup/dead-code commits
+(`aa04a418`/`b98fac8a`) — deletions are recorded as resolution notes on the issues that flagged
+them. Demo/showcase galleries are deliberately excluded and catalogued once
 each in `_reference/showcase-index.md` rather than documented individually — see
 [frontend/README.md § Scope of this documentation](./frontend/README.md#scope-of-this-documentation).
 

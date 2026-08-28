@@ -21,7 +21,7 @@ verified per file, not assumed:
 | [`mark_read.dart`](../../../../flutter-boilerplate/lib/api/server/notifications/mark_read.dart) | Direct GraphQL | `mutation MarkNotificationRead($id: ID!) { markNotificationRead(id: $id) }` | [Mark one notification read](../../../backend/messaging-realtime/notification/endpoints.md#mark-one-notification-read) — the live implementation |
 | [`read.dart`](../../../../flutter-boilerplate/lib/api/server/notifications/read.dart) | Direct GraphQL | `.markAllRead()` → `mutation MarkAllNotificationsRead` (live); `.markRead()` → an **invalid** query, `{ id read }` selected on a `Boolean` field (dead — see [hooks.md](./hooks.md)) | [Mark all notifications read](../../../backend/messaging-realtime/notification/endpoints.md#mark-all-notifications-read) |
 | [`unread_count.dart`](../../../../flutter-boilerplate/lib/api/server/notifications/unread_count.dart) | Direct GraphQL | `query UnreadNotificationCount` | [Get unread notification count (GraphQL)](../../../backend/messaging-realtime/notification/endpoints.md#get-unread-notification-count-graphql) |
-| [`dm_unread_count.dart`](../../../../flutter-boilerplate/lib/api/server/notifications/dm_unread_count.dart) | Direct GraphQL — **wrong query** | Sends the **same** `query UnreadNotificationCount` as `unread_count.dart` above, not a DM-specific operation | Same GraphQL query as above — see [MOB-012](../../../issues.md#mob-012); currently unreachable (see [hooks.md](./hooks.md)) |
+| [`dm_unread_count.dart`](../../../../flutter-boilerplate/lib/api/server/messages/dm_unread_count.dart) (moved to `api/server/messages/` in a later pass) | Direct GraphQL — **wrong query** | Sends the **same** `query UnreadNotificationCount` as `unread_count.dart` above, not a DM-specific operation | Same GraphQL query as above — see [MOB-012](../../../issues.md#mob-012); currently unreachable (see [hooks.md](./hooks.md)) |
 
 No REST-shaped file exists for the notification list itself — this vertical is 100% GraphQL on
 mobile, same conclusion as web (see
@@ -37,7 +37,7 @@ call sites anywhere in `flutter-boilerplate/lib`.
 |---|---|
 | [`actions.dart`](../../../../flutter-boilerplate/lib/api/client/notifications/actions.dart) | `notificationActionsProvider` → `NotificationActions` (`markRead`, `markAllRead`) — the live implementation, see [hooks.md](./hooks.md) |
 | [`query.dart`](../../../../flutter-boilerplate/lib/api/client/notifications/query.dart) | `notificationsProvider`, `notificationsUnreadCountProvider`, `dmUnreadNotificationsProvider` (buggy, see above) |
-| [`mark_read.dart`](../../../../flutter-boilerplate/lib/api/client/notifications/mark_read.dart) | `markReadNotificationsProvider` — dead, see [hooks.md](./hooks.md) |
+| `mark_read.dart` | `markReadNotificationsProvider` — was dead, **deleted** in a later cleanup pass; see [hooks.md](./hooks.md) |
 
 ## Push notifications — three uncoordinated, all-broken paths
 

@@ -70,6 +70,27 @@ isn't a recognized Prisma model) exists because falling through to "unencrypted"
 type like `SessionUserPayload` (the `me` query's return type) was a real bug — `me { id }` shipped the
 raw database uuid in production before this fallback was added.
 
+## Post-docs hardening (2026-08-28)
+
+Three changes landed after this doc was first written — all in
+[`id-codec.util.ts`](../../../../../nest-js-boilerplate/src/common/id-codec/id-codec.util.ts) /
+[`id-codec.interceptor.ts`](../../../../../nest-js-boilerplate/src/common/id-codec/id-codec.interceptor.ts):
+
+- **Cycle-safe deep walk.** `deepEncryptIds`/`deepDecryptIds` now track the current recursion path
+  in a `WeakSet`: a true cycle is cut (returned untransformed) while shared "diamond" references are
+  still transformed on every path. Hit live by Express's `req↔res↔socket` object graph — a `@Res()`
+  controller (LiveKit/Stripe webhooks) returns the Response object itself, and walking it recursed
+  to `RangeError`, logging a phantom 500 on every webhook.
+- **Interceptor `@Res()` passthrough.** The HTTP interceptor now returns the value untouched when it
+  *is* the Response object (the real body was already flushed by then) instead of walking it.
+- **LiveKit reuse.** [rtc](../../../messaging-realtime/rtc/README.md)'s
+  `toLivekitIdentity`/`toLivekitRoomName` reuse this module's deterministic `encryptId()` so LiveKit
+  identities and room names carry the same public ids clients already know — see
+  [rtc/README.md § Identity & room-name encryption](../../../messaging-realtime/rtc/README.md#identity--room-name-encryption).
+  One deliberate gap to know about: `RtcParticipant.livekitIdentity` stores a **raw** userId and is
+  *not* in the uuid field sets — it must never be exposed through a client-facing surface (the
+  meeting participant summaries exist precisely to avoid that).
+
 ## Interfaces
 
 None. Internal-only — an interceptor + a schema transformer + a query-parser hook, all wired at the

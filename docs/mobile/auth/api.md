@@ -38,7 +38,7 @@ rather than assumed from precedent).
 |---|---|
 | [`actions.dart`](../../../flutter-boilerplate/lib/api/client/auth/actions.dart) | `loginActionsProvider` → `LoginActions` — thin pass-through wrapping every server file above (`login`, `register`, `logout`, `requestPasswordReset`, `resetPassword`, `changePassword`, `undoPasswordChange`, `verifyEmail`/`verifyEmailCode`/`resendEmailCode`, `verifyLoginMfa`/`resendLoginCode`, `enrollMfa`/`verifyMfa`/`disableMfa`). **This is the one provider all 6 in-scope screens actually call** — unlike web, where none of the 6 pages route through the equivalent `useAuthActions()`. |
 | [`oauth.dart`](../../../flutter-boilerplate/lib/api/client/auth/oauth.dart) | `oauthActionsProvider` → `OAuthActions.loginWithOAuth(state)` — thin wrapper, called only after the OAuth deep-link round-trip resolves (see [login/widgets/social-login-buttons.md](./login/widgets/social-login-buttons.md)) |
-| [`queries.dart`](../../../flutter-boilerplate/lib/api/client/auth/queries.dart) | `currentUserProvider` — a `FutureProvider` around `MeServer.call()`. **Dead code, and a name collision** — see [Known issues](#known-issues) |
+| `queries.dart` | `currentUserProvider` — was a dead `FutureProvider` around `MeServer.call()` with a name collision; **deleted** in a later cleanup pass. See [Known issues](#known-issues) |
 
 ## Session state: `authProvider`
 

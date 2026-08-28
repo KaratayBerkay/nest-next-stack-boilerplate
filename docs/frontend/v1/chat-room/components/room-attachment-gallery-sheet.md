@@ -1,7 +1,7 @@
 # RoomAttachmentGallerySheet
 
 **Source:** [`RoomAttachmentGallerySheet.tsx`](../../../../../next-js-boilerplate/src/views/chat-room/RoomAttachmentGallerySheet.tsx) ·
-utils: [`RoomAttachmentGallerySheet-utils.ts`](../../../../../next-js-boilerplate/src/views/chat-room/RoomAttachmentGallerySheet-utils.ts)
+utils: [`AttachmentGalleryPanel-utils.ts`](../../../../../next-js-boilerplate/src/components/AttachmentGalleryPanel-utils.ts) (shared — see note below)
 **Types:** [`RoomAttachmentGallerySheet-types.ts`](../../../../../next-js-boilerplate/src/types/chat-room/RoomAttachmentGallerySheet-types.ts)
 **Used in:** [ChatRoomBaseView](./chat-room-base-view.md) (opened from
 [ChatRoomMainContent](./chat-room-main-content.md)'s folder icon)
@@ -18,6 +18,14 @@ two distinct backend endpoints)
 collapsible accordion, with search + date-range filtering and infinite scroll. Functionally identical
 to messages' `AttachmentGallerySheet`, reimplemented against the room-scoped query instead of a
 per-peer one.
+
+> **Dedup note (post-docs change, commit `aa04a418`):** the "reimplemented" duplication this doc
+> originally described is gone — the shared body now lives in
+> [`AttachmentGalleryPanel.tsx`](../../../../../next-js-boilerplate/src/components/AttachmentGalleryPanel.tsx)
+> (+ its `-utils.ts`), used by both this sheet and messages'
+> [AttachmentGallerySheet](../../messages/components/attachment-gallery-sheet.md). This file is now a
+> thin wrapper binding the room-scoped attachments query to the panel; its own `-utils.ts` no longer
+> exists.
 
 ## Props (`RoomAttachmentGallerySheetProps`)
 

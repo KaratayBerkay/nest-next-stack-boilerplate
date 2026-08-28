@@ -1,7 +1,7 @@
 # AttachmentGallerySheet
 
 **Source:** [`AttachmentGallerySheet.tsx`](../../../../../next-js-boilerplate/src/views/messages/AttachmentGallerySheet.tsx) ·
-utils: [`AttachmentGallerySheet-utils.ts`](../../../../../next-js-boilerplate/src/views/messages/AttachmentGallerySheet-utils.ts)
+utils: [`AttachmentGalleryPanel-utils.ts`](../../../../../next-js-boilerplate/src/components/AttachmentGalleryPanel-utils.ts) (shared — see note below)
 **Types:** [`AttachmentGallerySheet-types.ts`](../../../../../next-js-boilerplate/src/types/messages/AttachmentGallerySheet-types.ts)
 **Used in:** [ChatView](./chat-view.md) (opened from [ChatViewHeader](./chat-view-header.md)'s folder icon)
 **Mobile equivalent:** none — confirmed absent, not just unlocated. See
@@ -12,6 +12,14 @@ utils: [`AttachmentGallerySheet-utils.ts`](../../../../../next-js-boilerplate/sr
 
 "All uploads" side sheet: every file ever exchanged with the open peer, day-grouped in a collapsible
 accordion, with search + date-range filtering and infinite scroll.
+
+> **Dedup note (post-docs change, commit `aa04a418`):** the sheet's body — day grouping, search,
+> date-range filter, infinite scroll — was extracted into the shared
+> [`AttachmentGalleryPanel.tsx`](../../../../../next-js-boilerplate/src/components/AttachmentGalleryPanel.tsx)
+> (+ its `-utils.ts`), used by both this sheet and chat-room's
+> [RoomAttachmentGallerySheet](../../chat-room/components/room-attachment-gallery-sheet.md). The two
+> per-vertical `-utils.ts` files described elsewhere in this doc no longer exist; this file is now a
+> thin wrapper that fetches DM attachments and renders the panel.
 
 ## Props (`AttachmentGallerySheetProps`)
 

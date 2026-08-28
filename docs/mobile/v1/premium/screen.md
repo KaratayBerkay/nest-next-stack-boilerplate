@@ -9,9 +9,13 @@
 **this is not a subscription-status page**, it's an RBAC tier-gate demo. Everything in that warning
 applies here identically; not repeated in full below.
 
-## ⚠ 7 of this vertical's 8 files are dead code — verify before trusting file names here
+## ⚠ 7 of this vertical's 8 files were dead code — since deleted
 
-`lib/views/premium/` contains 8 files. Only **one**, `page_view.dart`, is ever actually reached:
+**Resolved by deletion:** the seven dead files below were removed in the cross-stack dead-code pass
+(commit `b98fac8a`), closing [MOB-022](../../../issues.md#mob-022) — `lib/views/premium/` now
+contains only the live `page_view.dart`. The original analysis is kept for the record.
+
+`lib/views/premium/` contained 8 files. Only **one**, `page_view.dart`, was ever actually reached:
 
 ```dart
 // router.dart
@@ -20,16 +24,11 @@ builder: (_, state) => PremiumPageContent(...)   // from page_view.dart only
 
 `PremiumPageContent` wraps a `TierGate` around **four private classes defined inline in the same
 file** — `_FreePremiumView`, `_BasicPremiumView`, `_MediumPremiumView`, `_PremiumPremiumView` — plus
-its own private `_StatsGrid`/`_GrowthStatsGrid`/`_StatCard`/`_StatsLoadingRow`. The other seven files —
-[`free_page_view.dart`](../../../../flutter-boilerplate/lib/views/premium/free_page_view.dart),
-[`basic_page_view.dart`](../../../../flutter-boilerplate/lib/views/premium/basic_page_view.dart),
-[`medium_page_view.dart`](../../../../flutter-boilerplate/lib/views/premium/medium_page_view.dart),
-[`premium_page_view.dart`](../../../../flutter-boilerplate/lib/views/premium/premium_page_view.dart),
-[`premium_handlers.dart`](../../../../flutter-boilerplate/lib/views/premium/premium_handlers.dart),
-[`growth_stats_section.dart`](../../../../flutter-boilerplate/lib/views/premium/growth_stats_section.dart),
-[`stats_section.dart`](../../../../flutter-boilerplate/lib/views/premium/stats_section.dart) — form a
-second, complete, independently-built implementation of the exact same four tier views, and are
-**never imported by the router or by `page_view.dart`**. Confirmed via a full-repo grep for every
+its own private `_StatsGrid`/`_GrowthStatsGrid`/`_StatCard`/`_StatsLoadingRow`. The other seven files
+(all deleted in `b98fac8a`) — `free_page_view.dart`, `basic_page_view.dart`, `medium_page_view.dart`,
+`premium_page_view.dart`, `premium_handlers.dart`, `growth_stats_section.dart`,
+`stats_section.dart` — formed a second, complete, independently-built implementation of the exact
+same four tier views, and were **never imported by the router or by `page_view.dart`**. Confirmed via a full-repo grep for every
 public symbol these seven files export (`FreePremiumPage`, `BasicPremiumPage`, `MediumPremiumPage`,
 `PremiumPremiumPage`, `GrowthStatsSection(`, `PremiumStatsSection(`, `exportStatsCSV`,
 `refreshPremiumData`) — every match is inside this same dead cluster, referencing itself. This is the

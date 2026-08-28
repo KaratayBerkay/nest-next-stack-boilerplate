@@ -4,7 +4,9 @@
 **Router registration:** [`router.dart#L435-L440`](../../../../../flutter-boilerplate/lib/app/router.dart) —
 `builder: (_, state) => PostDetailPageContent(lang: ..., postId: state.pathParameters['uuid'] ?? '')`.
 **Entry widget:** `PostDetailPageContent` in
-[`detail_page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/detail_page_view.dart)
+[`[uuid]/page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/[uuid]/page_view.dart)
+(restructured since this doc was written: the flat `detail_page_view.dart` became the
+`views/posts/[uuid]/` folder — per-tier views plus extracted widgets, mirroring web)
 **Web equivalent:** [posts page](../../../../frontend/v1/posts/page.md) — the one mobile `posts`
 screen with a direct web match
 
@@ -60,7 +62,7 @@ inferred:
   that folder → zero matches).
 - `router.dart` imports only
   [`views/posts/create_page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/create_page_view.dart),
-  [`views/posts/detail_page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/detail_page_view.dart),
+  [`views/posts/[uuid]/page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/[uuid]/page_view.dart),
   and [`views/posts/page_view.dart`](../../../../../flutter-boilerplate/lib/views/posts/page_view.dart)
   — three flat files, never anything from the `[uuid]/` subfolder. The `/v1/:lang/posts/:uuid` route
   is wired to `PostDetailPageContent` (`detail_page_view.dart`), not `PostDetailPage`

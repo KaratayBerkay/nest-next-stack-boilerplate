@@ -46,10 +46,10 @@ The 3-step MFA enrollment wizard, one component with an internal `step` switch (
 
 ## Known issues
 
-- [FE-007](../../../../../issues.md#fe-007) — a second, unused implementation of the handlers this
-  component's callbacks resolve to
-  ([`views/settings/security/mfa-handlers.ts`](../../../../../../next-js-boilerplate/src/views/settings/security/mfa-handlers.ts))
-  exists but is never imported. Its `handleVerify` even has a signature mismatch from the real one
+- [FE-007](../../../../../issues.md#fe-007) — **resolved by deletion** (dedup pass, commit
+  `aa04a418`): a second, unused implementation of the handlers this component's callbacks resolve to
+  (`views/settings/security/mfa-handlers.ts`) existed but was never imported. Its `handleVerify`
+  even had a signature mismatch from the real one
   (an optional `setMfaEnabled` callback the real inline handler always provides) — a sign it drifted
   from the live code path rather than being a recent, in-sync alternative. See
   [api.md § Known issues](../api.md#known-issues).

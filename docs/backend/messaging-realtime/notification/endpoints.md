@@ -4,42 +4,12 @@ Module: [README.md](./README.md) · Source: [`nest-js-boilerplate/src/notificati
 
 ## REST
 
-Base path: `/api` (`@Controller('api')` in
-[`notification.controller.ts`](../../../../nest-js-boilerplate/src/notification/notification.controller.ts)).
-**Auth:** `SessionAuthGuard` on the whole controller — see
-[identity-access/auth](../../identity-access/auth/README.md). ⚠ Every endpoint below has **zero
-real callers on either platform** — see
-[README.md § Interfaces](./README.md#interfaces) and
-[BE-012](../../../issues.md#be-012). Documented in full regardless, since it's a live, guarded,
-behaviorally-correct surface — just an unused one.
-
-### List notifications
-
-**Kind:** REST · **`GET /api/notifications`** · query `cursor?`, `take?` (default 20, capped 100)
-**Source:** [`notification.controller.ts#L12-L55`](../../../../nest-js-boilerplate/src/notification/notification.controller.ts)
-**Response:** `{ items: Notification[], hasMore: boolean }`, newest-first; over-fetches by one row
-internally to compute `hasMore`. Each item's `actor.avatarUrl` is redacted to `null` when the actor
-has `hideAvatar` set and isn't the caller themself.
-**Used by:** nobody — see [BE-012](../../../issues.md#be-012).
-
-### Get unread notification count
-
-**Kind:** REST · **`GET /api/notifications/unread-count`**
-**Source:** [`notification.controller.ts#L57-L60`](../../../../nest-js-boilerplate/src/notification/notification.controller.ts)
-**Response:** a bare number. Served from the `SessionAuthGuard`-attached Redis session snapshot
-(`user.unread`) when present, falling back to a live `COUNT` query only if that field is absent —
-zero-Postgres hot path, the same pattern as auth's `me` query and messaging's friends list.
-**Used by:** nobody — see [BE-012](../../../issues.md#be-012).
-
-### Mark notifications read
-
-**Kind:** REST · **`POST /api/notifications/read`**
-**Source:** [`notification.controller.ts#L62-L73`](../../../../nest-js-boilerplate/src/notification/notification.controller.ts)
-**Request body:** `{ id?: string }` (mark one) or `{ all: true }` (mark every unread notification
-for the caller) — one endpoint, not two, unlike the GraphQL side below.
-**Response:** `{ success: true }` unconditionally — even a body with neither `id` nor `all` silently
-succeeds as a no-op rather than 400ing.
-**Used by:** nobody — see [BE-012](../../../issues.md#be-012).
+**Removed.** This module previously had a REST controller (`notification.controller.ts`, base path
+`/api`: `GET /api/notifications`, `GET /api/notifications/unread-count`,
+`POST /api/notifications/read`). Every endpoint on it had **zero callers on either platform** —
+exactly what [BE-012](../../../issues.md#be-012) flagged — and the controller was deleted outright
+in the cross-stack dead-code pass (commit `b98fac8a`). The module is now **GraphQL-only**; the
+equivalent operations are all below.
 
 ## GraphQL
 

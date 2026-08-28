@@ -113,6 +113,9 @@ against source) → `fixed` | `wontfix`.
 | [BE-025](#be-025) | LOW | Backend | `cookies/` (demo) vs `common/cookies/` (real) — a fourth confirmed module-naming collision trap | verified | Phase 5a |
 | [MOB-025](#mob-025) | HIGH | Mobile | Admin user-search calls a backend/BFF route that has never existed — every search errors visibly | verified | Phase 5b |
 | [CROSS-038](#cross-038) | LOW | Frontend + Mobile | The About page has no discoverable in-app nav link on either platform | verified | Phase 5b |
+| [CROSS-031](#cross-031) | MED | Frontend + Mobile + Backend | Tier feature copy exists in four divergent hardcoded sets (web pricing, web plans, backend seed/config, mobile plans Dart) — no single source of truth | verified | Phase 4a *(entry reconstructed 2026-08-29 — was referenced by 8 docs but never written)* |
+| [CROSS-034](#cross-034) | MED | Frontend + Mobile | Payment-methods parity inversion: mobile settings/billing has full add/remove/set-default; web's PaymentMethods is read-only despite the same backend mutations and already-built (unused) web client hooks | verified | Phase 4b *(entry reconstructed 2026-08-29 — was referenced by 7 docs but never written)* |
+| [MOB-023](#mob-023) | MED | Mobile | Premium growth-stats view: two displayed fields have no backend counterpart (permanently 0/0.0%), two really-fetched fields are never displayed | verified | Phase 4b *(detail entry reconstructed 2026-08-29 — index row existed, detail section didn't)* |
 | [MOB-026](#mob-026) | LOW | Mobile | 4 of the app-shell inventory's files are dead code — `V1Header` reimplements all of them inline instead | verified | Phase 5b |
 | [MOB-027](#mob-027) | LOW | Mobile | `lib/views/fallbacks/` (19 files) is an entirely dead, confusingly-named twin of the real `lib/fallbacks/` tree | verified | Phase 5b |
 | [MOB-028](#mob-028) | MED | Mobile | `lib/features/statics/` (7 widgets) is entirely unwired — no error/not-found/unauthorized fallback UI exists live anywhere | verified | Phase 5b |
@@ -283,7 +286,7 @@ before deciding `wontfix` vs a real fix (narrow the REST response to `{ message 
 concept (Flutter's own `router.dart` documents this exclusion in a header comment listing web-only
 Next.js features with no Flutter route). `grep -rn "NoncePanel"` outside the file itself returns
 nothing.
-**Evidence:** [`flutter-boilerplate/lib/views/security/csp/nonce_panel.dart`](../flutter-boilerplate/lib/views/security/csp/nonce_panel.dart).
+**Evidence:** `flutter-boilerplate/lib/views/security/csp/nonce_panel.dart` (since deleted in `b98fac8a` — resolved).
 **Notes:** candidate for deletion; not documented as a real screen in
 `mobile/_reference/showcase-index.md` (Phase 5).
 
@@ -455,7 +458,7 @@ client-side UX/affordance gap, and a recent one (most recent commit on `main` as
 `Provider<AuthenticatedUser?>` (synchronous, derived from the locally-cached session) — every real
 call site in the app (~20, spanning messages/feed/settings/this vertical's own
 `verify_email/page_content.dart`) resolves to this one.
-[`api/client/auth/queries.dart`](../flutter-boilerplate/lib/api/client/auth/queries.dart) separately
+`api/client/auth/queries.dart` (since deleted — resolved) separately
 defines `FutureProvider<AuthenticatedUser>` (a fresh `me` GraphQL fetch) under the identical name —
 its only reference anywhere is a re-export in `lib/api/index.dart`; it is never actually read or
 watched.
@@ -660,7 +663,7 @@ implementation of `handleEnroll`/`handleVerify`/`handleDisable` — `PageContent
 its own inline versions instead. The dead version's `handleVerify` even has a different signature
 (an optional `setMfaEnabled` param) from the live one, suggesting drift rather than a recent
 parallel attempt.
-**Evidence:** [`next-js-boilerplate/src/views/settings/security/mfa-handlers.ts`](../next-js-boilerplate/src/views/settings/security/mfa-handlers.ts)
+**Evidence:** `next-js-boilerplate/src/views/settings/security/mfa-handlers.ts` (since deleted in `aa04a418` — resolved)
 vs. `PageContent.tsx`'s inline handlers in the same directory; `grep -rln "mfa-handlers"
 next-js-boilerplate/src` returns nothing outside the file itself.
 **Notes:** See [CROSS-013](#cross-013) — the same shape of bug independently exists on mobile in the
@@ -755,7 +758,7 @@ instead of re-fetching by id, or add a backend query that accepts a target id. D
 **Summary:** The bare `/v1/:lang/users` route (`UsersPageContent`) is registered and admin-gated but
 unreachable in practice — no navigational caller anywhere in the app, and its list rows have no tap
 handler.
-**Evidence:** [`flutter-boilerplate/lib/views/users/page_view.dart`](../flutter-boilerplate/lib/views/users/page_view.dart)
+**Evidence:** `flutter-boilerplate/lib/views/users/page_view.dart` (since restructured into `users/list/` + `users/detail/`)
 — `ListTile` items with no `onTap`. `grep -rn "'v1Users'"` (outside `router.dart` itself) and
 `grep -rn "/users'"` (outside `/users/list`, `/users/detail`) both return nothing across
 `flutter-boilerplate/lib`. No equivalent web route exists at this exact path.
@@ -831,8 +834,8 @@ that both the backend and the web client make freely available to them.
 `pagination_bar.dart` (an unused `PaginationBar` widget).
 **Evidence:** `grep -rn "highlightMatch\|filterByQuery\|Debouncer("` and
 `grep -rln "PaginationBar("` across `flutter-boilerplate/lib` each return only the symbol's own
-definition file, [`views/find_friends/search_utils.dart`](../flutter-boilerplate/lib/views/find_friends/search_utils.dart)
-/ [`views/find_friends/pagination_bar.dart`](../flutter-boilerplate/lib/views/find_friends/pagination_bar.dart).
+definition file, `views/find_friends/search_utils.dart` (since consolidated into `use_friend_search.dart`)
+/ `views/find_friends/pagination_bar.dart` (since deleted).
 None of the three real search implementations paginate — each renders every result in one
 `ListView.builder`.
 **Notes:** Same shape as [MOB-001](#mob-001). Web's equivalent `PaginationBar.tsx` **is** used.
@@ -846,9 +849,9 @@ Documented in [mobile/v1/find-friends/README.md](./mobile/v1/find-friends/README
 `account_avatar_section.dart` and `settings_select.dart`. Both real screens reimplement the same UI
 inline instead.
 **Evidence:** `grep -rln "AccountAvatarSection"` → only
-[`views/settings/account/account_avatar_section.dart`](../flutter-boilerplate/lib/views/settings/account/account_avatar_section.dart)
+`views/settings/account/account_avatar_section.dart` (since deleted in `b98fac8a` — resolved)
 itself (the real `page_view.dart` reimplements the avatar section inline). `grep -rln "SettingsSelect("`
-→ only [`views/settings/general/settings_select.dart`](../flutter-boilerplate/lib/views/settings/general/settings_select.dart)
+→ only `views/settings/general/settings_select.dart` (since deleted in `b98fac8a` — resolved)
 itself (the real screen uses inline `DropdownButton`s). Both web counterparts
 (`AccountAvatarSection.tsx`, `SettingsSelect.tsx`) are genuinely used — mobile-only.
 **Notes:** With this and [CROSS-013](#cross-013)/[FE-007](#fe-007), the pattern now recurs across four
@@ -2017,3 +2020,53 @@ per-field GraphQL authorization (e.g. a viewer-aware `@ResolveField()` override 
 `User.status` that redacts for anyone other than the record's own owner or an admin/superadmin,
 the same shape as the existing `hideAvatar` redaction pattern used elsewhere) — a small but real new
 pattern, not a one-line fix, so flagged here rather than built under this task's scope.
+
+---
+
+### CROSS-031
+
+**Severity:** MED · **Apps:** Frontend + Mobile + Backend · **Status:** verified (Phase 4a)
+
+*(Reconstructed 2026-08-29: this entry was cross-referenced by the plans/pricing/billing docs on
+both platforms but its detail section was never actually written into this file.)*
+
+**Summary:** the subscription tiers' feature copy has **no single source of truth** — at least four
+independently-hardcoded sets exist: web's marketing pricing page, web's `v1/plans` `TierCard` copy,
+the backend's own tier definitions, and mobile's plans screen (a fourth set inlined in Dart). They
+already disagree in wording and can silently disagree in substance after any one-sided edit.
+
+**Evidence:** see the referencing docs —
+[frontend/v1/plans/page.md](./frontend/v1/plans/page.md),
+[frontend/pricing/page.md](./frontend/pricing/page.md),
+[mobile/v1/plans/screen.md](./mobile/v1/plans/screen.md), and both `billing-funnel.md` hubs.
+
+### CROSS-034
+
+**Severity:** MED · **Apps:** Frontend + Mobile · **Status:** verified (Phase 4b)
+
+*(Reconstructed 2026-08-29 — same situation as CROSS-031.)*
+
+**Summary:** payment-methods **parity inversion**: mobile's settings/billing implements the full
+add / remove / set-default lifecycle against the backend's billing mutations, while web's
+[PaymentMethods](./frontend/v1/settings/billing/components/payment-methods.md) is read-only — even
+though the same mutations are available and web even has already-built, unused client hooks for
+them. Mobile is ahead of web here, the reverse of this doc effort's usual finding direction.
+
+**Evidence:** [frontend/v1/settings/billing/page.md](./frontend/v1/settings/billing/page.md) ·
+[mobile/v1/settings/billing/screen.md](./mobile/v1/settings/billing/screen.md).
+
+### MOB-023
+
+**Severity:** MED · **App:** Mobile · **Status:** verified (Phase 4b)
+
+*(Index row existed from the start; the detail section it pointed at was never written —
+reconstructed 2026-08-29.)*
+
+**Summary:** mobile's live Premium growth-stats view permanently renders **0 / 0.0% for two fields
+that have no backend counterpart at all**, while **two fields the provider really does fetch are
+never displayed anywhere** — the widget's field list and the query's field list were built against
+different assumptions and nobody reconciled them.
+
+**Evidence:** [mobile/v1/premium/screen.md](./mobile/v1/premium/screen.md) (the live
+`page_view.dart` inline classes — note the formerly-duplicated dead premium files were deleted in
+`b98fac8a`, which does not change this issue: it lives in the surviving live code).

@@ -40,10 +40,10 @@ Not used by this page directly; documented here since it lives in the same file.
 BFF wrapper, then invalidating the `["notifications"]` query key on success. This is the hook this
 page and `NotificationDropdown` both actually call.
 
-⚠ [FE-011](../../../issues.md#fe-011): a second, complete implementation of the same two actions,
-[`useMarkNotificationRead`](../../../../next-js-boilerplate/src/api/client/notifications/mark-read.ts)
-(a different file — `api/client/notifications/mark-read.ts`, not to be confused with the BFF wrapper
-of the same name under `api/server/`), is exported from the barrel `src/api/index.ts` but has zero
+⚠ [FE-011](../../../issues.md#fe-011) — **resolved by deletion** (dedup pass, commit `aa04a418`):
+a second, complete implementation of the same two actions, `useMarkNotificationRead`
+(`api/client/notifications/mark-read.ts` — a different file from the BFF wrapper of the same name
+under `api/server/`, which still exists), was exported from the barrel `src/api/index.ts` but had zero
 real callers anywhere in the app. Same "scaffolded-then-inlined, original left behind" shape as
 [FE-007](../../../issues.md#fe-007) and [CROSS-013](../../../issues.md#cross-013).
 

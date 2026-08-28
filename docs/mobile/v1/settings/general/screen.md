@@ -42,8 +42,8 @@ Timezone has no equivalent live-apply mechanism on either platform — see
   screen and web's, persists correctly but is never read back by either app to affect actual date/time
   formatting or rendering.
 - [MOB-006](../../../../issues.md#mob-006) —
-  [`settings_select.dart`](../../../../../flutter-boilerplate/lib/views/settings/general/settings_select.dart)'s
-  `SettingsSelect` widget is fully built and **never used** (`grep -rln "SettingsSelect("
+  `settings_select.dart`'s `SettingsSelect` widget — **resolved by deletion** (commit `b98fac8a`) —
+  was fully built and **never used** (`grep -rln "SettingsSelect("
   flutter-boilerplate/lib` returns only its own definition) — this screen uses inline `DropdownButton`s
   for every field instead. Same dead-scaffold pattern as
   [account/screen.md § Known issues](../account/screen.md#known-issues)'s `AccountAvatarSection`; web's
