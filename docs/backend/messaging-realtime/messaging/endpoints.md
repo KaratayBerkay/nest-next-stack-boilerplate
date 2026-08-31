@@ -43,7 +43,7 @@ each `{ id, direction: 'incoming'|'outgoing', user: {...}, createdAt }`.
 pending count badges the "Pending requests" tab even when the "Add friends" tab is active); Mobile
 [find-friends/requests](../../../mobile/v1/find-friends/requests/screen.md) and find-friends' Premium
 tier ([mobile/v1/find-friends/screen.md](../../../mobile/v1/find-friends/screen.md#premium-tier)) — ⚠
-see [MOB-007](../../../issues.md#mob-007): Flutter's `FriendRequest.fromJson` reads field names
+see `MOB-007` (resolved): Flutter's `FriendRequest.fromJson` reads field names
 (`fromUserId`/`fromUserName`/`fromUserAvatar`) that don't exist anywhere in this response (the real
 shape nests per-user fields under `user`, and this endpoint's `direction` field isn't read by the
 Dart model at all) — the parse throws for every non-empty result, so this endpoint is effectively
@@ -75,7 +75,7 @@ all three) · [friends](../../../frontend/v1/friends/api.md) (re-exports the sam
 page itself); Mobile [find-friends](../../../mobile/v1/find-friends/screen.md) (all three, plus its
 [widgets](../../../mobile/v1/find-friends/README.md#widgets)) ·
 [users/detail](../../../mobile/v1/users/detail/screen.md) ("Add Friend" button — ⚠ see
-[MOB-003](../../../issues.md#mob-003): this caller always sends its own user id as the target, so
+`MOB-003` (resolved): this caller always sends its own user id as the target, so
 `request` always hits the `403 EX_FORBIDDEN` self-friending case above).
 
 ### List conversations
@@ -134,7 +134,7 @@ DTO [`send-message-rest.dto.ts`](../../../../nest-js-boilerplate/src/messaging/d
 ```
 
 **Response:** the full result of `sendAndDeliverMessage()` — `{ message, delivery }`. ⚠
-[BE-003](../../../issues.md#be-003): `delivery` is an internal WS-fan-out payload shape that the
+`BE-003` (resolved): `delivery` is an internal WS-fan-out payload shape that the
 GraphQL mutation for the same action deliberately excludes — looks like an unintentional leak, not
 a documented contract difference.
 **Errors:** `400` (`TextOrAttachmentConstraint`: all of text/attachments/envelope empty) · `400`
@@ -190,7 +190,7 @@ DTO [`favorite-conversation.input.ts`](../../../../nest-js-boilerplate/src/messa
 **Behavior:** one-directional and private (only the caller's own `conversations:{userId}` cache
 entry is invalidated — the peer isn't notified and can't see that they were favorited).
 **Used by:** the web messages sidebar's favorites filter — see
-[CROSS-001](../../../issues.md#cross-001): this action has **no Flutter caller at all**.
+`CROSS-001` (resolved): this action has **no Flutter caller at all**.
 
 ### List / read / write chat rooms
 
@@ -226,7 +226,7 @@ Excludes the caller and anyone already `PENDING`/`ACCEPTED`/`BLOCKED` with them.
 [frontend/v1/find-friends/api.md § User search](../../../frontend/v1/find-friends/api.md#user-search)).
 ⚠ Note: web's [users/list](../../../frontend/v1/users/list/page.md) page does **not** call this
 query despite living in a `src/api/**/users/` path suggestively named the same — that page is
-hardcoded demo data with zero backend calls, see [CROSS-016](../../../issues.md#cross-016). Mobile
+hardcoded demo data with zero backend calls, see `CROSS-016` (resolved). Mobile
 [find-friends](../../../mobile/v1/find-friends/screen.md) ·
 [users/list](../../../mobile/v1/users/list/screen.md) both genuinely call this, directly (GraphQL, no
 BFF hop — see [mobile/v1/find-friends/api.md](../../../mobile/v1/find-friends/api.md)).
@@ -257,7 +257,7 @@ input [`send-message.input.ts`](../../../../nest-js-boilerplate/src/messaging/dt
 `replyToId`) minus `_tempId` (REST-only, optimistic-UI concern with no GraphQL analogue).
 **Response:** **only** the `Message` row — the resolver explicitly discards `delivery` from
 `sendAndDeliverMessage()`'s result (inline comment: "irrelevant to the GraphQL caller"). Contrast
-with the REST entry above, which returns both — see [BE-003](../../../issues.md#be-003).
+with the REST entry above, which returns both — see `BE-003` (resolved).
 **`Message.body`** is not a plain field on the generated Prisma-backed `Message` type — it's the
 `@ResolveField` documented below, since the DB never stores plaintext.
 **Used by:** Mobile — [`send_message.dart`](../../../../flutter-boilerplate/lib/api/server/messages/send_message.dart),
@@ -291,7 +291,7 @@ Gateway: [`messaging-ws.gateway.ts`](../../../../nest-js-boilerplate/src/messagi
 registers frame handlers into the shared [`realtime`](../realtime/README.md) gateway via
 `onModuleInit()`; does not own a `/ws` connection itself. **Auth:** inherited from the `realtime`
 gateway's WS-upgrade-time cookie check (see [realtime/README.md](../realtime/README.md) and
-[CROSS-005](../../../issues.md#cross-005) — this is *not* a first-message token protocol, despite
+`CROSS-005` (resolved) — this is *not* a first-message token protocol, despite
 what older, now-removed docs said).
 
 WS frames bypass the REST/GraphQL DTO pipeline entirely — no `ValidationPipe`/

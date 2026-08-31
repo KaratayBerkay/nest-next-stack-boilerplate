@@ -1,7 +1,26 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { User } from '../@generated/user/user.model';
+import { UserRole } from '../@generated/prisma/user-role.enum';
+import { UserStatus } from '../@generated/prisma/user-status.enum';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
+
+/** Moderation-metadata visibility: the row's owner, admins, and the
+ *  viewer-less public auth surfaces (always the caller's own row) see the
+ *  real value; everyone else gets the benign default. MODERATOR is
+ *  deliberately not privileged — every admin surface in this codebase gates
+ *  on ADMIN/SUPERADMIN only. */
+function canSeeModerationFields(
+  user: User,
+  viewer: JwtUser | undefined,
+): boolean {
+  if (!viewer) return true;
+  if (user.id === viewer.userId) return true;
+  return (
+    viewer.role === (UserRole.ADMIN as string) ||
+    viewer.role === (UserRole.SUPERADMIN as string)
+  );
+}
 
 /**
  * Cross-cutting privacy enforcement for EVERY GraphQL surface that returns
@@ -72,6 +91,36 @@ export class UserPrivacyResolver {
   ): boolean {
     if (viewer && user.id !== viewer.userId) return false;
     return user.mfaEnabled ?? false;
+  }
+
+  /**
+   * CROSS-044: `role` on the generated type was readable by ANY authenticated
+   * caller through the general `users(search)` query — admin/moderator
+   * account discovery is target-selection intel, so non-privileged viewers
+   * now get the default USER back. The admin UI keeps real values (its
+   * viewer is ADMIN/SUPERADMIN); own-row surfaces are unaffected.
+   */
+  @ResolveField(() => UserRole)
+  role(
+    @Parent() user: User,
+    @CurrentUser() viewer: JwtUser | undefined,
+  ): `${UserRole}` {
+    if (!canSeeModerationFields(user, viewer)) return UserRole.USER;
+    return user.role ?? UserRole.USER;
+  }
+
+  /**
+   * CROSS-044, same shape as `role`: whether another account is
+   * BANNED/SUSPENDED (or still unverified) is moderation metadata, not
+   * peer-visible profile data — non-privileged viewers get ACTIVE.
+   */
+  @ResolveField(() => UserStatus)
+  status(
+    @Parent() user: User,
+    @CurrentUser() viewer: JwtUser | undefined,
+  ): `${UserStatus}` {
+    if (!canSeeModerationFields(user, viewer)) return UserStatus.ACTIVE;
+    return user.status ?? UserStatus.ACTIVE;
   }
 
   /**

@@ -47,7 +47,7 @@ linked here as the exact call site this page depends on, not independently re-ve
 
 ## Known issues
 
-- [FE-007](../../../../issues.md#fe-007) — **resolved by deletion**: a sibling file,
+- `FE-007` — **resolved by deletion**: a sibling file,
   `views/settings/security/mfa-handlers.ts`, exported its own
   `handleEnroll`/`handleVerify`/`handleDisable` built on the same `mfa.ts` functions but was never
   imported anywhere. The dedup pass (commit `aa04a418`) deleted it. Originally flagged as fully dead, functionally

@@ -32,7 +32,7 @@ plain REST `GET`s. See [endpoints.md](./endpoints.md).
 | Window | **Monthly** — default query range is `[start of current UTC month, now]`, and the caller can pass its own `from`/`to` | **Cumulative, all-time** — no date filter at all |
 | Measured from | `SUM(letterCount)` across **both** `Message` (DMs) and `RoomMessage` (chat rooms), `WHERE senderId = userId AND createdAt BETWEEN from AND to` | `SUM(size)` + `COUNT(*)` over every `PendingUpload` row `WHERE uploadedBy = userId` — the upload module's own append-only ledger, so this is authoritative regardless of which messages/rooms ended up referencing a given upload |
 | Unit stored | Letters (a count), converted to an estimated byte figure via `BYTES_PER_LETTER = 1.35` (a fixed UTF-8-plus-envelope-overhead heuristic — **not** a read of the real server-side-encrypted row size; `letterCount` itself is populated by the messaging module at write time, before [wire-crypto](../../messaging-realtime/wire-crypto/README.md)'s at-rest encryption, which is out of this module's scope) | Real bytes, read directly off the upload record |
-| Server-side enforced? | **Yes** — `assertCanSendMessage()` | **No** — see below, ⚠ [BE-022](../../../issues.md#be-022) |
+| Server-side enforced? | **Yes** — `assertCanSendMessage()` | **No** — see below, ⚠ `BE-022` (resolved) |
 
 Both limits scale by the same per-tier multiplier
 (`TIER_STORAGE_MULTIPLIER` in
@@ -67,7 +67,7 @@ is actually performed — neither is itself an HTTP endpoint:
   grep for both the class name and the method name inside `nest-js-boilerplate/src/upload`, zero
   matches beyond the method's own definition. **A user can upload unlimited attachment bytes
   regardless of tier** — the 250 MiB×multiplier cap this module computes and both frontend and mobile
-  display (see [Used by](#used-by)) is cosmetic only. See ⚠ [BE-022](../../../issues.md#be-022).
+  display (see [Used by](#used-by)) is cosmetic only. See ⚠ `BE-022` (resolved).
 
 ## Used by
 
@@ -93,7 +93,7 @@ A third, already-documented consumer exists **only on web**: the
 [`StorageLimitNotice`](../../../frontend/v1/messages/components/storage-limit-notice.md) reads
 `messageUsageQueryOptions()` to replace the chat composer entirely with a blocking "upgrade to send
 more" notice once the monthly letter budget is spent. **Mobile has no equivalent** — see ⚠
-[CROSS-033](../../../issues.md#cross-033), which closes the question Phase 0 left open in that
+`CROSS-033` (resolved), which closes the question Phase 0 left open in that
 same component doc.
 
 ## Relationship to `billing`
@@ -108,9 +108,9 @@ not a direct dependency either direction.
 
 ## Known issues
 
-- ⚠ [BE-022](../../../issues.md#be-022) — upload-storage limit is fully computed and
+- ⚠ `BE-022` (resolved) — upload-storage limit is fully computed and
   displayed on both platforms but never actually enforced (`assertCanUploadBytes` has no caller).
-- ⚠ [CROSS-033](../../../issues.md#cross-033) — mobile has no client-side equivalent of web's
+- ⚠ `CROSS-033` (resolved) — mobile has no client-side equivalent of web's
   `StorageLimitNotice`; the real, server-enforced message-storage cap is only discoverable on mobile
   as a raw failed-send error.
 - Full findings with severity and evidence are filed in [`issues.md`](../../../issues.md).

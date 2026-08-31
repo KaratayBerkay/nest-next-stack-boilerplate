@@ -73,6 +73,6 @@ All calls go directly to the backend — see [api.md § Shape per file](../api.m
 ## Known issues
 
 - ⚠ **Mobile has an MFA backup-code UI web lacks** — the reverse of most parity gaps found in this
-  doc set. Filed as [CROSS-009](../../../issues.md#cross-009) — see
+  doc set. Filed as `CROSS-009` (resolved) — see
   [frontend login/components/mfa-challenge-form.md § Known issues](../../../frontend/auth/login/components/mfa-challenge-form.md#known-issues)
   for the full evidence.

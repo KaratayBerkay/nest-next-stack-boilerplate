@@ -12,6 +12,8 @@ function buildService() {
     upsert: jest.fn(),
     updateMany: jest.fn(),
     findUnique: jest.fn(),
+    findMany: jest.fn().mockResolvedValue([]),
+    count: jest.fn().mockResolvedValue(0),
   };
   const user = { findUnique: jest.fn() };
 
@@ -81,10 +83,10 @@ const LIVE_STREAM = {
 describe('RtcStreamService', () => {
   describe('notifyViewerLeftByLiveKit', () => {
     it('broadcasts rtc:stream-viewer-left WITH the live viewerCount — regression for the webhook-driven frame omitting it, which made the web hook (Number(viewerCount ?? 0)) zero the visible count for everyone whenever a viewer hard-dropped', async () => {
-      const { service, liveStream, liveKit, realtime } = buildService();
+      const { service, liveStream, rtcParticipant, realtime } = buildService();
       liveStream.findUnique.mockResolvedValue(LIVE_STREAM);
-      // 4 LiveKit participants incl. the broadcaster => 3 viewers.
-      liveKit.listParticipantCount.mockResolvedValue(4);
+      // 3 VIEWER rows still active after the webhook stamped the leaver.
+      rtcParticipant.count.mockResolvedValue(3);
 
       service.notifyViewerLeftByLiveKit('room1', 'viewer9');
       await flushAsync();
@@ -98,6 +100,107 @@ describe('RtcStreamService', () => {
           viewerCount: 3,
         },
       );
+    });
+  });
+
+  describe('notifyViewerJoinedByLiveKit', () => {
+    it('re-broadcasts rtc:stream-viewer-joined with the DB count once a viewer actually connects — regression for a full LiveKit reconnect leaving the counter one low forever (participant_left broadcast a decrement, the rejoin broadcast nothing)', async () => {
+      const { service, liveStream, rtcParticipant, realtime } = buildService();
+      liveStream.findUnique.mockResolvedValue(LIVE_STREAM);
+      rtcParticipant.findUnique.mockResolvedValue({ role: 'VIEWER' });
+      rtcParticipant.count.mockResolvedValue(2);
+
+      service.notifyViewerJoinedByLiveKit('room1', 'viewer1');
+      await flushAsync();
+
+      expect(realtime.broadcastToRoom).toHaveBeenCalledWith(
+        'rtc-stream:slug1',
+        {
+          type: 'rtc:stream-viewer-joined',
+          slug: 'slug1',
+          userId: 'viewer1',
+          viewerCount: 2,
+        },
+      );
+    });
+
+    it("stays silent for the broadcaster's own connect — their participant row is BROADCASTER-role, not audience", async () => {
+      const { service, liveStream, rtcParticipant, realtime } = buildService();
+      liveStream.findUnique.mockResolvedValue(LIVE_STREAM);
+      rtcParticipant.findUnique.mockResolvedValue({ role: 'BROADCASTER' });
+
+      service.notifyViewerJoinedByLiveKit('room1', 'bcast1');
+      await flushAsync();
+
+      expect(realtime.broadcastToRoom).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getViewerCount', () => {
+    it('counts non-departed VIEWER rows in the DB, not LiveKit participants — regression for the first viewer forever showing "0 watching": the join mutation ran before their WebRTC connection existed, so the LiveKit read missed the very viewer that triggered it', async () => {
+      const { service, rtcParticipant, liveKit } = buildService();
+      rtcParticipant.count.mockResolvedValue(1);
+
+      await expect(service.getViewerCount({ roomId: 'room1' })).resolves.toBe(
+        1,
+      );
+
+      expect(rtcParticipant.count).toHaveBeenCalledWith({
+        where: { roomId: 'room1', role: 'VIEWER', leftAt: null },
+      });
+      expect(liveKit.listParticipantCount).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('viewerSummaries', () => {
+    it('returns only active VIEWER rows as the summary contract — display name resolved, avatarUrl nulled for hideAvatar users, no email or livekitIdentity on the shape', async () => {
+      const { service, rtcParticipant } = buildService();
+      rtcParticipant.findMany.mockResolvedValue([
+        {
+          userId: 'v1',
+          joinedAt: new Date('2026-08-30T10:00:00Z'),
+          user: {
+            name: 'Ada',
+            email: 'ada@example.com',
+            avatarUrl: 'https://cdn/a.png',
+            hideAvatar: false,
+          },
+        },
+        {
+          userId: 'v2',
+          joinedAt: new Date('2026-08-30T10:01:00Z'),
+          user: {
+            name: null,
+            email: 'shy@example.com',
+            avatarUrl: 'https://cdn/s.png',
+            hideAvatar: true,
+          },
+        },
+      ]);
+
+      const result = await service.viewerSummaries({ roomId: 'room1' });
+
+      expect(rtcParticipant.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { roomId: 'room1', role: 'VIEWER', leftAt: null },
+        }),
+      );
+      expect(result).toEqual([
+        {
+          userId: 'v1',
+          name: 'Ada',
+          avatarUrl: 'https://cdn/a.png',
+          joinedAt: new Date('2026-08-30T10:00:00Z'),
+        },
+        {
+          userId: 'v2',
+          // displayName's app-wide fallback chain (name → email), same as
+          // meeting participant summaries and chat sender names.
+          name: 'shy@example.com',
+          avatarUrl: null,
+          joinedAt: new Date('2026-08-30T10:01:00Z'),
+        },
+      ]);
     });
   });
 
@@ -122,7 +225,7 @@ describe('RtcStreamService', () => {
     });
 
     it('as an ordinary viewer: still upserts the VIEWER row and broadcasts viewer-joined with a count (the broadcaster guard must not leak onto the normal path)', async () => {
-      const { service, liveStream, user, rtcParticipant, liveKit, realtime } =
+      const { service, liveStream, user, rtcParticipant, realtime } =
         buildService();
       liveStream.findUnique.mockResolvedValue(LIVE_STREAM);
       user.findUnique.mockResolvedValue({
@@ -130,7 +233,7 @@ describe('RtcStreamService', () => {
         email: 'v@example.com',
         avatarUrl: null,
       });
-      liveKit.listParticipantCount.mockResolvedValue(3);
+      rtcParticipant.count.mockResolvedValue(2);
 
       await service.joinStreamAsViewer('viewer1', 'slug1');
 
@@ -146,6 +249,12 @@ describe('RtcStreamService', () => {
           userId: 'viewer1',
           viewerCount: 2,
         }),
+      );
+      // The count must be read AFTER the upsert so the joined frame includes
+      // the joining viewer themselves — the old LiveKit-list read ran before
+      // their WebRTC connection existed and told everyone "0 watching".
+      expect(rtcParticipant.count.mock.invocationCallOrder[0]).toBeGreaterThan(
+        rtcParticipant.upsert.mock.invocationCallOrder[0],
       );
     });
   });

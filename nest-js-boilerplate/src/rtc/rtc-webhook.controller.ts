@@ -125,7 +125,7 @@ export class RtcWebhookController {
     if (!livekitRoomName || !identity) return;
     const room = await this.prisma.rtcRoom.findUnique({
       where: { livekitRoomName },
-      select: { id: true },
+      select: { id: true, kind: true },
     });
     if (!room) return;
     const userId = fromLivekitIdentity(identity);
@@ -137,6 +137,13 @@ export class RtcWebhookController {
       },
       data: { leftAt: null },
     });
+    if (room.kind === RtcRoomKind.STREAM) {
+      // A viewer only exists in LiveKit's room from this moment — this is
+      // the broadcast that settles the watcher count after the REST-join
+      // frame and after a full reconnect's left/joined webhook pair (the
+      // service itself filters out broadcaster connects).
+      this.rtcStreamService.notifyViewerJoinedByLiveKit(room.id, userId);
+    }
   }
 
   private async handleRoomFinished(livekitRoomName?: string) {

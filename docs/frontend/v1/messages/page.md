@@ -96,9 +96,9 @@ MessagesPageContent
 
 ## Known issues affecting this page
 
-- [CROSS-001](../../../issues.md#cross-001) — `MessagesSidebarFilterBar.tsx`'s favorites/groups
+- `CROSS-001` (resolved) — `MessagesSidebarFilterBar.tsx`'s favorites/groups
   filter has no Flutter counterpart.
-- [BE-017](../../../issues.md#be-017) — sending a message with an `attachments[].url` copied from
+- `BE-017` (resolved) — sending a message with an `attachments[].url` copied from
   elsewhere silently re-links that attachment's access control to the new message — found while
   documenting the upload module (Phase 3b); see
   [upload/README.md § Known issues](../../../backend/messaging-realtime/upload/README.md#known-issues).

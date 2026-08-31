@@ -1,0 +1,92 @@
+import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { SESSION_USER_COOKIE, sessionUserCookieOptions } from "@/lib/cookie";
+import { graphqlFetch } from "@/lib/backend";
+import { ME_QUERY } from "@/lib/graphql/queries";
+import { getAccessToken } from "@/store/ssr-cookies";
+import { withLogging } from "@/lib/request-logger";
+import {
+  decodeSessionUserCookie,
+  encodeSessionUserCookie,
+} from "@/lib/session-user-cookie";
+import type { User } from "@/features/auth/hooks/useAuth";
+
+export const GET = withLogging(async (_request, log) => {
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    log.warn({}, "me: no access token");
+    return NextResponse.json({ user: null }, { status: 200 });
+  }
+
+  // Fast path: read session_user cookie created at login/register time (or
+  // re-written by a mutation route since — see /api/profile/update,
+  // /api/billing/subscribe).
+  const cookieStore = await cookies();
+  const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
+  let cookieUser: User | null = null;
+  if (encoded) {
+    cookieUser = decodeSessionUserCookie<User>(encoded);
+    if (cookieUser) {
+      // Cookies minted before login/register/mfa started overlaying the real
+      // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
+      // sessionId). Self-heal instead of trusting that partial snapshot
+      // for the rest of the session. Keep this canary pointed at whichever
+      // field was added most recently.
+      if (cookieUser.sessionId !== undefined) {
+        return NextResponse.json(
+          { user: cookieUser, accessToken },
+          { status: 200 },
+        );
+      }
+    } else {
+      log.warn(
+        {},
+        "me: session_user cookie malformed or tampered, falling through to GraphQL",
+      );
+    }
+  } else {
+    log.warn({}, "me: no session_user cookie, falling through to GraphQL");
+  }
+
+  // Slow path: no session cookie (or one missing hideAvatar), fetch the full
+  // snapshot from the backend.
+  const { data, errors } = await graphqlFetch<{ me: Record<string, unknown> }>(
+    ME_QUERY,
+    undefined,
+    accessToken,
+    undefined,
+    true,
+  );
+
+  if (errors || !data?.me) {
+    if (cookieUser) {
+      // Self-heal attempt failed but the session itself is still good —
+      // keep serving the stale-but-valid cookie rather than logging the
+      // user out over a transient GraphQL hiccup.
+      return NextResponse.json(
+        { user: cookieUser, accessToken },
+        { status: 200 },
+      );
+    }
+    log.warn(
+      {
+        exc: errors?.[0]?.extensions?.exc,
+        statusCode: errors?.[0]?.extensions?.statusCode,
+        code: errors?.[0]?.extensions?.code,
+      },
+      "me: GraphQL fallback also failed",
+    );
+    return NextResponse.json({ error: "Token expired" }, { status: 401 });
+  }
+
+  log.info({}, "me: GraphQL fallback succeeded");
+  const mergedUser = cookieUser ? { ...cookieUser, ...data.me } : data.me;
+  const response = NextResponse.json(
+    { user: mergedUser, accessToken },
+    { status: 200 },
+  );
+  response.cookies.set(
+    sessionUserCookieOptions(encodeSessionUserCookie(mergedUser)),
+  );
+  return response;
+});

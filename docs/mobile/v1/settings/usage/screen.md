@@ -47,9 +47,9 @@ involvement for this screen at all.
 
 ## Known issues
 
-- ⚠ [BE-022](../../../../issues.md#be-022) — same as web: the upload card's "limit reached" warning has
+- ⚠ `BE-022` (resolved) — same as web: the upload card's "limit reached" warning has
   no real backend enforcement behind it. Not a mobile-specific gap.
 - Not a bug on this screen, but related: mobile has no equivalent of web's composer-blocking
   [`StorageLimitNotice`](../../../../frontend/v1/messages/components/storage-limit-notice.md) — see
-  ⚠ [CROSS-033](../../../../issues.md#cross-033). This screen (the usage-summary display) is itself at
+  ⚠ `CROSS-033` (resolved). This screen (the usage-summary display) is itself at
   parity with web.

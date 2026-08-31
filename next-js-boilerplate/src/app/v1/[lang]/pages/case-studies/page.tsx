@@ -4,7 +4,7 @@ import CaseStudiesPageContent from "@/views/pages/case-studies/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CaseStudiesPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <CaseStudiesPageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <CaseStudiesPageContent initialTab={tab} initialFull={full === "1"} />;
 }

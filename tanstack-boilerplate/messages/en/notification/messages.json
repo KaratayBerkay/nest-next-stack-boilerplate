@@ -1,0 +1,14 @@
+{
+  "title": "Notifications",
+  "markAllRead": "Mark all read",
+  "markAllReadFailed": "Failed to mark notifications as read. Try again.",
+  "noNotifications": "No notifications yet",
+  "enablePush": "Enable push notifications",
+  "disablePush": "Disable push notifications",
+  "pushBlocked": "Notifications are blocked — enable them in your browser settings",
+  "back": "Back",
+  "loadMore": "Load more",
+  "notificationsWithUnread": "Notifications ({count} unread)",
+  "close": "Close",
+  "seeMore": "See more"
+}

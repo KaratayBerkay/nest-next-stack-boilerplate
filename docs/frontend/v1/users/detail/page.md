@@ -34,8 +34,8 @@ None — see [../README.md](../README.md) and [../api.md](../api.md).
 
 ## Known issues
 
-- [CROSS-016](../../../../issues.md#cross-016) — this whole vertical is static demo content on web.
-- [MOB-003](../../../../issues.md#mob-003) — the *mobile* equivalent of this specific page (a real
+- `CROSS-016` (resolved) — this whole vertical is static demo content on web.
+- `MOB-003` (resolved) — the *mobile* equivalent of this specific page (a real
   screen, unlike this one) has a confirmed bug where it always shows the caller's own profile
   regardless of which user was tapped. Not reachable on web (there's no real lookup here to have the
   bug in) — cross-referenced because a reader diffing "detail page" behavior across platforms should

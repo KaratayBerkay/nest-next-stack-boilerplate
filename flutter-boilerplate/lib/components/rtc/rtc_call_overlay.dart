@@ -579,11 +579,20 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
   void _syncTimer() {
     final isConnected = widget.state.phase == RtcCallPhase.connected;
     if (isConnected && _durationTimer == null) {
-      _callStart = DateTime.now();
+      // Seed from the server-side accept time when known (snapshot recovery
+      // after a relaunch) so the readout continues instead of restarting at
+      // 0:00 — same fix as the web overlay's connectedAt seeding. Clamped so
+      // clock skew can't render a negative elapsed time.
+      _callStart = widget.state.connectedAt ?? DateTime.now();
+      _durationSeconds =
+          DateTime.now().difference(_callStart!).inSeconds.clamp(0, 1 << 31);
       _durationTimer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!mounted) return;
         setState(() {
-          _durationSeconds = DateTime.now().difference(_callStart!).inSeconds;
+          _durationSeconds = DateTime.now()
+              .difference(_callStart!)
+              .inSeconds
+              .clamp(0, 1 << 31);
         });
       });
     } else if (!isConnected && _durationTimer != null) {

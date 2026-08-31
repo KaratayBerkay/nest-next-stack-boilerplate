@@ -29,5 +29,5 @@ assumption easy to make.
 
 ## Known issues
 
-- [CROSS-016](../../../issues.md#cross-016) — full writeup of the static-content finding and its mobile
+- `CROSS-016` (resolved) — full writeup of the static-content finding and its mobile
   contrast.

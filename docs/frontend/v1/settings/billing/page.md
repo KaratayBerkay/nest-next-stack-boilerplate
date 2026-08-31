@@ -76,14 +76,14 @@ involuntary payment failure downgrades immediately.
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-034](../../../../issues.md#cross-034) —
+- ⚠ `CROSS-034` (resolved) —
   [PaymentMethods](./components/payment-methods.md) here is **read-only**: no add/remove/set-default
   action anywhere, despite the backend and even this app's own client hooks
   (`useRemovePaymentMethod`/`useSetDefaultPaymentMethod`, see [api.md](./api.md)) already existing,
   fully wired, completely unused. [Mobile's equivalent screen](../../../../mobile/v1/settings/billing/screen.md)
   has a working add/remove/set-default flow — a rare case in this doc effort of mobile being ahead of
   web.
-- ⚠ [FE-015](../../../../issues.md#fe-015) —
+- `FE-015` (resolved) —
   [BillingAddressForm](./components/billing-address.md)'s "Cancel" button reuses the
   `cancelSubscription` translation key, so it visibly reads "Cancel subscription" instead of "Cancel."
 - Usage/quota data (storage used, message limits) does **not** appear anywhere on this page — see the

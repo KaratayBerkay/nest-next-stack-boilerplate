@@ -1,0 +1,44 @@
+// Ported from next-js-boilerplate/src/app/(demos)/ssr/page.tsx
+import { createFileRoute } from "@tanstack/react-router";
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { Timestamp } from "@/views/demos/ssr/Timestamp";
+import { MonoEllipsisFallback } from "@/fallbacks";
+import { metadataToHead } from "@/lib/head";
+
+export const metadata: Metadata = {
+  title: "SSR",
+  description: "Server-side rendering demo",
+};
+
+function getServerData() {
+  return {
+    message:
+      "This data was rendered on the server. It appears in the initial HTML.",
+  };
+}
+
+export const Route = createFileRoute("/_demos/ssr/")({
+  head: () => metadataToHead(metadata),
+  component: SsrPage,
+});
+
+function SsrPage() {
+  const data = getServerData();
+  return (
+    <div className="flex flex-col gap-2">
+      <h2 className="text-brand text-sm font-semibold">
+        Server-Side Rendering
+      </h2>
+      <p className="text-muted text-sm" data-testid="ssr-message">
+        {data.message}
+      </p>
+      <p className="text-xs text-zinc-500">
+        Rendered at:{" "}
+        <Suspense fallback={<MonoEllipsisFallback />}>
+          <Timestamp />
+        </Suspense>
+      </p>
+    </div>
+  );
+}

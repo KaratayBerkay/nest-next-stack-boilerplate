@@ -55,6 +55,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated template-source modules (large string payloads).
+    "src/generated/pages-manifest.ts",
+    "src/generated/pages-sources/**",
   ]),
 ]);
 

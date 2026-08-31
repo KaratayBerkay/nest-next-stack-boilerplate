@@ -1,4 +1,7 @@
-FROM ghcr.io/cirruslabs/flutter:3.44.2 AS base
+# 3.44.0 is the final tag cirruslabs published (registry frozen May 2026);
+# 3.44.2 was never pushed. instrumentisto/flutter is the maintained
+# alternative but tops out at 3.41.x as of 2026-08.
+FROM ghcr.io/cirruslabs/flutter:3.44.0 AS base
 RUN flutter config --no-analytics && dart --disable-analytics
 
 FROM base AS deps
@@ -14,7 +17,7 @@ ARG APP_ENV=production
 ENV APP_ENV=$APP_ENV
 RUN flutter build apk --release --dart-define-from-file=.env.example
 
-FROM python:3.12-alpine AS serve
+FROM python:3.13-alpine AS serve
 WORKDIR /srv
 COPY --from=builder /app/build/app/outputs/flutter-apk/app-release.apk .
 RUN printf '<html><body><h1>Flutter APK</h1><a href="app-release.apk">Download</a></body></html>' > index.html

@@ -9,7 +9,8 @@
 ## Purpose
 
 The broadcaster surface: a title form + camera preview before going live; once live, the publishing
-stage with mic/camera/screen-share toggles, the same chat panel viewers see, viewer count,
+stage with mic/camera/screen-share toggles, the same chat panel viewers see, viewer count, the live
+watcher list above the chat,
 [recording control](../../components/rtc-report-dialog.md#rtcrecordingcontrol), and a confirm-gated
 End stream.
 
@@ -24,4 +25,5 @@ page surfaces the rejection as an error state with upgrade copy rather than pre-
 | Go live | [`useStreamActions.goLive`](../../../../../../next-js-boilerplate/src/api/client/rtc/streams-actions.ts) → [`streams/go-live.ts`](../../../../../../next-js-boilerplate/src/api/server/rtc/streams/go-live.ts) → `goLive` (returns the publish token) |
 | Publish | [`useLiveKitStreamRoom`](../../hooks.md#livekit-room-hooks-srchooksrtc) (camera/mic/screen publish) |
 | Chat / count | [`useRoomChat`](../../hooks.md#livekit-room-hooks-srchooksrtc) + [`useStreamViewerCount`](../../hooks.md#livekit-room-hooks-srchooksrtc) — the backend never counts the broadcaster as a viewer |
+| Viewer list | [`useStreamViewers`](../../hooks.md#livekit-room-hooks-srchooksrtc) → `StreamViewerList` stacked above the chat in the sidebar |
 | End | `useStreamActions.endStream` → [`streams/end.ts`](../../../../../../next-js-boilerplate/src/api/server/rtc/streams/end.ts) → `endStream` (idempotent server-side) |

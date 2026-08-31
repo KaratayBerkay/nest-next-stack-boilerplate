@@ -4,7 +4,7 @@ import CompliancePageContent from "@/views/pages/compliance/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CompliancePage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <CompliancePageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <CompliancePageContent initialTab={tab} initialFull={full === "1"} />;
 }

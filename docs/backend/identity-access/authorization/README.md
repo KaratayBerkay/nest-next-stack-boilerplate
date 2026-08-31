@@ -101,12 +101,12 @@ its raison d'être).
   [`AuditLogProcessor.createAuditLog()`](../../../../nest-js-boilerplate/src/outbox/audit-log.processor.ts#L53-71)
   (same `P2003`-retry-with-null-actor logic, same log message) — but nothing in `admin.resolver.ts`
   ever calls it; every real mutation in the file correctly uses `outbox.emit()` instead. Logged as
-  [BE-006](../../../issues.md#be-006).
+  `BE-006` (resolved).
 - ⚠ **`setUserStatus` has no UI on either platform** — confirmed via `grep -rn "setUserStatus"`
   across both `next-js-boilerplate/src` and `flutter-boilerplate/lib`: zero matches outside the
   resolver itself. A real, working, role-gated ban/suspend mutation with nothing to trigger it. Logged
-  as [BE-007](../../../issues.md#be-007).
+  as `BE-007` (resolved).
 - ⚠ **`resetMfa` has no UI on either platform** — same check, same result. (Flutter's
   `_resetMfa()` in `views/auth/login/page_content.dart` is an unrelated local function that clears
   local MFA-challenge form state during login — a naming coincidence confirmed by reading it, not a
-  caller of this mutation.) Logged as [BE-007](../../../issues.md#be-007) alongside `setUserStatus`.
+  caller of this mutation.) Logged as `BE-007` (resolved) alongside `setUserStatus`.

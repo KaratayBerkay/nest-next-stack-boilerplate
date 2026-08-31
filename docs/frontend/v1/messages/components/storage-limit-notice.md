@@ -15,7 +15,7 @@ has no equivalent gating.
 > ever read by the two settings/usage cards — nothing in mobile's chat composer reads them. So a
 > mobile user who hits the cap gets a real, hard send failure with no advance warning, rather than
 > this component's graceful pre-emptive block — see ⚠
-> [CROSS-033](../../../../issues.md#cross-033).
+> `CROSS-033` (resolved).
 
 ## Purpose
 

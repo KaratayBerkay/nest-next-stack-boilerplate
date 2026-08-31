@@ -38,4 +38,4 @@ which buckets into date-headed groups; this list renders one flat sequence).
   generated thumbnail (see
   [upload/README.md § Thumbnail generation](../../../../backend/messaging-realtime/upload/README.md#thumbnail-generation))
   genuinely renders here on web (contrast mobile's equivalent widget, which doesn't pass it at all —
-  [CROSS-027](../../../../issues.md#cross-027)).
+  `CROSS-027` (resolved)).

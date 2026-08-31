@@ -4,7 +4,7 @@ import CompareProductsPageContent from "@/views/pages/compare-products/PageConte
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,8 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CompareProductsPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <CompareProductsPageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return (
+    <CompareProductsPageContent initialTab={tab} initialFull={full === "1"} />
+  );
 }

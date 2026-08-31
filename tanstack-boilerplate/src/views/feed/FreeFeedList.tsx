@@ -1,0 +1,176 @@
+"use client";
+
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
+import type { FeedListProps } from "@/types/feed/FeedList-types";
+import type { Post } from "@/types/feed/PostCard-types";
+import {
+  useSuspenseQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { PostCard } from "@/components/feed/PostCard";
+import { useYSwipeGesture } from "@/hooks/useYSwipeGesture";
+import { useRealtime } from "@/lib/realtime/RealtimeProvider";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { feedListQueryOptions } from "@/api/client/posts/query";
+import {
+  PAGE_SIZE,
+  handleLoadMore,
+  handleToggleComments,
+  handleDeletePost,
+  refreshFeedList,
+  mergeFeedPosts,
+} from "@/lib/feed/feed-list-actions";
+import { usePostHashScroll } from "@/hooks/usePostHashScroll";
+import { FeedListEmptyState } from "@/components/feed/FeedListEmptyState";
+import { IconCrown } from "@tabler/icons-react";
+
+export function FeedList({
+  search,
+  initialFeedData,
+  currentUserId,
+}: FeedListProps) {
+  const t = useMessages("feed");
+  const queryClient = useQueryClient();
+  const realtime = useRealtime();
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
+
+  useEffect(() => {
+    realtime?.watch("feed");
+    return () => realtime?.unwatch("feed");
+  }, [realtime]);
+  useEffect(() => {
+    queryClient.setQueryData(["feed", "new-flag"], false);
+  }, [queryClient]);
+  const [extraPosts, setExtraPosts] = useState<Post[]>([]);
+  const [extraHasMore, setExtraHasMore] = useState(true);
+  const cursorRef = useRef<string | null>(null);
+  const loadingRef = useRef(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useYSwipeGesture<HTMLDivElement>();
+
+  const { data } = useSuspenseQuery({
+    ...feedListQueryOptions(PAGE_SIZE, null, search),
+    initialData: !search
+      ? (initialFeedData as {
+          posts: Post[];
+          hasMore: boolean;
+          nextCursor: string | null;
+        })
+      : undefined,
+  });
+
+  const posts = useMemo(
+    () => mergeFeedPosts(data?.posts ?? [], extraPosts),
+    [data?.posts, extraPosts],
+  );
+  const hasMore =
+    extraPosts.length > 0 ? extraHasMore : (data?.hasMore ?? false);
+
+  const loadMore = useCallback(
+    () =>
+      handleLoadMore(
+        loadingRef,
+        hasMore,
+        cursorRef,
+        search,
+        setLoadingMore,
+        setExtraPosts,
+        setExtraHasMore,
+      ),
+    [hasMore, search],
+  );
+
+  useEffect(() => {
+    cursorRef.current = data?.nextCursor ?? null;
+  }, [data?.nextCursor]);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore();
+      },
+      { rootMargin: "300px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [loadMore, hasMore]);
+
+  usePostHashScroll();
+
+  const newFlag = useQuery<boolean>({
+    queryKey: ["feed", "new-flag"],
+    queryFn: () => false,
+    staleTime: Infinity,
+  }).data;
+
+  const handleRefresh = useCallback(
+    () => refreshFeedList(queryClient, setExtraPosts, setExtraHasMore, search),
+    [queryClient, search],
+  );
+
+  // Surfaced as a banner the reader taps, not an automatic reset — `newFlag`
+  // flips on ANY user's post finishing its friend-fan-out (a global topic,
+  // not scoped to this reader's own friends), so auto-refreshing instantly
+  // collapsed the feed back to page 1 mid-scroll or mid-comment with zero
+  // warning, discarding whatever pages the reader had already loaded.
+  const showNewPostsBanner = Boolean(newFlag) && posts.length > 0;
+
+  return (
+    <div
+      ref={scrollRef}
+      className="flex max-h-[calc(100dvh-8rem)] flex-col gap-3 overflow-y-auto px-1 pb-4"
+    >
+      {showNewPostsBanner && (
+        <button
+          type="button"
+          onClick={handleRefresh}
+          className="bg-brand text-brand-fg sticky top-0 z-10 rounded-lg py-2 text-center text-xs font-medium shadow"
+        >
+          {t.newPostsAvailable}
+        </button>
+      )}
+
+      {posts.length === 0 ? (
+        <FeedListEmptyState />
+      ) : (
+        posts.map((post) => (
+          <div key={post.id} className="relative">
+            {currentUserId != null && post.author.id === currentUserId && (
+              <span className="bg-brand text-brand-fg absolute -top-1 -right-1 z-10 flex h-5 w-5 items-center justify-center rounded-full">
+                <IconCrown size={12} stroke={2} />
+              </span>
+            )}
+            <PostCard
+              post={post}
+              isExpanded={expandedPostId === post.id}
+              onToggle={() => handleToggleComments(post.id, setExpandedPostId)}
+              onDelete={(postId) =>
+                handleDeletePost(postId, setExtraPosts, setExpandedPostId)
+              }
+            />
+          </div>
+        ))
+      )}
+
+      {hasMore && <div ref={sentinelRef} className="h-4" />}
+
+      {loadingMore && (
+        <div className="flex items-center justify-center py-4">
+          <p className="text-muted text-[10px]">{t.loadingMore}</p>
+        </div>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <p className="text-muted py-4 text-center text-[10px]">
+          {t.allCaughtUp}
+        </p>
+      )}
+    </div>
+  );
+}

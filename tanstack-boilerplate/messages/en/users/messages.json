@@ -1,0 +1,11 @@
+{
+  "title": "Users",
+  "tapToView": "Tap a row to view details.",
+  "loading": "Loading users...",
+  "userNotFound": "User not found",
+  "backToUsers": "Back to Users",
+  "name": "Name",
+  "email": "Email",
+  "role": "Role",
+  "swipeBack": "Swipe left to go back..."
+}

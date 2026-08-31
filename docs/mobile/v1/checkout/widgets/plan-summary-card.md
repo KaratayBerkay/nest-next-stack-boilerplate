@@ -33,7 +33,7 @@ call site, and it doesn't pass this parameter. Contrast web's equivalent
 *does* show a feature list (sourced from its own hardcoded `TIER_FEATURES`, see
 [CROSS-031](../../../../issues.md#cross-031)) — this is a minor, cosmetic-only parity gap: web's
 checkout recap shows features, mobile's doesn't, despite the widget being fully capable of it. See
-[MOB-018](../../../../issues.md#mob-018).
+`MOB-018` (resolved).
 
 ## Calls
 

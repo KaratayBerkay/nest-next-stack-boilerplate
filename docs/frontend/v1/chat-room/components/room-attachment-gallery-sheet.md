@@ -10,7 +10,7 @@ DM equivalent — a near-exact structural mirror, documented separately per
 [conventions.md §2](../../../../conventions.md#2-file-naming) since they're two distinct files with
 two distinct backend endpoints)
 **Mobile equivalent:** none — see [screen.md § Confirmed gaps vs. web](../../../../mobile/v1/chat-room/screen.md#confirmed-gaps-vs-web-found-while-documenting-this-screen),
-[CROSS-028](../../../../issues.md#cross-028).
+`CROSS-028` (resolved).
 
 ## Purpose
 

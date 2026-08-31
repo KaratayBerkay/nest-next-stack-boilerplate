@@ -1,0 +1,154 @@
+"use client";
+
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
+import type { NotificationDropdownProps } from "@/types/feed/NotificationDropdown-types";
+import type { NotificationItem } from "@/lib/realtime/useNotifications";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import { useClickOutside } from "@/hooks/useClickOutside";
+import { useBreakpoint } from "@/hooks";
+import { IconBell } from "@tabler/icons-react";
+import { IconButton } from "@/components/ui/button/icon-button";
+import {
+  useNotifications,
+  useUnreadNotificationCount,
+} from "@/lib/realtime/useNotifications";
+import { notificationTarget } from "@/lib/notifications/target";
+import { Badge } from "@/components/feed/Badge";
+import { NotificationList } from "@/components/feed/NotificationList";
+import { useNotificationActions } from "@/api/client/notifications/actions";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+
+function handleToggle(setOpen: Dispatch<SetStateAction<boolean>>) {
+  setOpen((prev) => !prev);
+}
+
+function handleNavigate(
+  n: NotificationItem,
+  lang: string,
+  setOpen: Dispatch<SetStateAction<boolean>>,
+  router: ReturnType<typeof useRouter>,
+) {
+  const target = notificationTarget(
+    n.payload as Record<string, unknown> | undefined,
+    lang,
+  );
+  if (target) {
+    router.push(target);
+    setOpen(false);
+  }
+}
+
+export function NotificationDropdown({
+  lang = "en",
+}: NotificationDropdownProps) {
+  const t = useMessages("notification");
+  const { data: notifData } = useNotifications();
+  const { data: unreadCount = 0 } = useUnreadNotificationCount();
+  const notifications = useMemo(
+    () => notifData?.pages.flatMap((p) => p.items) ?? [],
+    [notifData],
+  );
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const isDesktop = useBreakpoint("sm");
+
+  useClickOutside(ref, () => {
+    if (isDesktop) setOpen(false);
+  });
+
+  const { markRead, markAllRead } = useNotificationActions();
+
+  // Seeing them in the open list counts as "read" — clicking one still
+  // additionally navigates, but simply viewing the panel is enough to clear
+  // the badge for whatever's currently showing in it.
+  const hasUnread = notifications.some((n) => !n.readAt);
+  useEffect(() => {
+    if (!open || !hasUnread) return;
+    markAllRead().catch(() => {});
+  }, [open, hasUnread, markAllRead]);
+
+  const content = (
+    <NotificationList
+      notifications={notifications}
+      onMarkRead={(id) => markRead(id)}
+      onMarkAllRead={() => markAllRead()}
+      onNavigate={(n) => handleNavigate(n, lang, setOpen, router)}
+      onSeeMore={() => setOpen(false)}
+      lang={lang}
+    />
+  );
+
+  return (
+    <div ref={ref} className="relative">
+      <IconButton
+        icon={
+          <>
+            <IconBell size={20} stroke={1.5} />
+            <Badge count={unreadCount} />
+          </>
+        }
+        label={
+          unreadCount > 0
+            ? t.notificationsWithUnread.replace("{count}", String(unreadCount))
+            : t.title
+        }
+        onClick={() => handleToggle(setOpen)}
+      />
+
+      {open && isDesktop && (
+        <div className="border-border bg-bg absolute top-full right-0 z-50 mt-3 w-80 rounded-xl border p-1 shadow-lg">
+          {content}
+        </div>
+      )}
+
+      {open &&
+        !isDesktop &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            {/* Decorative dismiss backdrop, not a control — the panel's own controls remain
+                keyboard-reachable; this scrim only needs a click target. */}
+            <div
+              className="bg-overlay/50 fixed inset-0 z-40"
+              onClick={() => setOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="bg-bg animate-fade-in fixed inset-0 z-50 flex flex-col p-4">
+              <div className="flex items-center justify-between pb-3">
+                <span className="text-sm font-semibold">{t.title}</span>
+                <button
+                  onClick={() => setOpen(false)}
+                  className="text-muted hover:bg-surface-hover rounded-lg p-1"
+                  aria-label={t.close}
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="flex flex-1 flex-col gap-0.5 overflow-y-auto">
+                {content}
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
+    </div>
+  );
+}

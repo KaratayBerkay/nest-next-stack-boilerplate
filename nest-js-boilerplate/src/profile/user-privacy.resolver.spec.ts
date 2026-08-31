@@ -10,8 +10,8 @@ function row(overrides: Partial<User> & { hideAvatar?: boolean }): User {
   } as unknown as User;
 }
 
-function viewer(userId: string): JwtUser {
-  return { userId } as JwtUser;
+function viewer(userId: string, role = 'USER'): JwtUser {
+  return { userId, role } as JwtUser;
 }
 
 describe('UserPrivacyResolver', () => {
@@ -73,6 +73,50 @@ describe('UserPrivacyResolver', () => {
     it('returns the real value on own-row surfaces (login/verifyLoginMfa payloads)', () => {
       expect(resolver.mfaEnabled(row({ mfaEnabled: true }), undefined)).toBe(
         true,
+      );
+    });
+  });
+
+  describe('role/status (CROSS-044 — moderation metadata redacted from ordinary peers)', () => {
+    it('redacts another user role to USER for a non-privileged viewer — regression: { users(search) { role } } exposed admin/moderator accounts to any session', () => {
+      expect(
+        resolver.role(row({ role: 'ADMIN' }), viewer('someone-else')),
+      ).toBe('USER');
+    });
+
+    it('redacts another user status to ACTIVE for a non-privileged viewer — BANNED/SUSPENDED is target-selection intel', () => {
+      expect(
+        resolver.status(row({ status: 'BANNED' }), viewer('someone-else')),
+      ).toBe('ACTIVE');
+    });
+
+    it('keeps real values for the owner themselves', () => {
+      expect(resolver.role(row({ role: 'MODERATOR' }), viewer('owner-1'))).toBe(
+        'MODERATOR',
+      );
+      expect(
+        resolver.status(row({ status: 'SUSPENDED' }), viewer('owner-1')),
+      ).toBe('SUSPENDED');
+    });
+
+    it('keeps real values for ADMIN and SUPERADMIN viewers — the admin search UI reads them', () => {
+      expect(
+        resolver.role(row({ role: 'MODERATOR' }), viewer('adm', 'ADMIN')),
+      ).toBe('MODERATOR');
+      expect(
+        resolver.status(row({ status: 'BANNED' }), viewer('sa', 'SUPERADMIN')),
+      ).toBe('BANNED');
+    });
+
+    it('does NOT privilege MODERATOR viewers — no admin surface gates on that role', () => {
+      expect(
+        resolver.role(row({ role: 'ADMIN' }), viewer('mod', 'MODERATOR')),
+      ).toBe('USER');
+    });
+
+    it('passes real values through on viewer-less (public auth-mutation) surfaces, where the row is the caller own', () => {
+      expect(resolver.status(row({ status: 'PENDING_VERIFICATION' }), undefined)).toBe(
+        'PENDING_VERIFICATION',
       );
     });
   });

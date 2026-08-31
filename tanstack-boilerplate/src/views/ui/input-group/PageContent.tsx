@@ -1,0 +1,74 @@
+"use client";
+import { InputGroup } from "@/components/ui/InputGroup";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+
+const examples: UIExample[] = [
+  {
+    id: "usage",
+    title: "URL Prefix",
+    description: "Input with a https:// addon prefix.",
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">URL Prefix</h3>
+          <InputGroup>
+            <span className="border-border bg-surface text-muted flex items-center border px-3 text-sm">
+              https://
+            </span>
+            <Input placeholder="example.com" />
+          </InputGroup>
+        </section>
+      </div>
+    ),
+  },
+  {
+    id: "variants",
+    title: "Search + Submit",
+    description: "Input attached to a button in a single row.",
+    render: () => (
+      <div className="flex flex-col gap-4">
+        <section className="flex flex-col gap-3">
+          <h3 className="text-lg font-semibold">Search + Submit</h3>
+          <InputGroup>
+            <Input placeholder="Search products, docs, and more..." />
+            <Button
+              leftIcon={
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+              }
+            >
+              Search
+            </Button>
+          </InputGroup>
+        </section>
+      </div>
+    ),
+  },
+];
+
+export default function InputGroupPage({
+  initialTab,
+}: {
+  initialTab?: string;
+}) {
+  return (
+    <ExampleTabs
+      title="Input Group"
+      intro="A group of related inputs."
+      examples={examples}
+      initialTab={initialTab}
+    />
+  );
+}

@@ -29,5 +29,5 @@ wasted round trip per page visit), but worth knowing if this file is touched aga
 
 ## Known issues
 
-- [CROSS-016](../../../../issues.md#cross-016) — this screen is real and admin-gated; web's same-named page
+- `CROSS-016` (resolved) — this screen is real and admin-gated; web's same-named page
   is static demo content open to any authenticated user. See [../README.md](../README.md).

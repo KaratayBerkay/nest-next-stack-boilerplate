@@ -17,7 +17,7 @@ reading all 3 server files. See
 | [`revoke.dart`](../../../../../flutter-boilerplate/lib/api/server/api_keys/revoke.dart) | Direct GraphQL | `mutation RevokeApiKey` | [Revoke an API key](../../../../backend/identity-access/api-keys/endpoints.md#revoke-an-api-key) |
 
 No file here calls `updateApiKey` — matches the confirmed absence of any rename/enable-disable UI on
-this screen ([CROSS-012](../../../../issues.md#cross-012)); `grep -rn "updateApiKey"
+this screen (`CROSS-012` (resolved)); `grep -rn "updateApiKey"
 flutter-boilerplate/lib` returns nothing at all, not even a stub.
 
 ## Client layer (`lib/api/client/api_keys/`)

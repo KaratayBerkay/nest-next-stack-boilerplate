@@ -30,7 +30,7 @@ title/body/relative-time, and an unread dot. The whole row is a `<button>` — t
   solid-color circle. This is why the frontend's GraphQL query for this list
   ([api.md § List notifications (BFF route)](../api.md#list-notifications-bff-route)) doesn't select
   `actor.avatarUrl` at all — there's nothing here that would render it. This is also why
-  [CROSS-020](../../../../issues.md#cross-020)'s `hideAvatar` redaction gap has no visible effect through
+  `CROSS-020` (resolved)'s `hideAvatar` redaction gap has no visible effect through
   *this* component today, even though the underlying GraphQL resolver has the gap.
 - **Click handler order matters**: `onRead` fires before the target is even computed, so a
   notification is always marked read the instant it's tapped, regardless of whether a navigation

@@ -78,4 +78,4 @@ DM branch: `{type: "direct-message", ...}`, same entry. Attachment upload:
 ⚠ Unlike web, this call has no `scope` parameter at all — `UploadAttachmentServer.call()` only ever
 takes `(filePath, fileName)` — so it never sends `x-scope-kind`/`x-scope-id`, from either this widget
 or [messages'](../../messages/widgets/chat-input-bar.md#calls) identical call. See
-[MOB-017](../../../../issues.md#mob-017).
+`MOB-017` (resolved).

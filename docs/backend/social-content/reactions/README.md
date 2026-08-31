@@ -43,7 +43,7 @@ what the frontend/mobile actually render (see [Known issues](#known-issues)).
 
 `AuthModule` (guard), `NotificationModule`, `RealtimeModule` (same `feed`/`post:{id}` renew-frame
 convention as `post`/`comment`). Also imports `PostModule` without ever injecting `PostService` —
-[BE-010](../../../issues.md#be-010), the same unused-import shape noted in
+`BE-010` (resolved), the same unused-import shape noted in
 [comment/README.md § Depends on](../comment/README.md#depends-on); `create()`'s post/comment lookups
 for the notification's target-author resolution go through `PrismaService`'s `include` on the
 `reaction.create`/`update` call itself, not a service call.
@@ -57,7 +57,7 @@ for the notification's target-author resolution go through `PrismaService`'s `in
 
 ## Known issues
 
-- [BE-010](../../../issues.md#be-010) — imports `PostModule` without ever injecting `PostService` —
+- `BE-010` (resolved) — imports `PostModule` without ever injecting `PostService` —
   see [§ Depends on](#depends-on).
 - The standalone `reactions(postId, commentId)` query (as opposed to the `reactions`/`replies`
   fields eagerly included by `post`'s own queries) has no confirmed direct caller on either platform

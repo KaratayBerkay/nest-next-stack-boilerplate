@@ -9,7 +9,7 @@ None of the three areas below is a page or screen in its own right, so none gets
 
 **Was at** `lib/views/common/share_sheet/` (not a top-level `lib/share_sheet/`). The whole folder —
 all three files below — was removed in the cross-stack dead-code pass (commit `b98fac8a`), closing
-[MOB-029](../issues.md#mob-029). Inventory kept for the record:
+`MOB-029` (resolved). Inventory kept for the record:
 
 Three files, all plain Dart/Flutter with no external service dependency:
 
@@ -23,7 +23,7 @@ Three files, all plain Dart/Flutter with no external service dependency:
 flutter-boilerplate/lib` matches only each file's own definition, nowhere else in the app. The real
 `v1/share` screen (documented in Phase 2b) does not import from this folder, and the app's actual
 native-share integration elsewhere (`mfa_enroll`, `attachment_preview`) uses the `share_plus` package
-directly rather than this custom trio. See [MOB-029](../issues.md#mob-029).
+directly rather than this custom trio. See `MOB-029` (resolved).
 
 ## `lib/fallbacks/`
 
@@ -75,7 +75,7 @@ for a non-admin visitor — see
 built the equivalent widget set and never wired any of it into a real error boundary, router
 `errorBuilder`, or the admin screen's own (missing) role-check fallback — see
 [mobile/v1/admin/screen.md § The admin-role gate](./v1/admin/screen.md#the-admin-role-gate) for the one
-place this would have been a direct, ready-to-use fix. See [MOB-028](../issues.md#mob-028).
+place this would have been a direct, ready-to-use fix. See `MOB-028` (resolved).
 
 ## Naming trap: `lib/fallbacks/app/` vs. `lib/views/fallbacks/app/`
 
@@ -104,4 +104,4 @@ assuming either one — don't guess from the name alone.
     and left behind rather than deleted, not a second real content type that belongs cross-referenced
     from any vertical's own docs.
 
-See [MOB-027](../issues.md#mob-027) for the full write-up.
+See `MOB-027` (resolved) for the full write-up.

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import {
   IconMicrophone,
   IconMicrophoneOff,
@@ -209,6 +210,10 @@ function ActiveCallOverlay({
   micEnabled,
   cameraEnabled,
   remoteCameraLive,
+  remoteMicEnabled,
+  remoteSpeaking,
+  localSpeaking,
+  connectedAt,
   speakerEnabled,
   actionPending,
   livekitConnected,
@@ -230,16 +235,23 @@ function ActiveCallOverlay({
 
   useEffect(() => {
     if (phase !== "connected") return;
-    callStartRef.current = Date.now();
-    const id = setInterval(() => {
-      setDuration(Math.floor((Date.now() - callStartRef.current) / 1000));
-    }, 1000);
+    // Seed from the server-side accept time when known (snapshot recovery
+    // after a reload) so the readout continues instead of restarting at 0:00.
+    const startMs = connectedAt ? new Date(connectedAt).getTime() : NaN;
+    callStartRef.current = Number.isFinite(startMs) ? startMs : Date.now();
+    const tick = () =>
+      setDuration(
+        Math.max(0, Math.floor((Date.now() - callStartRef.current) / 1000)),
+      );
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [phase]);
+  }, [phase, connectedAt]);
 
   const isRinging = phase === "outgoing-ringing";
   const showVideo = phase === "connected" && hasVideo;
   const palette = participantPalette(peerId || peerName);
+  const selfPalette = participantPalette(selfName || "you");
   const mediaError = getMediaErrorMessage(livekitError, t);
 
   // Media errors deliberately do NOT enter this ladder: they have their own
@@ -284,15 +296,54 @@ function ActiveCallOverlay({
               camera frame is visible — full-bleed cover cropped the top and
               bottom of the feed. */}
           <div className="min-h-0 flex-1 px-3 pb-3 sm:px-4 sm:pb-4">
-            <div className="border-overlay-fg/15 bg-bg relative h-full w-full overflow-hidden rounded-2xl border shadow-2xl">
+            {/* Breathing speak glow on the video tile — the same treatment
+                the meeting tiles use, keyed to the peer's identity color. */}
+            <div
+              className={`border-overlay-fg/15 bg-bg relative h-full w-full overflow-hidden rounded-2xl border shadow-2xl ${
+                remoteSpeaking && remoteCameraLive
+                  ? "animate-speaking-glow"
+                  : ""
+              }`}
+              style={
+                {
+                  "--speak-ring": palette.ring,
+                  "--speak-halo": palette.halo,
+                } as CSSProperties
+              }
+            >
               <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                <Avatar
-                  style={{ background: palette.fill, color: palette.onFill }}
-                  src={peerAvatarUrl ?? undefined}
-                  fallback={peerName || "?"}
-                  size="xl"
-                  className="bg-brand text-brand-fg ring-brand/20 size-28 ring-4"
-                />
+                <div className="relative flex items-center justify-center">
+                  {/* Two staggered ripples = the continuous breathing ring
+                      around the avatar while the peer speaks camera-off. */}
+                  {remoteSpeaking && !remoteCameraLive && (
+                    <>
+                      <span
+                        aria-hidden
+                        className="animate-speaking-ripple absolute -inset-1 rounded-full border-2"
+                        style={{ borderColor: palette.ring }}
+                      />
+                      <span
+                        aria-hidden
+                        className="animate-speaking-ripple absolute -inset-1 rounded-full border-2 [animation-delay:0.8s]"
+                        style={{ borderColor: palette.ring }}
+                      />
+                    </>
+                  )}
+                  <Avatar
+                    style={{
+                      background: palette.fill,
+                      color: palette.onFill,
+                      boxShadow:
+                        remoteSpeaking && !remoteCameraLive
+                          ? `0 0 0 2px ${palette.ring}`
+                          : undefined,
+                    }}
+                    src={peerAvatarUrl ?? undefined}
+                    fallback={peerName || "?"}
+                    size="xl"
+                    className="bg-brand text-brand-fg ring-brand/20 size-28 ring-4"
+                  />
+                </div>
                 <p className="text-overlay-fg text-lg font-semibold">
                   {peerName}
                 </p>
@@ -310,6 +361,14 @@ function ActiveCallOverlay({
                 playsInline
                 className={`absolute inset-0 h-full w-full object-contain ${remoteCameraLive ? "" : "opacity-0"}`}
               />
+
+              {/* Peer muted their mic — same badge treatment as the meeting
+                  participant tiles, visible over video and avatar alike. */}
+              {remoteConnected && !remoteMicEnabled && (
+                <span className="bg-overlay/60 text-error absolute top-3 left-3 flex size-8 items-center justify-center rounded-full backdrop-blur-sm">
+                  <IconMicrophoneOff size={16} aria-hidden />
+                </span>
+              )}
 
               <div className="absolute right-3 bottom-3 sm:right-4 sm:bottom-4">
                 <div className="relative">
@@ -329,13 +388,41 @@ function ActiveCallOverlay({
                       data-testid="self-camera-placeholder"
                       className="bg-surface border-overlay-fg/25 absolute inset-0 flex items-center justify-center rounded-xl border-2 shadow-xl"
                     >
-                      <Avatar
-                        src={selfAvatarUrl ?? undefined}
-                        fallback={selfName || "?"}
-                        size="lg"
-                        className="bg-brand text-brand-fg"
-                      />
+                      <div className="relative flex items-center justify-center">
+                        {/* Own breathing ring while speaking camera-off. */}
+                        {localSpeaking && (
+                          <>
+                            <span
+                              aria-hidden
+                              className="animate-speaking-ripple absolute -inset-1 rounded-full border-2"
+                              style={{ borderColor: selfPalette.ring }}
+                            />
+                            <span
+                              aria-hidden
+                              className="animate-speaking-ripple absolute -inset-1 rounded-full border-2 [animation-delay:0.8s]"
+                              style={{ borderColor: selfPalette.ring }}
+                            />
+                          </>
+                        )}
+                        <Avatar
+                          src={selfAvatarUrl ?? undefined}
+                          fallback={selfName || "?"}
+                          size="lg"
+                          className="bg-brand text-brand-fg"
+                          style={{
+                            boxShadow: localSpeaking
+                              ? `0 0 0 2px ${selfPalette.ring}`
+                              : undefined,
+                          }}
+                        />
+                      </div>
                     </div>
+                  )}
+                  {/* Own mute badge on the self PiP tile. */}
+                  {!micEnabled && (
+                    <span className="bg-overlay/60 text-error absolute top-1.5 right-1.5 flex size-6 items-center justify-center rounded-full backdrop-blur-sm">
+                      <IconMicrophoneOff size={13} aria-hidden />
+                    </span>
                   )}
                 </div>
               </div>
@@ -571,6 +658,10 @@ export function RtcCallOverlay() {
       micEnabled={livekit.micEnabled}
       cameraEnabled={livekit.cameraEnabled}
       remoteCameraLive={livekit.remoteCameraLive}
+      remoteMicEnabled={livekit.remoteMicEnabled}
+      remoteSpeaking={livekit.remoteSpeaking}
+      localSpeaking={livekit.localSpeaking}
+      connectedAt={state.connectedAt}
       speakerEnabled={speakerEnabled}
       actionPending={state.actionPending !== null}
       remoteConnected={livekit.remoteConnected}

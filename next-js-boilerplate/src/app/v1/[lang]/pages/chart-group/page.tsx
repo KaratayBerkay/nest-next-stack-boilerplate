@@ -4,7 +4,7 @@ import ChartGroupPageContent from "@/views/pages/chart-group/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ChartGroupPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <ChartGroupPageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <ChartGroupPageContent initialTab={tab} initialFull={full === "1"} />;
 }

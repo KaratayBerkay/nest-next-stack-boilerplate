@@ -26,6 +26,7 @@ audience (the backend also guards this server-side — see
 | Join / leave | [`streams/join.ts`](../../../../../../next-js-boilerplate/src/api/server/rtc/streams/join.ts) / [`leave.ts`](../../../../../../next-js-boilerplate/src/api/server/rtc/streams/leave.ts) → `joinStreamAsViewer` / `leaveStreamAsViewer` |
 | Video | [`useLiveKitStreamRoom`](../../hooks.md#livekit-room-hooks-srchooksrtc) with the join token (subscribe-only) |
 | Viewer count | [`useStreamViewerCount`](../../hooks.md#livekit-room-hooks-srchooksrtc) seeded from the join response |
+| Viewer list | [`useStreamViewers`](../../hooks.md#livekit-room-hooks-srchooksrtc) (enabled once `active`) → `StreamViewerList` stacked above the chat in the sidebar |
 | Chat | [`useRoomChat`](../../hooks.md#livekit-room-hooks-srchooksrtc) + history via [`streams/chat.ts`](../../../../../../next-js-boilerplate/src/api/server/rtc/streams/chat.ts) (gated until joined) → [StreamChatPanel](../../components/stream-chat-panel.md) |
 | End signal | `rtc:stream-ended` frame → `ended` screen |
 | Report | [RtcReportDialog](../../components/rtc-report-dialog.md) → `reportStream` |

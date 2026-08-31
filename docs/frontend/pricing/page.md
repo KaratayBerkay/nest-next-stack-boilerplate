@@ -30,7 +30,7 @@ somewhere to send a visitor before the app knows their `lang`.
 
 ## ⚠ This redirect defeats the entire point of a public pricing page
 
-See [CROSS-029](../../issues.md#cross-029) for the full write-up; summarized here since it's
+See `CROSS-029` (resolved) for the full write-up; summarized here since it's
 this exact page's own behavior that causes it:
 
 `/v1/{lang}/plans`'s own layout
@@ -67,6 +67,6 @@ None — the redirect fires before any data fetch, and this component never impo
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-029](../../issues.md#cross-029) (HIGH) — see above; this page is the frontend half
+- ⚠ `CROSS-029` (resolved) (HIGH) — see above; this page is the frontend half
   of the finding, [`v1/[lang]/layout.tsx`](../../../next-js-boilerplate/src/app/v1/[lang]/layout.tsx)'s
   unconditional auth gate and the backend's `planPrices` guard are the other two parts.

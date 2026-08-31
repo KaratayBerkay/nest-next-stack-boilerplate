@@ -15,6 +15,10 @@ class ActiveCallSnapshot {
   final String? roomName;
   final int? maxDurationMinutes;
 
+  /// rtc:accepted recovery only — when the call actually connected, so a
+  /// relaunched client's timer continues instead of restarting at 0:00.
+  final String? acceptedAt;
+
   ActiveCallSnapshot({
     required this.type,
     required this.callId,
@@ -28,6 +32,7 @@ class ActiveCallSnapshot {
     this.token,
     this.roomName,
     this.maxDurationMinutes,
+    this.acceptedAt,
   });
 
   factory ActiveCallSnapshot.fromJson(Map<String, dynamic> json) =>
@@ -44,5 +49,6 @@ class ActiveCallSnapshot {
         token: json['token'] as String?,
         roomName: json['roomName'] as String?,
         maxDurationMinutes: (json['maxDurationMinutes'] as num?)?.toInt(),
+        acceptedAt: json['acceptedAt'] as String?,
       );
 }

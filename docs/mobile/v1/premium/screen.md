@@ -12,7 +12,7 @@ applies here identically; not repeated in full below.
 ## ⚠ 7 of this vertical's 8 files were dead code — since deleted
 
 **Resolved by deletion:** the seven dead files below were removed in the cross-stack dead-code pass
-(commit `b98fac8a`), closing [MOB-022](../../../issues.md#mob-022) — `lib/views/premium/` now
+(commit `b98fac8a`), closing `MOB-022` (resolved) — `lib/views/premium/` now
 contains only the live `page_view.dart`. The original analysis is kept for the record.
 
 `lib/views/premium/` contained 8 files. Only **one**, `page_view.dart`, was ever actually reached:
@@ -34,10 +34,10 @@ public symbol these seven files export (`FreePremiumPage`, `BasicPremiumPage`, `
 `refreshPremiumData`) — every match is inside this same dead cluster, referencing itself. This is the
 largest single instance (by file count) of this doc effort's recurring "scaffolded, then reimplemented
 inline, original left behind" pattern (compare
-[CROSS-013](../../../issues.md#cross-013)/[MOB-006](../../../issues.md#mob-006), 2-3 files each) — but,
-unlike [MOB-008](../../../issues.md#mob-008), the live and dead versions are functionally equivalent
+[CROSS-013](../../../issues.md#cross-013)/`MOB-006` (resolved), 2-3 files each) — but,
+unlike `MOB-008` (resolved), the live and dead versions are functionally equivalent
 (same providers, same fields, same bugs — see below), so there's no capability gap between them, just
-duplicated, unreachable code. See ⚠ [MOB-022](../../../issues.md#mob-022).
+duplicated, unreachable code. See ⚠ `MOB-022` (resolved).
 
 Everything below describes the **live** code only (`page_view.dart`'s inline classes).
 
@@ -71,7 +71,7 @@ rather than erroring — so these two cards are **permanently stuck at "0" and "
 who ever reaches Medium/Premium tier. Meanwhile the two fields the backend *does* provide and the
 query *does* fetch — `totalPosts`, `totalFriendships` — are parsed nowhere and never appear in the UI
 at all. `newUsersLast7Days` is also mislabeled "New Users (Month)" here despite being a genuine 7-day
-window (web's label gets this right). See ⚠ [MOB-023](../../../issues.md#mob-023).
+window (web's label gets this right). See `MOB-023` (resolved).
 
 ## API
 
@@ -80,8 +80,8 @@ subfolder for this vertical (no standalone, live widget files — see the dead-c
 
 ## Known issues
 
-- ⚠ [MOB-022](../../../issues.md#mob-022) — 7 of 8 files in this vertical are dead code.
-- ⚠ [MOB-023](../../../issues.md#mob-023) — "New Subs (Month)"/"Growth Rate" never load real
+- ⚠ `MOB-022` (resolved) — 7 of 8 files in this vertical are dead code.
+- `MOB-023` (resolved) — "New Subs (Month)"/"Growth Rate" never load real
   data; `totalPosts`/`totalFriendships` are fetched but never shown.
 - ⚠ [CROSS-035](../../../issues.md#cross-035) — inherited from the web page (same backend
   queries): this whole vertical is an RBAC tier-gate demo, not subscription status — see

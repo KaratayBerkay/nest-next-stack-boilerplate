@@ -46,7 +46,7 @@ excludes, so in practice every row rendered here has a working link.
 
 ## Known issues
 
-- ⚠ [MOB-021](../../../../../issues.md#mob-021) — mobile's equivalent invoice badge compares
+- ⚠ `MOB-021` (resolved) — mobile's equivalent invoice badge compares
   against the wrong literal (`'paid'` instead of `'COMPLETED'`), so it never shows the success state
   this component correctly shows for every real row.
 

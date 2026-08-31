@@ -6,7 +6,7 @@ detail lives in [backend/](./backend/README.md); per-page detail lives in
 still-accurate content of this repo's former Architecture Decision Records (deleted as part of this
 documentation rewrite — see [conventions.md § 11](./conventions.md)); one of the six, on E2EE, was
 found to describe a system that was deliberately replaced and is corrected here rather than carried
-forward (see [issues.md#cross-004](./issues.md#cross-004)).
+forward (see `CROSS-004` (resolved)).
 
 ## Workspace layout
 
@@ -67,7 +67,7 @@ there hits the path the *backend's own controller* natively serves (e.g. `/api/f
 frontend's differently-namespaced BFF path (`/api/messages/friends`) — meaning `messages` has **zero
 Next.js involvement on mobile**, for either call shape. An earlier research pass in this effort
 claimed Flutter's REST calls generally go through the BFF; that claim is retracted for `messages`
-and unverified elsewhere — see [issues.md#cross-007](./issues.md#cross-007). See
+and unverified elsewhere — see `CROSS-007` (resolved). See
 [conventions.md § 9](./conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement)
 for the three-shape test to apply per file, and
 [issues.md#cross-003](./issues.md#cross-003) for the related note that the backend has no actual API
@@ -109,7 +109,7 @@ transport, auth, and generic emit primitives; feature gateways (`MessagingWsGate
 RTC phases `RtcCallWsGateway`/`RtcChatWsGateway`) register frame handlers into it rather than
 opening their own connections. Authentication happens at the **WS
 upgrade** (cookie-based, before a socket exists), not via a post-connect message — see
-[issues.md#cross-005](./issues.md#cross-005) for why this is worth stating explicitly (older repo
+`CROSS-005` (resolved) for why this is worth stating explicitly (older repo
 docs described a different, now-removed first-message protocol). One socket per device; a
 page-claim protocol (`{type:"page", page:"messages", params:{...}}`) scopes server-push delivery to
 whatever route the client is currently on. Full protocol detail:
@@ -147,7 +147,7 @@ server or process compromise**, since the server can always re-derive both keys.
 deliberate, documented trade-off (smaller crypto surface, real-time content moderation stays
 possible) — not an oversight — but the surviving reference doc for the old design was never marked
 superseded, which is why this section exists; see
-[issues.md#cross-004](./issues.md#cross-004) for the full account. Detail:
+`CROSS-004` (resolved) for the full account. Detail:
 [backend/messaging-realtime/wire-crypto/README.md](./backend/messaging-realtime/wire-crypto/README.md).
 
 ## No backend API versioning

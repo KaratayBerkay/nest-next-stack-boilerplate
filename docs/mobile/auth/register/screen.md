@@ -45,9 +45,9 @@ No social-login call — see Known issues.
   `SocialLoginButtons` component login does. A user who wants to sign up with Google/GitHub/etc. can
   only do so from the mobile login screen, not the register screen (functionally reachable, since
   `loginWithOAuth` creates a new account on first use — but the entry point is missing, and the
-  register screen's own copy/framing never mentions it). Filed as [CROSS-010](../../../issues.md#cross-010).
+  register screen's own copy/framing never mentions it). Filed as `CROSS-010` (resolved).
 - ⚠ **No live password-requirements checklist and no password reveal toggle** — filed as
-  [CROSS-011](../../../issues.md#cross-011); see
+  `CROSS-011` (resolved); see
   [frontend password-requirements.md § Known issues](../../../frontend/auth/register/components/password-requirements.md#known-issues)
   for the full evidence (traced to a single web+backend-only commit, `d4fee7ce`). This screen's own
   client-side check (`password.length > 128` → `authErrorsPasswordMax`) still exists and matches the

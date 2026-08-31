@@ -1,0 +1,34 @@
+// Ported from next-js-boilerplate/src/app/(demos)/form/page.tsx
+import { createFileRoute } from "@tanstack/react-router";
+import type { Metadata } from "next";
+import { metadataToHead } from "@/lib/head";
+import { Suspense } from "react";
+import { SignupForm } from "@/views/demos/form/Form";
+
+export const metadata: Metadata = {
+  title: "Form",
+  description: "Form handling demo",
+};
+
+export const Route = createFileRoute("/_demos/form/")({
+  head: () => metadataToHead(metadata),
+  component: FormPage,
+});
+
+function FormPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <h2 className="text-brand text-sm font-semibold">
+        TanStack Form &mdash; Signup Demo
+      </h2>
+      <p className="text-muted text-sm">
+        This form uses <code className="text-brand">@tanstack/react-form</code>{" "}
+        with Zod v4 validation. Client-side validation fires on change;
+        server-side validation runs on submit.
+      </p>
+      <Suspense fallback={null}>
+        <SignupForm />
+      </Suspense>
+    </div>
+  );
+}

@@ -37,7 +37,7 @@ the client side of [wire-crypto](../../../backend/messaging-realtime/wire-crypto
 transport encryption. Wraps `src/lib/crypto/session.ts`'s `hasSession`/`encryptForServer`/
 `decryptFromServer`, exposing `active` (via `useSyncExternalStore`, reactive to a
 `session-crypto-change` window event), `encrypt`, and `decrypt`. **Not** a message-content E2EE hook
-— see [../../../issues.md#cross-004](../../../issues.md#cross-004) if the name suggests otherwise.
+— see `CROSS-004` (resolved) if the name suggests otherwise.
 Handshake triggering itself lives in the realtime connection setup (`realtime-client.ts`), not here.
 
 ### `useTypingIndicator`

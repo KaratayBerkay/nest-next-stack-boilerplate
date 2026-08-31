@@ -60,7 +60,7 @@ an outbox audit event (includes `reason` in the summary if provided), then uncon
 user is killed immediately, not just updated.
 **Errors:** none thrown — invalid target silently returns `false`.
 **Used by:** ⚠ **nobody** — see [README.md § Known issues](./README.md#known-issues)
-([BE-007](../../../issues.md#be-007)).
+(`BE-007` (resolved)).
 
 ### Premium stats (demo tier gate)
 
@@ -73,7 +73,7 @@ user is killed immediately, not just updated.
 [`views/premium/PremiumPageView.tsx`](../../../../next-js-boilerplate/src/views/premium/PremiumPageView.tsx).
 Mobile: [`v1/premium`](../../../mobile/v1/premium/screen.md)'s live `page_view.dart`
 (`premiumStatsProvider`) — see that screen's own known-issues for the dead-parallel-implementation
-caveat ([MOB-022](../../../issues.md#mob-022)) affecting the other four tier-view files.
+caveat (`MOB-022` (resolved)) affecting the other four tier-view files.
 
 ### Growth stats (demo tier gate)
 
@@ -86,7 +86,7 @@ aggregates (posts filtered `deletedAt: null`, friendships filtered `status: ACCE
 [`views/premium/GrowthStatsSection.tsx`](../../../../next-js-boilerplate/src/views/premium/GrowthStatsSection.tsx),
 [`api/server/premium/growth-stats.ts`](../../../../next-js-boilerplate/src/api/server/premium/growth-stats.ts).
 Mobile: [`v1/premium`](../../../mobile/v1/premium/screen.md)'s live `page_view.dart`
-(`growthStatsProvider`), same [MOB-022](../../../issues.md#mob-022) caveat as
+(`growthStatsProvider`), same `MOB-022` (resolved) caveat as
 [Premium stats](#premium-stats-demo-tier-gate) above.
 
 ### Reset a user's MFA
@@ -101,7 +101,7 @@ Mobile: [`v1/premium`](../../../mobile/v1/premium/screen.md)'s live `page_view.d
 audit event and `tokenStore.revokeAllForUser` (every session for that user is force-logged-out, since
 their auth posture just changed).
 **Used by:** ⚠ **nobody** — see [README.md § Known issues](./README.md#known-issues)
-([BE-007](../../../issues.md#be-007)).
+(`BE-007` (resolved)).
 
 ### List audit logs
 

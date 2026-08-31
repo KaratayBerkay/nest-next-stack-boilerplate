@@ -10,7 +10,7 @@ Screens: [screen.md](./screen.md), [requests/screen.md](./requests/screen.md) ·
 |---|---|---|---|
 | [`friends/suggested.dart`](../../../../flutter-boilerplate/lib/api/server/friends/suggested.dart) | Direct GraphQL (`_dio.post('/graphql', ...)`) | `query SuggestedFriends` | [social-content/friends/endpoints.md#list-suggested-friends](../../../backend/social-content/friends/endpoints.md#list-suggested-friends) |
 | [`users/search.dart`](../../../../flutter-boilerplate/lib/api/server/users/search.dart) | Direct GraphQL | `query Users($search: String)` | [messaging/endpoints.md#list-discoverable-users](../../../backend/messaging-realtime/messaging/endpoints.md#list-discoverable-users) |
-| [`server/messages/friend_requests.dart`](../../../../flutter-boilerplate/lib/api/server/messages/friend_requests.dart) (reused, not friends-specific) | Direct REST | `GET /api/friends/requests` | [messaging/endpoints.md#list-pending-friend-requests](../../../backend/messaging-realtime/messaging/endpoints.md#list-pending-friend-requests) — see [MOB-007](../../../issues.md#mob-007), the response shape and this file's model disagree |
+| [`server/messages/friend_requests.dart`](../../../../flutter-boilerplate/lib/api/server/messages/friend_requests.dart) (reused, not friends-specific) | Direct REST | `GET /api/friends/requests` | [messaging/endpoints.md#list-pending-friend-requests](../../../backend/messaging-realtime/messaging/endpoints.md#list-pending-friend-requests) — see `MOB-007` (resolved), the response shape and this file's model disagree |
 | [`server/messages/{send,accept,decline}_friend_request.dart`](../../../../flutter-boilerplate/lib/api/server/messages/) (reused) | Direct REST | `POST /api/friends/{request,accept,decline}/:userId` | [messaging/endpoints.md#send--accept--decline-a-friend-request](../../../backend/messaging-realtime/messaging/endpoints.md#send--accept--decline-a-friend-request) |
 
 Confirmed per [conventions.md §9](../../../conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement):
@@ -41,7 +41,7 @@ Note `suggested.dart`'s query selects `avatarUrl` where web's equivalent doesn't
 - [PremiumFindFriendsPage](./screen.md#premium-tier) / [requests/screen.md](./requests/screen.md) →
   `friendRequestsProvider` →
   [messaging/endpoints.md#list-pending-friend-requests](../../../backend/messaging-realtime/messaging/endpoints.md#list-pending-friend-requests)
-  — see [MOB-007](../../../issues.md#mob-007)
+  — see `MOB-007` (resolved)
 - [SuggestedFriendsPanel](./widgets/suggested-friends-panel.md), [UserSearchCard](./widgets/user-search-card.md),
   [PendingRequestCard](./widgets/pending-request-card.md), [requests/screen.md](./requests/screen.md)'s
   `_RequestsView` → `friendActionsProvider` →

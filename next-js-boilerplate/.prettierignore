@@ -9,3 +9,5 @@ blob-report/
 pnpm-lock.yaml
 docs/
 public/sw.js
+src/generated/pages-manifest.ts
+src/generated/pages-sources/

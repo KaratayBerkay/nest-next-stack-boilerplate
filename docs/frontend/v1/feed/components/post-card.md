@@ -27,7 +27,7 @@ Composes three smaller components rather than rendering everything itself —
   the `post` prop as `initialData` and a 30s `staleTime` — so a card starts from the list's data but
   independently refreshes to the single-post query's shape/freshness once stale. This means a card
   can silently pick up fields the list query itself didn't request (e.g. `reactionBreakdown`, if that
-  were ever added to `POST_QUERY` — see [FE-009](../../../../issues.md#fe-009)).
+  were ever added to `POST_QUERY` — see `FE-009` (resolved)).
 - **Inline edit is local to this component** — `editing`/`editTitle`/`editContent` are `useState`
   here, separate from [posts](../../posts/page.md)'s own edit-in-place on the detail page (different
   component, same underlying `updatePost` mutation).

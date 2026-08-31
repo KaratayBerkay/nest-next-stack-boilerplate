@@ -101,7 +101,7 @@ Source root: [`src/app/routing/`](../../../next-js-boilerplate/src/app/routing/)
 
 [`src/app/security/csp/page.tsx`](../../../next-js-boilerplate/src/app/security/csp/page.tsx) — Content-Security-Policy
 nonce demo. Flutter has no CSP concept — its own dead `nonce_panel.dart` (see
-[MOB-001](../../issues.md#mob-001)) is the mobile side of this same gap, already documented.
+`MOB-001` (resolved)) is the mobile side of this same gap, already documented.
 
 
 ## shadcnblocks marketing-block gallery — `v1/[lang]/pages/*` (27 pages)

@@ -16,7 +16,7 @@ const VIEWS = { FREE: FreePageView, BASIC: BasicPageView, MEDIUM: MediumPageView
 | Tier | View file | Adds |
 |---|---|---|
 | Free | [`FreePageView.tsx`](../../../../next-js-boilerplate/src/views/chat-room/FreePageView.tsx) | `showPageInfo` (the info-icon dialog) |
-| Basic | `BasicPageView.tsx` | nothing — `export const BasicPageView = FreePageView;`, a real alias, not a duplicate file (contrast [FE-010](../../../issues.md#fe-010), the *wrong* pattern this repo has elsewhere) |
+| Basic | `BasicPageView.tsx` | nothing — `export const BasicPageView = FreePageView;`, a real alias, not a duplicate file (contrast `FE-010` (resolved), the *wrong* pattern this repo has elsewhere) |
 | Medium | `MediumPageView.tsx` | `vipRooms={["vip-lounge"]}` |
 | Premium | `PremiumPageView.tsx` | `vipRooms={["vip-lounge"]}` + `showSelfCrown` (a crown badge next to the viewer's own name in the online-members list) |
 
@@ -98,11 +98,11 @@ file.
 Checked directly rather than assumed, per this effort's own house rule
 ([conventions.md §11](../../../conventions.md#11-old-reference-docs-are-a-lead-not-a-source-of-truth)):
 
-- [CROSS-001](../../../issues.md#cross-001) (web's favorites/groups filter-pill sidebar has no
+- `CROSS-001` (resolved) (web's favorites/groups filter-pill sidebar has no
   Flutter counterpart) **doesn't apply structurally** — chat-room's sidebar is a room list + an
   online-members tab, not a filterable conversation list, on *either* platform. There's no
   favorites/groups-shaped feature here to be missing.
-- [CROSS-006](../../../issues.md#cross-006) (Flutter DM messaging has no reply-to at all) **doesn't
+- `CROSS-006` (resolved) (Flutter DM messaging has no reply-to at all) **doesn't
   apply either, for a different reason** — see [CROSS-024](#known-issues-affecting-this-page)
   below: chat-room lacks reply-to (and delete) on **every** platform, because the backend doesn't
   support it for rooms at all. This is a new, separate finding, not an instance of CROSS-006.
@@ -121,17 +121,17 @@ Checked directly rather than assumed, per this effort's own house rule
 
 ## Known issues affecting this page
 
-- ⚠ [BE-016](../../../issues.md#be-016) — the VIP room (`vip-lounge`) both tier views above expose has
+- ⚠ `BE-016` (resolved) — the VIP room (`vip-lounge`) both tier views above expose has
   no backing `Room` database row created by any seed/startup path. Joining it and viewing its (empty)
   history works — sending the **first** message in it fails with a `409` (a Prisma foreign-key
   conflict surfacing through the standard exception mapping), not a clean "room not found." Every
   Medium/Premium user hits this identically until the row is created out-of-band.
-- [BE-017](../../../issues.md#be-017) — sending a message with an `attachments[].url` copied from a
+- `BE-017` (resolved) — sending a message with an `attachments[].url` copied from a
   message/room the sender doesn't own silently re-links that attachment's access control to the new
   message — see [upload/README.md § Known issues](../../../backend/messaging-realtime/upload/README.md#known-issues).
 - [CROSS-024](../../../issues.md#cross-024) — unlike [messages](../messages/page.md), chat-room has **no**
   reply-to-message and **no** delete-message capability, on any surface — this isn't a
-  frontend-only gap (contrast [CROSS-006](../../../issues.md#cross-006), which is DM reply present
+  frontend-only gap (contrast `CROSS-006` (resolved), which is DM reply present
   backend-side but missing only on Flutter): the backend's `RoomMessage`/`RoomMessageAttachment`
   models have no reply-target or soft-delete columns at all, `saveRoomMessage()` takes no
   `replyToId`, and no delete-room-message endpoint exists anywhere (REST, GraphQL, or WS). This is

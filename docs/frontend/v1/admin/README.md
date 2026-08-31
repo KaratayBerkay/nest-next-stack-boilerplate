@@ -23,7 +23,7 @@ which documents this vertical as its real (if previously undocumented) consumer,
 [endpoints.md](../../../backend/identity-access/authorization/endpoints.md) for the full operation
 list, including `whoAmI`/`adminStats` (pipeline demos with no UI consumer on either platform — expected,
 not a bug) and `setUserStatus`/`resetMfa` (real, role-gated mutations with **no** UI consumer on either
-platform — see [BE-007](../../../issues.md#be-007)). Neither of the latter two is reachable from this
+platform — see `BE-007` (resolved)). Neither of the latter two is reachable from this
 page today.
 
 ## Known issues affecting this vertical
@@ -31,6 +31,6 @@ page today.
 - [CROSS-039](../../../issues.md#cross-039) — the admin-role gate is client-side-only in both pages' own
   component trees on web; see [page.md](./page.md#the-admin-role-gate-is-enforced-correctly-but-is-client-side-only-at-the-page-level).
   The actual privileged mutations/queries are correctly backend-gated regardless.
-- [MOB-025](../../../issues.md#mob-025) — mobile's equivalent of this vertical's search feature is
+- `MOB-025` (resolved) — mobile's equivalent of this vertical's search feature is
   completely broken (dead network call, always fails); see
   [mobile/v1/admin/screen.md](../../../mobile/v1/admin/screen.md).

@@ -34,7 +34,7 @@ demo-gated) — see [`post.module.ts`](../../../../nest-js-boilerplate/src/post/
   base64 on read (`post.resolver.ts#L89-94`). `imageUrl` is a plain nullable string, expected to be a
   URL already produced by the [upload module](../../messaging-realtime/upload/README.md), specifically
   documented). Both fields are fully wired end-to-end (DTO → service → resolver → Prisma column) — but
-  ⚠ [BE-011](../../../issues.md#be-011): neither frontend nor mobile's post-composer ever sends
+  ⚠ `BE-011` (resolved): neither frontend nor mobile's post-composer ever sends
   `coverImage`, only `imageUrl` — see [Known issues](#known-issues).
 
 ## Tier gating is real here (unlike some other verticals)
@@ -64,14 +64,14 @@ directly, not via module import (both injected from elsewhere in the DI graph).
 
 ## Known issues
 
-- [FE-009](../../../issues.md#fe-009) — Web's post-detail page never selects `reactionBreakdown`/
+- `FE-009` (resolved) — Web's post-detail page never selects `reactionBreakdown`/
   `whoReacted` in its GraphQL query, so these two real, `TierGuard`-enforced fields never reach the
   Medium/Premium-tier UI built to display them — see
   [frontend/v1/posts/page.md § Known issues](../../../frontend/v1/posts/page.md#known-issues).
-- [MOB-008](../../../issues.md#mob-008) — mobile's actual routed post-detail screen has no UI for either
+- `MOB-008` (resolved) — mobile's actual routed post-detail screen has no UI for either
   field at all (a separate, unrouted implementation that does have it was abandoned) — see
   [mobile/v1/posts/detail/screen.md § Known issues](../../../mobile/v1/posts/detail/screen.md#known-issues).
-- [BE-011](../../../issues.md#be-011) — `coverImage` is fully wired (DTO/service/resolver/Prisma
+- `BE-011` — `coverImage` is fully wired (DTO/service/resolver/Prisma
   column) but no real UI on either platform ever sets it — both platforms' post composers (frontend
   [share](../../../frontend/v1/share/page.md), mobile
   [share](../../../mobile/v1/share/screen.md)/[posts create](../../../mobile/v1/posts/create/screen.md))

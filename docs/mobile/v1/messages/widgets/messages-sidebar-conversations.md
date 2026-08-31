@@ -13,7 +13,7 @@ preview, relative timestamp, unread-count badge. Filters `conversationsProvider`
 ## Behavior notes vs. web
 
 - **No favorite star** — no favorite/unfavorite affordance anywhere in this widget (consistent with
-  [CROSS-001](../../../../issues.md#cross-001)).
+  `CROSS-001` (resolved)).
 - **No "friend with no history yet" synthesis** — web's sidebar merges in placeholder rows for
   friends without a conversation row so "All" reads as "everyone you can message"; this widget only
   ever shows real conversation rows. On mobile, starting a chat with a friend who has no history yet

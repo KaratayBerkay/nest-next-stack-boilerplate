@@ -295,6 +295,46 @@ services:
     ports:
       - "3100:3100"
 
+  # TanStack Start port of the Next.js frontend (tanstack-boilerplate/).
+  # Runs alongside nextjs on host port 3101; same runtime env + build args.
+  # Its fluentd tag still matches the `frontend*` rule, so logs land in the
+  # web-logs index, distinguishable from nextjs by container metadata.
+  tanstack:
+    logging:
+      driver: fluentd
+      options:
+        <<: *default-logging-options
+        tag: "frontend-tanstack"
+    build:
+      context: ./tanstack-boilerplate
+      network: host
+      args:
+        NEXT_PUBLIC_APP_URL: "${NEXT_PUBLIC_APP_URL:-}"
+        NEXT_PUBLIC_REALTIME_WS_URL: "${NEXT_PUBLIC_REALTIME_WS_URL:-}"
+        NEXT_PUBLIC_LIVEKIT_URL: "${NEXT_PUBLIC_LIVEKIT_URL:-}"
+        NEXT_PUBLIC_STRIPE_KEY: "${NEXT_PUBLIC_STRIPE_KEY:-}"
+        NEXT_PUBLIC_VAPID_PUBLIC_KEY: "${NEXT_PUBLIC_VAPID_PUBLIC_KEY:-}"
+        NEXT_PUBLIC_IMAGE_HOSTNAMES: "${NEXT_PUBLIC_IMAGE_HOSTNAMES:-}"
+    restart: unless-stopped
+    init: true
+    depends_on:
+      vault-init:
+        condition: service_completed_successfully
+      app:
+        condition: service_started
+      fluent-bit:
+        condition: service_healthy
+    env_file: ./.vault-envs/frontend.env
+    healthcheck:
+      # wget is busybox-provided on Alpine, same as the nextjs healthcheck.
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3100"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    ports:
+      - "3101:3100"
+
   # ──────────────────────────────────────────────────────
   # ELK logging stack
   # ──────────────────────────────────────────────────────

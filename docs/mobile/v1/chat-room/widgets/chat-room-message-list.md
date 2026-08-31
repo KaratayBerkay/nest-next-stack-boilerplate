@@ -25,12 +25,12 @@ makes relative to web.
 - ⚠ Two hardcoded, unlocalized string literals: `'Failed to load messages'` (also hardcoded on web —
   a shared, cross-platform gap, not mobile-only) and `'No messages yet'` (web correctly uses `t.noMessages`
   here; the matching ARB key `chatRoomNoMessages` exists on mobile and goes unused). See
-  [MOB-015](../../../../issues.md#mob-015).
+  `MOB-015` (resolved).
 - ⚠ **Renders attachments via the shared `AttachmentPreview` widget without passing `thumbnailUrl`**
   — the loop (`for (final att in msg.attachments) ... AttachmentPreview(url: att.url, type: att.type,
   name: att.name)`) never reads `att.thumbnailUrl`, even though `MessageAttachment.fromJson` parses
   and retains it correctly. The widget itself has no `thumbnailUrl` parameter to pass regardless — see
-  [CROSS-027](../../../../issues.md#cross-027).
+  `CROSS-027` (resolved).
 
 ## Calls
 

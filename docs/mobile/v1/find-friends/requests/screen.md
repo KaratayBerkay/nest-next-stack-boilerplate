@@ -30,7 +30,7 @@ sourced from `friendRequestsProvider`.
 
 ## Known issues
 
-- [MOB-007](../../../../issues.md#mob-007) — **`friendRequestsProvider` throws for every real pending
+- `MOB-007` (resolved) — **`friendRequestsProvider` throws for every real pending
   request the backend returns**, for every tier that can reach this screen. The backend's `GET
   /api/friends/requests` returns rows shaped `{id, direction: 'incoming'|'outgoing', user: {id, name,
   email, avatar}, createdAt}` (confirmed directly in
@@ -52,7 +52,7 @@ sourced from `friendRequestsProvider`.
   Basic/Medium/Premium — the feature is simply broken for anyone it has data to show.
   **Separately**, Free tier is additionally denied the screen entirely regardless of this bug (a
   static `Center(child: Text(t.findFriendsUpgradeToSee))`, no provider watch) — see
-  [CROSS-018](../../../../issues.md#cross-018) for that tier-gating angle, which is real and independent of
+  `CROSS-018` (resolved) for that tier-gating angle, which is real and independent of
   the parsing bug above (fixing the parse wouldn't give Free tier this screen; the `TierGate` denies it
   before any data is ever requested).
   **Blast radius check**: `friendRequestsProvider`'s only other consumers are

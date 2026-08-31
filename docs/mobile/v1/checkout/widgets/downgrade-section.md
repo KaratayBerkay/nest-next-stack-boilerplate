@@ -33,7 +33,7 @@ owns its own submit handler internally).
 `_handleChange` (the screen-level handler this button triggers) calls
 `billing.subscribe(_tier)` with no payment method — the exact call that
 [correctly reaches the backend's deferred-schedule logic on mobile](../screen.md#-paidpaid-tier-changes-work-correctly-here--confirmed-unlike-web),
-unlike web's equivalent flow. See [CROSS-030](../../../../issues.md#cross-030).
+unlike web's equivalent flow. See `CROSS-030` (resolved).
 
 ## Calls
 

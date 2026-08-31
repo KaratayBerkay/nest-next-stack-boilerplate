@@ -1,0 +1,5 @@
+{
+  "errors": {
+    "nameExists": "Bu isimde bir API anahtarı zaten mevcut"
+  }
+}

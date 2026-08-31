@@ -45,7 +45,7 @@ No vertical-specific `hooks.md` — state lives directly in `FreePageView`.
 Cross-cutting: `useAuth` (imported from `@/features/auth/hooks/useAuth` here rather than the
 `@/hooks/useAuth` re-export path other pages in this vertical use — both resolve to the identical
 context/provider, confirmed by reading both files; not a duplicate-implementation trap like
-[MOB-002](../../../../issues.md#mob-002), just two import paths to the same singleton), `useToast`,
+`MOB-002` (resolved), just two import paths to the same singleton), `useToast`,
 `useMessages`.
 
 - [api.md](./api.md)

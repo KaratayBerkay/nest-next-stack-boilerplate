@@ -37,15 +37,15 @@ pattern.
 
 ## Known issues
 
-- [CROSS-029](../../issues.md#cross-029) (HIGH) — the marketing pricing page is unreachable for
+- `CROSS-029` (resolved) (HIGH) — the marketing pricing page is unreachable for
   logged-out visitors; three independent bugs stack to cause it.
-- [CROSS-030](../../issues.md#cross-030) (HIGH) — every paid↔paid tier change from web checkout fails
+- `CROSS-030` (resolved) (HIGH) — every paid↔paid tier change from web checkout fails
   with a misleading error; a validation bug in one Next.js BFF route, not a backend defect.
-- [CROSS-032](../../issues.md#cross-032) (MED) — mobile never applies a live tier change pushed over
+- `CROSS-032` (resolved) (MED) — mobile never applies a live tier change pushed over
   WebSocket; web does.
-- [BE-018](../../issues.md#be-018)/[BE-020](../../issues.md#be-020) (MED) — the Stripe webhook has no
+- `BE-018` (resolved)/`BE-020` (resolved) (MED) — the Stripe webhook has no
   throttle exemption, which can in turn cause a new subscription's first billing-history row to be
   permanently wrong.
-- [BE-021](../../issues.md#be-021) (INFO) — `Wallet`'s balance/transfer schema is fully modeled and
+- `BE-021` (resolved) (INFO) — `Wallet`'s balance/transfer schema is fully modeled and
   entirely unused; billing only uses it as a bookkeeping anchor.
 - Full list: [issues.md](../../issues.md).

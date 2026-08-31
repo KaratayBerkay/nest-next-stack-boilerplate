@@ -58,7 +58,7 @@ run's six backend modules. See
 
 A third file that used to sit in this same source tree, `csp/nonce_panel.dart`, was **confirmed
 dead code and deleted** (commit `b98fac8a`) (CSP nonces are a web-only concept — see
-[MOB-001](../../../../issues.md#mob-001), already logged; not documented here as a real screen, per this
+`MOB-001` (resolved), already logged; not documented here as a real screen, per this
 run's brief).
 
 ## API

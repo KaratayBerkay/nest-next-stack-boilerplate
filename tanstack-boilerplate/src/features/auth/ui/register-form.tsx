@@ -1,0 +1,183 @@
+"use client";
+
+import { useState, type Dispatch, type SetStateAction } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
+import { LOGIN_PATH } from "@/constants/routes";
+import Link from "next/link";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import type { I18nMessages } from "@/generated/i18n-messages";
+import { registerFormSchema } from "@/validators/auth/schema";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { Button } from "@/components/ui/Button";
+import { PasswordRequirements } from "@/features/auth/ui/PasswordRequirements";
+
+const VERIFY_EMAIL_PATH = "/auth/verify-email";
+
+async function handleRegisterSubmit(
+  e: React.SyntheticEvent,
+  schema: ReturnType<typeof registerFormSchema>,
+  email: string,
+  password: string,
+  name: string,
+  setFieldErrors: Dispatch<SetStateAction<Record<string, string>>>,
+  setSubmitting: Dispatch<SetStateAction<boolean>>,
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ userId: string; email: string }>,
+  t: I18nMessages["auth"],
+  push: (url: string) => void,
+) {
+  e.preventDefault();
+  setFieldErrors({});
+
+  const result = schema.safeParse({ email, password, name: name || undefined });
+  if (!result.success) {
+    const flat = result.error.flatten().fieldErrors;
+    const errors: Record<string, string> = {};
+    for (const [field, msgs] of Object.entries(flat)) {
+      if (msgs && msgs.length > 0) errors[field] = msgs[0];
+    }
+    setFieldErrors(errors);
+    return;
+  }
+
+  setSubmitting(true);
+  try {
+    const { userId } = await register(email, password, name || undefined);
+    push(
+      `${VERIFY_EMAIL_PATH}?userId=${userId}&email=${encodeURIComponent(email)}`,
+    );
+  } catch (err) {
+    const exc = (err as { exc?: string; field?: string; msg?: string }).exc;
+    const field = (err as { field?: string }).field;
+    const msg = (err as { msg?: string }).msg;
+    if (exc === "EX_AUTH_EMAIL_TAKEN" || field === "email") {
+      setFieldErrors({ email: msg ?? t.errors.emailTaken });
+    } else if (field) {
+      setFieldErrors({ [field]: msg ?? t.errors.registerFailed });
+    } else {
+      setFieldErrors({ form: t.errors.registerFailed });
+    }
+  } finally {
+    setSubmitting(false);
+  }
+}
+
+export function RegisterForm() {
+  const t = useMessages("auth");
+  const { register, loading } = useAuth();
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [submitting, setSubmitting] = useState(false);
+
+  const schema = registerFormSchema(t.errors);
+
+  if (loading) {
+    return <p className="text-muted text-sm">{t.loading}</p>;
+  }
+
+  return (
+    <div className="flex flex-col gap-4 text-center">
+      <h2 className="text-brand text-sm font-semibold">
+        {t.form.register.title}
+      </h2>
+
+      <form
+        onSubmit={(e) =>
+          handleRegisterSubmit(
+            e,
+            schema,
+            email,
+            password,
+            name,
+            setFieldErrors,
+            setSubmitting,
+            register,
+            t,
+            router.push,
+          )
+        }
+        className="flex flex-col gap-3"
+      >
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-name-input">{t.form.register.nameLabel}</Label>
+          <Input
+            id="reg-name-input"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t.form.register.namePlaceholder}
+            data-testid="reg-name"
+          />
+        </div>
+
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-email-input" required>
+            {t.form.register.emailLabel}
+          </Label>
+          <Input
+            id="reg-email-input"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            error={fieldErrors.email}
+            data-testid="reg-email"
+          />
+          {fieldErrors.email && (
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.email}</p>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-1 text-left">
+          <Label htmlFor="reg-password-input" required>
+            {t.form.register.passwordLabel}
+          </Label>
+          <Input
+            id="reg-password-input"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            minLength={8}
+            error={fieldErrors.password}
+            data-testid="reg-password"
+          />
+          {fieldErrors.password && (
+            <p className="text-error mt-0.5 text-xs">{fieldErrors.password}</p>
+          )}
+          <PasswordRequirements password={password} />
+        </div>
+
+        {fieldErrors.form && (
+          <p className="text-error text-sm" data-testid="reg-error">
+            {fieldErrors.form}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          disabled={submitting}
+          className="w-full"
+          data-testid="reg-submit"
+        >
+          {submitting ? t.form.register.submitting : t.form.register.submit}
+        </Button>
+      </form>
+
+      <p className="text-muted text-xs">
+        {t.form.register.hasAccount}{" "}
+        <Link href={LOGIN_PATH} className="text-brand underline">
+          {t.form.register.loginLink}
+        </Link>
+      </p>
+    </div>
+  );
+}

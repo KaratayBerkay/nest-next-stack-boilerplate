@@ -135,7 +135,7 @@ see [api-keys](../api-keys/) (Phase 1).
 [`realtime.gateway.ts`](../../messaging-realtime/realtime/README.md) calls this same
 `SessionValidatorService.validate()` during the WS **upgrade** (before a socket exists), reading the
 four cookies directly rather than waiting for a client-sent auth message. See
-[../../../issues.md#cross-005](../../../issues.md#cross-005) if you've encountered older
+`CROSS-005` (resolved) if you've encountered older
 documentation describing a different, first-message-based WS auth protocol — that was replaced.
 
 ## Revocation

@@ -1,0 +1,301 @@
+"use client";
+
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { TIMEZONE_COOKIE } from "@/constants/i18n";
+import type { AuthProviderProps } from "@/types/auth/AuthProvider-types";
+import { loginServer } from "@/api/server/auth/login";
+import { registerServer } from "@/api/server/auth/register";
+import { logoutServer } from "@/api/server/auth/logout";
+import { getMeServer } from "@/api/server/auth/me";
+import { refreshTokenServer } from "@/api/server/auth/token";
+import { refreshSession } from "@/lib/api-client";
+import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
+import { verifyMfaServer } from "@/api/server/auth/mfa";
+import { setOwnUserId } from "@/api/client/messages/query";
+
+// Session snapshot fields arrive via /api/auth/me (Redis, zero-PG).
+// Login/register return a subset from AuthPayload; the snapshot is the
+// identity source after the first `me` call.
+import type { User } from "@/types/auth/User";
+
+export type { User } from "@/types/auth/User";
+
+type AuthContextValue = {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  verifyMfa: (mfaToken: string, code: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ userId: string; email: string }>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+};
+
+const AuthContext = createContext<AuthContextValue | null>(null);
+
+// Hard-navigate to the login page unless already on one. Shared by the
+// manual logout() and the automatic 401-handler so both end with the user
+// actually seeing the login form.
+function redirectToLoginIfNeeded(): void {
+  const path = window.location.pathname;
+  if (path !== "/auth/login" && !path.startsWith("/auth/")) {
+    window.location.href = "/auth/login";
+  }
+}
+
+// Internal channel for the SSR session bridge. Raw inline <script> tags in
+// the body (the old window.__INITIAL_USER__ approach) break React 19
+// hydration, so the session streams in as RSC props via SessionHydrator.
+const AuthHydrateContext = createContext<
+  ((user: User, token: string | null) => void) | null
+>(null);
+
+export function SessionHydrator({
+  user,
+  token,
+}: {
+  user: User;
+  token: string | null;
+}) {
+  const hydrate = useContext(AuthHydrateContext);
+  useEffect(() => {
+    hydrate?.(user, token);
+  }, [hydrate, user, token]);
+  return null;
+}
+
+export function AuthProvider({ children, initialUser }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!initialUser);
+  const logoutEventRef = useRef(false);
+  const ssrHydratedRef = useRef(false);
+
+  const hydrateFromSSR = useCallback((u: User, t: string | null) => {
+    ssrHydratedRef.current = true;
+    setUser(u);
+    if (t) setToken(t);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    // SessionHydrator (a descendant) already delivered the SSR session —
+    // child effects run before parent effects, so the guard is set by now.
+    if (ssrHydratedRef.current) return;
+
+    if (initialUser) {
+      // Fire-and-forget: ensure device token is in localStorage for the
+      // wire-crypto handshake. The cookie already exists from login, but
+      // localStorage may be empty on first SSR load after deploy/re-login.
+      deviceHandshakeServer();
+      refreshTokenServer()
+        .then((t) => {
+          if (t?.accessToken) setToken(t.accessToken);
+        })
+        .catch(() => {});
+      return;
+    }
+
+    async function load() {
+      await deviceHandshakeServer();
+
+      try {
+        const data = await getMeServer();
+        if (data.user) {
+          setUser(data.user);
+          setToken(data.accessToken ?? null);
+        }
+      } catch {
+        /* guest or offline */
+      }
+      setLoading(false);
+    }
+
+    load();
+  }, [initialUser]);
+
+  // Same idea for the _ownUserId bridge query.ts's decrypt helpers rely on.
+  // Previously only ever set as a side effect of opening a specific DM
+  // (conversationMessagesQueryOptions), which raced the conversations list
+  // itself — that list's own decrypt (fetchConversations) needs this before
+  // its very first fetch, which happens on Messages/shell mount, well before
+  // any conversation is opened.
+  useEffect(() => {
+    setOwnUserId(user?.id ?? null);
+  }, [user?.id]);
+
+  // Listen for auth:logout events dispatched by apiFetch on 401.
+  useEffect(() => {
+    async function onAuthLogout() {
+      if (logoutEventRef.current) return;
+      logoutEventRef.current = true;
+      setUser(null);
+      setToken(null);
+      try {
+        // Clear the BFF cookies *before* navigating. Without this, the stale
+        // session_user cookie survives into the next full page load, the
+        // login page's server-side check treats the user as logged in,
+        // bounces back to /v1/en/feed, which 401s again — the login loop.
+        await logoutServer();
+        // Wipe the wire-crypto keypair + device-token mirror so the next
+        // login starts with fresh crypto material (localStorage + IndexedDB).
+        const { flushAll } = await import("@/lib/crypto/device-storage");
+        await flushAll();
+      } catch {
+        /* best-effort — never block the redirect */
+      }
+      redirectToLoginIfNeeded();
+    }
+
+    window.addEventListener("auth:logout", onAuthLogout);
+    return () => {
+      window.removeEventListener("auth:logout", onAuthLogout);
+    };
+  }, []);
+
+  function readTimezone(): string | undefined {
+    const match = document.cookie.match(
+      new RegExp(`${TIMEZONE_COOKIE}=([^;]+)`),
+    );
+    return match?.[1];
+  }
+
+  const login = useCallback(async (email: string, password: string) => {
+    try {
+      const data = await loginServer(email, password, readTimezone());
+      setUser(data.user);
+      if (data.accessToken) setToken(data.accessToken);
+      if (data.deviceToken) {
+        const { setDeviceToken } = await import("@/lib/crypto/device-storage");
+        setDeviceToken(data.deviceToken);
+      }
+    } catch (err) {
+      if ((err as Error & { mfaRequired?: boolean }).mfaRequired) throw err;
+      const exception = (err as Error & { exception?: unknown }).exception;
+      if (exception) throw exception;
+      throw err;
+    }
+  }, []);
+
+  const register = useCallback(
+    async (email: string, password: string, name?: string) => {
+      try {
+        const data = await registerServer(
+          email,
+          password,
+          name,
+          readTimezone(),
+        );
+        setUser(data.user);
+        if (data.accessToken) setToken(data.accessToken);
+        if (data.deviceToken) {
+          const { setDeviceToken } =
+            await import("@/lib/crypto/device-storage");
+          setDeviceToken(data.deviceToken);
+        }
+        return { userId: data.user.id, email: data.user.email };
+      } catch (err) {
+        const exception = (err as Error & { exception?: unknown }).exception;
+        if (exception) throw exception;
+        throw err;
+      }
+    },
+    [],
+  );
+
+  const verifyMfa = useCallback(async (mfaToken: string, code: string) => {
+    try {
+      const data = await verifyMfaServer(mfaToken, code);
+      setUser(data.user);
+      if (data.accessToken) setToken(data.accessToken);
+      if (data.deviceToken) {
+        const { setDeviceToken } = await import("@/lib/crypto/device-storage");
+        setDeviceToken(data.deviceToken);
+      }
+    } catch (err) {
+      const exception = (err as Error & { exception?: unknown }).exception;
+      if (exception) throw exception;
+      throw err;
+    }
+  }, []);
+
+  const logout = useCallback(async () => {
+    await logoutServer();
+    const { flushAll } = await import("@/lib/crypto/device-storage");
+    await flushAll();
+    setUser(null);
+    setToken(null);
+    redirectToLoginIfNeeded();
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const data = await getMeServer();
+      if (data.user) setUser(data.user);
+    } catch {
+      /* silent */
+    }
+  }, []);
+
+  // Listen for tier-changed events from the realtime WebSocket.
+  // After billing changes, the backend rewrites every live session's tier in
+  // Redis — which invalidates the rbac_token cookie (derived from the OLD
+  // tier) for the very next authenticated request. Rotate the session so a
+  // fresh rbac token (derived from the current DB tier) lands in the cookie;
+  // the refresh-on-401 path is the safety net when this frame is missed.
+  useEffect(() => {
+    function onTierChanged() {
+      // Rotate the session first; then refetch the display user. If the
+      // rotation failed, the refetch's own 401 → refresh → retry path takes
+      // over, so the badge still converges.
+      refreshSession().then(() => refreshUser());
+    }
+
+    window.addEventListener("tier-changed", onTierChanged);
+    return () => {
+      window.removeEventListener("tier-changed", onTierChanged);
+    };
+  }, [refreshUser]);
+
+  const value = useMemo(
+    () => ({
+      user,
+      token,
+      loading,
+      login,
+      verifyMfa,
+      register,
+      logout,
+      refreshUser,
+    }),
+    [user, token, loading, login, verifyMfa, register, logout, refreshUser],
+  );
+
+  return (
+    <AuthContext.Provider value={value}>
+      <AuthHydrateContext.Provider value={hydrateFromSSR}>
+        {children}
+      </AuthHydrateContext.Provider>
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  const ctx = useContext(AuthContext);
+  if (!ctx) {
+    throw new Error("useAuth must be used within an AuthProvider");
+  }
+  return ctx;
+}

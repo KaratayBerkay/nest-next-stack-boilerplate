@@ -1,0 +1,86 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useCallback,
+  useRef,
+  useState,
+  useEffect,
+  useId,
+} from "react";
+import { useBreakpoint } from "@/hooks";
+import type { TooltipProps } from "@/types/ui/Tooltip-types";
+
+type Side = "top" | "bottom" | "left" | "right";
+
+interface TooltipContextType {
+  open: boolean;
+  side: Side;
+  triggerRect: DOMRect | null;
+  show: () => void;
+  hide: () => void;
+  setTriggerRect: (rect: DOMRect) => void;
+  toggle: () => void;
+  isDesktop: boolean;
+  tooltipId: string;
+}
+
+const TooltipContext = createContext<TooltipContextType | null>(null);
+
+export function useTooltip() {
+  const ctx = useContext(TooltipContext);
+  if (!ctx) throw new Error("Tooltip components must be used within <Tooltip>");
+  return ctx;
+}
+
+export function Tooltip({ children, delay = 200, side = "top" }: TooltipProps) {
+  const [open, setOpen] = useState(false);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const isDesktop = useBreakpoint("sm");
+  const tooltipId = useId();
+
+  const show = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setOpen(true), delay);
+  }, [delay]);
+
+  const hide = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    setOpen(false);
+  }, []);
+
+  const toggle = useCallback(() => {
+    if (open) {
+      hide();
+    } else {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      setOpen(true);
+    }
+  }, [open, hide]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  return (
+    <TooltipContext.Provider
+      value={{
+        open,
+        side,
+        triggerRect,
+        show,
+        hide,
+        toggle,
+        setTriggerRect,
+        isDesktop,
+        tooltipId,
+      }}
+    >
+      {children}
+    </TooltipContext.Provider>
+  );
+}

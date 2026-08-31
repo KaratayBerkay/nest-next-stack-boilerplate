@@ -1,0 +1,68 @@
+import { apiFetch } from "@/lib/api-client";
+import type { ExceptionResponse } from "@/lib/api-client";
+import { AUTH_LOGIN_URL } from "@/constants/api/urls";
+import { POST } from "@/constants/api/methods";
+import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
+import type { User } from "@/types/auth/User";
+
+export type MfaMethod = "TOTP" | "EMAIL";
+
+export interface LoginResult {
+  user: User;
+  accessToken?: string;
+  deviceToken?: string;
+  mfaRequired?: boolean;
+  mfaToken?: string;
+  mfaMethod?: MfaMethod;
+}
+
+export async function loginServer(
+  email: string,
+  password: string,
+  timezone?: string,
+): Promise<LoginResult> {
+  const res = await apiFetch(AUTH_LOGIN_URL, {
+    method: POST,
+    headers: JSON_CONTENT_TYPE_HEADER,
+    body: JSON.stringify({ email, password, timezone }),
+  });
+
+  const data = (await res.json()) as LoginResult & {
+    mfaRequired?: boolean;
+    mfaToken?: string;
+    mfaMethod?: MfaMethod;
+  };
+
+  if ((res.status === 202 || !res.ok) && data.mfaRequired) {
+    const err = new Error("MFA required") as Error & {
+      mfaRequired: boolean;
+      mfaToken: string;
+      mfaMethod: MfaMethod;
+      user: User;
+    };
+    err.mfaRequired = true;
+    err.mfaToken = data.mfaToken!;
+    err.mfaMethod = data.mfaMethod ?? "TOTP";
+    err.user = data.user;
+    throw err;
+  }
+
+  if (!res.ok) {
+    const body = data as unknown as Partial<ExceptionResponse>;
+    const err = new Error(body.msg ?? "Login failed") as Error & {
+      exception?: ExceptionResponse;
+    };
+    // Mirrors apiFetchJson (lib/api-client.ts) — that's the only path
+    // useAuth.tsx's login() unwraps into the rethrown error, and the only
+    // shape LoginCredentialsForm's err.field/err.msg reads actually work
+    // against. Without this, every login failure showed the same hardcoded
+    // "Invalid credentials" regardless of the real reason (locked account,
+    // rate-limit, etc).
+    if (body.exc && body.msg) {
+      err.exception = body as ExceptionResponse;
+    }
+    throw err;
+  }
+
+  return data;
+}

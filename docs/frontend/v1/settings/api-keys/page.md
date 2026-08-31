@@ -60,6 +60,6 @@ issues.
 
 ## Known issues
 
-- [CROSS-012](../../../../issues.md#cross-012) — no rename/enable-disable UI exists anywhere on this
+- `CROSS-012` (resolved) — no rename/enable-disable UI exists anywhere on this
   page (or its mobile equivalent) despite the backend + BFF being fully built. `ApiKeyList` only
   renders a static enabled/disabled `Badge`, never an editable one.

@@ -87,13 +87,14 @@ frames broadcast to the `rtc-meeting:<slug>` / `rtc-stream:<slug>` channel.
 | `rtc:meeting-force-muted` | target participant | Host muted you (server-enforced via LiveKit mute) |
 | `rtc:meeting-removed` | target participant | Host removed you (client shows the removed screen, must not auto-rejoin) |
 | `rtc:meeting-limit-warning` / `rtc:meeting-ended` | meeting channel | Sweep warning; meeting over (host end, sweep force-end, or LiveKit room_finished) |
-| `rtc:stream-viewer-joined` / `-left` | stream channel | Viewer roster + **live `viewerCount`** (both directions carry the count; clients ignore frames without one) |
+| `rtc:stream-viewer-joined` / `-left` | stream channel | Viewer roster + **live `viewerCount`** (both directions carry the count; clients ignore frames without one). Both also fire from the webhook path: `-left` so hard-dropped viewers disappear, `-joined` re-broadcast once a viewer's WebRTC connection actually lands (also resettles the count after a full LiveKit reconnect's left/joined pair) |
 | `rtc:stream-ended` | stream channel | Broadcast over |
 | `rtc:chat-message` | room channel | A chat message (decrypted server-side for delivery) |
 
 **Client subscribers:** web [`RtcCallProvider`](../../../../next-js-boilerplate/src/lib/rtc/RtcCallProvider.tsx)
 (call frames), [`useRoomChat`](../../../../next-js-boilerplate/src/hooks/rtc/useRoomChat.ts) +
-[`useStreamViewerCount`](../../../../next-js-boilerplate/src/hooks/rtc/useStreamViewerCount.ts)
+[`useStreamViewerCount`](../../../../next-js-boilerplate/src/hooks/rtc/useStreamViewerCount.ts) +
+[`useStreamViewers`](../../../../next-js-boilerplate/src/hooks/rtc/useStreamViewers.ts)
 (room frames); mobile [`rtc_call_provider.dart`](../../../../flutter-boilerplate/lib/lib/rtc/rtc_call_provider.dart),
 [`meeting_signal.dart`](../../../../flutter-boilerplate/lib/lib/rtc/meeting_signal.dart),
 [`stream_signal.dart`](../../../../flutter-boilerplate/lib/lib/rtc/stream_signal.dart),
@@ -142,7 +143,8 @@ the *other* party's tier too). Values: [README.md § Tier limits](./README.md#ti
 | `joinStreamAsViewer(slug)` | Mutation | Viewer join: participant upsert + viewer-count broadcast + subscribe-only token. **Broadcaster-safe:** the broadcaster opening their own viewer page skips all viewer side effects (their participant row is what keeps their chat alive) |
 | `leaveStreamAsViewer(slug)` | Mutation | Stamps viewer `leftAt` + broadcasts the new count (no-op for the broadcaster) |
 | `endStream(slug)` | Mutation | Broadcaster-only; idempotent (a double-end or a race with LiveKit's own room_finished no-ops) |
-| `LiveStream.viewerCount` | ResolveField | Live LiveKit participant count minus the broadcaster |
+| `LiveStream.viewerCount` | ResolveField | Count of non-departed `VIEWER` participant rows (DB, not LiveKit's list — that read lagged the join mutation, so the first viewer's joined frame said `0` and the counter never moved) |
+| `LiveStream.viewers` | ResolveField | `[StreamViewerSummary]` — client-safe watcher list (display name, `hideAvatar`-filtered avatar, `joinedAt`; no email / raw identity), `VIEWER` rows only, capped at 200 |
 
 ### Reports
 

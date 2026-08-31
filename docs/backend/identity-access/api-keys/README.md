@@ -76,4 +76,4 @@ and `ApiKeyGuard` for any other module wanting to accept `bp_...` bearer auth.
   and `grep -rn "updateApiKey" next-js-boilerplate/src` outside the route/GraphQL-string files returns
   nothing. Mobile: `grep -rn "updateApiKey" flutter-boilerplate/lib` returns **zero** matches anywhere
   — not even a BFF-equivalent stub, since mobile calls GraphQL directly. Logged as
-  [CROSS-012](../../../issues.md#cross-012).
+  `CROSS-012` (resolved).

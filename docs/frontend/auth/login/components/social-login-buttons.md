@@ -51,6 +51,6 @@ SocialLoginButton (onClick)
 
 - ⚠ Mobile's register screen has no equivalent widget at all — `SocialLoginButtons` in Flutter has
   exactly one call site in the whole app, the login screen. Web renders it on both login and
-  register. Filed as [CROSS-010](../../../../issues.md#cross-010) — see
+  register. Filed as `CROSS-010` (resolved) — see
   [mobile register/screen.md § Known issues](../../../../mobile/auth/register/screen.md#known-issues)
   for the full evidence.

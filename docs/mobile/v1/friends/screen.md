@@ -29,7 +29,7 @@ equivalent action. See [Known issues](#known-issues).
 
 ## Known issues
 
-- [FE-008](../../../issues.md#fe-008) — noted here for cross-reference only: this is a **web** bug, not
+- `FE-008` (resolved) — noted here for cross-reference only: this is a **web** bug, not
   a mobile one. Web's `FriendsPageContent.tsx` hardcodes `/v1/en/...` in its "Find friends" button and
   per-row navigation instead of using the current locale; this screen's equivalent
   (`friends_page_content.dart#L43,68,111`) correctly uses `lang` throughout, which is how the web gap

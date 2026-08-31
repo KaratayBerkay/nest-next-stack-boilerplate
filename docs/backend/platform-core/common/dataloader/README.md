@@ -34,7 +34,7 @@ post in a feed page. `getPostLoader()` has no caller anywhere — see [Known iss
 
 ## Known issues
 
-- [BE-024](../../../../issues.md#be-024) (LOW) — `DataloaderService.getPostLoader()` is fully
+- `BE-024` (resolved) (LOW) — `DataloaderService.getPostLoader()` is fully
   implemented but has zero callers anywhere in `src/` (confirmed: `grep -rn "getPostLoader"` matches
   only its own definition). `getUserLoader()`, defined right next to it and following the identical
   pattern, is genuinely used by `post/post.resolver.ts`.

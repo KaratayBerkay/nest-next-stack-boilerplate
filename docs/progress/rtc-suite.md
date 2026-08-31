@@ -43,7 +43,8 @@ An early pass of this plan assumed this repo's chat encryption was a client-side
 sender-key/X3DH scheme (matching the reference repo's own framing of "E2EE"), and
 designed RTC chat key-distribution around that. **That system was removed from this repo
 on 2026-08-04** (`nest-js-boilerplate/src/wire-crypto/README.md` / the mirrored doc at
-`docs/backend/messaging-realtime/wire-crypto/README.md`, `docs/issues.md#cross-004`) and
+`docs/backend/messaging-realtime/wire-crypto/README.md`, `CROSS-004` — resolved, entry
+since removed from `docs/issues.md`) and
 replaced with `StorageCryptoService` — **trusted-server, server-held-key** at-rest
 encryption: one HKDF-derived key per DM sender, one shared HKDF-derived key for all
 `RoomMessage` rows. The server can always decrypt; the guarantee is "ciphertext at rest /

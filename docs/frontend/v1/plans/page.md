@@ -52,7 +52,7 @@ their own tier's card as starting with a self-referential, tautological bullet. 
 content begins "Everything in Premium") is assigned to the **PREMIUM** card for the same reason —
 worse, `featuresPro` is a naming leftover from what looks like a fifth tier ("Pro") that no longer
 exists in the current `FREE`/`BASIC`/`MEDIUM`/`PREMIUM` enum at all. See
-[FE-013](../../../issues.md#fe-013).
+`FE-013` (resolved).
 
 Separately — not the same bug, but the same *shape* of bug — the web
 [checkout page](../checkout/page.md) sources its own tier-feature bullets from a third, completely
@@ -100,8 +100,8 @@ Full request chain in [api.md](./api.md).
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-029](../../../issues.md#cross-029) (HIGH) — this page can only ever render for an
+- ⚠ `CROSS-029` (resolved) (HIGH) — this page can only ever render for an
   already-authenticated visitor (see [pricing page.md](../../pricing/page.md)); a design that intends
   "Plans" to double as the public marketing/pricing surface doesn't currently work that way.
-- ⚠ [FE-013](../../../issues.md#fe-013) (LOW–MED) — see above.
+- ⚠ `FE-013` (resolved) (LOW–MED) — see above.
 - ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — see above.

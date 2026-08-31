@@ -31,7 +31,7 @@ one — there is no GraphQL query for the DM-unread count at all (only the REST
 `GET /api/messages/unread-count` — see
 [messaging/endpoints.md](../../../backend/messaging-realtime/messaging/endpoints.md#get-total-unread-dm-count)),
 so this file cannot return the number its name promises even in principle. See ⚠
-[MOB-012](../../../issues.md#mob-012). Currently harmless in practice: nothing in the app ever
+`MOB-012` (resolved). Currently harmless in practice: nothing in the app ever
 `watch`/`read`s this provider's *value* — [`realtime_provider.dart`](../../../../flutter-boilerplate/lib/lib/realtime/realtime_provider.dart)
 only `invalidate()`s it on relevant WS frames, which is a no-op with no active listener. The real,
 correctly-implemented DM badge (`v1_header.dart`) watches a **different** provider —
@@ -53,8 +53,8 @@ actually reads.
 
 ### Dead and broken duplicates found while documenting this file
 
-⚠ [MOB-013](../../../issues.md#mob-013) — same "scaffolded-then-inlined, original left behind" pattern
-as [FE-007](../../../issues.md#fe-007)/[CROSS-013](../../../issues.md#cross-013), twice over in this
+⚠ `MOB-013` (resolved) — same "scaffolded-then-inlined, original left behind" pattern
+as `FE-007` (resolved)/[CROSS-013](../../../issues.md#cross-013), twice over in this
 one API layer:
 
 - the since-deleted `api/client/notifications/mark_read.dart`'s

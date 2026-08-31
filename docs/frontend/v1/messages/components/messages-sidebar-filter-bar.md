@@ -3,7 +3,7 @@
 **Source:** [`MessagesSidebarFilterBar.tsx`](../../../../../next-js-boilerplate/src/views/messages/MessagesSidebarFilterBar.tsx)
 **Types:** [`MessagesSidebarFilterBar-types.ts`](../../../../../next-js-boilerplate/src/types/messages/MessagesSidebarFilterBar-types.ts)
 **Used in:** [MessagesSidebar](./messages-sidebar.md)
-**Mobile equivalent:** **none** — see [CROSS-001](../../../../issues.md#cross-001).
+**Mobile equivalent:** **none** — see `CROSS-001` (resolved).
 
 ## Purpose
 
@@ -22,10 +22,10 @@ conversation with a friend who has no thread yet.
   [find-friends](../../find-friends/page.md) (Phase 2) — built as `` `/v1/${lang}${FIND_FRIENDS_PATH}` ``.
   This confirmed [`FIND_FRIENDS_PATH`](../../../../../next-js-boilerplate/src/constants/routes.ts) is
   used correctly as a route *segment*, not a full path — see
-  [FE-001](../../../../issues.md#fe-001) (closed, not a bug — found while documenting this exact
+  `FE-001` (resolved) (closed, not a bug — found while documenting this exact
   component).
 - **This is the one place the favorites/groups feature actually lives** on web with no Flutter
-  counterpart at all — see [CROSS-001](../../../../issues.md#cross-001). If porting this component
+  counterpart at all — see `CROSS-001` (resolved). If porting this component
   to mobile, this file (plus [MessagesSidebar](./messages-sidebar.md)'s `filter`/`friendsWithoutConvo`
   logic and [MessagesSidebarRooms](./messages-sidebar-rooms.md) for the "Groups" branch) is the
   complete web-side reference.

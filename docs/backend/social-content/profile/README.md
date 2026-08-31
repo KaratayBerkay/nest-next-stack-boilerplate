@@ -15,7 +15,7 @@ shows up in a call chain you're tracing, stop and check which one before assumin
 
 The frontend/mobile `users/` **pages** are also unrelated to *either* backend module — see
 [frontend/v1/users/README.md](../../../frontend/v1/users/README.md) and
-[CROSS-016](../../../issues.md#cross-016): the web pages are hardcoded demo content with zero backend calls,
+`CROSS-016` (resolved): the web pages are hardcoded demo content with zero backend calls,
 and mobile's are a real feature that calls this module (`myProfile`, indirectly) plus the messaging
 module's friends list/search, not a dedicated "look up another user's profile" endpoint (there isn't
 one — see [Known issues](#known-issues)).
@@ -85,14 +85,14 @@ via their own BFF/proxy layer, not a native backend REST route — see each plat
 | Mobile | [settings/account](../../../mobile/v1/settings/account/screen.md) · [settings/general](../../../mobile/v1/settings/general/screen.md) · [settings/privacy](../../../mobile/v1/settings/privacy/screen.md) |
 
 `users/list` and `users/detail` on **web** do **not** call this module (or any backend) — see
-[CROSS-016](../../../issues.md#cross-016). `users/list`/`users/detail`/the bare `users` route on **mobile**
+`CROSS-016` (resolved). `users/list`/`users/detail`/the bare `users` route on **mobile**
 call `myProfile` (via the same `GET`-shaped `ProfileGetServer`/`profileGetServerProvider` the settings
 screens use) but only ever for the *caller's own* profile — see
-[MOB-003](../../../issues.md#mob-003) and [Known issues](#known-issues) below.
+`MOB-003` (resolved) and [Known issues](#known-issues) below.
 
 ## Known issues
 
-- [MOB-003](../../../issues.md#mob-003) — there is no backend query to fetch another user's profile by
+- `MOB-003` (resolved) — there is no backend query to fetch another user's profile by
   id. Mobile's user-detail screen calls `myProfile` (self-scoped) regardless of which user's card was
   tapped, so it always renders the caller's own data — not a gap in this module's contract by itself,
   but this module is the reason a correct fix needs either a new query here or a different data source

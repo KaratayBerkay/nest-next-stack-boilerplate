@@ -5,7 +5,7 @@
 **Used in:** [MessagesSidebar](./messages-sidebar.md) (shown when the "Groups" filter is active)
 **Mobile equivalent:** confirmed none — [mobile's messages sidebar](../../../../mobile/v1/messages/widgets/messages-sidebar.md)
 is a 2-tab Chats/Friends switcher with no room list at all (see
-[CROSS-001](../../../../issues.md#cross-001)); mobile reaches rooms exclusively through the separate
+`CROSS-001` (resolved)); mobile reaches rooms exclusively through the separate
 [chat-room screen](../../../../mobile/v1/chat-room/screen.md), never from within the messages screen
 itself. Verified while documenting Phase 3b.
 

@@ -4,7 +4,7 @@
 **Category:** [Messaging & Realtime](../README.md)
 
 > ⚠ **This module replaced a different, deleted system.** See
-> [../../../issues.md#cross-004](../../../issues.md#cross-004) before reading further if you've seen
+> `CROSS-004` (resolved) before reading further if you've seen
 > references elsewhere (old comments, prior documentation) to X3DH, Double Ratchet, safety numbers,
 > or a `src/e2ee/` module — that system was removed 2026-08-04 and nothing below describes it. This
 > module is a trusted-server transport + at-rest encryption scheme, not client-side E2EE.
@@ -109,6 +109,6 @@ directly (matches this module's own native route, no BFF hop).
 
 ## Known issues
 
-- [CROSS-004](../../../issues.md#cross-004) — surviving pre-rewrite documentation described a
+- `CROSS-004` (resolved) — surviving pre-rewrite documentation described a
   different system this module replaced; resolved by this rewrite, kept here as a pointer in case
   the old confusion resurfaces from cached knowledge, comments, or memory elsewhere.

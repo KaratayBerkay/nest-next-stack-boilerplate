@@ -18,7 +18,7 @@ search → conversation list *or* room list (depending on the "Groups" filter). 
 **not the same interaction model** wearing different widgets — mobile has no unread filter, no
 favorites, no room/group list in this screen at all, and "start a new conversation" is a whole tab
 (browse all friends) rather than a small popover. See
-[CROSS-001](../../../../issues.md#cross-001) and
+`CROSS-001` (resolved) and
 [MessagesSidebarTabBar](./messages-sidebar-tab-bar.md)/[MessagesSidebarFriends](./messages-sidebar-friends.md)
 for the two widgets that realize this different model.
 

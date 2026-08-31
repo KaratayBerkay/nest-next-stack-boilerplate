@@ -54,7 +54,7 @@ device/session headers attached server-side. Standard BFF pattern, no surprises 
 
 ## Known issues affecting this page
 
-- ⚠ [BE-022](../../../../issues.md#be-022) — the upload card's "limit reached" warning has **no real
+- ⚠ `BE-022` (resolved) — the upload card's "limit reached" warning has **no real
   enforcement standing behind it**: unlike the message-storage limit (`assertCanSendMessage`, checked
   server-side before every send), nothing on the backend actually blocks an upload once
   `bytes >= limitBytes` — this page can show the warning while uploads keep succeeding regardless. See
@@ -64,5 +64,5 @@ device/session headers attached server-side. Standard BFF pattern, no surprises 
   [`StorageLimitNotice`](../../messages/components/storage-limit-notice.md) reads the same
   message-usage query this page's `MessageStorageCard` does, to block the chat composer once the
   monthly letter budget is spent — mobile has no equivalent of that composer-blocking behavior, see
-  ⚠ [CROSS-033](../../../../issues.md#cross-033). This page itself (the usage-summary display) is at
+  ⚠ `CROSS-033` (resolved). This page itself (the usage-summary display) is at
   parity on both platforms.

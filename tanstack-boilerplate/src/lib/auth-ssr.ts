@@ -1,0 +1,77 @@
+import "server-only";
+import { cache } from "react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { LOGIN_PATH } from "@/constants/routes";
+import { SESSION_USER_COOKIE } from "@/lib/cookie";
+import { graphqlFetch, sessionTokenHeaders } from "@/lib/backend";
+import { ME_QUERY } from "@/lib/graphql/queries";
+import { getAccessToken } from "@/store/ssr-cookies";
+import { decodeSessionUserCookie } from "@/lib/session-user-cookie";
+import type { User } from "@/types/auth/User";
+
+async function fetchMe(accessToken: string): Promise<User | null> {
+  try {
+    const { data, errors } = await graphqlFetch<{ me: User }>(
+      ME_QUERY,
+      undefined,
+      accessToken,
+      await sessionTokenHeaders(),
+    );
+    return errors || !data?.me ? null : data.me;
+  } catch {
+    // A thrown network/parse error is just as transient as a GraphQL error
+    // — treat it the same instead of letting it bubble past this check.
+    return null;
+  }
+}
+
+export const getSessionUser = cache(async (): Promise<User | null> => {
+  // Fast path: read session_user cookie set at login/register time.
+  const cookieStore = await cookies();
+  const encoded = cookieStore.get(SESSION_USER_COOKIE)?.value;
+  const cookieUser: User | null = encoded
+    ? decodeSessionUserCookie<User>(encoded)
+    : null;
+  if (cookieUser) {
+    // Cookies minted before login/register/mfa started overlaying the real
+    // `me` snapshot never carry the newest SessionUserPayload fields (e.g.
+    // sessionId — added after hideAvatar, which itself can't be selected on
+    // the login/register mutation's `user` type, @HideField()'d).
+    // Rather than trust that partial snapshot for the rest of the session,
+    // treat a missing sessionId as a signal to self-heal from `me` below.
+    // Keep this canary pointed at whichever SessionUserPayload field was
+    // added most recently.
+    if (cookieUser.sessionId !== undefined) {
+      return cookieUser;
+    }
+  }
+
+  const accessToken = await getAccessToken();
+  if (!accessToken) {
+    return cookieUser;
+  }
+
+  // One flaky call on this live check must not read as "logged out" — retry
+  // once before falling back to the (possibly stale/absent) cookie snapshot,
+  // so a single transient hiccup can't bounce the user to /auth/login.
+  const me = (await fetchMe(accessToken)) ?? (await fetchMe(accessToken));
+  if (!me) {
+    return cookieUser;
+  }
+
+  return cookieUser ? { ...cookieUser, ...me } : me;
+});
+
+/**
+ * getSessionUser for pages that cannot render without a session: a missing
+ * session redirects to the login page instead of returning null. The
+ * tier-gated pages previously did `user!.tier`, which turned every
+ * logged-out visit into a server-side crash — the redirect is the answer
+ * all of them intended.
+ */
+export async function requireSessionUser(): Promise<User> {
+  const user = await getSessionUser();
+  if (!user) redirect(LOGIN_PATH);
+  return user;
+}

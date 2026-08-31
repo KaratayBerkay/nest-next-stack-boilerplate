@@ -27,7 +27,7 @@ and a Revoke button per row. Loading and empty states included in the same compo
 
 - **The `enabled`/`disabled` badge is read-only** — there is no click target on it, no toggle. Given
   the backend's `updateApiKey` mutation exists specifically to flip `enabled`, this is the visible
-  symptom of [CROSS-012](../../../../../issues.md#cross-012): the UI can *display* a key's enabled
+  symptom of `CROSS-012` (resolved): the UI can *display* a key's enabled
   state but has no way to *change* it short of full revocation.
 - Revoke is gated behind a native `confirm()` dialog (`handleRevokeApiKey` in `api-key-handlers.ts`),
   not a styled `ConfirmDialog` component the way

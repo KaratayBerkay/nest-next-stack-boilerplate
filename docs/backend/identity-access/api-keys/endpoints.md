@@ -53,6 +53,6 @@ ApiKeyType!`**
 revoke.
 **Errors:** `404 EX_API_KEY_NOT_FOUND`.
 **Used by:** ⚠ **nobody, on either platform** — see
-[README.md § Known issues](./README.md#known-issues) ([CROSS-012](../../../issues.md#cross-012)).
+[README.md § Known issues](./README.md#known-issues) (`CROSS-012` (resolved)).
 Web has a complete BFF proxy for it (`PATCH /api/api-keys/[id]`) with no caller above it; mobile has no
 trace of it at all.

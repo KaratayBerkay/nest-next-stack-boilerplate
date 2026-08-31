@@ -17,7 +17,7 @@ Friend" button.
 
 - **Has a working Add Friend button** — `onPressed: () =>
   ref.read(friendActionsProvider).sendRequest(users[i].id)`. Web's equivalent component has no
-  interactive element at all. See [CROSS-017](../../../../issues.md#cross-017) — this is the one confirmed
+  interactive element at all. See `CROSS-017` (resolved) — this is the one confirmed
   gap in this vertical where mobile is ahead of web, not behind.
 - **Can render a real avatar image**, not just initials — this widget's underlying query
   ([`api/server/friends/suggested.dart`](../../../../../flutter-boilerplate/lib/api/server/friends/suggested.dart))

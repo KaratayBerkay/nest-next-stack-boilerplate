@@ -45,7 +45,7 @@ writes plaintext). If the client supplies its own transport-layer `envelope`
 flattened into the `v`/`ct`/`nonce` columns; otherwise the server encrypts the plaintext itself using
 a key it derives from `MESSAGE_STORAGE_MASTER_KEY`. **Both paths are server-decryptable** — see
 [wire-crypto/README.md](../wire-crypto/README.md) and
-[../../../issues.md#cross-004](../../../issues.md#cross-004) for why this is not full end-to-end
+`CROSS-004` (resolved) for why this is not full end-to-end
 encryption despite some surviving naming/comments in this module implying otherwise (e.g. references
 to "E2EE envelope" in code comments — accurate for the wire-transport layer, not for at-rest storage
 or a true content-layer guarantee).
@@ -64,7 +64,7 @@ shared helper, [`message-body.util.ts`](../../../../nest-js-boilerplate/src/mess
 
 All three are **independent entry points** into mostly the same `MessagingService` methods, not
 thin wrappers of each other — their response shapes differ in places (see
-[../../../issues.md#be-003](../../../issues.md#be-003) for one confirmed asymmetry). The WS gateway
+`BE-003` (resolved) for one confirmed asymmetry). The WS gateway
 doesn't own a socket; it registers frame handlers (`direct-message`, `room-message`, `typing-start`,
 …) into the shared [`realtime`](../realtime/README.md) gateway via `onModuleInit()`.
 
@@ -88,7 +88,7 @@ All three surfaces guard with `SessionAuthGuard` — see
 
 ## Known issues
 
-- [CROSS-001](../../../issues.md#cross-001) — Flutter has no equivalent of the web's favorite/group
+- `CROSS-001` (resolved) — Flutter has no equivalent of the web's favorite/group
   filter-pills sidebar feature.
-- [BE-003](../../../issues.md#be-003) — the REST `sendMessage` response leaks an internal `delivery`
+- `BE-003` (resolved) — the REST `sendMessage` response leaks an internal `delivery`
   field the GraphQL mutation deliberately strips.

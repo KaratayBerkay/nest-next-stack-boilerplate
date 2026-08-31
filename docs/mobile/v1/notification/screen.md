@@ -71,7 +71,7 @@ can actually work end-to-end — see [Known issues](#known-issues) for the full,
 ## Known issues
 
 - ⚠ **Mobile push notifications are non-functional end-to-end** — see
-  [CROSS-021](../../../issues.md#cross-021) for the full write-up. Summary: `push_notification_service.dart`
+  `CROSS-021` (resolved) for the full write-up. Summary: `push_notification_service.dart`
   registers an FCM device token against `POST /api/push-notifications/register`, a path with no
   backend route at all (confirmed — `nest-js-boilerplate/src` has zero Firebase/FCM code anywhere,
   and `push-notification.module.ts` registers no controllers, only a GraphQL resolver built for W3C
@@ -84,7 +84,7 @@ can actually work end-to-end — see [Known issues](#known-issues) for the full,
   (`PushNotificationService.sendToUser()`, [notification/README.md § Push notification wiring](../../../backend/messaging-realtime/notification/README.md#push-notification-wiring))
   is W3C Web Push-only — structurally incapable of reaching an FCM token. Three independent,
   uncoordinated attempts, all broken.
-- ⚠ [CROSS-022](../../../issues.md#cross-022) — the push notification-tap handler
+- `CROSS-022` (resolved) — the push notification-tap handler
   (`navigateFromData` in `push_notification_service.dart`) sends friend-request/accepted taps to
   `/v1/$lang/find-friends` — **not** `/v1/$lang/find-friends/requests`, the target this screen's own
   in-app tap handler uses for the same kind. The file's own comment says it "mirrors the web service
@@ -94,7 +94,7 @@ can actually work end-to-end — see [Known issues](#known-issues) for the full,
   on both the in-app and push paths.
 - ⚠ [CROSS-023](../../../issues.md#cross-023) — web auto-marks every notification read on first page load;
   this screen has no equivalent effect, only the explicit "Mark all read" button and per-item taps.
-- ⚠ [CROSS-020](../../../issues.md#cross-020) — this screen's GraphQL query selects and renders
+- ⚠ `CROSS-020` (resolved) — this screen's GraphQL query selects and renders
   `actor.avatarUrl` as a real image ([`Avatar`](../../../../flutter-boilerplate/lib/components/ui/avatar/avatar.dart)
   widget, via `NotificationItem.imageUrl`), and the backend resolver behind it doesn't redact that
   field for actors with `hideAvatar` set — see

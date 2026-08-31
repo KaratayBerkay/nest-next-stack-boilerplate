@@ -4,7 +4,7 @@
 **Used in:** [MessagesSidebar](./messages-sidebar.md)
 **Web equivalent:** **none directly** — this is mobile's own navigation model, not a port of
 [MessagesSidebarFilterBar](../../../../frontend/v1/messages/components/messages-sidebar-filter-bar.md).
-See [CROSS-001](../../../../issues.md#cross-001) and
+See `CROSS-001` (resolved) and
 [MessagesSidebar § Structural differences](./messages-sidebar.md#structural-differences-from-web-found-while-documenting-this-widget).
 
 ## Purpose

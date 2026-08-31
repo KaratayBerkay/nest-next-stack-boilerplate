@@ -12,7 +12,7 @@ one (`device_handshake.dart`) is a direct REST call whose path matches the backe
 `devices/` controller route. **Zero Next.js involvement anywhere in this vertical** — same conclusion
 as the `messages` vertical (see
 [conventions.md § 9](../../conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement)
-and [issues.md#cross-007](../../issues.md#cross-007) for why this needs re-confirming per vertical
+and `CROSS-007` (resolved) for why this needs re-confirming per vertical
 rather than assumed from precedent).
 
 ## Shape per file

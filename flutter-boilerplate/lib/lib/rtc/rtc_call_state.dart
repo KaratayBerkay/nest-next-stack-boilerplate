@@ -35,6 +35,11 @@ class RtcCallState {
   final RtcCallPeer? peer;
   final bool hasVideo;
   final RtcLiveKitInfo? livekit;
+
+  /// Server-side acceptedAt of the connected call — seeds the overlay timer
+  /// so a snapshot recovery doesn't restart the readout from 0:00 (mirrors
+  /// web's RtcCallState.connectedAt).
+  final DateTime? connectedAt;
   final int? warningSecondsRemaining;
   final String? lastError;
   final RtcCallAction? actionPending;
@@ -45,6 +50,7 @@ class RtcCallState {
     this.peer,
     this.hasVideo = true,
     this.livekit,
+    this.connectedAt,
     this.warningSecondsRemaining,
     this.lastError,
     this.actionPending,
@@ -60,6 +66,7 @@ class RtcCallState {
     RtcCallPeer? peer,
     bool? hasVideo,
     RtcLiveKitInfo? livekit,
+    DateTime? connectedAt,
     int? warningSecondsRemaining,
     String? lastError,
     // Sentinel default so callers can clear the pending action with an
@@ -72,6 +79,7 @@ class RtcCallState {
       peer: peer ?? this.peer,
       hasVideo: hasVideo ?? this.hasVideo,
       livekit: livekit ?? this.livekit,
+      connectedAt: connectedAt ?? this.connectedAt,
       warningSecondsRemaining:
           warningSecondsRemaining ?? this.warningSecondsRemaining,
       lastError: lastError ?? this.lastError,

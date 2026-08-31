@@ -14,7 +14,7 @@ row (emoji/attach/input/send).
 
 ## Constructor
 
-`useNativeControls` (accepted, never read — see [MOB-014](../../../../issues.md#mob-014)), `room`,
+`useNativeControls` (accepted, never read — see `MOB-014` (resolved)), `room`,
 `roomCounts`, `connectionState`, `messages`, `hasMore`, `isLoadingMore`, `onLoadMore`, `userId`,
 `onlineUserIds`, `msgsLoading`, `msgsError`, `messageController`, `scrollController`, `isAtBottom`,
 `attaching`, `emojiOpen`, `pendingAttachment`, `onSetSidebarOpen`, `onSend`, `onAttachFile`,

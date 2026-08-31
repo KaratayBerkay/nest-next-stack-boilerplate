@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "types": ["vite/client"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "next": ["./src/compat/next/index.ts"],
+      "next/image": ["./src/compat/next/image.tsx"],
+      "next/link": ["./src/compat/next/link.tsx"],
+      "next/navigation": ["./src/compat/next/navigation.ts"],
+      "next/headers": ["./src/compat/next/headers.ts"],
+      "next/server": ["./src/compat/next/server.ts"],
+      "next/dynamic": ["./src/compat/next/dynamic.tsx"],
+      "next/script": ["./src/compat/next/script.tsx"],
+      "next/cache": ["./src/compat/next/cache.ts"],
+      "next/font/google": ["./src/compat/next/font-google.ts"],
+      "next/web-vitals": ["./src/compat/next/web-vitals.ts"],
+      "server-only": ["./src/compat/next/server-only.ts"],
+      "@tanstack/react-form-nextjs": [
+        "./node_modules/@tanstack/react-form-start"
+      ]
+    }
+  },
+  "include": ["src", "vite.config.ts", "vitest.setup.ts", "**/*.mts"],
+  "exclude": ["node_modules", "scripts", "e2e", ".output", ".tanstack"]
+}

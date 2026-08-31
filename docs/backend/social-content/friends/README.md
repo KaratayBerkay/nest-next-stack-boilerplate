@@ -79,7 +79,7 @@ seeds candidates from friends-of-friends (via `getFriendIds` + `getMutualCounts`
 and existing friends, sorts by mutual-friend count, returns the top 10. Gated
 `@MinTier(SubscriptionTier.MEDIUM)` — the **only** tier gate anywhere in this module or in the
 friend-request REST routes it's commonly confused with (those have no tier gate at all — see
-[CROSS-018](../../../issues.md#cross-018) and the module note above).
+`CROSS-018` (resolved) and the module note above).
 
 `SuggestedFriend` (the GraphQL return type, defined inline in `friends.resolver.ts#L12-28` rather than
 a separate model file) withholds `avatarUrl` when the candidate has `hideAvatar` set — the same
@@ -104,11 +104,11 @@ No REST controller, no WS gateway.
 | App | Page / Screen | Calls |
 |---|---|---|
 | Frontend | [find-friends](../../../frontend/v1/find-friends/page.md) (Medium+ tier: [SuggestedFriendsPanel](../../../frontend/v1/find-friends/components/suggested-friends-panel.md)) | via BFF, [api.md](../../../frontend/v1/find-friends/api.md) |
-| Mobile | [find-friends](../../../mobile/v1/find-friends/screen.md) (all 4 tier branches call it, though Free/Basic tiers can't act on the result — see [CROSS-018](../../../issues.md#cross-018)) | direct GraphQL, [api.md](../../../mobile/v1/find-friends/api.md) |
+| Mobile | [find-friends](../../../mobile/v1/find-friends/screen.md) (all 4 tier branches call it, though Free/Basic tiers can't act on the result — see `CROSS-018` (resolved)) | direct GraphQL, [api.md](../../../mobile/v1/find-friends/api.md) |
 
 ## Known issues
 
-- [CROSS-018](../../../issues.md#cross-018) — mobile's find-friends screens gate search and even
+- `CROSS-018` (resolved) — mobile's find-friends screens gate search and even
   viewing/accepting pending requests behind Basic/Medium+ tier, well beyond what this module (or the
   messaging-module friend-request routes) actually requires — `suggestedFriends`'s `MEDIUM` gate is
   the *only* tier restriction that exists anywhere in the real friend-request/search contract. See

@@ -37,7 +37,7 @@ demo-gated). GraphQL-only — no REST controller.
 `AuthModule` (guard), `NotificationModule`, `RealtimeModule` (feed renew frames — same
 `emitToTopic('feed', ...)` / `emitToTopic('post:{id}', ...)` convention as `post`, see
 [social-content/README.md](../README.md#how-the-pieces-fit-together)). Also imports `PostModule` in
-its `@Module.imports` — ⚠ [BE-010](../../../issues.md#be-010): never actually injects `PostService`:
+its `@Module.imports` — ⚠ `BE-010` (resolved): never actually injects `PostService`:
 both `create()`'s post-lookup (for the notification's post title) and every ownership check go
 straight through `PrismaService` instead. Harmless (NestJS DI tolerates an unused module import), but
 worth knowing if you're tracing why `PostModule` is a dependency here — see
@@ -53,7 +53,7 @@ that module.
 
 ## Known issues
 
-- [BE-010](../../../issues.md#be-010) — imports `PostModule` without ever injecting `PostService` —
+- `BE-010` (resolved) — imports `PostModule` without ever injecting `PostService` —
   see [§ Depends on](#depends-on).
 
 See also [post/README.md § Known issues](../post/README.md#known-issues) for the reaction-breakdown/

@@ -23,6 +23,14 @@ export type { RtcChatMessageView as StreamChatMessageView } from './rtc-chat.ser
 
 type StreamWithRoom = LiveStream & { room: RtcRoom };
 
+/** Client-safe watcher shape exposed on the GraphQL LiveStream type. */
+export interface StreamViewerSummaryView {
+  userId: string;
+  name: string;
+  avatarUrl: string | null;
+  joinedAt: Date;
+}
+
 function chatChannel(slug: string): string {
   // Own prefix, distinct from rtc-meeting: and a chat-room Room.slug — all
   // three share RealtimeGateway's flat roomSockets keyspace.
@@ -223,18 +231,59 @@ export class RtcStreamService {
     });
   }
 
-  /** Live number comes from LiveKit's own participant list at read time —
-   *  peakViewerCount in the DB is a historical high-water mark only. The
-   *  broadcaster occupies one LiveKit participant slot too, so it's
-   *  subtracted out of the viewer-facing count while still live. */
-  async getViewerCount(stream: {
-    isLive: boolean;
-    room?: { livekitRoomName: string | null } | null;
-  }): Promise<number> {
-    const roomName = stream.room?.livekitRoomName;
-    if (!roomName) return 0;
-    const count = await this.liveKit.listParticipantCount(roomName);
-    return Math.max(0, count - (stream.isLive ? 1 : 0));
+  /** Live number comes from RtcParticipant rows (role VIEWER, leftAt null),
+   *  NOT LiveKit's participant list: joinStreamAsViewer runs before the
+   *  viewer's WebRTC connection exists, so a LiveKit read at that moment
+   *  missed the very viewer that triggered it — the first viewer's joined
+   *  frame carried viewerCount 0 and the broadcaster's "watching" counter
+   *  never left 0 (nothing re-broadcast once the connection landed). The
+   *  VIEWER row is upserted before the joined broadcast and leftAt is
+   *  stamped by both the explicit leave path and the participant_left
+   *  webhook, so the count is right at every broadcast. peakViewerCount in
+   *  the DB stays a historical high-water mark only. */
+  async getViewerCount(stream: { roomId: string }): Promise<number> {
+    return this.prisma.rtcParticipant.count({
+      where: {
+        roomId: stream.roomId,
+        role: RtcParticipantRole.VIEWER,
+        leftAt: null,
+      },
+    });
+  }
+
+  /** Client-safe watcher list for the GraphQL LiveStream.viewers field —
+   *  same deliberate summary contract as RtcMeetingService
+   *  .participantSummaries (no email, hideAvatar honored, no raw
+   *  livekitIdentity), VIEWER rows only (the broadcaster is the stage, not
+   *  the audience), capped so a large audience can't balloon the response. */
+  async viewerSummaries(stream: {
+    roomId: string;
+  }): Promise<StreamViewerSummaryView[]> {
+    const rows = await this.prisma.rtcParticipant.findMany({
+      where: {
+        roomId: stream.roomId,
+        role: RtcParticipantRole.VIEWER,
+        leftAt: null,
+      },
+      orderBy: { joinedAt: 'asc' },
+      take: 200,
+      include: {
+        user: {
+          select: {
+            name: true,
+            email: true,
+            avatarUrl: true,
+            hideAvatar: true,
+          },
+        },
+      },
+    });
+    return rows.map((p) => ({
+      userId: p.userId,
+      name: displayName(p.user),
+      avatarUrl: p.user.hideAvatar ? null : (p.user.avatarUrl ?? null),
+      joinedAt: p.joinedAt,
+    }));
   }
 
   async joinStreamAsViewer(userId: string, slug: string) {
@@ -431,6 +480,37 @@ export class RtcStreamService {
     void this.broadcastLeaveBySlugForRoom(roomId, identity);
   }
 
+  /** participant_joined for a STREAM-kind room: the leftAt clear (rejoin
+   *  case) already happened in RtcWebhookController — this re-broadcasts the
+   *  count now that the viewer's WebRTC connection actually exists. It is
+   *  what settles the counter after livekit-client's full reconnect (whose
+   *  participant_left broadcast a decremented count moments earlier) and
+   *  doubles as a resync on every genuine connect. Broadcaster connects are
+   *  filtered out — their participant row isn't VIEWER-role. */
+  notifyViewerJoinedByLiveKit(roomId: string, identity: string): void {
+    void (async () => {
+      const stream = await this.prisma.liveStream.findUnique({
+        where: { roomId },
+      });
+      if (!stream) return;
+      const row = await this.prisma.rtcParticipant.findUnique({
+        where: { roomId_userId: { roomId, userId: identity } },
+      });
+      if (row?.role !== RtcParticipantRole.VIEWER) return;
+      const viewerCount = await this.getViewerCount(stream);
+      this.realtime.broadcastToRoom(chatChannel(stream.slug), {
+        type: 'rtc:stream-viewer-joined',
+        slug: stream.slug,
+        userId: identity,
+        viewerCount,
+      });
+    })().catch((err: Error) =>
+      this.logger.error(
+        rtcErrorLog('stream.viewer_joined_notify_failed', err, { roomId }),
+      ),
+    );
+  }
+
   /** room_finished for a STREAM-kind room: safety net for whenever nobody
    *  called endStream explicitly — idempotent, a no-op if already !isLive. */
   async handleRoomEndedByLiveKit(roomId: string): Promise<void> {
@@ -480,8 +560,8 @@ export class RtcStreamService {
     // web hook reads the count off every joined/left frame, and this webhook
     // path used to omit it — one hard-dropped viewer (tab crash, network cut)
     // zeroed the visible count for everyone still watching. The departed
-    // viewer is already out of LiveKit's participant list by the time the
-    // participant_left webhook lands, so the read-time count is accurate.
+    // viewer's leftAt was already stamped by RtcWebhookController before this
+    // notify runs, so the DB read-time count is accurate.
     const viewerCount = await this.getViewerCount(stream);
     this.realtime.broadcastToRoom(chatChannel(stream.slug), {
       type: 'rtc:stream-viewer-left',

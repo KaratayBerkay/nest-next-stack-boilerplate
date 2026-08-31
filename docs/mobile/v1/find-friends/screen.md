@@ -51,14 +51,14 @@ renders a request — see [Known issues](#known-issues).
 
 ## Known issues
 
-- [MOB-007](../../../issues.md#mob-007) — Premium tier's inline "Pending Requests" section
+- `MOB-007` (resolved) — Premium tier's inline "Pending Requests" section
   (`friendRequestsProvider`) throws on every real pending request the backend returns — the underlying
   `FriendRequest.fromJson` reads field names that don't exist in the actual response shape. This
   section never successfully renders a request card in practice; it only *looks* functional in a
   no-pending-requests test account. Full evidence in
   [requests/screen.md § Known issues](./requests/screen.md#known-issues) (same provider, same bug,
   documented once there since that's the primary screen for this data).
-- [CROSS-018](../../../issues.md#cross-018) — **Free and Basic tier have no way to search for or add a new
+- `CROSS-018` (resolved) — **Free and Basic tier have no way to search for or add a new
   friend anywhere in this app.** No search box exists on either tier's `/find-friends` widget, and
   neither tier's `/find-friends/requests` widget offers one either (see
   [requests/screen.md](./requests/screen.md)). The backend places no tier requirement on

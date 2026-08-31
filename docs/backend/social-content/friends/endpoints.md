@@ -49,5 +49,5 @@ suggestion path) when the friend graph is empty.
 **Used by:** Frontend [find-friends](../../../frontend/v1/find-friends/page.md) (Medium+ tier only,
 via [SuggestedFriendsPanel](../../../frontend/v1/find-friends/components/suggested-friends-panel.md));
 Mobile [find-friends](../../../mobile/v1/find-friends/screen.md) (all four tier branches call it —
-see [CROSS-018](../../../issues.md#cross-018) for why Free/Basic tier mobile screens call a query they can
+see `CROSS-018` (resolved) for why Free/Basic tier mobile screens call a query they can
 never get a non-error response from).

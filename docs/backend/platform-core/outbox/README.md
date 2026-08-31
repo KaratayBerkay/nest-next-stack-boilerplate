@@ -37,7 +37,7 @@ worker or cause an event to be lost/retried unnecessarily.
 
 Note: `authorization/admin.resolver.ts` has its own private, unused `createAuditLog()` method that
 duplicates this processor's logic byte-for-byte — dead code, not a second real writer. See
-[BE-006](../../../issues.md#be-006) (documented in Phase 1,
+`BE-006` (resolved) (documented in Phase 1,
 [identity-access/authorization](../../identity-access/authorization/README.md)).
 
 ## `FrontendEventConsumer` — web's half of the split telemetry pipeline

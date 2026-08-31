@@ -145,18 +145,18 @@ import in `messaging.module.ts`; the coupling is entirely through the shared Pri
 
 ## Known issues
 
-- [BE-016](../../../issues.md#be-016) — the VIP chat room (`vip-lounge`) both frontend and mobile
+- `BE-016` (resolved) — the VIP chat room (`vip-lounge`) both frontend and mobile
   expose to Medium/Premium tiers has no corresponding `Room` database row created by any seed or
   startup path — sending the first message in it fails. Not this module's bug (the fix is in
   `messaging`'s room seeding), but discovered while tracing this module's `assertCanAccessUpload`
   room-tier branch. See [chat-room page.md § Known issues](../../../frontend/v1/chat-room/page.md#known-issues-affecting-this-page).
-- [BE-017](../../../issues.md#be-017) — attachment `url`s are resolved and re-linked (`messageId`/
+- `BE-017` — attachment `url`s are resolved and re-linked (`messageId`/
   `roomMessageId` backfill) with no check that the `PendingUpload` was uploaded by the sender or
   scoped to the conversation/room the message lands in.
 - [FE-012](../../../issues.md#fe-012) — the buffered BFF route `POST /api/upload/attachment` on web
   never forwards the `x-scope-kind`/`x-scope-id` headers to the backend (its streamed sibling route
   does). Currently dead code — nothing on web calls the buffered path.
-- [CROSS-027](../../../issues.md#cross-027) — mobile's shared `AttachmentPreview` widget has no `thumbnailUrl`
+- `CROSS-027` (resolved) — mobile's shared `AttachmentPreview` widget has no `thumbnailUrl`
   parameter at all, so neither [messages](../../../mobile/v1/messages/screen.md) nor
   [chat-room](../../../mobile/v1/chat-room/screen.md) ever render the thumbnails this module
   generates — every attachment preview fetches the full original file instead.

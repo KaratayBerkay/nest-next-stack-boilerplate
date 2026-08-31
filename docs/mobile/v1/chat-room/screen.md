@@ -11,7 +11,7 @@
 
 Same `TierGate`-over-4-widgets composition pattern as
 [messages](../messages/screen.md#what-renders-here), and — unlike web's parallel four-file duplicate
-of the same pattern, contrast [CROSS-018](../../../issues.md#cross-018)'s over-independent tier
+of the same pattern, contrast `CROSS-018` (resolved)'s over-independent tier
 variants elsewhere in this app — genuinely **clean inheritance**, not four separate builds:
 
 | Tier | File | Relationship |
@@ -22,7 +22,7 @@ variants elsewhere in this app — genuinely **clean inheritance**, not four sep
 | Premium | [`premium_page_view.dart`](../../../../flutter-boilerplate/lib/views/chat_room/premium_page_view.dart) | same as Medium, plus `showSelfCrown` → `true` |
 
 `useNativeControls` is the one flag Medium/Premium set that Free/Basic don't — ⚠ see
-[MOB-014](../../../issues.md#mob-014): it has no observable effect anywhere.
+`MOB-014` (resolved): it has no observable effect anywhere.
 
 ## Two routes, one widget, one real branch
 
@@ -68,7 +68,7 @@ provider `_isNamedRoom` selects (see table above) — both are the same provider
 5 significant widgets in
 [`lib/views/chat_room/`](../../../../flutter-boilerplate/lib/views/chat_room/) — one fewer than web's
 6, since mobile has no [RoomAttachmentGallerySheet](../../../frontend/v1/chat-room/components/room-attachment-gallery-sheet.md)
-equivalent (see [CROSS-028](../../../issues.md#cross-028) below):
+equivalent (see `CROSS-028` (resolved) below):
 [chat-room-base-view.md](./widgets/chat-room-base-view.md) ·
 [chat-room-header.md](./widgets/chat-room-header.md) ·
 [chat-room-sidebar.md](./widgets/chat-room-sidebar.md) ·
@@ -93,23 +93,23 @@ and [conventions.md §2](../../../conventions.md#2-file-naming).)
 - ⚠ **Attachment uploads never carry an upload scope** — `messageActionsProvider.uploadAttachment()`
   has no `scope` parameter anywhere in its call chain, so every attachment upload from this screen
   (and from [messages](../messages/screen.md)) lands in the backend's default DM storage folder,
-  never the room-scoped one web correctly uses. See [MOB-017](../../../issues.md#mob-017).
+  never the room-scoped one web correctly uses. See `MOB-017` (resolved).
 - ⚠ **Hardcoded room list, no live fetch** — this screen never calls `GET /api/rooms`; it uses
   `ChatConstants.chatRooms`/`vipRooms` (Dart constants) where web calls
-  `roomsQueryOptions()`. See [CROSS-025](../../../issues.md#cross-025).
+  `roomsQueryOptions()`. See `CROSS-025` (resolved).
 - ⚠ **No unlocalized-string parity check passed** — several UI strings ("Chat Rooms", "Rooms",
   "Online (n)", "No one is here", "No messages yet") are hardcoded English literals despite matching
-  ARB keys already existing and being ready to use. See [MOB-015](../../../issues.md#mob-015).
+  ARB keys already existing and being ready to use. See `MOB-015` (resolved).
 - ⚠ **No attachment gallery** — same as [messages](../messages/screen.md#confirmed-parity-gaps-vs-web-found-while-documenting-this-screen),
   now confirmed rather than "unconfirmed": `grep -rli "attachmentgallery\|alluploads"` across the
   entire Flutter app returns nothing. Web's [RoomAttachmentGallerySheet](../../../frontend/v1/chat-room/components/room-attachment-gallery-sheet.md)
-  has no mobile counterpart in either vertical. See [CROSS-028](../../../issues.md#cross-028).
+  has no mobile counterpart in either vertical. See `CROSS-028` (resolved).
 - ⚠ **Attachment thumbnails never render** — the shared `AttachmentPreview` widget this screen's
   [ChatRoomMessageList](./widgets/chat-room-message-list.md) uses has no `thumbnailUrl` parameter at
   all, even though the JSON response and the parsed `MessageAttachment` model both carry it correctly.
-  See [CROSS-027](../../../issues.md#cross-027).
+  See `CROSS-027` (resolved).
 - ⚠ **`useNativeControls` is dead** — threaded through 6 files, read in none of them. See
-  [MOB-014](../../../issues.md#mob-014).
+  `MOB-014` (resolved).
 - ⚠ **The legacy DM route appears unreachable** — `v1ChatRoomLegacy` is registered and fully
   functional but nothing in the current app navigates to it. See [MOB-016](../../../issues.md#mob-016).
 - No reply-to-message and no delete-message — same as web, and for the same reason (the backend

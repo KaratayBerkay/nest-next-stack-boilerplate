@@ -51,7 +51,7 @@ checked in this pass).
   Mobile's [register](../../../../mobile/auth/register/screen.md) and
   [reset-password](../../../../mobile/auth/reset-password/screen.md) screens have neither a live
   requirements checklist nor a password show/hide toggle (`LabeledField`'s `obscureText` is a fixed
-  bool with no visible-toggle affordance). Filed as [CROSS-011](../../../../issues.md#cross-011).
+  bool with no visible-toggle affordance). Filed as `CROSS-011` (resolved).
 
 ## Calls
 

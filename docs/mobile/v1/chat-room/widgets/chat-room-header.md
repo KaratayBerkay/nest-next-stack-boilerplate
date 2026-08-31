@@ -23,4 +23,4 @@ web's equivalent.
 - ⚠ The title `'Chat Rooms'` is a hardcoded string literal, not run through `AppLocalizations` — the
   page-info dialog's own title, a few lines away in the same call tree, correctly uses
   `t.chatRoomTitle` for what is conceptually the same label, and the ARB key is fully populated. See
-  [MOB-015](../../../../issues.md#mob-015).
+  `MOB-015` (resolved).

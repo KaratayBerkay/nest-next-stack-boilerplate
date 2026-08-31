@@ -27,7 +27,7 @@ V1Shell                       (Scaffold; responsive Row-vs-Stack layout at 768px
 ## ⚠ Four of this inventory's files were dead code — since deleted
 
 **Resolved by deletion:** all four files below were removed in the cross-stack dead-code pass
-(commit `b98fac8a`), closing [MOB-026](../issues.md#mob-026). The analysis is kept because the
+(commit `b98fac8a`), closing `MOB-026` (resolved). The analysis is kept because the
 inline-reimplementation pattern it documents is real and recurring.
 
 **`message_dropdown.dart`, `profile_dropdown.dart`, and `badge.dart` (`BadgeWidget`) were never
@@ -38,7 +38,7 @@ panel), and hand-written `InkWell` + `Positioned`/`Container` badge circles for 
 message icons — no shared `BadgeWidget`, no auto-pop-on-arrival behavior like web's `MessageDropdown`.
 This is the same "scaffolded, then reimplemented inline, original left behind" pattern already on
 record for api-keys/security/account/general (see
-[CROSS-013](../issues.md#cross-013)/[FE-007](../issues.md#fe-007)/[MOB-006](../issues.md#mob-006)) —
+[CROSS-013](../issues.md#cross-013)/`FE-007` (resolved)/`MOB-006` (resolved)) —
 this app-shell cluster is a fourth, previously-unrecorded instance of it, and larger (3 files at once).
 
 **`page_nav_wrapper.dart`'s `PageNavWrapper` is also dead** (zero instantiations anywhere) — and even
@@ -47,7 +47,7 @@ provides an in-flight-navigation progress overlay (`PageNavigationProvider` + `N
 mobile's `PageNavWrapper` is an unrelated `AnimatedSwitcher`/`FadeTransition` per-page-key transition
 wrapper. Same file name, same directory position in the port, unrelated concept and both unused.
 
-See [MOB-026](../issues.md#mob-026) for the full write-up. `ProfileSection`, by contrast, **is** genuinely
+See `MOB-026` (resolved) for the full write-up. `ProfileSection`, by contrast, **is** genuinely
 imported and used by `V1Sidebar` — not every file in this folder is dead, just these four.
 
 ## Files
@@ -84,5 +84,5 @@ computed, not shared code, but agree with each other. See [CROSS-039](../issues.
 
 ## Known issues affecting this shell
 
-- [MOB-026](../issues.md#mob-026) — four dead files (`message_dropdown.dart`, `profile_dropdown.dart`,
+- `MOB-026` (resolved) — four dead files (`message_dropdown.dart`, `profile_dropdown.dart`,
   `badge.dart`, `page_nav_wrapper.dart`); **resolved by deletion** in `b98fac8a`, see above.

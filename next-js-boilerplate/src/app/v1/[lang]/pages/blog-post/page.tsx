@@ -4,7 +4,7 @@ import PageContent from "@/views/pages/blog-post/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function BlogPostPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <PageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <PageContent initialTab={tab} initialFull={full === "1"} />;
 }

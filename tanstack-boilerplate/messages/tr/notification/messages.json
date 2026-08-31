@@ -1,0 +1,14 @@
+{
+  "title": "Bildirimler",
+  "markAllRead": "Tümünü okundu işaretle",
+  "markAllReadFailed": "Bildirimler okundu olarak işaretlenemedi. Tekrar deneyin.",
+  "noNotifications": "Henüz bildirim yok",
+  "enablePush": "Bildirimleri etkinleştir",
+  "disablePush": "Bildirimleri devre dışı bırak",
+  "pushBlocked": "Bildirimler engellendi — tarayıcı ayarlarınızdan etkinleştirin",
+  "back": "Geri",
+  "loadMore": "Daha fazla yükle",
+  "notificationsWithUnread": "Bildirimler ({count} okunmamış)",
+  "close": "Kapat",
+  "seeMore": "Daha fazlasını gör"
+}

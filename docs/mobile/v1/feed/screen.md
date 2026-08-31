@@ -63,11 +63,11 @@ to confirm it independently.
 
 ## Known issues affecting this screen
 
-- [MOB-009](../../../issues.md#mob-009) — [PostStatsSidebar](./widgets/post-stats-sidebar.md)'s
+- `MOB-009` (resolved) — [PostStatsSidebar](./widgets/post-stats-sidebar.md)'s
   "Load Stats" button is a silent no-op: its `onLoadStats` callback is never supplied at either of
   this screen's two instantiation sites (`_SidebarLayout`, Medium/Premium only), and the fully-working
   `postStatsProvider` it would call has zero readers anywhere in the app.
-- [MOB-011](../../../issues.md#mob-011) — [PostCard](./widgets/post-card.md) never wires
+- `MOB-011` (resolved) — [PostCard](./widgets/post-card.md) never wires
   `onEditStart`/`onDeleteConfirm` when instantiating [PostHeader](./widgets/post-header.md): a post
   author's edit icon renders permanently disabled, and the delete icon shows a real confirm dialog
   that silently does nothing on confirm. Mobile-only — web's equivalent wires both correctly.

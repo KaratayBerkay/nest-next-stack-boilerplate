@@ -36,7 +36,7 @@ looks up by `endpoint` first — a re-subscribe (e.g. key rotation) updates the 
 - Frontend: [notification page](../../../frontend/v1/notification/page.md) via
   [`usePushNotifications`](../../../../next-js-boilerplate/src/hooks/usePushNotifications.ts) →
   `app/api/push/subscribe/route.ts` (BFF, bearer-token auth).
-- Mobile: ⚠ [CROSS-021](../../../issues.md#cross-021) — no working path. Mobile's
+- Mobile: ⚠ `CROSS-021` (resolved) — no working path. Mobile's
   `push_notification_service.dart` targets Firebase Cloud Messaging and never calls this
   Web-Push-shaped mutation at all; a second, separate, also-unused Dart code path
   (`PushActions.subscribe`) would call it with the wrong argument shape if it were ever wired up. See
@@ -54,7 +54,7 @@ looks up by `endpoint` first — a re-subscribe (e.g. key rotation) updates the 
 **Used by:**
 - Frontend: [notification page](../../../frontend/v1/notification/page.md), same hook as above →
   `app/api/push/unsubscribe/route.ts`.
-- Mobile: none — see [CROSS-021](../../../issues.md#cross-021) above.
+- Mobile: none — see `CROSS-021` (resolved) above.
 
 ## Internal (not client-facing)
 
@@ -69,6 +69,6 @@ subscription row automatically (expired/unsubscribed-at-the-browser-level). See
 ## Known issues
 
 - [BE-015](../../../issues.md#be-015) — `myPushSubscriptions` has no caller on either platform.
-- [CROSS-021](../../../issues.md#cross-021) — mobile push notifications are non-functional
+- `CROSS-021` (resolved) — mobile push notifications are non-functional
   end-to-end (targets FCM; this backend only implements Web Push).
 - Full findings with severity and evidence are filed in [`issues.md`](../../../issues.md).

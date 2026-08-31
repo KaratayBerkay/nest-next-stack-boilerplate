@@ -33,13 +33,13 @@ layout).
 
 ## Known issues
 
-- [MOB-006](../../../../issues.md#mob-006) —
+- `MOB-006` (resolved) —
   `account_avatar_section.dart`'s `AccountAvatarSection` widget — **resolved by deletion** (commit
   `b98fac8a`) — was fully built and never imported anywhere (`grep -rln
   "AccountAvatarSection" flutter-boilerplate/lib` returns only its own definition file) — the real
   screen reimplements the same avatar-preview-plus-change-button UI inline instead. Same
   "scaffolded then inlined, original left behind" shape as
-  [CROSS-013](../../../../issues.md#cross-013)/[FE-007](../../../../issues.md#fe-007) — see that
+  [CROSS-013](../../../../issues.md#cross-013)/`FE-007` (resolved) — see that
   issue's Notes for the sibling instance in [general](../general/screen.md#known-issues), and the two
   Phase 1b instances (web's `mfa-handlers.ts`, mobile's api-keys widget trio) this now makes a
   four-vertical recurring pattern.

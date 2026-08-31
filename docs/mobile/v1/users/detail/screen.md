@@ -18,7 +18,7 @@ Friend" button calling `friendActionsProvider.sendRequest(user.id)`.
 
 ## Known issues
 
-- [MOB-003](../../../../issues.md#mob-003) — **`_userDetailProvider` ignores its own `userId` parameter
+- `MOB-003` (resolved) — **`_userDetailProvider` ignores its own `userId` parameter
   and always shows the caller's own profile.**
 
   ```dart

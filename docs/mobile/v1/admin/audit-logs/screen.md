@@ -42,7 +42,7 @@ No independent client-side role re-check before the call (same as [../screen.md]
 The sibling file in the same folder,
 [`search_users.dart`](../../../../../flutter-boilerplate/lib/api/server/admin/search_users.dart), was
 **not** given the same fix — see [../screen.md § the user-search feature is completely broken](../screen.md#-the-user-search-feature-is-completely-broken)
-and [MOB-025](../../../../issues.md#mob-025).
+and `MOB-025` (resolved).
 
 ## Backend endpoints this screen depends on
 

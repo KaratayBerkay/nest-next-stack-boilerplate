@@ -20,7 +20,7 @@ if (!post.reactionBreakdown || post.reactionBreakdown.length === 0) {
 }
 ```
 
-`post.reactionBreakdown` is never populated — [FE-009](../../../../issues.md#fe-009), see
+`post.reactionBreakdown` is never populated — `FE-009` (resolved), see
 [page.md § Known issues](../page.md#known-issues). The backend field this component is built for is
 real and working (`@ResolveField`, `@MinTier(MEDIUM)` — see
 [post/endpoints.md](../../../../backend/social-content/post/endpoints.md#postreactionbreakdown-resolved-field));

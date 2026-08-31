@@ -20,7 +20,7 @@ anything *here*, since the caller is asking about themselves).
 `GET /api/profile`, see [frontend api.md](../../../frontend/v1/settings/account/api.md)); Mobile
 `settings/account`/`settings/general`/`settings/privacy` and `users/list`/`users/detail`/the bare
 `users` route (direct GraphQL, always self-scoped — see
-[MOB-003](../../../issues.md#mob-003) for the user-detail-screen consequence of that).
+`MOB-003` (resolved) for the user-detail-screen consequence of that).
 
 ### Check username availability
 

@@ -52,7 +52,7 @@ auth-bootstrap dependency, not settings-specific.
 
 ## Known issues affecting this vertical
 
-- [CROSS-012](../../../issues.md#cross-012) — `updateApiKey` (rename/enable-disable a key) is fully
+- `CROSS-012` (resolved) — `updateApiKey` (rename/enable-disable a key) is fully
   built backend + BFF, with zero UI on either platform. See
   [api-keys/page.md](./api-keys/page.md#known-issues).
 - A dead-code pattern shows up twice in this vertical alone, once per platform: web's
@@ -66,11 +66,11 @@ auth-bootstrap dependency, not settings-specific.
   rendered UI language on mobile; web only reads `profile.locale` back to pre-fill its own dropdown.
   Timezone persists on both platforms but neither reads it back for real date/time formatting. See
   [general/page.md](./general/page.md#known-issues).
-- ⚠ [CROSS-034](../../../issues.md#cross-034) — Billing's `PaymentMethods` is read-only on web
+- ⚠ `CROSS-034` (resolved) — Billing's `PaymentMethods` is read-only on web
   (no add/remove/set-default anywhere) despite full backend support and even already-built, unused
   client hooks — [mobile's equivalent](../../../mobile/v1/settings/billing/screen.md) has a working
   version of all three. See [billing/page.md](./billing/page.md#known-issues-affecting-this-page).
-- ⚠ [MOB-020](../../../issues.md#mob-020) — the dead-parallel-implementation pattern noted
+- ⚠ `MOB-020` (resolved) — the dead-parallel-implementation pattern noted
   above (mfa-handlers.ts / api-keys' 3 files / account+general's 2 files) recurs a fifth time in
   Billing, mobile-side: `payment_methods.dart`'s `PaymentMethods` widget class is fully built and never
   imported — the real screen reimplements the same list/remove/set-default UI inline instead.

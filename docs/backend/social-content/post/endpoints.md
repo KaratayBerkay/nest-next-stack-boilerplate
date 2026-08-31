@@ -64,7 +64,7 @@ live).
 **Used by:** Frontend [posts](../../../frontend/v1/posts/page.md) (`PostEditForm`), the feed's inline
 edit in [PostCard](../../../frontend/v1/feed/components/post-card.md); Mobile
 [posts detail](../../../mobile/v1/posts/detail/screen.md) — ⚠ not reachable in practice, see
-[MOB-008](../../../issues.md#mob-008).
+`MOB-008` (resolved).
 
 ### Delete a post
 
@@ -75,7 +75,7 @@ Soft delete (`deletedAt` stamped) — same 404/403 rules and cache/renew side-ef
 [PostCard](../../../frontend/v1/feed/components/post-card.md); Mobile
 [posts detail](../../../mobile/v1/posts/detail/screen.md) — ⚠ not reachable in practice (no delete
 action exists on the real, routed mobile detail screen at all — see
-[MOB-008](../../../issues.md#mob-008)).
+`MOB-008` (resolved)).
 
 ### Get my post stats
 
@@ -88,7 +88,7 @@ callers get a `403`. Computed live from the caller's own published, non-deleted 
 **Used by:** Frontend [PostStatsSidebar](../../../frontend/v1/feed/components/post-stats-sidebar.md);
 Mobile [PostStatsSidebar](../../../mobile/v1/feed/widgets/post-stats-sidebar.md) — ⚠ wired
 server-side but the mobile widget's load callback is never connected at its call site, see
-[MOB-009](../../../issues.md#mob-009).
+`MOB-009` (resolved).
 
 ### `Post.reactionBreakdown` (resolved field)
 
@@ -98,7 +98,7 @@ server-side but the mobile widget's load callback is never connected at its call
 **Auth:** `TierGuard` + `@MinTier(MEDIUM)` — a Free/Basic caller who requests this field in their
 query gets a field-level `403`.
 **Used by:** Frontend [ReactionBreakdown](../../../frontend/v1/posts/components/reaction-breakdown.md)
-— ⚠ [FE-009](../../../issues.md#fe-009): never actually requested by the frontend's `POST_QUERY`, so
+— ⚠ `FE-009` (resolved): never actually requested by the frontend's `POST_QUERY`, so
 this component always renders nothing in practice despite the field working correctly server-side.
 No mobile query requests this field either (mobile's `Post` type has no `reactionBreakdown`
 equivalent at all — its own, differently-shaped "reaction breakdown" widget exists only in
@@ -111,9 +111,9 @@ type}`, one row per reaction)
 **Source:** [`post.resolver.ts#L116-126`](../../../../nest-js-boilerplate/src/post/post.resolver.ts)
 **Auth:** `TierGuard` + `@MinTier(PREMIUM)`.
 **Used by:** Frontend [WhoReacted](../../../frontend/v1/posts/components/who-reacted.md) — same
-[FE-009](../../../issues.md#fe-009) gap as `reactionBreakdown` above. No mobile consumer — the only
+`FE-009` (resolved) gap as `reactionBreakdown` above. No mobile consumer — the only
 mobile widget with this name is unrouted dead code with fully hardcoded placeholder data, see
-[MOB-008](../../../issues.md#mob-008).
+`MOB-008` (resolved).
 
 ## Known issues
 

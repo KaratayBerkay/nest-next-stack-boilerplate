@@ -71,7 +71,7 @@ why mobile's screen doc mentions a fourth section this page doesn't have.
 
 ## Known issues
 
-- [FE-007](../../../../issues.md#fe-007) — `security/mfa-handlers.ts` is dead code: a complete,
+- `FE-007` (resolved) — `security/mfa-handlers.ts` is dead code: a complete,
   unused second implementation of `handleEnroll`/`handleVerify`/`handleDisable`, superseded by the
   inline versions in `PageContent.tsx`. See
   [components/security-mfa-wizard.md](./components/security-mfa-wizard.md#known-issues).

@@ -1,0 +1,9 @@
+export { Dialog, useDialog } from "./dialog";
+export { DialogTrigger } from "./dialog-trigger";
+export { DialogContent } from "./dialog-content";
+export { DialogHeader } from "./dialog-header";
+export { DialogTitle } from "./dialog-title";
+export { DialogDescription } from "./dialog-description";
+export { DialogFooter } from "./dialog-footer";
+export { DialogClose } from "./dialog-close";
+export { DialogBody } from "./dialog-body";

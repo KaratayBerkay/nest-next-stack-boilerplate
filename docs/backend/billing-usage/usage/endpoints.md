@@ -31,7 +31,7 @@ whether to block the chat composer). Mobile:
 [`message_storage_card.dart`](../../../../flutter-boilerplate/lib/views/settings/usage/message_storage_card.dart)
 (on [settings/usage/screen.md](../../../mobile/v1/settings/usage/screen.md)) only — no mobile
 chat-composer equivalent of `StorageLimitNotice` exists, see ⚠
-[CROSS-033](../../../issues.md#cross-033).
+`CROSS-033` (resolved).
 
 ### Get upload-storage usage
 
@@ -49,7 +49,7 @@ uploaded (`uploadedBy = userId`, no date filter — cumulative, unlike the messa
 [`upload_storage_card.dart`](../../../../flutter-boilerplate/lib/views/settings/usage/upload_storage_card.dart)
 (on [settings/usage/screen.md](../../../mobile/v1/settings/usage/screen.md)).
 ⚠ Both cards render a hard "limit reached, upgrade" warning once `bytes >= limitBytes` — see
-[BE-022](../../../issues.md#be-022): nothing server-side actually stops the upload once
+`BE-022` (resolved): nothing server-side actually stops the upload once
 that point is reached, on either platform.
 
 ## Internal guards (not HTTP endpoints)
@@ -80,7 +80,7 @@ shapes).
 **Behavior:** same shape as `assertCanSendMessage` above, computed against
 [Get upload-storage usage](#get-upload-storage-usage)'s cumulative total instead of a monthly one.
 **Errors:** `403 EX_UPLOAD_STORAGE_LIMIT_REACHED` — in principle; never actually thrown in practice.
-**Called by:** nobody. ⚠ [BE-022](../../../issues.md#be-022) — confirmed via a full-repo
+**Called by:** nobody. ⚠ `BE-022` (resolved) — confirmed via a full-repo
 grep for `assertCanUploadBytes`, the only match is this method's own definition. The
 [upload module](../../messaging-realtime/upload/README.md)'s controller/services never import
 `UsageService`. Every attachment upload on both platforms (chat and room) succeeds regardless of how
@@ -88,9 +88,9 @@ much a user has already uploaded, on every tier.
 
 ## Known issues
 
-- ⚠ [BE-022](../../../issues.md#be-022) — `assertCanUploadBytes` is dead code; the
+- ⚠ `BE-022` (resolved) — `assertCanUploadBytes` is dead code; the
   upload-storage limit is displayed on both platforms but never enforced.
-- ⚠ [CROSS-033](../../../issues.md#cross-033) — no mobile equivalent of web's
+- ⚠ `CROSS-033` (resolved) — no mobile equivalent of web's
   `StorageLimitNotice`; the real message-storage cap is only discoverable on mobile via a raw failed
   send.
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

@@ -60,7 +60,7 @@ anywhere**: the backend's `authorization` module is GraphQL-only (confirmed —
 `GET /api/admin/audit-logs` and `POST /api/admin/set-tier` — no `/users` sub-route. Every search of 2+
 characters throws a `DioException` that `adminSearchUsersProvider` doesn't catch, surfacing as a
 visible `Error: ...` message in the results area — this isn't a latent/unreachable bug, it fires on the
-very first keystroke past the 2-character minimum. See [MOB-025](../../../issues.md#mob-025).
+very first keystroke past the 2-character minimum. See `MOB-025` (resolved).
 
 This is the same class of bug the sibling `audit_logs.dart` file in this exact folder documents fixing
 in its own header comment: *"there is no and never was a REST `/api/admin/audit-logs` route on the
@@ -77,5 +77,5 @@ bug's still-broken twin, never given the same fix.
 
 ## Known issues affecting this screen
 
-- [MOB-025](../../../issues.md#mob-025) — user search is completely broken (dead URL, every call errors).
+- `MOB-025` (resolved) — user search is completely broken (dead URL, every call errors).
 - [CROSS-039](../../../issues.md#cross-039) — the admin-role gate has no in-widget redundancy here, unlike web.

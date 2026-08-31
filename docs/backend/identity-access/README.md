@@ -17,10 +17,10 @@ Frontend: [`/auth/*`](../../frontend/auth/README.md) (6 pages) +
 [`auth/*`](../../mobile/auth/README.md) (6 screens) +
 [`settings/{sessions,api-keys}` + `security`](../../mobile/v1/settings/README.md).
 
-Notable findings from this phase: [BE-005](../../issues.md#be-005) (unguarded dead OAuth endpoint),
-[BE-007](../../issues.md#be-007)/[CROSS-012](../../issues.md#cross-012) (real mutations with zero UI
-trigger — ban/suspend, MFA reset, API key rename), [CROSS-009](../../issues.md#cross-009)/[CROSS-010](../../issues.md#cross-010)/[CROSS-011](../../issues.md#cross-011)
+Notable findings from this phase: `BE-005` (resolved) (unguarded dead OAuth endpoint),
+`BE-007` (resolved)/`CROSS-012` (resolved) (real mutations with zero UI
+trigger — ban/suspend, MFA reset, API key rename), `CROSS-009` (resolved)/`CROSS-010` (resolved)/`CROSS-011` (resolved)
 (three independent mobile-vs-web auth-UX parity gaps), and
-[CROSS-013](../../issues.md#cross-013)/[FE-007](../../issues.md#fe-007) (the same
+[CROSS-013](../../issues.md#cross-013)/`FE-007` (resolved) (the same
 scaffolded-then-inlined dead-code pattern recurring on both platforms). Full list:
 [issues.md](../../issues.md).

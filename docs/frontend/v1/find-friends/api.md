@@ -60,4 +60,4 @@ a real avatar image, even when one exists.
   `useFriendActions()` → see [friends/api.md](../friends/api.md)
 - [SuggestedFriendsPanel](./components/suggested-friends-panel.md) → `fetchSuggestedFriendsServer()` →
   [social-content/friends/endpoints.md#list-suggested-friends](../../../backend/social-content/friends/endpoints.md#list-suggested-friends)
-  — read-only, see [CROSS-017](../../../issues.md#cross-017)
+  — read-only, see `CROSS-017` (resolved)

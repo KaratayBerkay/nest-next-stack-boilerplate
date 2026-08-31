@@ -17,7 +17,7 @@ Note the field set doesn't map 1:1 onto the backend's `BillingAddress` shape: th
 has no `email`), and has no `vatNumber` field at all, unlike both the backend model and web's
 equivalent display — so a VAT number saved via [BillingAddressForm](./billing-address-form.md) (which
 does collect and submit one) is never shown back to the user anywhere on this screen once saved. See ⚠
-[MOB-024](../../../../../issues.md#mob-024).
+`MOB-024` (resolved).
 
 ## Constructor
 

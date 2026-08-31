@@ -79,5 +79,5 @@ Cross-cutting: `useAuth`, `useMessages`, `usePathname`.
 
 ## Known issues
 
-- [CROSS-017](../../../issues.md#cross-017) — [SuggestedFriendsPanel](./components/suggested-friends-panel.md)
+- `CROSS-017` (resolved) — [SuggestedFriendsPanel](./components/suggested-friends-panel.md)
   (Medium+ sidebar) has no way to actually send a request to a suggested person from this panel.

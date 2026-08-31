@@ -25,7 +25,7 @@ and [endpoints.md](../../../backend/identity-access/authorization/endpoints.md).
 
 ## Known issues affecting this vertical
 
-- [MOB-025](../../../issues.md#mob-025) — [screen.md](./screen.md)'s user-search feature is completely
+- `MOB-025` (resolved) — [screen.md](./screen.md)'s user-search feature is completely
   broken: every search call hits a URL with no matching backend route or BFF route, and throws visibly.
   The tier-set action itself works correctly once a `userId` is known by some other means.
 - [CROSS-039](../../../issues.md#cross-039) — neither screen in this vertical has an in-widget role-check

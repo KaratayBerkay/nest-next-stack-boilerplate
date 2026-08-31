@@ -60,7 +60,7 @@ separate, fully-wired inline implementation with three real actions:
 **Web's [PaymentMethods](../../../../frontend/v1/settings/billing/components/payment-methods.md) has
 none of this** — it's read-only, despite the exact same three backend mutations being fully available
 and even having already-built (but unused) client hooks on web. See ⚠
-[CROSS-034](../../../../issues.md#cross-034) — mobile is ahead of web here, the reverse of this
+`CROSS-034` (resolved) — mobile is ahead of web here, the reverse of this
 doc effort's usual direction.
 
 ## Invoices tab
@@ -87,7 +87,7 @@ never `'paid'`. So `inv.status == 'paid'` is **always false**: every invoice on 
 with the warning/orange badge variant, showing the raw, un-localized text "COMPLETED" — never the
 green "Paid" success state [web's `StatusBadge`](../../../../frontend/v1/settings/billing/components/invoice-table.md#statusbadge)
 correctly shows for the exact same rows (web checks `=== "COMPLETED"`, the real value). See ⚠
-[MOB-021](../../../../issues.md#mob-021).
+`MOB-021` (resolved).
 
 ## Widgets
 
@@ -103,16 +103,16 @@ correctly shows for the exact same rows (web checks `=== "COMPLETED"`, the real 
 
 ## Known issues
 
-- ⚠ [CROSS-034](../../../../issues.md#cross-034) — mobile's payment-methods UI is materially
+- ⚠ `CROSS-034` (resolved) — mobile's payment-methods UI is materially
   more capable than web's (add/remove/set-default vs. read-only).
-- ⚠ [MOB-020](../../../../issues.md#mob-020) — **resolved by deletion** (commit `b98fac8a`): this
+- ⚠ `MOB-020` — **resolved by deletion** (commit `b98fac8a`): this
   vertical's own `payment_methods.dart` (`PaymentMethods` widget class) was dead code — `_PaymentMethodsSection` above reimplements the same
   UI inline instead of using it. The same "scaffolded then inlined, original left behind" pattern this
   effort has found repeatedly elsewhere (e.g.
-  [CROSS-013](../../../../issues.md#cross-013)/[MOB-006](../../../../issues.md#mob-006)).
-- ⚠ [MOB-021](../../../../issues.md#mob-021) — invoice status badge always renders as
+  [CROSS-013](../../../../issues.md#cross-013)/`MOB-006` (resolved)).
+- ⚠ `MOB-021` (resolved) — invoice status badge always renders as
   "warning," never "success," and shows a raw unlocalized enum string.
-- ⚠ [MOB-024](../../../../issues.md#mob-024) —
+- ⚠ `MOB-024` (resolved) —
   [BillingInfoDisplay](./widgets/billing-info-display.md) has no `vatNumber` field at all, so a VAT
   number entered via [BillingAddressForm](./widgets/billing-address-form.md) is saved correctly but
   never shown back once the form closes.

@@ -36,6 +36,7 @@ with a toast when realtime status isn't `open` (`realtime_unavailable`).
 | [`useTrackAttach.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useTrackAttach.ts) | Tiles | Attach/detach a LiveKit track to a media element ref |
 | [`useRoomChat.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useRoomChat.ts) | Meetings + streams | Sends `rtc:join-room-chat` on activation / `rtc:leave-room-chat` on teardown, merges the paginated history query with live `rtc:chat-message` frames, re-joins the channel after a WS reconnect |
 | [`useStreamViewerCount.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useStreamViewerCount.ts) | Streams | Live count off `rtc:stream-viewer-joined`/`-left` frames; ignores frames without a numeric `viewerCount` |
+| [`useStreamViewers.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useStreamViewers.ts) | Streams | Live watcher list off the `streams/[slug]/viewers` BFF query, refetched on every joined/`-left` frame and on WS reopen (frames carry the count but not avatars); feeds `StreamViewerList` in both stream sidebars |
 | [`useWakeLock.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useWakeLock.ts) | Calls/meetings | `navigator.wakeLock` while connected (re-acquired on visibility change) — keeps the screen on during a call |
 | [`useMediaSessionActive.ts`](../../../../next-js-boilerplate/src/hooks/rtc/useMediaSessionActive.ts) | Calls | Media Session registration so the browser treats the call as active playback (prevents tab throttling from freezing call UI timers) |
 

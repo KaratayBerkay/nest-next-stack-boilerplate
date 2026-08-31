@@ -29,7 +29,7 @@ page state; the actual next request goes through
 
 - Mobile has an unused, byte-for-byte-equivalent port of this component
   (`views/find_friends/pagination_bar.dart`) — see
-  [MOB-005](../../../../issues.md#mob-005) and
+  `MOB-005` (resolved) and
   [mobile find-friends § Known issues](../../../../mobile/v1/find-friends/screen.md#known-issues).
   None of mobile's three real search implementations (Medium, Premium, and the shared search-results
   builder) paginate at all — they render every result in one `ListView.builder`.

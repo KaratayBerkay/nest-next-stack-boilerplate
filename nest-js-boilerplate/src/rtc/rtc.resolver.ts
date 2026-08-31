@@ -120,6 +120,24 @@ class RtcChatMessagesPage {
   hasMore: boolean;
 }
 
+// Same deliberate summary contract as MeetingParticipantSummary above (no
+// email, hideAvatar honored server-side, no raw livekitIdentity) — see
+// RtcStreamService.viewerSummaries, which is the whole implementation.
+@ObjectType()
+class StreamViewerSummary {
+  @Field()
+  userId: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => String, { nullable: true })
+  avatarUrl: string | null;
+
+  @Field()
+  joinedAt: Date;
+}
+
 // Shared shape for both goLive and joinStreamAsViewer — the two mutations
 // already imply which role the caller has (broadcaster vs. viewer), so
 // there's no separate `role` field the way JoinMeetingResult needs one.
@@ -310,6 +328,11 @@ export class RtcResolver {
   @ResolveField(() => Int)
   async viewerCount(@Parent() stream: LiveStream): Promise<number> {
     return this.streams.getViewerCount(stream);
+  }
+
+  @ResolveField(() => [StreamViewerSummary])
+  viewers(@Parent() stream: LiveStream) {
+    return this.streams.viewerSummaries(stream);
   }
 
   // ==================== Reporting ====================

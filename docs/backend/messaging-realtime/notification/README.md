@@ -80,7 +80,7 @@ not the raw Prisma row — deliberately, for two reasons: raw actor rows carry `
 (`reputation`, `storageQuotaBytes`) that crash `JSON.stringify`, and the DTO redacts the actor's
 `avatarUrl` to `null` when that actor has `hideAvatar` set (and isn't the recipient themself). ⚠ This
 redaction is **not** applied consistently everywhere the same underlying data is exposed — see
-[CROSS-020](../../../issues.md#cross-020).
+`CROSS-020` (resolved).
 
 ## Push notification wiring
 
@@ -113,13 +113,13 @@ of this page.
 
 | Kind | Source | Documented in |
 |---|---|---|
-| REST controller | **removed** — the dead controller [BE-012](../../../issues.md#be-012) flagged was deleted in commit `b98fac8a`; GraphQL is now the only client surface | [endpoints.md § REST](./endpoints.md#rest) |
+| REST controller | **removed** — the dead controller `BE-012` flagged was deleted in commit `b98fac8a`; GraphQL is now the only client surface | [endpoints.md § REST](./endpoints.md#rest) |
 | GraphQL resolver | [`notification.resolver.ts`](../../../../nest-js-boilerplate/src/notification/notification.resolver.ts) | [endpoints.md § GraphQL](./endpoints.md#graphql) |
 
 This module used to carry a parallel REST surface covering identical ground (list / unread-count /
 mark-read, same `NotificationService` calls) — it was **entirely dead**, and the cross-stack
 dead-code pass (commit `b98fac8a`) deleted the controller, resolving
-[BE-012](../../../issues.md#be-012). The dead-caller evidence that justified the deletion, kept for
+`BE-012` (resolved). The dead-caller evidence that justified the deletion, kept for
 the record: the frontend's BFF routes
 ([`app/api/notifications/*/route.ts`](../../../frontend/v1/notification/api.md)) all use
 `graphqlFetch` against the resolver below, never the REST paths, despite one of them
@@ -129,7 +129,7 @@ entirely, not a call into this REST controller. Flutter's
 [`api/server/notifications/*.dart`](../../../mobile/v1/notification/api.md) files are 100%
 `_dio.post('/graphql', ...)`, and the REST-shaped Dart constants
 (`ApiUrls.notifications`/`notificationsRead`/`notificationsUnreadCount`) have zero call sites
-anywhere in `flutter-boilerplate/lib`. See ⚠ [BE-012](../../../issues.md#be-012).
+anywhere in `flutter-boilerplate/lib`. See ⚠ `BE-012` (resolved).
 
 ## Depends on
 
@@ -146,16 +146,16 @@ anywhere in `flutter-boilerplate/lib`. See ⚠ [BE-012](../../../issues.md#be-01
 
 ## Known issues
 
-- ⚠ [CROSS-020](../../../issues.md#cross-020) — GraphQL `myNotifications` doesn't redact a `hideAvatar`
+- ⚠ `CROSS-020` (resolved) — GraphQL `myNotifications` doesn't redact a `hideAvatar`
   actor's `avatarUrl`, unlike the REST list endpoint and unlike this module's own realtime push DTO;
   live and exploitable on Flutter (its query selects and renders the field), latent on web (its
   query doesn't select the field today).
-- ⚠ [BE-012](../../../issues.md#be-012) — the entire REST controller has zero real callers on either
+- ⚠ `BE-012` (resolved) — the entire REST controller has zero real callers on either
   platform.
-- ⚠ [BE-013](../../../issues.md#be-013) — `messaging.controller.ts` and `messaging-ws.gateway.ts`
+- ⚠ `BE-013` (resolved) — `messaging.controller.ts` and `messaging-ws.gateway.ts`
   each inject `PushNotificationService` and never call it; the real DM-push call site is
   `messaging-dm.service.ts`'s own, separately-constructed copy of the same service.
-- ⚠ [CROSS-021](../../../issues.md#cross-021) — mobile push notifications (Firebase Cloud Messaging) are
+- ⚠ `CROSS-021` (resolved) — mobile push notifications (Firebase Cloud Messaging) are
   non-functional end-to-end: no backend route or mechanism can ever receive or act on an FCM device
   token. The backend-side half of the evidence is above (this module + `push-notification/`'s
   Web-Push-only send path); the app-side half is in

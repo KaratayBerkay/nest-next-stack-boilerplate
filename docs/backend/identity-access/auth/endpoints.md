@@ -85,7 +85,7 @@ tries `otplib.verify` against the user's stored (encrypted) secret first, then f
 [`verifyBackupCode`](../../../../nest-js-boilerplate/src/auth/auth-login.service.ts) (one-time-use
 `MfaBackupCode` row, hash-compared) if the TOTP check fails — **either accepted code type completes
 login**, the resolver/DTO don't distinguish which one was used beyond the 6-10 char length allowance.
-⚠ [CROSS-009](../../../issues.md#cross-009): the web login page's `MfaChallengeForm` has no UI to submit a backup code
+⚠ `CROSS-009` (resolved): the web login page's `MfaChallengeForm` has no UI to submit a backup code
 at all (TOTP/email only); Flutter's does.
 **Errors:** `401 EX_AUTH_MFA_EXPIRED` (challenge not found/already consumed) · `401
 EX_AUTH_MFA_NOT_ENABLED` · `401 EX_AUTH_MFA_INVALID_CODE`.
@@ -290,7 +290,7 @@ same resolver file and its output (the undo email) is what feeds the in-scope
 [undo-password-change page](../../../frontend/auth/undo-password-change/page.md) below. Mobile:
 [`ChangePassword` widget](../../../mobile/v1/settings/security/widgets/change-password.md)
 (`flutter-boilerplate/lib/views/security/change_password/page_content.dart`), documented as part of
-the settings/security vertical — see [CROSS-015](../../../issues.md#cross-015).
+the settings/security vertical — see `CROSS-015` (resolved).
 
 ### Undo a password change
 
@@ -335,7 +335,7 @@ selection can't carry (`hideAvatar` is `@HideField()`'d on `User`, so it's never
 ([`me.dart`](../../../../flutter-boilerplate/lib/api/server/auth/me.dart)) is called from
 [settings/account](../../../mobile/v1/settings/account/screen.md)'s avatar-upload success path (a
 best-effort session re-sync, out of scope for this pass to detail further) — ⚠ see
-[MOB-002](../../../issues.md#mob-002) for a second, unrelated provider that duplicates its name
+`MOB-002` (resolved) for a second, unrelated provider that duplicates its name
 without ever calling it.
 
 ## REST
@@ -350,7 +350,7 @@ separate `devices/` module, `DeviceController`. Neither is guarded at the class 
 **Response:** `string[]` — provider names from
 [`oauth-providers.ts`](../../../../nest-js-boilerplate/src/auth/oauth/oauth-providers.ts) (`google`,
 `github`, `x`, `linkedin`, `huggingface`, `twitch`) filtered to whichever have a client-id env var set.
-**Used by:** nobody. ⚠ [CROSS-008](../../../issues.md#cross-008) — both the web and mobile social-login buttons hardcode
+**Used by:** nobody. ⚠ `CROSS-008` (resolved) — both the web and mobile social-login buttons hardcode
 their own identical 6-provider list instead of fetching this.
 
 ### Start an OAuth flow
@@ -400,7 +400,7 @@ backend route redirects *to*); Mobile's is the `flutterboilerplate://oauth/callb
 **Response:** the stored [`OAuthProfileResult`](../../../../nest-js-boilerplate/src/auth/oauth/oauth-providers.ts)
 (`email`, `name`, `provider`, `providerAccountId`) — deletes it from Redis on read (single-use).
 **Errors:** generic `UnauthorizedException` if `state` is unknown/expired/already consumed.
-**Used by:** nobody in current frontend/mobile code. ⚠ [BE-005](../../../issues.md#be-005) — this method's own doc
+**Used by:** nobody in current frontend/mobile code. ⚠ `BE-005` (resolved) — this method's own doc
 comment says it "requires an authenticated session," but **no guard is applied** (no
 `@UseGuards`, no class-level guard either); it is also dead — `loginWithOAuth` retrieves the profile
 itself, server-to-server, via the same `OAuthService.retrieveProfile` this delegates to, so no current
@@ -438,12 +438,12 @@ native route, not a frontend-namespaced one — see
 - [BE-004](../../../issues.md#be-004) — `register`/`resetPassword`/`changePassword`'s
   `validatePasswordStrength()` length/variety checks are unreachable dead code; the DTO's
   class-validator rule is already stricter.
-- [BE-005](../../../issues.md#be-005) — `GET /auth/oauth/:provider/profile` has no auth guard
+- `BE-005` (resolved) — `GET /auth/oauth/:provider/profile` has no auth guard
   despite its own doc comment claiming one; also dead code.
-- [CROSS-008](../../../issues.md#cross-008) — `GET /auth/oauth/providers` is dead; both clients
+- `CROSS-008` (resolved) — `GET /auth/oauth/providers` is dead; both clients
   hardcode their own provider list instead.
-- [CROSS-009](../../../issues.md#cross-009) — the web MFA challenge form has no backup-code UI path;
+- `CROSS-009` (resolved) — the web MFA challenge form has no backup-code UI path;
   Flutter's does.
-- [MOB-002](../../../issues.md#mob-002) — Flutter's `currentUserProvider` is defined twice with
+- `MOB-002` (resolved) — Flutter's `currentUserProvider` is defined twice with
   incompatible types; one copy is dead.
 - Full findings with severity and evidence are filed in [`issues.md`](../../../issues.md).

@@ -68,24 +68,24 @@ auth-bootstrap dependency.
 
 ## Known issues affecting this vertical
 
-- [CROSS-012](../../../issues.md#cross-012) — `updateApiKey` has zero UI on mobile too (not just web) —
+- `CROSS-012` (resolved) — `updateApiKey` has zero UI on mobile too (not just web) —
   `grep -rn "updateApiKey" flutter-boilerplate/lib` returns nothing at all.
 - [CROSS-013](../../../issues.md#cross-013) — this vertical's api-keys sub-screen has the *exact* same
   dead-parallel-implementation pattern web's security page does: 3 whole widget files
   (`api_key_list.dart`, `create_api_key_form.dart`, `api_key_handlers.dart`) are fully built and
   completely unused — the real screen (`page_content.dart`) reimplements everything inline instead.
   See [api-keys/screen.md](./api-keys/screen.md#known-issues).
-- [MOB-006](../../../issues.md#mob-006) — same pattern again, twice more, in this vertical's own
+- `MOB-006` (resolved) — same pattern again, twice more, in this vertical's own
   new subpages: `account_avatar_section.dart` (Account) and `settings_select.dart` (General) are
   fully-built, never-imported widgets; both real screens reimplement the same UI inline. Four
   recurrences of this exact pattern now, across api-keys/security/account/general.
 - [CROSS-019](../../../issues.md#cross-019) — General's Language field is the only one of the two
   platforms where changing it actually re-renders the app in the new language; web only persists it.
   Timezone persists on both platforms but neither reads it back for real formatting.
-- ⚠ [CROSS-034](../../../issues.md#cross-034) — Billing's payment-methods UI is a rare reversal
+- ⚠ `CROSS-034` (resolved) — Billing's payment-methods UI is a rare reversal
   of this vertical's usual direction: mobile has a real, working add/remove/set-default flow;
   [web's equivalent](../../../frontend/v1/settings/billing/components/payment-methods.md) is read-only.
-- ⚠ [MOB-020](../../../issues.md#mob-020) — the dead-parallel-implementation pattern noted
+- ⚠ `MOB-020` (resolved) — the dead-parallel-implementation pattern noted
   above recurs a fifth time in Billing: `payment_methods.dart`'s `PaymentMethods` widget class is fully
   built and never imported — the real screen reimplements the same UI inline instead. See
   [billing/screen.md](./billing/screen.md#known-issues).

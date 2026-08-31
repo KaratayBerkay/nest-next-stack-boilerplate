@@ -35,7 +35,7 @@ Indirect only — `onAccept`/`onDecline` are wired by the parent
 
 ## Known issues
 
-- [MOB-007](../../../../issues.md#mob-007) — this widget can only ever render successfully for a
+- `MOB-007` (resolved) — this widget can only ever render successfully for a
   request object that survived `FriendRequest.fromJson`, and that parse **throws** for every real
   request the backend ever returns — see
   [../requests/screen.md § Known issues](../requests/screen.md#known-issues) for the full evidence.

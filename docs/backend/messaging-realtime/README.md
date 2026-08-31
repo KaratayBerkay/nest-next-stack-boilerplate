@@ -30,7 +30,7 @@ Both the WS transport and the Postgres-at-rest message body go through
 [`wire-crypto`](./wire-crypto/README.md) — two independent encryption layers (session-transport,
 storage-at-rest), both server-held-key, neither end-to-end. See
 [../../architecture.md § Wire encryption](../../architecture.md#wire-encryption--trusted-server-transport--at-rest-encryption)
-for why, and [../../issues.md#cross-004](../../issues.md#cross-004) for a doc-accuracy finding tied
+for why, and `CROSS-004` (resolved) for a doc-accuracy finding tied
 to this specific area.
 
 ## Used by
@@ -42,15 +42,15 @@ to this specific area.
 
 ## Notable findings from Phase 3
 
-[CROSS-020](../../issues.md#cross-020) (HIGH — the in-app notification feed leaks a `hideAvatar`
-user's real avatar, live and exploitable on mobile) and [CROSS-021](../../issues.md#cross-021)
+`CROSS-020` (resolved) (HIGH — the in-app notification feed leaks a `hideAvatar`
+user's real avatar, live and exploitable on mobile) and `CROSS-021` (resolved)
 (HIGH — mobile push notifications are non-functional end-to-end, built against Firebase Cloud
 Messaging while this backend only ever implemented Web Push) are the two most significant findings.
-[BE-016](../../issues.md#be-016) (HIGH — the VIP chat room has no backing database row; sending a
-message in it fails for every user who reaches it) and [BE-017](../../issues.md#be-017) (MED — an
+`BE-016` (resolved) (HIGH — the VIP chat room has no backing database row; sending a
+message in it fails for every user who reaches it) and `BE-017` (resolved) (MED — an
 attachment-ownership check gap in the room/DM message-send path) round out the backend side.
 [CROSS-024](../../issues.md#cross-024) (chat-room has no reply-to or delete-message capability at all,
-structurally, unlike 1:1 messaging) and [CROSS-027](../../issues.md#cross-027)/[CROSS-028](../../issues.md#cross-028)
+structurally, unlike 1:1 messaging) and `CROSS-027` (resolved)/`CROSS-028` (resolved)
 (mobile never surfaces server-generated thumbnails, and has no attachment-gallery feature at all —
 resolving a "verify in Phase 3" flag left open since Phase 0) are the standout parity gaps. Full list:
 [issues.md](../../issues.md).

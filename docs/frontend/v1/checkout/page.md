@@ -37,7 +37,7 @@ delay (2s immediate, 2s cancel, 5s scheduled — the longer delay gives the user
 
 ## ⚠ Paid↔paid tier changes are broken on web
 
-See [CROSS-030](../../../issues.md#cross-030) for the full write-up (evidence, exact call
+See `CROSS-030` (resolved) for the full write-up (evidence, exact call
 chain, severity). Summary: [`DowngradeSection`](./components/downgrade-section.md)'s submit handler
 calls `subscribe(targetTier)` with **no `paymentMethodId` and no `currentTier`**. The BFF route this
 hits ([`app/api/billing/subscribe/route.ts`](../../../../next-js-boilerplate/src/app/api/billing/subscribe/route.ts))
@@ -80,7 +80,7 @@ handler through to the database write:
 4. The `invoice.paid` webhook ([stripe.md](../../../backend/billing-usage/billing/stripe.md#invoicepaid))
    is **not** what activates the subscription — it's purely a later reconciliation step: it corrects
    the first ledger row's placeholder `amount: 0` to the real charged amount (see
-   [BE-020](../../../issues.md#be-020)), and it's what actually clears `pendingTier` once a
+   `BE-020` (resolved)), and it's what actually clears `pendingTier` once a
    *scheduled* paid↔paid change eventually bills. `mySubscription`'s `tier`/`periodStart`/`periodEnd`
    are all set synchronously by the mutation itself, never dependent on the webhook having fired.
 
@@ -88,7 +88,7 @@ handler through to the database write:
 the [billing-history](../../../backend/billing-usage/billing/endpoints.md#get-my-billing-history)
 entry for that specific charge under-reports `$0.00` with no invoice link until the webhook
 eventually reconciles it (or forever, if it never does) — see
-[BE-020](../../../issues.md#be-020) — and a **scheduled** paid↔paid change's `pendingTier`
+`BE-020` (resolved) — and a **scheduled** paid↔paid change's `pendingTier`
 banner never clears until the renewal invoice's webhook lands, which is expected/inherent (there's
 nothing to reconcile *to* until Stripe actually bills the new price).
 
@@ -120,14 +120,14 @@ No dedicated hook file exists for this vertical (same as [plans](../plans/page.m
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-029](../../../issues.md#cross-029) (HIGH) — unreachable when logged out, same as
+- ⚠ `CROSS-029` (resolved) (HIGH) — unreachable when logged out, same as
   [plans](../plans/page.md).
-- ⚠ [CROSS-030](../../../issues.md#cross-030) (HIGH) — see above; paid↔paid changes broken on
+- ⚠ `CROSS-030` (resolved) (HIGH) — see above; paid↔paid changes broken on
   web only.
 - ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — [`PlanSummaryCard`](./components/plan-summary-card.md)'s
   feature bullets are a third, unlocalized, independently-hardcoded copy of tier feature copy.
 - ⚠ [BE-019](../../../issues.md#be-019) (LOW) — no UI recovery path for a Stripe
   `authentication_required` (3DS/SCA) decline on the actual subscription charge.
-- ⚠ [FE-014](../../../issues.md#fe-014) (LOW) — the `subscribe` BFF route publishes a
+- ⚠ `FE-014` (resolved) (LOW) — the `subscribe` BFF route publishes a
   Kafka event unconditionally mislabeled `billing.subscription.upgraded`, even for a cancel/downgrade
   submitted from this same page.

@@ -56,7 +56,7 @@ whole app: **zero importers**. [`page_content.dart`](../screen.md) imports
 `components/ui/stripe_card_form.dart` directly, bypassing this re-export entirely. Not broken (nothing
 depends on it, so its existence changes no behavior) but dead weight — a barrel file with no
 consumer, left behind rather than genuinely wired in. See
-[MOB-019](../../../../issues.md#mob-019).
+`MOB-019` (resolved).
 
 ## Calls
 

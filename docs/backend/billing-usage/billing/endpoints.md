@@ -8,7 +8,7 @@ Webhook detail: [stripe.md](./stripe.md)
 Resolver: [`billing.resolver.ts`](../../../../nest-js-boilerplate/src/billing/billing.resolver.ts) ·
 **class-level `SessionAuthGuard`** — every operation below requires a full logged-in session, with no
 exception (see [README.md § What this module owns](./README.md#what-this-module-owns) and ⚠
-[CROSS-029](../../../issues.md#cross-029)). All service logic is delegated to
+`CROSS-029` (resolved)). All service logic is delegated to
 [`BillingService`](../../../../nest-js-boilerplate/src/billing/billing.service.ts) — a single flat
 service, not a facade over sub-services (contrast [auth](../../identity-access/auth/endpoints.md)).
 
@@ -49,7 +49,7 @@ mutation resolves normally and the caller must check `result.success`. ⚠
 distinguished from a generic decline; see [stripe.md § Known issues](./stripe.md#known-issues).
 **Used by:** Frontend [checkout page](../../../frontend/v1/checkout/page.md) (`StripeCardForm` for
 FREE→paid; `DowngradeSection` for paid↔paid and paid→FREE — see ⚠
-[CROSS-030](../../../issues.md#cross-030), the paid↔paid path is currently broken **on web
+`CROSS-030` (resolved), the paid↔paid path is currently broken **on web
 only**, blocked by the Next.js BFF before this mutation is ever reached); Mobile
 [checkout screen](../../../mobile/v1/checkout/screen.md) (`_handleSubscribe` for FREE→paid,
 `_handleChange` for paid↔paid/paid→FREE — calls this mutation directly, unaffected by
@@ -115,7 +115,7 @@ query resolves, not a fallback source of truth — confirmed by reading both cal
 [frontend plans page.md](../../../frontend/v1/plans/page.md) and
 [mobile plans screen.md](../../../mobile/v1/plans/screen.md)).
 **Behind the same guard as everything else in this resolver** — see ⚠
-[CROSS-029](../../../issues.md#cross-029): there is no way for a not-yet-authenticated visitor
+`CROSS-029` (resolved): there is no way for a not-yet-authenticated visitor
 to fetch a real price from this backend at all, anywhere, today.
 **Used by:** Frontend [plans page](../../../frontend/v1/plans/page.md),
 [checkout page](../../../frontend/v1/checkout/page.md); Mobile
@@ -134,7 +134,7 @@ GraphQL-representable.
 zero-amount `ADJUSTMENT` rows written for scheduled cancellations/tier changes are deliberately
 excluded here (they're internal bookkeeping, surfaced to the user via `pendingTier`/
 `cancelAtPeriodEnd` on `mySubscription` instead, not as a fake "invoice"). See ⚠
-[BE-020](../../../issues.md#be-020) — the first `FEE` row for a brand-new subscription is
+`BE-020` (resolved) — the first `FEE` row for a brand-new subscription is
 written with `amount: 0` synchronously by `subscribeToPlan` itself and only corrected to the real
 charged amount once the `invoice.paid` webhook reconciles it; if that webhook is delayed or never
 arrives, this query keeps returning `$0.00` (and no `stripeInvoiceUrl`) for a charge that genuinely
@@ -245,12 +245,12 @@ mobile code is aware this endpoint exists.
 
 ## Known issues
 
-- ⚠ [CROSS-029](../../../issues.md#cross-029) — `planPrices` (and every other query/mutation
+- ⚠ `CROSS-029` (resolved) — `planPrices` (and every other query/mutation
   here) requires a full session; no logged-out visitor can ever see real pricing data through this
   resolver.
-- ⚠ [CROSS-030](../../../issues.md#cross-030) — `subscribeToPlan`'s paid↔paid path is unreachable
+- ⚠ `CROSS-030` (resolved) — `subscribeToPlan`'s paid↔paid path is unreachable
   from the **web** checkout page specifically (a frontend BFF bug, not a bug in this resolver/service
   — confirmed working when called directly, as mobile does).
-- ⚠ [BE-019](../../../issues.md#be-019), [BE-020](../../../issues.md#be-020) —
+- ⚠ [BE-019](../../../issues.md#be-019), `BE-020` (resolved) —
   see [stripe.md § Known issues](./stripe.md#known-issues).
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

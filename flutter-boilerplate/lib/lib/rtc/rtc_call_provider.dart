@@ -271,6 +271,13 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
     String roomName,
     int? maxDurationMinutes, {
     RtcCallPeer? peer,
+    // Snapshot recovery only — the live rtc:accepted push's client already
+    // knows the call type from rtc:invite/startCall. Without this, a
+    // recovered audio call rendered the video UI (state default is true).
+    bool? hasVideo,
+    // Server-side accept time; seeds the timer so a relaunch/recovery
+    // continues the readout instead of restarting at 0:00.
+    DateTime? acceptedAt,
   }) {
     final validPhase = state.phase == RtcCallPhase.outgoingRinging ||
         state.phase == RtcCallPhase.incomingRinging;
@@ -282,11 +289,13 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       phase: RtcCallPhase.connected,
       callId: callId,
       peer: peer,
+      hasVideo: hasVideo,
       livekit: RtcLiveKitInfo(
         token: token,
         roomName: roomName,
         maxDurationMinutes: maxDurationMinutes,
       ),
+      connectedAt: acceptedAt ?? DateTime.now(),
       actionPending: null,
     );
     logRtcEvent(
@@ -379,6 +388,10 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
                 name: snapshot.peerName ?? '',
                 avatarUrl: snapshot.peerAvatarUrl,
               )
+            : null,
+        hasVideo: snapshot.hasVideo,
+        acceptedAt: snapshot.acceptedAt != null
+            ? DateTime.tryParse(snapshot.acceptedAt!)
             : null,
       );
     }

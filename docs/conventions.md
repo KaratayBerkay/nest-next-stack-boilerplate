@@ -105,7 +105,7 @@ hop** — confirmed false for the `messages` vertical (Phase 0): every one of it
 matches the **backend's own native controller route** exactly (`/api/friends`, not the frontend
 BFF's namespaced `/api/messages/friends`) — i.e. `apiBaseUrl` points at the NestJS backend directly,
 and *neither* call shape involves the Next.js app at all for this vertical. See
-[issues.md#cross-007](./issues.md#cross-007) — an earlier research pass in this same effort
+`CROSS-007` (resolved) — an earlier research pass in this same effort
 mis-classified this as "REST-via-BFF" without checking whether the REST path matched the backend's
 native route or the frontend's BFF-namespaced one; that framing is retracted here and must not be
 assumed for un-verified verticals either.
@@ -142,8 +142,8 @@ sentence inside a `page.md` will never get triaged.
 
 This repo previously had hand-maintained reference docs (`AUTH.md`, `E2EE.md`, `REALTIME.md`, ADRs)
 that were often detailed and well-written — but two were caught, while writing this pilot, actively
-describing removed systems (see [issues.md](./issues.md#cross-004) and
-[issues.md](./issues.md#cross-005)). Treat any surviving notes, comments, or memory of those docs as
+describing removed systems (see issues.md (resolved) and
+issues.md (resolved)). Treat any surviving notes, comments, or memory of those docs as
 a **draft lead only**: verify every non-trivial claim against the actual current source file before
 writing it into a new doc. A doc that matches source today drifts the moment source changes again —
 these docs are only as good as the next person's discipline in re-verifying them, not a one-time

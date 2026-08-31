@@ -39,7 +39,7 @@ relying on the guard's cookie fallback) → this module's `subscribePush`/`unsub
 
 ## Known issues
 
-- ⚠ [CROSS-021](../../../issues.md#cross-021): mobile's push-notification integration is
+- ⚠ `CROSS-021` (resolved): mobile's push-notification integration is
   non-functional end-to-end — it targets Firebase Cloud Messaging, which nothing in this module (or
   anywhere in the backend) implements; this module only ever speaks Web Push. See
   [notification/README.md § Known issues](../notification/README.md#known-issues) for the full,

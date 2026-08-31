@@ -15,7 +15,7 @@ Purely presentational — reads `post.whoReacted` and renders `null` if it's emp
 ## ⚠ Currently always renders nothing
 
 Same root cause as [ReactionBreakdown](./reaction-breakdown.md) —
-[FE-009](../../../../issues.md#fe-009): `post.whoReacted` is never populated because `POST_QUERY`
+`FE-009` (resolved): `post.whoReacted` is never populated because `POST_QUERY`
 never requests it, so this component's `if (!post.whoReacted || post.whoReacted.length === 0) return
 null;` guard is always true in practice, even for a Premium-tier viewer on a heavily-reacted post.
 The backend field is real (`@ResolveField`, `@MinTier(PREMIUM)` — see

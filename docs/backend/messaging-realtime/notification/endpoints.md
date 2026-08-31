@@ -7,7 +7,7 @@ Module: [README.md](./README.md) · Source: [`nest-js-boilerplate/src/notificati
 **Removed.** This module previously had a REST controller (`notification.controller.ts`, base path
 `/api`: `GET /api/notifications`, `GET /api/notifications/unread-count`,
 `POST /api/notifications/read`). Every endpoint on it had **zero callers on either platform** —
-exactly what [BE-012](../../../issues.md#be-012) flagged — and the controller was deleted outright
+exactly what `BE-012` (resolved) flagged — and the controller was deleted outright
 in the cross-stack dead-code pass (commit `b98fac8a`). The module is now **GraphQL-only**; the
 equivalent operations are all below.
 
@@ -30,7 +30,7 @@ to `[1, 100]`, default 20.
 **`Notification.actor`** is the raw generated `User` GraphQL type
 ([`@generated/notification/notification.model.ts`](../../../../nest-js-boilerplate/src/@generated/notification/notification.model.ts)),
 exposed via the Prisma `include: {actor: true}` relation with **no field remapping**. ⚠
-[CROSS-020](../../../issues.md#cross-020): unlike the REST list endpoint above, and unlike this module's own
+`CROSS-020` (resolved): unlike the REST list endpoint above, and unlike this module's own
 realtime push DTO (see
 [README.md § Live delivery over realtime](./README.md#live-delivery-over-realtime)), nothing on this
 path redacts `avatarUrl` for an actor with `hideAvatar` set.
@@ -51,7 +51,7 @@ Same Redis-snapshot-first logic as the REST entry above.
 **Used by:** Frontend [notification page](../../../frontend/v1/notification/page.md) and
 `NotificationDropdown`'s bell badge; Mobile
 [notification screen](../../../mobile/v1/notification/screen.md) and `v1_header.dart`'s bell badge.
-⚠ Also the accidental target of [MOB-012](../../../issues.md#mob-012) — a mobile file named and
+⚠ Also the accidental target of `MOB-012` (resolved) — a mobile file named and
 positioned for a different purpose (fetching the DM-unread count) queries this same operation
 instead of a DM-specific one.
 
@@ -84,10 +84,10 @@ open — see ⚠ [CROSS-023](../../../issues.md#cross-023) for this parity gap.
 
 ## Known issues
 
-- [CROSS-020](../../../issues.md#cross-020) — `myNotifications`'s `actor.avatarUrl` isn't `hideAvatar`-
+- `CROSS-020` (resolved) — `myNotifications`'s `actor.avatarUrl` isn't `hideAvatar`-
   redacted; live on mobile.
-- [BE-012](../../../issues.md#be-012) — the whole REST surface above is dead.
-- [MOB-012](../../../issues.md#mob-012) — a mobile file misnamed/miswired to hit
+- `BE-012` (resolved) — the whole REST surface above is dead.
+- `MOB-012` (resolved) — a mobile file misnamed/miswired to hit
   `unreadNotificationCount` instead of a DM-count operation.
 - [CROSS-023](../../../issues.md#cross-023) — web auto-marks-all-read on page open; mobile doesn't.
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

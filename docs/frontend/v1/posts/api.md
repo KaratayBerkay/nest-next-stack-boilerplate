@@ -118,7 +118,7 @@ from whether the extra row came back — the same pattern the page's own SSR fet
 **Source:** [`app/api/posts/route.ts` § `POST`](../../../../next-js-boilerplate/src/app/api/posts/route.ts) —
 CSRF-echoed (`csrfEchoHeaders()`, `403` if missing/invalid), validates `title`/`content` present
 before calling the backend, forwards `coverImage`/`imageUrl` through unchanged if present in the
-request body (though see [BE-011](../../../issues.md#be-011) /
+request body (though see `BE-011` (resolved) /
 [post/README.md](../../../backend/social-content/post/README.md#what-this-module-owns): no real
 caller ever sends `coverImage`).
 

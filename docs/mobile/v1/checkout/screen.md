@@ -52,7 +52,7 @@ There is **no intermediate validation layer** between this call and the backend 
 equivalent of web's `isUpgrade`/`isReSelection` gate — so a genuine BASIC↔MEDIUM (or any other
 paid↔paid) change submitted from this screen reaches and correctly exercises the backend's
 deferred-schedule logic. This is the mobile side of
-[CROSS-030](../../../issues.md#cross-030): the *feature* works identically on both platforms at
+`CROSS-030` (resolved): the *feature* works identically on both platforms at
 the backend, but web has a self-inflicted frontend bug blocking it that mobile simply has no
 equivalent code path to reproduce.
 
@@ -85,13 +85,13 @@ for why one of the remaining two is folded into another widget's doc rather than
 
 ## Known issues affecting this screen
 
-- ⚠ [CROSS-030](../../../issues.md#cross-030) (HIGH, web-only) — see above; documented here as
+- ⚠ `CROSS-030` (resolved) (HIGH, web-only) — see above; documented here as
   the "working" side of the cross-platform comparison.
-- ⚠ [MOB-018](../../../issues.md#mob-018) (INFO) —
+- ⚠ `MOB-018` (resolved) (INFO) —
   [`PlanSummaryCard`](./widgets/plan-summary-card.md)'s `features` param is dead from this screen.
-- ⚠ [MOB-019](../../../issues.md#mob-019) (INFO) — `views/checkout/stripe_card_form.dart`
+- ⚠ `MOB-019` (resolved) (INFO) — `views/checkout/stripe_card_form.dart`
   is a zero-importer re-export shim.
-- ⚠ [CROSS-032](../../../issues.md#cross-032) (MED) — this app never handles the
+- ⚠ `CROSS-032` (resolved) (MED) — this app never handles the
   `tier-changed` WS frame the backend pushes right after a successful subscribe (see
   [backend billing/README.md § Making a tier change take effect immediately](../../../backend/billing-usage/billing/README.md#making-a-tier-change-take-effect-immediately)).
   Not a correctness problem for *this* screen specifically (it reads the fresh tier via

@@ -30,5 +30,5 @@ None — see [../README.md](../README.md) and [../api.md](../api.md).
 
 ## Known issues
 
-- [CROSS-016](../../../../issues.md#cross-016) — this whole vertical is static demo content on web; mobile's
+- `CROSS-016` (resolved) — this whole vertical is static demo content on web; mobile's
   same-named screen is a real, live feature. See [../README.md](../README.md) for the full comparison.

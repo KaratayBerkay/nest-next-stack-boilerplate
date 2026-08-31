@@ -53,7 +53,7 @@ those pointers resolve to.
 - [BE-023](../../issues.md#be-023) (LOW) — `VaultService` (`vault/vault.service.ts`, `@Global()`
   provided) is never injected anywhere in the app; the only vault-secret path actually exercised is
   the unrelated standalone `loadVaultSecrets()` function called directly from `main.ts`.
-- [CROSS-036](../../issues.md#cross-036) (INFO) — `backend/README.md`'s "demo-gated-but-live" callout
+- `CROSS-036` (resolved) (INFO) — `backend/README.md`'s "demo-gated-but-live" callout
   previously said four directories; a fifth (`exception-filters/`, the global `APP_FILTER`) was found
   verifying this phase — corrected here and in [_reference/demo-gated-but-live.md](../_reference/demo-gated-but-live.md).
 - Full list: [issues.md](../../issues.md).

@@ -77,7 +77,7 @@ NotificationPageContent
   [backend/notification/README.md § Who creates a notification](../../../backend/messaging-realtime/notification/README.md#who-creates-a-notification-and-when))
   no navigation happens, only the mark-read. ⚠ This is **not** the same target logic the push
   notification's service-worker click handler uses for the same notification kinds — see
-  [CROSS-022](../../../issues.md#cross-022).
+  `CROSS-022` (resolved).
 - **Two swipe gestures, different purposes**: `useYSwipeGesture` (on the list container) is
   click/touch-drag-to-scroll, not pull-to-refresh; `useSwipeGesture` (page-level, `onSwipeLeft`)
   navigates back to `/v1/${lang}/feed` on a leftward swipe, with a live transform/opacity
@@ -105,10 +105,10 @@ NotificationPageContent
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-022](../../../issues.md#cross-022) — the in-app click target above and the push notification's
+- `CROSS-022` (resolved) — the in-app click target above and the push notification's
   service-worker click target disagree for the same notification kinds.
 - ⚠ [CROSS-023](../../../issues.md#cross-023) — this page auto-marks every notification read on first load;
   mobile requires an explicit tap.
-- ⚠ [FE-011](../../../issues.md#fe-011) — a second, dead implementation of mark-read
+- ⚠ `FE-011` (resolved) — a second, dead implementation of mark-read
   (`useMarkNotificationRead`) sits unused alongside the real one this page calls — see
   [hooks.md](./hooks.md).

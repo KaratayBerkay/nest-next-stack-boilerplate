@@ -64,7 +64,7 @@ NestJS backend only).
 ## Known issues affecting this screen
 
 - ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — see above.
-- ⚠ [CROSS-032](../../../issues.md#cross-032) (MED) — `userTierProvider` (the value this
+- ⚠ `CROSS-032` (resolved) (MED) — `userTierProvider` (the value this
   screen's "Current Plan"/"Included" badges are computed from) never updates live from the
   `tier-changed` WS frame the backend pushes on a tier change — this app has no handler for that
   frame anywhere (see

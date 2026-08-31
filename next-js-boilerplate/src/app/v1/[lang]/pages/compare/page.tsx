@@ -4,7 +4,7 @@ import ComparePageContent from "@/views/pages/compare/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ComparePage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <ComparePageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <ComparePageContent initialTab={tab} initialFull={full === "1"} />;
 }

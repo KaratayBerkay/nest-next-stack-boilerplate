@@ -46,7 +46,7 @@ as the exact call site, not independently detailed. This screen
 (`change_password/page_content.dart`, documented in full at
 [widgets/change-password.md](./widgets/change-password.md)) is the caller `auth/endpoints.md`'s own
 `changePassword` entry links to — a coordination gap between the two concurrent passes that wrote
-these docs, resolved; see [CROSS-015](../../../../issues.md#cross-015).
+these docs, resolved; see `CROSS-015`.
 
 ## Not called from here
 

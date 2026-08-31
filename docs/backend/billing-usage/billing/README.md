@@ -34,7 +34,7 @@ sub-service split. It composes four *other* real modules directly instead:
 [`SessionAuthGuard`](../../identity-access/auth/README.md#sessionauthguard--validation-order) — every
 single query and mutation in the module, including `planPrices`, requires a full logged-in session.
 There is no `@Public()`-style exception anywhere in this resolver. See ⚠
-[CROSS-029](../../../issues.md#cross-029) — this is one half of why the marketing pricing page
+`CROSS-029` (resolved) — this is one half of why the marketing pricing page
 can't show real prices to a logged-out visitor.
 
 The only REST surface is [`StripeWebhookController`](../../../../nest-js-boilerplate/src/billing/stripe-webhook.controller.ts)
@@ -140,7 +140,7 @@ is silently dropped. Backend enforcement is unaffected either way (`SessionAuthG
 rbac token from the real Redis-stored tier on every request, not from client state), but a mobile
 session left open across a tier change (an admin edit, or a scheduled paid↔paid change reconciling
 via webhook while the app is in the foreground) shows stale tier-gated UI until the app is restarted
-or the session naturally re-syncs. See ⚠ [CROSS-032](../../../issues.md#cross-032).
+or the session naturally re-syncs. See ⚠ `CROSS-032` (resolved).
 
 ## Wallet — a ledger anchor, not a feature
 
@@ -162,7 +162,7 @@ scheduling/cancellation bookkeeping rows), only ever sets `fromWalletId` (never 
 write path populates), and never reads or writes `.balance` anywhere. Confirmed via
 `grep -rn "\.balance\b"` and `grep -rn "toWalletId" ` across all non-generated backend source: zero
 real (non-spec, non-`@generated`) hits beyond that one defensive `OR` clause. See ⚠
-[BE-021](../../../issues.md#be-021) — this is forward-provisioned schema with no feature
+`BE-021` (resolved) — this is forward-provisioned schema with no feature
 built on top of it, the same pattern as [BE-008](../../../issues.md#be-008) (`MfaFactor`'s unused
 WebAuthn columns) and [CROSS-002](../../../issues.md#cross-002) (`Organization`/`Team`/`Project` with
 no API surface). Every real `Wallet`/`WalletTransaction` reference in the backend lives in exactly
@@ -194,7 +194,7 @@ static tier→price map.
 
 | App | Page / Screen |
 |---|---|
-| Frontend | [plans page](../../../frontend/v1/plans/page.md), [checkout page](../../../frontend/v1/checkout/page.md) — `subscribeToPlan`, `mySubscription`, `planPrices`, `createBillingSetupIntent`. The [pricing redirect page](../../../frontend/pricing/page.md) itself calls none of these — it client-redirects to the plans page before any fetch happens (see ⚠ [CROSS-029](../../../issues.md#cross-029)) |
+| Frontend | [plans page](../../../frontend/v1/plans/page.md), [checkout page](../../../frontend/v1/checkout/page.md) — `subscribeToPlan`, `mySubscription`, `planPrices`, `createBillingSetupIntent`. The [pricing redirect page](../../../frontend/pricing/page.md) itself calls none of these — it client-redirects to the plans page before any fetch happens (see ⚠ `CROSS-029` (resolved)) |
 | Mobile | [plans screen](../../../mobile/v1/plans/screen.md), [checkout screen](../../../mobile/v1/checkout/screen.md) — same four operations, called directly (no BFF) |
 | Frontend | [settings/billing page](../../../frontend/v1/settings/billing/page.md) (Phase 4b) — `myBillingHistory`, `myPaymentMethods` (read-only — `removePaymentMethod`/`setDefaultPaymentMethod` are wired but unused, see that page's own known issues), `myBillingAddress`, `upsertBillingAddress`, `cancelSubscription`, and the "re-select current tier" escape hatch of `subscribeToPlan` |
 | Mobile | [settings/billing screen](../../../mobile/v1/settings/billing/screen.md) (Phase 4b) — same operations, `removePaymentMethod`/`setDefaultPaymentMethod` genuinely used here (unlike web) |
@@ -204,16 +204,16 @@ Per-endpoint "Used by" detail (including which specific component calls which op
 
 ## Known issues
 
-- ⚠ [CROSS-029](../../../issues.md#cross-029) (with frontend) — no code path lets a logged-out
+- ⚠ `CROSS-029` (resolved) (with frontend) — no code path lets a logged-out
   visitor see real tier/pricing data: this resolver's class-level `SessionAuthGuard` has no exception
   for `planPrices`, and the frontend's own public pricing route never reaches a page that could call
   it anyway.
-- ⚠ [BE-018](../../../issues.md#be-018), [BE-019](../../../issues.md#be-019),
-  [BE-020](../../../issues.md#be-020) — Stripe webhook throttling, 3DS/SCA handling, and
+- ⚠ `BE-018` (resolved), [BE-019](../../../issues.md#be-019),
+  `BE-020` (resolved) — Stripe webhook throttling, 3DS/SCA handling, and
   ledger-accuracy-pending-reconciliation gaps; see [stripe.md § Known issues](./stripe.md#known-issues).
-- ⚠ [BE-021](../../../issues.md#be-021) — `Wallet`/`WalletTransaction`'s balance/transfer
+- ⚠ `BE-021` (resolved) — `Wallet`/`WalletTransaction`'s balance/transfer
   surface is unused; see [§ Wallet](#wallet--a-ledger-anchor-not-a-feature) above.
-- ⚠ [CROSS-032](../../../issues.md#cross-032) — mobile never handles the `tier-changed` WS
+- ⚠ `CROSS-032` (resolved) — mobile never handles the `tier-changed` WS
   frame this module pushes on every live tier change; see
   [§ Making a tier change take effect immediately](#making-a-tier-change-take-effect-immediately) above.
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

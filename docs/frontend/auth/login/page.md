@@ -64,5 +64,5 @@ their own doc (the third, `LoginForm` above, is a trivial dispatcher folded into
 - ⚠ No UI path to submit an MFA **backup code** — `MfaChallengeForm` only ever renders a 6-digit
   `InputOTP` for TOTP/email codes, even though the backend's `verifyLoginMfa` accepts a backup code
   interchangeably (6-10 chars). Flutter's login screen has an explicit "use a backup code instead"
-  toggle with no web equivalent. Filed as [CROSS-009](../../../issues.md#cross-009) — see
+  toggle with no web equivalent. Filed as `CROSS-009` (resolved) — see
   [mfa-challenge-form.md](./components/mfa-challenge-form.md#known-issues) for the full evidence.

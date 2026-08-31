@@ -25,11 +25,11 @@ Features come from
 `TIER_FEATURES` — a plain hardcoded `Record<string, string[]>`, always English, never routed through
 `useMessages()`. This is textually **different** copy from both the
 [plans page](../../plans/page.md)'s i18n-driven (and separately mis-mapped, see
-[FE-013](../../../../issues.md#fe-013)) feature lists and mobile's own inline Dart feature
+`FE-013` (resolved)) feature lists and mobile's own inline Dart feature
 lists. Three independently-maintained tier-feature-copy sources across the app (four counting the
 i18n bundle's own `featuresPro`/`featuresPremium` split) is the drift risk tracked as
 [CROSS-031](../../../../issues.md#cross-031) — precedent:
-[issues.md#cross-008](../../../../issues.md#cross-008) (hardcoded OAuth provider lists, same shape).
+`CROSS-008` (resolved) (hardcoded OAuth provider lists, same shape).
 
 ## Calls
 

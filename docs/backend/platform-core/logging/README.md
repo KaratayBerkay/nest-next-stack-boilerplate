@@ -66,13 +66,13 @@ instance once `main.ts` installs it. Not enumerated per-caller.
 
 ## Known issues
 
-- [CROSS-037](../../../issues.md#cross-037) (INFO) — both `logging.module.ts` and `request-context.ts` carry
+- `CROSS-037` (resolved) (INFO) — both `logging.module.ts` and `request-context.ts` carry
   doc comments pointing at `docs/backend/research/logger.md` ("See `docs/backend/research/logger.md`
   for why the built-in logger was rejected…" / "…the correlation gap called out in
   `docs/backend/research/logger.md`"). That file doesn't exist in the current repo — it was one of the
   pre-rewrite docs removed in this effort's Phase 0 commit (confirmed: `git log --all -- docs/backend/research/logger.md`
   shows no history beyond the initial commit and the Phase 0 rewrite commit that deleted the whole old
-  `docs/` tree). Unlike [CROSS-004](../../../issues.md#cross-004)/[CROSS-005](../../../issues.md#cross-005)
+  `docs/` tree). Unlike `CROSS-004` (resolved)/`CROSS-005` (resolved)
   (a surviving doc actively misleading a reader about current behavior), this is just a dangling
   pointer inside a code comment — low-stakes, but worth a maintainer knowing the referenced rationale
   doc no longer exists rather than chasing a 404.

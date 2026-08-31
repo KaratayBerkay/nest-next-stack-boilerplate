@@ -68,7 +68,7 @@ internally, independent of the null `onRefresh` callback.
 Contrast with web's equivalent [PostHeader](../../../../frontend/v1/feed/components/post-header.md),
 where `PostCard.tsx` wires `onEditStart`/`onDeleteConfirm`/`onRefresh` correctly — this is a
 mobile-only regression, not a cross-platform parity gap present on both sides. See
-[issues.md](../../../../issues.md) — filed as [MOB-011](../../../../issues.md#mob-011).
+[issues.md](../../../../issues.md) — filed as `MOB-011` (resolved).
 
 ## Calls
 

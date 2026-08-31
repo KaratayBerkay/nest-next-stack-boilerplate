@@ -28,7 +28,7 @@ copy-to-clipboard button (web's equivalent has one) — the user has to long-pre
 
 ## Behavior notes vs. web
 
-- No enabled/disabled toggle or rename action anywhere — same [CROSS-012](../../../../issues.md#cross-012)
+- No enabled/disabled toggle or rename action anywhere — same `CROSS-012` (resolved)
   gap as web; the `Badge` here is exactly as read-only as web's.
 - The "created key" dialog has no copy button (see above) — a small UX gap worth noting if this screen
   gets touched again, not severe enough for its own `issues.md` row.

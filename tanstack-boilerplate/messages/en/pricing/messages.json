@@ -1,0 +1,36 @@
+{
+  "heading": "Pricing",
+  "subtitle": "Choose the plan that fits your needs.",
+  "free": "Free",
+  "currentPlan": "Current plan",
+  "included": "Included",
+  "upgrade": "Upgrade",
+  "getStarted": "Get started",
+  "guestSubtitle": "Choose the plan that fits your needs. Sign up to get started — no credit card required for Free.",
+  "featuresFree": ["Basic access", "Community support"],
+  "featuresBasic": [
+    "Everything in Free",
+    "Priority support",
+    "Basic analytics"
+  ],
+  "featuresMedium": [
+    "Everything in Basic",
+    "Post stats & reaction breakdown",
+    "VIP room access",
+    "Suggested friends"
+  ],
+  "featuresPremium": [
+    "Everything in Medium",
+    "Who-reacted list",
+    "Export data",
+    "Crown badge",
+    "Dedicated support"
+  ],
+  "priceFree": "$0",
+  "priceBasic": "$9.99/mo",
+  "priceMedium": "$19.99/mo",
+  "pricePremium": "$49.99/mo",
+  "changePending": "Change pending",
+  "planChangeScheduled": "Your plan will change to {tier} on {date}.",
+  "downgrade": "Downgrade"
+}

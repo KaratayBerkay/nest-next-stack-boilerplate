@@ -7,7 +7,7 @@ bypassing the `DEMO_MODULES` gate entirely — that's genuinely live in every en
 included. [backend/README.md](../README.md) previously said "four" here, naming four of the five in
 prose (gRPC, the complexity plugin, the rate-limit guard, the perf interceptor); verifying each against
 source this phase found a fifth real instance (`exception-filters/`) that wasn't previously named — see
-[CROSS-036](../../issues.md#cross-036) and the corrected count in [backend/README.md](../README.md).
+`CROSS-036` (resolved) and the corrected count in [backend/README.md](../README.md).
 
 For each, this doc asks the same question BE-001 already answered for gRPC: is the always-on file
 **intentional** (a deliberate, if confusingly-located, piece of core infrastructure), or **broken the
@@ -16,7 +16,7 @@ intentional and working correctly. Only BE-001 (gRPC) is an actual bug.
 
 ## BE-001 — gRPC's hybrid transport
 
-**Status: confirmed bug**, already tracked as [issues.md#be-001](../../issues.md#be-001) — read there
+**Status: confirmed bug**, already tracked as `BE-001` (resolved) — read there
 for the full evidence. Summary: [`main.ts`](../../../nest-js-boilerplate/src/main.ts) unconditionally
 calls `internalGrpcOptions()` (imported from `./grpc/grpc.module`) and starts a gRPC microservice
 listener on `:5050` via `app.connectMicroservice(...)`/`app.startAllMicroservices()` — regardless of

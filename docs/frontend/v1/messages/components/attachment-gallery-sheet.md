@@ -6,7 +6,7 @@ utils: [`AttachmentGalleryPanel-utils.ts`](../../../../../next-js-boilerplate/sr
 **Used in:** [ChatView](./chat-view.md) (opened from [ChatViewHeader](./chat-view-header.md)'s folder icon)
 **Mobile equivalent:** none — confirmed absent, not just unlocated. See
 [mobile messages/screen.md § Confirmed parity gaps vs. web](../../../../mobile/v1/messages/screen.md#confirmed-parity-gaps-vs-web-found-while-documenting-this-screen)
-([CROSS-028](../../../../issues.md#cross-028)).
+(`CROSS-028` (resolved)).
 
 ## Purpose
 

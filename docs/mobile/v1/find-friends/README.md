@@ -57,22 +57,22 @@ see [Known issues](#known-issues-affecting-this-vertical)) in
 
 ## Known issues affecting this vertical
 
-- [MOB-007](../../../issues.md#mob-007) — **`friendRequestsProvider` throws for every real pending
+- `MOB-007` (resolved) — **`friendRequestsProvider` throws for every real pending
   request the backend ever returns** (a field-name mismatch between the Dart model and the actual
   response shape, not a tier-gating issue) — affects every tier that can reach pending-request data
   (Basic/Medium/Premium). Only invisible in testing because a zero-pending-requests account never
   triggers the broken parse. Full evidence in
   [requests/screen.md § Known issues](./requests/screen.md#known-issues).
-- [CROSS-018](../../../issues.md#cross-018) — mobile gates search entirely away from Free/Basic tier and
+- `CROSS-018` (resolved) — mobile gates search entirely away from Free/Basic tier and
   gates pending-request *visibility* away from Free tier, neither of which the backend or web requires
   (the backend's only tier gate anywhere in this contract is `suggestedFriends`, `MEDIUM`+ — see
   [social-content/friends/endpoints.md](../../../backend/social-content/friends/endpoints.md#list-suggested-friends)).
   Free and Basic tier mobile users have **no way to search for or add a new friend anywhere in the
   app**, and Free tier users additionally cannot view or act on an incoming friend request. See
   [screen.md § Known issues](./screen.md#known-issues) for the full per-tier breakdown.
-- [CROSS-017](../../../issues.md#cross-017) — the reverse-direction gap: web's `SuggestedFriendsPanel` has no
+- `CROSS-017` (resolved) — the reverse-direction gap: web's `SuggestedFriendsPanel` has no
   add-friend action; this vertical's [SuggestedFriendsPanel widget](./widgets/suggested-friends-panel.md)
   does.
-- [MOB-005](../../../issues.md#mob-005) — dead code: `search_utils.dart` (3 unused exports) and
+- `MOB-005` (resolved) — dead code: `search_utils.dart` (3 unused exports) and
   `pagination_bar.dart` (an unused, fully-built `PaginationBar` widget — none of the three real search
   UIs on this screen paginate; each renders every result in one `ListView.builder`).

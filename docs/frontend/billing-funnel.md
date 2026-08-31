@@ -8,7 +8,7 @@ effort's own original plan assumed a 5-step funnel ending in `v1/premium`; Phase
 
 1. **[`(marketing)/pricing`](./pricing/page.md)** — public marketing entry point. **Currently broken
    for its actual audience**: it client-redirects straight to step 2 without ever rendering, and step
-   2 requires a session — see [CROSS-029](../issues.md#cross-029). A logged-out visitor cannot
+   2 requires a session — see `CROSS-029` (resolved). A logged-out visitor cannot
    complete this step today.
 2. **[`v1/plans`](./v1/plans/page.md)** — the real plan-comparison page (session-gated). Fetches live
    prices from [`billing/endpoints.md#get-plan-prices`](../backend/billing-usage/billing/endpoints.md);
@@ -16,7 +16,7 @@ effort's own original plan assumed a 5-step funnel ending in `v1/premium`; Phase
    [CROSS-031](../issues.md#cross-031).
 3. **[`v1/checkout/[tier]`](./v1/checkout/page.md)** — payment collection (FREE→paid, via Stripe
    Elements) or a plan change (paid↔paid or paid→FREE, no payment form). **Paid↔paid changes are
-   broken from this page** — see [CROSS-030](../issues.md#cross-030); only FREE→paid and paid→FREE
+   broken from this page** — see `CROSS-030` (resolved); only FREE→paid and paid→FREE
    currently work through it. Backend confirmation: [`billing/endpoints.md#subscribe-to-a-plan`](../backend/billing-usage/billing/endpoints.md),
    webhook-reconciled per [`billing/stripe.md`](../backend/billing-usage/billing/stripe.md).
 4. **[`v1/settings/billing`](./v1/settings/billing/page.md)** — the ongoing subscription-management

@@ -34,7 +34,7 @@ client-side from presence/absence of `readAt`).
 ## Behavior notes vs. web
 
 - **Renders a real avatar image**, unlike web's initials-only circle: `Avatar(imageUrl: item.imageUrl,
-  name: item.title)`. This is exactly why [CROSS-020](../../../../issues.md#cross-020)'s backend redaction
+  name: item.title)`. This is exactly why `CROSS-020` (resolved)'s backend redaction
   gap is *live* here and not on web — the GraphQL query behind this screen
   ([api.md](../api.md)) selects `actor { id name avatarUrl }`, and this widget actually displays
   whatever comes back. If an actor has `hideAvatar` set, their real avatar image still renders here

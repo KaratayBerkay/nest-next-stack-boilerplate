@@ -7,7 +7,7 @@
 
 Both pages under this route are **hardcoded static demo content with zero backend calls**. No
 `profile/`, no `friends/`, no `messaging/` — no network request of any kind. See
-[CROSS-016](../../../issues.md#cross-016) for the full writeup; the short version:
+`CROSS-016` (resolved) for the full writeup; the short version:
 
 - [`views/users/list/FreePageView.tsx`](../../../../next-js-boilerplate/src/views/users/list/FreePageView.tsx)
   renders a literal `const USERS = [...]` array of 3 fake people (`alice@example.com`,
@@ -29,7 +29,7 @@ functions).
 
 **Mobile's same-named screens are a completely different, fully real feature** — see
 [mobile/v1/users/README.md](../../../mobile/v1/users/README.md) and
-[CROSS-016](../../../issues.md#cross-016): live friends list + live user search, backed by real GraphQL
+`CROSS-016` (resolved): live friends list + live user search, backed by real GraphQL
 calls, and gated to `ADMIN`/`SUPERADMIN` role only (redirects everyone else to `/feed`) — a role gate
 this web version has none of. Two platforms, one route name, two unrelated implementations with
 inverted access control. Don't assume parity here just because the folder names match.
@@ -48,8 +48,8 @@ first thing a reader checking "what does this page call" sees, rather than somet
 
 ## Known issues affecting this vertical
 
-- [CROSS-016](../../../issues.md#cross-016) — web is 100% static demo content with no role/tier gate; mobile
+- `CROSS-016` (resolved) — web is 100% static demo content with no role/tier gate; mobile
   is a real, live-data feature gated to admins only. See also
-  [MOB-003](../../../issues.md#mob-003) (mobile's detail screen bug, a consequence of it being real code
+  `MOB-003` (resolved) (mobile's detail screen bug, a consequence of it being real code
   with a real defect — something that can't happen on the web side since there's no code path to have
   the bug in).

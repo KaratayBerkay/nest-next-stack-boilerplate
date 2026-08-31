@@ -30,7 +30,7 @@ the most involved BFF route on this page:
 1. `401`s without an `access_token` cookie.
 2. **The `isUpgrade`/`isReSelection`/`paymentMethodId` gate that breaks paid↔paid changes from this
    page** — see [page.md § Paid↔paid tier changes are broken on web](./page.md#-paidpaid-tier-changes-are-broken-on-web)
-   and [CROSS-030](../../../issues.md#cross-030).
+   and `CROSS-030` (resolved).
 3. Runs `SubscribeToPlan` server-to-server, CSRF-echoed (`csrfEchoHeaders()`).
 4. A GraphQL-level failure → `errBody.statusCode`; a GraphQL-level `success: false` → `402
    EX_BILLING_DECLINED` with `result.reason` as the message.
@@ -43,7 +43,7 @@ the most involved BFF route on this page:
    regardless of whether this was actually an upgrade, a downgrade, or a cancel) via
    [`lib/kafka.ts`](../../../../next-js-boilerplate/src/lib/kafka.ts)`.publishEvent` — best-effort
    (no-ops entirely if `KAFKA_BROKER` is unset/`"disabled"`). See
-   [FE-014](../../../issues.md#fe-014) — zero consumers of this topic exist anywhere in
+   `FE-014` (resolved) — zero consumers of this topic exist anywhere in
    the current codebase, so this has no observed effect today, but the label is wrong for any
    non-upgrade outcome.
 

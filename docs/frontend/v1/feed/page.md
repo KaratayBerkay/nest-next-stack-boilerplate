@@ -92,6 +92,6 @@ logic of their own) ·
 
 ## Known issues affecting this page
 
-- [FE-010](../../../issues.md#fe-010) — `MediumFeedList.tsx` is a byte-for-byte duplicate of
+- `FE-010` (resolved) — `MediumFeedList.tsx` is a byte-for-byte duplicate of
   `FreeFeedList.tsx`; should alias like `BasicPageView.tsx` does instead of maintaining a second
   copy.

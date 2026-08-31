@@ -25,9 +25,9 @@ export default function RoutingLayout({ children }: RoutingLayoutProps) {
           This shell is rendered by <code>routing/layout.tsx</code>. It stays
           mounted while the page below swaps on navigation.
         </p>
-        <p className="text-muted text-xs">
+        <div className="text-muted text-xs">
           <Counter label="layout" />
-        </p>
+        </div>
       </header>
 
       <Suspense fallback={<RoutingNavFallback />}>

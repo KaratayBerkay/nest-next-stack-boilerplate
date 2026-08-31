@@ -28,7 +28,7 @@ management, and composing [ChatViewHeader](./chat-view-header.md),
   "jump, remeasure, jump again" before a real animated scroll can target the true bottom. Web has no
   equivalent complexity here (`useAutoScroll` relies on DOM `scrollHeight`, always exact).
 - **No reply state** — no `replyTarget` equivalent exists (see
-  [CROSS-006](../../../../issues.md#cross-006)); this widget is correspondingly simpler than its web
+  `CROSS-006` (resolved)); this widget is correspondingly simpler than its web
   counterpart, which owns reply staging/cancellation on top of everything above.
 - **No storage-limit gating** — no equivalent of web's `StorageLimitNotice` swap-in. Confirmed a real
   gap, not just out of Phase 0's scope: the limit **is** enforced server-side identically on both
@@ -37,7 +37,7 @@ management, and composing [ChatViewHeader](./chat-view-header.md),
   hits the cap gets a real, hard send failure with no advance warning instead of this widget's web
   counterpart's graceful pre-emptive block. See
   [frontend StorageLimitNotice § Mobile equivalent](../../../../frontend/v1/messages/components/storage-limit-notice.md)
-  and [CROSS-033](../../../../issues.md#cross-033).
+  and `CROSS-033` (resolved).
 
 ## Calls
 

@@ -56,4 +56,4 @@ functional, CSRF-echoed the same as `DELETE`, forwarding `{ name?, enabled? }` f
 straight to backend
 [`updateApiKey`](../../../../backend/identity-access/api-keys/endpoints.md#update-an-api-key). No
 `api/server/api-keys/update.ts` file exists to call it, and no component in this page references it.
-See [page.md § Known issues](./page.md#known-issues) ([CROSS-012](../../../../issues.md#cross-012)).
+See [page.md § Known issues](./page.md#known-issues) (`CROSS-012` (resolved)).

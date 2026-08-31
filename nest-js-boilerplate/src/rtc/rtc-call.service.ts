@@ -790,6 +790,13 @@ export class RtcCallService {
       token,
       roomName: call.room.livekitRoomName,
       maxDurationMinutes: call.maxDurationMinutes ?? undefined,
+      // Unlike the live rtc:accepted push (where the client carried these
+      // from rtc:invite/startCall), a refreshed client knows neither: without
+      // hasVideo the overlay guessed (audio calls came back as video UIs
+      // depending on which recovery path won the race), and without
+      // acceptedAt the call timer restarted from 0:00 on every reload.
+      hasVideo: call.hasVideo,
+      acceptedAt: call.acceptedAt?.toISOString(),
     };
   }
 

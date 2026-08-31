@@ -27,7 +27,7 @@ parallel phase's module — read here only as far as this page's own contract re
 `useSetDefaultPaymentMethod()` and `useRemovePaymentMethod()` (`payment-methods.ts`) are complete,
 correctly-invalidating mutation hooks — and are never imported anywhere outside their own definition
 file. [`PaymentMethods.tsx`](./components/payment-methods.md), the one component on this page that
-could plausibly call them, doesn't. See ⚠ [CROSS-034](../../../../issues.md#cross-034).
+could plausibly call them, doesn't. See ⚠ `CROSS-034` (resolved).
 
 `useBillingActions().createSetupIntent` **is** used, but not from this page — its only call site is
 [`StripeCardForm.tsx`](../../../../../next-js-boilerplate/src/features/billing/ui/StripeCardForm.tsx),

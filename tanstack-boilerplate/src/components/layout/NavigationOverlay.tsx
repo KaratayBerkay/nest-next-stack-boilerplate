@@ -1,0 +1,141 @@
+"use client";
+
+import { usePageNavigation } from "@/hooks/usePageNavigation";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { useMessages } from "@/lib/i18n/MessagesProvider";
+import { useCallback, useEffect } from "react";
+import Image from "next/image";
+
+const FINGER_IMAGES = [
+  "/app/finger-1.png",
+  "/app/finger-2.png",
+  "/app/finger-3.png",
+  "/app/finger-4.png",
+  "/app/finger-5.png",
+];
+
+function getFingerImage(progress: number): string {
+  const index = Math.min(
+    Math.floor(progress * FINGER_IMAGES.length),
+    FINGER_IMAGES.length - 1,
+  );
+  return FINGER_IMAGES[index];
+}
+
+export function NavigationOverlay() {
+  const t = useMessages("v1-shell");
+  const {
+    suggestion,
+    suggestNavigation,
+    commitNavigation,
+    cancelSuggestion,
+    currentPage: _currentPage,
+    backPage,
+    forwardPage,
+  } = usePageNavigation();
+
+  const { direction, progress, isSwiping, cancelGesture } = useSwipeGesture({
+    threshold: 50,
+    onSwipeLeft: useCallback(() => {
+      if (backPage) commitNavigation("back");
+    }, [backPage, commitNavigation]),
+    onSwipeRight: useCallback(() => {
+      if (forwardPage) commitNavigation("forward");
+    }, [forwardPage, commitNavigation]),
+    onSwipeCancel: useCallback(() => {
+      cancelSuggestion();
+    }, [cancelSuggestion]),
+  });
+
+  useEffect(() => {
+    if (direction && isSwiping) {
+      const sd = direction === "left" ? "back" : "forward";
+      suggestNavigation(sd, progress);
+    }
+    if (!isSwiping) {
+      suggestNavigation(null, 0);
+    }
+  }, [direction, progress, isSwiping, suggestNavigation]);
+
+  useEffect(() => {
+    if (!suggestion) return;
+    const onMouseDown = () => {
+      cancelSuggestion();
+      cancelGesture();
+    };
+    document.addEventListener("mousedown", onMouseDown);
+    return () => document.removeEventListener("mousedown", onMouseDown);
+  }, [suggestion, cancelSuggestion, cancelGesture]);
+
+  if (!suggestion && !isSwiping) return null;
+
+  const targetPage = suggestion?.targetPage ?? null;
+  const showOverlay = !!suggestion || isSwiping;
+  const fingerSrc = getFingerImage(
+    suggestion?.progress ?? (isSwiping ? progress : 0),
+  );
+
+  return (
+    <div
+      className={`pointer-events-none fixed inset-0 z-50 flex items-center justify-center transition-opacity duration-200 ${
+        showOverlay ? "opacity-100" : "opacity-0"
+      }`}
+    >
+      <div
+        className="bg-overlay/70 text-overlay-fg flex flex-col items-center gap-3 rounded-2xl px-8 py-6 shadow-2xl backdrop-blur-md"
+        style={{
+          transform:
+            suggestion?.direction === "back"
+              ? `translateX(${-20 - (1 - (suggestion?.progress ?? 0)) * 80}px)`
+              : suggestion?.direction === "forward"
+                ? `translateX(${20 + (1 - (suggestion?.progress ?? 0)) * 80}px)`
+                : "translateX(0)",
+        }}
+      >
+        {showOverlay && (
+          <div className="relative h-36 w-28">
+            <Image
+              src={fingerSrc}
+              alt=""
+              fill
+              className="object-contain opacity-80"
+              style={{
+                transform:
+                  suggestion?.direction === "back" ? "scaleX(-1)" : "none",
+              }}
+              sizes="112px"
+            />
+          </div>
+        )}
+
+        {targetPage && (
+          <div className="flex flex-col items-center gap-1">
+            {/* overlay-fg, not text-muted: the card is always a dark scrim,
+                and light-theme muted (a dark gray) was unreadable on it. */}
+            <span className="text-overlay-fg/70 text-sm">
+              {suggestion?.direction === "back" ? t.navBackTo : t.navForwardTo}
+            </span>
+            <span className="text-overlay-fg text-lg font-semibold">
+              {targetPage.title}
+            </span>
+          </div>
+        )}
+
+        {!targetPage && isSwiping && !suggestion && (
+          <span className="text-overlay-fg/70 text-sm">
+            {t.releaseToNavigate}
+          </span>
+        )}
+
+        {suggestion && suggestion.progress >= 1 && suggestion.direction && (
+          <div className="mt-1 flex flex-col items-center gap-2">
+            <div className="bg-overlay-fg h-1 w-20 animate-pulse overflow-hidden rounded-full" />
+            <span className="text-overlay-fg/70 text-xs">
+              {t.clickToCancel}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

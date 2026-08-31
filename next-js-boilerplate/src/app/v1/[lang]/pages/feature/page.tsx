@@ -4,7 +4,7 @@ import FeaturePageContent from "@/views/pages/feature/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function FeaturePage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <FeaturePageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <FeaturePageContent initialTab={tab} initialFull={full === "1"} />;
 }

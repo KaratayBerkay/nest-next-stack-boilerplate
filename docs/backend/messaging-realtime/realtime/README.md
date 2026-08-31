@@ -18,7 +18,7 @@ RTC phases (post-docs), [rtc](../rtc/README.md)'s `RtcCallWsGateway`/`RtcChatWsG
 
 > ⚠ If you've seen older docs or comments describing WS auth as "connect, then send
 > `{type:'auth', tokens:{...}}`" — that's gone. See
-> [../../../issues.md#cross-005](../../../issues.md#cross-005).
+> `CROSS-005` (resolved).
 
 `verifyUpgrade()` runs during the WS handshake, **before a socket is ever created**: it reads the
 four session cookies (`access_token`, `rbac_token`, `device_token`, `user_token` — unprefixed; the
@@ -77,5 +77,5 @@ table.
 
 ## Known issues
 
-- [CROSS-005](../../../issues.md#cross-005) — surviving pre-rewrite documentation described a
+- `CROSS-005` (resolved) — surviving pre-rewrite documentation described a
   removed first-message auth protocol; resolved by this rewrite.

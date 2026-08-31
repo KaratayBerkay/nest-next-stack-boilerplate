@@ -47,7 +47,7 @@ Unlike the plain `friends/` page, tier actually changes what renders here — ma
 Both tabs (search-and-add, pending-requests) are available to **every** tier on web — only the
 suggestions sidebar is tier-gated, matching the backend exactly. Contrast with mobile, which gates
 much more aggressively than the backend requires — see
-[CROSS-018](../../../issues.md#cross-018) and [mobile find-friends § Known issues](../../../mobile/v1/find-friends/screen.md#known-issues).
+`CROSS-018` (resolved) and [mobile find-friends § Known issues](../../../mobile/v1/find-friends/screen.md#known-issues).
 
 ## Hooks & API
 
@@ -71,7 +71,7 @@ content wrappers — `FreeFindFriendsContent`/`MediumFindFriendsContent` — are
 
 ## Known issues affecting this vertical
 
-- [CROSS-017](../../../issues.md#cross-017) — [SuggestedFriendsPanel](./components/suggested-friends-panel.md)
+- `CROSS-017` (resolved) — [SuggestedFriendsPanel](./components/suggested-friends-panel.md)
   has no "Add Friend" action; mobile's equivalent does.
-- [CROSS-018](../../../issues.md#cross-018) — mobile's find-friends screens are far more tier-restrictive
+- `CROSS-018` (resolved) — mobile's find-friends screens are far more tier-restrictive
   than this page or the backend contract.

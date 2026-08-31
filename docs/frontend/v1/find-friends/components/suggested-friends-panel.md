@@ -20,7 +20,7 @@ beyond the button's own `loading` prop, no empty state beyond never showing the 
 
 ## Known issues
 
-- [CROSS-017](../../../../issues.md#cross-017) — every row renders name + mutual-friend count only; there is
+- `CROSS-017` (resolved) — every row renders name + mutual-friend count only; there is
   no button, click handler, or any other affordance to actually send that person a friend request from
   this panel. The user has to separately search for the same person by name in the "Add friends" tab
   to act on a suggestion. Mobile's equivalent widget

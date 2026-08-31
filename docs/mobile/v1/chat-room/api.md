@@ -20,7 +20,7 @@ Both confirmed direct-to-backend (the path matches the backend's own native cont
 frontend-namespaced one — no Next.js app is involved anywhere in this stack for mobile). **No file
 exists for listing rooms** (`GET /api/rooms`, the bare list-rooms endpoint) — see below — and **no
 file exists for the room attachment gallery** (`GET /api/rooms/:room/attachments`), consistent with
-[CROSS-028](../../../issues.md#cross-028) (no gallery UI exists to call it from).
+`CROSS-028` (resolved) (no gallery UI exists to call it from).
 
 ### ⚠ Room list is hardcoded, never fetched
 
@@ -32,8 +32,8 @@ constant list (`general`/`random`/`tech`/`design`/`music`, plus `vip-lounge` for
 `grep -rn "'/api/rooms'"` across `flutter-boilerplate/lib` (excluding the `/messages`- and
 `/attachments`-suffixed paths above) returns nothing. This currently matches the backend's real fixed
 room list, but is a live-vs-hardcoded drift risk of the same shape as
-[CROSS-008](../../../issues.md#cross-008) (`GET /auth/oauth/providers`, unused but currently matching
-hardcoded client lists) — see [CROSS-025](../../../issues.md#cross-025).
+`CROSS-008` (resolved) (`GET /auth/oauth/providers`, unused but currently matching
+hardcoded client lists) — see `CROSS-025` (resolved).
 
 ### ⚠ Attachment upload never sends an upload scope
 
@@ -45,7 +45,7 @@ arguments — there is no third `scope` parameter anywhere in its call chain
 Every attachment uploaded from this screen lands in the backend's default DM storage folder
 (`uploads/messages/<userId>/…`) rather than the room-scoped one (`uploads/chat-room/<room>/…`) web
 correctly uses. This doesn't break access or quota (neither check consults `kind`/`scopeId`) — it's a
-storage-bookkeeping/traceability gap only. See [MOB-017](../../../issues.md#mob-017).
+storage-bookkeeping/traceability gap only. See `MOB-017` (resolved).
 
 ### Sending a room message — WebSocket only, and no `scope`/`envelope` concept applies
 

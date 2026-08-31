@@ -28,7 +28,7 @@ here.
 `handleDowngrade` calls `subscribe(targetTier)` — **only one argument**. No `paymentMethodId` (this
 branch is never supposed to need one — the backend's `handleFullCancellation`/`handleTierChange`
 paths genuinely don't charge anything here), and no `currentTier` either. That second omission is
-what makes [CROSS-030](../../../../issues.md#cross-030) bite: the BFF route this hits
+what makes `CROSS-030` (resolved) bite: the BFF route this hits
 (`/api/billing/subscribe`) can't tell "a real upgrade with no card" apart from "a re-selection of the
 current tier" without a `currentTier` value to compare against, and this component never sends one —
 so every paid↔paid attempt from here 400s before reaching the backend. Full evidence and the
@@ -42,4 +42,4 @@ change — [`StripeCardForm`](./stripe-card-form.md) only ever runs for the FREE
 - [api.md § Subscribe / change / cancel a plan](../api.md#subscribe--change--cancel-a-plan)
 - Backend: [billing/endpoints.md#subscribe-to-a-plan](../../../../backend/billing-usage/billing/endpoints.md#subscribe-to-a-plan)
   (in practice, only reachable from this component for the `paid → FREE` case today — see
-  [CROSS-030](../../../../issues.md#cross-030))
+  `CROSS-030` (resolved))

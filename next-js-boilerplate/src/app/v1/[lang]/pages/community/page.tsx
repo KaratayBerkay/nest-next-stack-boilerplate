@@ -4,7 +4,7 @@ import CommunityPageContent from "@/views/pages/community/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function CommunityPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <CommunityPageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <CommunityPageContent initialTab={tab} initialFull={full === "1"} />;
 }

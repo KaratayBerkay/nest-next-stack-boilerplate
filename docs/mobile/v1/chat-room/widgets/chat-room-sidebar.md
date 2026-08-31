@@ -12,7 +12,7 @@ room's live member list, structurally identical to web's equivalent.
 
 ## Constructor
 
-`useNativeControls` (accepted, never read — see [MOB-014](../../../../issues.md#mob-014)), `sidebarOpen`,
+`useNativeControls` (accepted, never read — see `MOB-014` (resolved)), `sidebarOpen`,
 `rooms`, `room`, `roomCounts`, `vipRooms`, `roomMembers`, `currentUserId`, `showSelfCrown`,
 `onSetSidebarOpen`, `onSelectRoom`.
 
@@ -24,7 +24,7 @@ room's live member list, structurally identical to web's equivalent.
 - ⚠ Three hardcoded, unlocalized string literals in this file: the `'Rooms'` section label, the
   `'Online (${count})'` tab label (the ARB key `chatRoomOnline` exists and goes unused), and
   `'No one is here'` (the ARB key `chatRoomNoOneHere` exists and goes unused). See
-  [MOB-015](../../../../issues.md#mob-015).
+  `MOB-015` (resolved).
 
 ## Sub-components (in `chat_room_sub_components.dart`)
 

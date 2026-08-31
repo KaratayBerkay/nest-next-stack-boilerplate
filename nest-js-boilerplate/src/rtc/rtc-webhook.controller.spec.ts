@@ -24,6 +24,7 @@ function buildController() {
   const rtcStreamService = {
     handleRoomEndedByLiveKit: jest.fn(),
     notifyViewerLeftByLiveKit: jest.fn(),
+    notifyViewerJoinedByLiveKit: jest.fn(),
   };
 
   // Cast only at the constructor boundary (which needs the real types) —
@@ -189,6 +190,34 @@ describe('RtcWebhookController', () => {
       data: { leftAt: null },
     });
     expect(status).toHaveBeenCalledWith(200);
+  });
+
+  // Regression for the "watching" counter never leaving 0: the join mutation
+  // broadcasts before the viewer's WebRTC connection exists, so this webhook
+  // is the only moment the audience count can be settled from a connection
+  // that actually happened.
+  it('participant_joined on a STREAM room notifies the stream service with the decrypted userId (other kinds stay quiet)', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, rtcStreamService, liveKit } =
+      buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_joined',
+      room: { name: 'stream-r9' },
+      participant: { identity: encryptId(rawUserId) },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r9', kind: 'STREAM' });
+    rtcParticipant.updateMany.mockResolvedValue({ count: 0 });
+
+    const { req, res } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcStreamService.notifyViewerJoinedByLiveKit).toHaveBeenCalledWith(
+      'r9',
+      rawUserId,
+    );
   });
 
   // Regression: a reconnecting client whose join races the call teardown

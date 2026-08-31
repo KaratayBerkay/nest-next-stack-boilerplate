@@ -5,11 +5,15 @@ rtc:
   port_range_end: 60000
   # The compose service binds to the host network via container ports below,
   # but LiveKit itself needs to know its own reachable address to hand out
-  # to clients in ICE candidates. When false, LiveKit uses its auto-detected
-  # local IP — works for localhost-only dev. For production or LAN testing
-  # with real devices, set to true and provide node_ip with the host's real
-  # LAN/public IP so clients receive routable ICE candidates.
-  use_external_ip: false
+  # to clients in ICE candidates. When false, LiveKit advertises only its
+  # auto-detected LAN IP (10.10.2.51) — calls then connect ONLY from the home
+  # network; external clients get an unroutable candidate and the call dies
+  # after signaling (seen live 2026-08-29). With true, LiveKit STUN-discovers
+  # the public IP and advertises it alongside the LAN candidates, so both
+  # sides work — PROVIDED the router forwards UDP 50000-60000 + TCP 7881 to
+  # this host (the reverse proxy only carries the 7880 signal WebSocket,
+  # never WebRTC media).
+  use_external_ip: true
   # network_mode: host means LiveKit sees every host interface — including
   # the docker bridges (docker0 + per-compose br-* at 172.17-19.0.1). Those
   # addresses are unreachable for every real client, yet they were being

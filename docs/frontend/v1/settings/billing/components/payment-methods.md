@@ -19,7 +19,7 @@ any "Add a card" affordance that would call `useBillingActions().createSetupInte
 cannot remove an old card, change which card is default, or add a new one from this page at all.
 Contrast [mobile's equivalent](../../../../../mobile/v1/settings/billing/screen.md#what-renders-here),
 which has working versions of all three (remove, set-default, and an add-card dialog backed by
-`flutter_stripe`). See ⚠ [CROSS-034](../../../../../issues.md#cross-034).
+`flutter_stripe`). See ⚠ `CROSS-034` (resolved).
 
 ## Props (`PaymentMethodsProps`)
 

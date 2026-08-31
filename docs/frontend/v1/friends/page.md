@@ -62,7 +62,7 @@ This page does **not** call `social-content/friends/`'s own `suggestedFriends` q
 
 ## Known issues
 
-- [FE-008](../../../issues.md#fe-008) — all three navigation actions on this page
+- `FE-008` (resolved) — all three navigation actions on this page
   (`FriendsPageContent.tsx#L32,49,60`) hardcode `/v1/en/...` instead of the current locale, unlike
   every other page in this vertical family (`find-friends`, `settings/*`) which correctly derive the
   active `lang` from routing. A non-English user clicking "Find friends" or any friend row on this

@@ -1,0 +1,50 @@
+"use client";
+
+import { TimeInput } from "@/components/ui/TimeInput";
+import { ExampleTabs } from "@/views/ui/_shared/ExampleTabs";
+import { VariantGallery } from "@/views/ui/_shared/VariantGallery";
+import { ComponentsTab } from "./ComponentsTab";
+import { ExamplesTab } from "./ExamplesTab";
+import type { UIExample } from "@/types/views/ui/ExampleTabs-types";
+import type { InitialTabProps } from "@/types/views/ui/PageContent-types";
+import type { TimeInputVariant } from "@/types/ui/TimeInput-types";
+
+const examples: UIExample[] = [
+  {
+    id: "usage",
+    title: "Time Formats",
+    description: "24-hour, seconds-enabled, and 12-hour AM/PM time inputs.",
+    render: () => <ComponentsTab />,
+  },
+  {
+    id: "variants",
+    title: "Scheduling Examples",
+    description: "Meeting, event, and timer scheduling examples.",
+    render: () => <ExamplesTab />,
+  },
+  {
+    id: "variant-gallery",
+    title: "Variant Gallery",
+    description: "All variants and sizes.",
+    render: () => (
+      <VariantGallery
+        variants={["default", "shiny", "glass", "neon", "gradient"]}
+        sizes={[]}
+        render={(variant) => (
+          <TimeInput variant={variant as TimeInputVariant} />
+        )}
+      />
+    ),
+  },
+];
+
+export default function TimeInputPage({ initialTab }: InitialTabProps) {
+  return (
+    <ExampleTabs
+      title="Time Input"
+      intro="A time picker with dropdown selectors for hours, minutes, and seconds with automatic timezone detection."
+      examples={examples}
+      initialTab={initialTab}
+    />
+  );
+}

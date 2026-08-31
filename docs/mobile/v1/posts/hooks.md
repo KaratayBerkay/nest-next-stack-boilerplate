@@ -28,10 +28,10 @@ vertical reuses that same provider, defined in the same file as `paginatedFeedPr
 
 Defined in this file but **has zero readers anywhere in the app** — see
 [feed/widgets/post-stats-sidebar.md § Known issues](../feed/widgets/post-stats-sidebar.md#known-issues)
-([MOB-009](../../../issues.md#mob-009)).
+(`MOB-009` (resolved)).
 
 ## Cross-cutting hooks used here but not posts-specific
 
 `currentUserProvider` — used by [detail](./detail/screen.md)'s Premium view (with the
-[MOB-008](../../../issues.md#mob-008) `isAuthor` bug — see
+`MOB-008` (resolved) `isAuthor` bug — see
 [detail/screen.md § Known issues](./detail/screen.md#known-issues)).

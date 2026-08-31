@@ -25,14 +25,14 @@ class ChatMessageBubble extends ConsumerWidget {
 - **No reply support** — the context menu here has exactly 2 entries (delete-for-me,
   delete-for-everyone); web's equivalent adds a 3rd (reply), and this widget's `ChatMessage` has no
   `replyTo` field to render one even if the action existed. See
-  [CROSS-006](../../../../issues.md#cross-006).
+  `CROSS-006` (resolved).
 - **No decryption-failure state** — web's bubble explicitly branches on an empty `body` with no
   attachments to show a "🔒 decryption failed" indicator; this widget has no equivalent branch (a
   message with empty `content` and no attachments would currently render an essentially blank
   bubble aside from the timestamp/tick). Worth checking whether this is reachable in practice, given
   [wire-crypto](../../../../backend/messaging-realtime/wire-crypto/README.md)'s at-rest encryption
   is server-controlled (not true E2EE — see
-  [CROSS-004](../../../../issues.md#cross-004)), so a genuine decrypt failure should be rarer here
+  `CROSS-004` (resolved)), so a genuine decrypt failure should be rarer here
   than a real E2EE system, but `resolveBody`'s multi-key-attempt fallback in the backend's
   [`message-body.util.ts`](../../../../../nest-js-boilerplate/src/messaging/message-body.util.ts)
   can still return an unresolved row.

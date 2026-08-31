@@ -66,7 +66,10 @@ export async function backendFetch<T = unknown>(
 
   const url = `${backendBaseUrl()}${path}`;
   const res = await fetch(url, {
-    next: { revalidate: 60 },
+    // no-store for the same reason as graphqlFetch below: the data cache
+    // ignores headers, so cached authed responses are shared across users.
+    // Callers may still opt into caching explicitly via `options`.
+    cache: "no-store",
     ...options,
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,
@@ -421,9 +424,17 @@ export async function graphqlFetch<T>(
   const url = `${backendBaseUrl()}${GQL_BACKEND_PATH}`;
   const res = await fetch(url, {
     method: POST,
-    ...(noCache
-      ? { cache: "no-store" as const }
-      : { next: { revalidate: 60 } }),
+    // Default no-store. Next's data cache keys on URL+method+BODY only —
+    // the per-user auth (cookie/bearer) rides in HEADERS, which are not
+    // part of the key, so any cached entry is shared across users: stale
+    // reads (a notification list refetch served a 60s-old empty page,
+    // making fresh notifications vanish from the dropdown) and potential
+    // cross-user leakage of authed data (ME_QUERY has no variables — one
+    // cache entry for everybody). `noCache === false` opts back into the
+    // 60s cache for a genuinely public, user-independent query.
+    ...(noCache === false
+      ? { next: { revalidate: 60 } }
+      : { cache: "no-store" as const }),
     headers: {
       ...JSON_CONTENT_TYPE_HEADER,
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),

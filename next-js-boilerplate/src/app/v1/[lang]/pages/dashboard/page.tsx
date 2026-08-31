@@ -4,7 +4,7 @@ import DashboardPageContent from "@/views/pages/dashboard/PageContent";
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; full?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -17,6 +17,6 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function DashboardPage({ searchParams }: PageProps) {
-  const tab = (await searchParams).tab;
-  return <DashboardPageContent initialTab={tab} />;
+  const { tab, full } = await searchParams;
+  return <DashboardPageContent initialTab={tab} initialFull={full === "1"} />;
 }

@@ -15,7 +15,7 @@ per-screen docs.
 **Call-shape warning:** unlike a typical mobile app that only talks to one backend, this app's
 network calls are **not uniformly routed** — some hit the NestJS backend directly (REST or GraphQL),
 some may go through the Next.js BFF (unconfirmed which verticals, if any, actually do this — see
-[../issues.md#cross-007](../issues.md#cross-007)). Every `api.md` states the confirmed shape **per
+`CROSS-007` (resolved)). Every `api.md` states the confirmed shape **per
 file**, with evidence — never assume from a previous vertical's answer. See
 [../conventions.md § 9](../conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement).
 
@@ -36,7 +36,7 @@ file**, with evidence — never assume from a previous vertical's answer. See
 | [Premium](./v1/premium/screen.md) | `v1/premium` — not part of the billing funnel, see [CROSS-035](../issues.md#cross-035) | ✅ Phase 4b |
 | [Admin](./v1/admin/README.md) | admin | ✅ Phase 5 |
 | [RTC](./v1/rtc/README.md) | `v1/:lang/rtc` (hub), `rtc/calls`, `rtc/meetings(/:slug)`, `rtc/live(/:slug, /go-live)` + the global call overlay at app root | ✅ post-docs addition (RTC phases) |
-| [Settings](./v1/settings/) | `v1/:lang/settings/*` (8 sub-screens, `security` included — **correction:** genuinely routed at `settings/security`, not a top-level route as earlier research claimed; only the Dart *source file* lives outside `lib/views/settings/`, see [CROSS-014](../issues.md#cross-014)) | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing/usage ✅ Phase 4b (usage written post-Phase-5, see [usage/screen.md](./v1/settings/usage/screen.md)) |
+| [Settings](./v1/settings/) | `v1/:lang/settings/*` (8 sub-screens, `security` included — **correction:** genuinely routed at `settings/security`, not a top-level route as earlier research claimed; only the Dart *source file* lives outside `lib/views/settings/`, see `CROSS-014` (resolved)) | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing/usage ✅ Phase 4b (usage written post-Phase-5, see [usage/screen.md](./v1/settings/usage/screen.md)) |
 
 ## Reference
 

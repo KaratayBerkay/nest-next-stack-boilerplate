@@ -82,7 +82,7 @@ under [feed](../feed/page.md), not duplicated.
 
 ## Known issues
 
-- [FE-009](../../../issues.md#fe-009) — `POST_QUERY` (used by both this page's SSR fetch and the
+- `FE-009` (resolved) — `POST_QUERY` (used by both this page's SSR fetch and the
   client-side `fetchSinglePostServer`/`singlePostQueryOptions`, the **only** query this vertical uses
   to load a single post) never selects `reactionBreakdown` or `whoReacted`. Both fields are real,
   working, `TierGuard`-enforced backend resolve fields — see

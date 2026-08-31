@@ -85,6 +85,7 @@ describe("RtcCallOverlay accessible names", () => {
       warningSecondsRemaining: null,
       lastError: null,
       actionPending: null,
+      connectedAt: null,
     };
 
     render(<RtcCallOverlay />);
@@ -103,6 +104,7 @@ describe("RtcCallOverlay accessible names", () => {
       warningSecondsRemaining: null,
       lastError: null,
       actionPending: null,
+      connectedAt: null,
     };
 
     render(<RtcCallOverlay />);
@@ -124,6 +126,7 @@ describe("RtcCallOverlay camera-off placeholders", () => {
     warningSecondsRemaining: null,
     lastError: null,
     actionPending: null,
+    connectedAt: null,
   };
 
   beforeEach(() => {
@@ -198,6 +201,7 @@ describe("call timer with tier limit", () => {
       warningSecondsRemaining: null,
       lastError: null,
       actionPending: null,
+      connectedAt: null,
     };
     livekitState.connected = true;
     livekitState.remoteConnected = true;
@@ -217,6 +221,7 @@ describe("call timer with tier limit", () => {
       warningSecondsRemaining: null,
       lastError: null,
       actionPending: null,
+      connectedAt: null,
     };
     livekitState.connected = true;
     livekitState.remoteConnected = true;

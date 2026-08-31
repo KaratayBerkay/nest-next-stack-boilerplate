@@ -14,7 +14,7 @@ there's no shared reusable field widget here — each `TextField` is written out
 `'Street address'`, etc.) rather than an `AppLocalizations` lookup — worth noting if this ever needs a
 non-English release, though not filed as its own issue (this repo already has a well-established,
 separately-tracked "hardcoded string despite a matching ARB key" pattern, e.g.
-[MOB-015](../../../../../issues.md#mob-015); this file wasn't checked against the ARB catalogue for a
+`MOB-015` (resolved); this file wasn't checked against the ARB catalogue for a
 specific matching key, so it isn't asserted here as another confirmed instance of that same finding).
 
 No "Cancel" button here (unlike web's equivalent) — `_BillingAddressSectionState` in

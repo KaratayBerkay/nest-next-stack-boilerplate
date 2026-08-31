@@ -25,7 +25,7 @@ Separately, five directories are demo-**modules** that nonetheless contain one r
 **file** each (gRPC's hybrid transport, the global query-complexity plugin, the global rate-limit
 guard, the global perf interceptor, and the global exception filter) — see
 [_reference/demo-gated-but-live.md](./_reference/demo-gated-but-live.md) and
-[../issues.md#be-001](../issues.md#be-001).
+`BE-001` (resolved).
 
 ## Module index
 

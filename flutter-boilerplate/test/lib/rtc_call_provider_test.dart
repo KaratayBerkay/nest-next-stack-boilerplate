@@ -278,6 +278,61 @@ void main() {
       expect(state.peer?.id, 'peer-1');
     });
 
+    test(
+        'recovered rtc:accepted applies the snapshot hasVideo — regression: '
+        'the state default is true, so a recovered AUDIO call rendered the '
+        'video-call UI (same bug web fixed in its CONNECTED reducer)', () {
+      final container = makeContainer();
+      container.read(rtcCallProvider.notifier).applySnapshot(
+            ActiveCallSnapshot(
+              type: 'rtc:accepted',
+              callId: 'c2',
+              token: 'tok',
+              roomName: 'room-2',
+              hasVideo: false,
+            ),
+          );
+
+      expect(container.read(rtcCallProvider).hasVideo, isFalse);
+    });
+
+    test(
+        'recovered rtc:accepted seeds connectedAt from the server acceptedAt '
+        '— regression: the in-call timer restarted from 0:00 on every app '
+        'relaunch because _callStart was always DateTime.now()', () {
+      final container = makeContainer();
+      container.read(rtcCallProvider.notifier).applySnapshot(
+            ActiveCallSnapshot(
+              type: 'rtc:accepted',
+              callId: 'c2',
+              token: 'tok',
+              roomName: 'room-2',
+              acceptedAt: '2026-08-30T10:00:00.000Z',
+            ),
+          );
+
+      expect(
+        container.read(rtcCallProvider).connectedAt,
+        DateTime.parse('2026-08-30T10:00:00.000Z'),
+      );
+    });
+
+    test('live rtc:accepted (no acceptedAt) stamps connectedAt = now', () {
+      final container = makeContainer();
+      final notifier = container.read(rtcCallProvider.notifier);
+      notifier.onIncoming('c1', _peer, false);
+      final before = DateTime.now();
+
+      notifier.acceptCall();
+      notifier.onAccepted('c1', 'tok', 'room-1', 30);
+
+      final connectedAt = container.read(rtcCallProvider).connectedAt;
+      expect(connectedAt, isNotNull);
+      expect(connectedAt!.isBefore(before), isFalse);
+      // The live path must keep the ringing-phase hasVideo, not reset it.
+      expect(container.read(rtcCallProvider).hasVideo, isFalse);
+    });
+
     test('never clobbers a live call', () {
       final container = makeContainer();
       final notifier = container.read(rtcCallProvider.notifier);

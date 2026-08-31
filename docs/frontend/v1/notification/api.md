@@ -25,7 +25,7 @@ Confirmed by reading every `route.ts` in both `app/api/notifications/` and `app/
 |---|---|---|
 | [`actions.ts`](../../../../next-js-boilerplate/src/api/client/notifications/actions.ts) | `useNotificationActions()` (`markRead`, `markAllRead`) | The mutation layer this page and `NotificationDropdown` actually call — see [hooks.md](./hooks.md) |
 | [`query.ts`](../../../../next-js-boilerplate/src/api/client/notifications/query.ts) | `notificationsQueryOptions`, `unreadCountQueryOptions`, `dmUnreadCountQueryOptions` | React Query option builders — all lazy-`import()` their matching `api/server` file |
-| `mark-read.ts` | `useMarkNotificationRead()` | **Deleted** (dedup pass, commit `aa04a418`) — was a dead duplicate of `useNotificationActions()`; see [FE-011](../../../issues.md#fe-011) and [hooks.md](./hooks.md) |
+| `mark-read.ts` | `useMarkNotificationRead()` | **Deleted** (dedup pass, commit `aa04a418`) — was a dead duplicate of `useNotificationActions()`; see `FE-011` (resolved) and [hooks.md](./hooks.md) |
 
 ## Server / BFF routes — notifications (`src/api/server/notifications/`)
 
@@ -38,7 +38,7 @@ the same as the backend's own dead REST route; this one hits the real BFF)
 → backend GraphQL `myNotifications`
 ([notification/endpoints.md#list-my-notifications](../../../backend/messaging-realtime/notification/endpoints.md#list-my-notifications)).
 Query selects `actor {id name email}` — no `avatarUrl` (see
-[CROSS-020](../../../issues.md#cross-020)'s web-side note).
+`CROSS-020` (resolved)'s web-side note).
 
 ### Mark read (BFF route)
 
@@ -56,7 +56,7 @@ GraphQL `markNotificationRead` / `markAllNotificationsRead`
 | File | BFF route | Backend operation |
 |---|---|---|
 | [`unread-count.ts`](../../../../next-js-boilerplate/src/api/server/notifications/unread-count.ts) | `GET NOTIFICATIONS_UNREAD_COUNT_URL` | GraphQL `unreadNotificationCount` ([notification/endpoints.md](../../../backend/messaging-realtime/notification/endpoints.md#get-unread-notification-count-graphql)) |
-| [`dm-unread-count.ts`](../../../../next-js-boilerplate/src/api/server/notifications/dm-unread-count.ts) | `GET MESSAGES_UNREAD_COUNT_URL` (a **messaging**-vertical URL constant, reused here) | REST `GET /api/messages/unread-count` ([messaging/endpoints.md](../../../backend/messaging-realtime/messaging/endpoints.md#get-total-unread-dm-count)) — correctly hits the DM count, unlike mobile's equivalent file, see [MOB-012](../../../issues.md#mob-012) |
+| [`dm-unread-count.ts`](../../../../next-js-boilerplate/src/api/server/notifications/dm-unread-count.ts) | `GET MESSAGES_UNREAD_COUNT_URL` (a **messaging**-vertical URL constant, reused here) | REST `GET /api/messages/unread-count` ([messaging/endpoints.md](../../../backend/messaging-realtime/messaging/endpoints.md#get-total-unread-dm-count)) — correctly hits the DM count, unlike mobile's equivalent file, see `MOB-012` (resolved) |
 
 ## Push notifications
 
@@ -92,4 +92,4 @@ target URL and either focuses/`postMessage`s an open `/v1/` tab or opens a new o
 [`V1Shell.tsx`](../../../../next-js-boilerplate/src/views/v1/[lang]/V1Shell.tsx)'s
 `serviceWorker.onmessage` listener). ⚠ Its target-URL logic duplicates, and disagrees with,
 [`notificationTarget()`](../../../../next-js-boilerplate/src/lib/notifications/target.ts) — see
-[CROSS-022](../../../issues.md#cross-022).
+`CROSS-022` (resolved).

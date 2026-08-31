@@ -77,10 +77,10 @@ search/sidebar-open state that here is local `State` inside
   [MessagesSidebarTabBar](./widgets/messages-sidebar-tab-bar.md)), not web's 4-pill filter bar
   (All/Unread/Favorites/Groups). There's no unread-only filter, no favorite-star action anywhere in
   the mobile widget set, and no in-sidebar room/group list — see
-  [CROSS-001](../../../issues.md#cross-001). The "Friends" tab ([MessagesSidebarFriends](./widgets/messages-sidebar-friends.md))
+  `CROSS-001` (resolved). The "Friends" tab ([MessagesSidebarFriends](./widgets/messages-sidebar-friends.md))
   is mobile's equivalent of web's "start a new chat" popover, not a like-for-like filter.
 - ⚠ **No reply-to-message feature at all** — no field on `ChatMessage`, no UI, no action. See
-  [CROSS-006](../../../issues.md#cross-006) — a larger gap than the filter/favorites one, since
+  `CROSS-006` (resolved) — a larger gap than the filter/favorites one, since
   reply-to is a core backend feature (`replyToId`/`replyTo` on every surface), not a recent
   web-only addition.
 - ⚠ **No attachment gallery ("all uploads") screen/sheet** — confirmed absent, not just "not yet
@@ -88,7 +88,7 @@ search/sidebar-open state that here is local `State` inside
   Web has this feature in *both* [messages](../../../frontend/v1/messages/components/attachment-gallery-sheet.md)
   and [chat-room](../../../frontend/v1/chat-room/components/room-attachment-gallery-sheet.md); mobile
   has it in neither. Verified while documenting Phase 3b (upload + chat-room) — see
-  [CROSS-028](../../../issues.md#cross-028).
+  `CROSS-028` (resolved).
 
 ## API
 
@@ -96,5 +96,5 @@ search/sidebar-open state that here is local `State` inside
 `lib/api/server/messages/*.dart` files call the NestJS backend directly (5 via raw `/graphql` POSTs,
 8 via REST paths that match the backend's own native controller routes). See
 [../../../conventions.md § 9](../../../conventions.md#9-flutters-call-shapes--verify-per-vertical-dont-assume-bff-involvement)
-and [../../../issues.md#cross-007](../../../issues.md#cross-007) (this finding corrected an earlier,
+and `CROSS-007` (resolved) (this finding corrected an earlier,
 less-verified claim from research done before this screen was documented).

@@ -36,7 +36,7 @@ on submit — persistence happens in the parent via `useUpsertBillingAddress()` 
 — so this button, whose only job is to close the address-edit form without saving, literally reads
 **"Cancel subscription"** rather than "Cancel." A user could reasonably read that as "this will cancel
 my plan" while just trying to back out of editing their billing address. See ⚠
-[FE-015](../../../../../issues.md#fe-015).
+`FE-015` (resolved).
 
 ## Calls
 

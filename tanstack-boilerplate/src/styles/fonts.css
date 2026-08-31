@@ -1,0 +1,29 @@
+/*
+ * Self-hosted Geist fonts (replaces next/font/google).
+ * @fontsource-variable packages register the @font-face rules; the variables
+ * below reproduce what next/font injected (`--font-geist-sans` /
+ * `--font-geist-mono`), which globals.css maps to Tailwind's font-sans/mono.
+ */
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+
+:root,
+.font-var-geist-sans {
+  --font-geist-sans:
+    "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    sans-serif;
+}
+
+:root,
+.font-var-geist-mono {
+  --font-geist-mono:
+    "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.font-geist-sans {
+  font-family: var(--font-geist-sans);
+}
+
+.font-geist-mono {
+  font-family: var(--font-geist-mono);
+}

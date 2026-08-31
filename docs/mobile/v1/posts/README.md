@@ -27,12 +27,12 @@ screens above.
 
 ## Known issues affecting this vertical
 
-- [MOB-008](../../../issues.md#mob-008) — the real, routed `/posts/:uuid` screen
+- `MOB-008` (resolved) — the real, routed `/posts/:uuid` screen
   ([detail/screen.md](./detail/screen.md)) has no edit-post, no reaction-breakdown, and no
   who-reacted UI at all; a separate, more fully-built implementation that does have all three exists
   in the codebase but is never wired into the router. Full evidence in
   [detail/screen.md § Known issues](./detail/screen.md#known-issues).
-- [MOB-010](../../../issues.md#mob-010) — `lib/types/posts/post_summary.dart` and
+- `MOB-010` (resolved) — `lib/types/posts/post_summary.dart` and
   `lib/types/posts/post_media.dart` are dead code: neither `PostSummary` nor `PostMedia` has any
   reference anywhere outside its own definition file
   (`grep -rln "PostSummary\|PostMedia\b" flutter-boilerplate/lib` returns only the two definition

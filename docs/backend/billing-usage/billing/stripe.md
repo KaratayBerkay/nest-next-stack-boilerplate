@@ -186,7 +186,7 @@ all Vault-sourced, none present in `.env`/`.env.example`.
 
 ## Known issues
 
-- ⚠ [BE-018](../../../issues.md#be-018) — this controller has no `@SkipThrottle()` (a decorator this codebase does use
+- ⚠ `BE-018` (resolved) — this controller has no `@SkipThrottle()` (a decorator this codebase does use
   elsewhere, see
   [`throttle.controller.ts`](../../../../nest-js-boilerplate/src/throttle/throttle.controller.ts)),
   so `/stripe/webhook` shares the app's global default rate limit
@@ -209,7 +209,7 @@ all Vault-sourced, none present in `.env`/`.env.example`.
   [§ Creating a subscription](#creating-a-subscription) above) — but that pattern doesn't guarantee
   the off-session charge itself never needs authentication, only that it usually won't for a
   just-verified card.
-- ⚠ [BE-020](../../../issues.md#be-020) — a brand-new subscription's first `WalletTransaction` ledger row is written
+- ⚠ `BE-020` (resolved) — a brand-new subscription's first `WalletTransaction` ledger row is written
   with `amount: 0` synchronously inside `subscribeToPlan` (before any webhook exists to know the real
   amount), and is only corrected to the genuine charged amount when `invoice.paid` reconciles it (see
   [§ invoice.paid](#invoicepaid) above, and idempotency above for why they share a row). If that

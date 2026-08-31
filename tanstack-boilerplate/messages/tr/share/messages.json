@@ -1,0 +1,16 @@
+{
+  "shareSomething": "Bir şey paylaş",
+  "title": "Başlık",
+  "titlePlaceholder": "Aklından ne geçiyor?",
+  "content": "İçerik",
+  "contentPlaceholder": "Bir şeyler yaz...",
+  "imageOptional": "Görsel (isteğe bağlı)",
+  "preview": "Önizleme",
+  "uploading": "Yükleniyor...",
+  "imageUploadFailed": "Görsel yüklenemedi.",
+  "remove": "Kaldır",
+  "retry": "Tekrar dene",
+  "sharing": "Paylaşılıyor...",
+  "share": "Paylaş",
+  "failedToCreatePost": "Gönderi oluşturulamadı"
+}

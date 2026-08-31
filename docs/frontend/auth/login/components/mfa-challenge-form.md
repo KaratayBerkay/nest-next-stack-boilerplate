@@ -51,7 +51,7 @@ this device" checkbox, and a "use a different account" escape hatch back to
   this toggle** (`_backupCodeMode` in
   [`login/page_content.dart`](../../../../../flutter-boilerplate/lib/views/auth/login/page_content.dart)),
   so a user who lost their authenticator device can complete login on mobile but not on web. Filed as
-  [CROSS-009](../../../../issues.md#cross-009).
+  `CROSS-009` (resolved).
 
 ## Calls
 

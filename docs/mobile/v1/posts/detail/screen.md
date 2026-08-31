@@ -44,7 +44,7 @@ renders:**
 - No who-reacted display (Premium tier concept).
 
 Compare with web's [posts page](../../../../frontend/v1/posts/page.md), which has all five of these
-wired up (even though [FE-009](../../../../issues.md#fe-009) means the last two currently render
+wired up (even though `FE-009` (resolved) means the last two currently render
 empty on web too — but the UI and the edit/delete/react actions themselves work on web).
 
 ## Known issues
@@ -102,7 +102,7 @@ this tree's "reaction breakdown" would show only a like count, not a per-emoji-t
 `[uuid]/` tree (fixing the `isAuthor` bug and replacing `WhoReacted`'s hardcoded data with a real
 fetch first), or delete it and add edit/delete/reaction-breakdown/who-reacted directly to the live
 `detail_page_view.dart` instead — keeping both around is the actively-misleading state a future
-reader of this codebase would otherwise land in. Filed as [MOB-008](../../../../issues.md#mob-008) (proposed HIGH — a live,
+reader of this codebase would otherwise land in. Filed as `MOB-008` (resolved) (proposed HIGH — a live,
 reachable, paying-tier-visible capability gap, not just an unused code path) in
 [issues.md](../../../../issues.md).
 

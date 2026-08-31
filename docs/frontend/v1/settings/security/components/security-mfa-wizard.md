@@ -46,7 +46,7 @@ The 3-step MFA enrollment wizard, one component with an internal `step` switch (
 
 ## Known issues
 
-- [FE-007](../../../../../issues.md#fe-007) — **resolved by deletion** (dedup pass, commit
+- `FE-007` — **resolved by deletion** (dedup pass, commit
   `aa04a418`): a second, unused implementation of the handlers this component's callbacks resolve to
   (`views/settings/security/mfa-handlers.ts`) existed but was never imported. Its `handleVerify`
   even had a signature mismatch from the real one

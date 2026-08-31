@@ -145,12 +145,19 @@ class PushNotificationService {
     final kind = data['kind'] as String?;
     final senderId = data['senderId'] as String?;
     final postId = data['postId'] as String?;
+    final slug = data['slug'] as String?;
     final lang = data['lang'] as String? ?? 'en';
 
     if (kind == 'direct-message' && senderId != null) {
       navigateTo?.call('/v1/$lang/messages?user=$senderId');
     } else if (kind == 'friend-request' || kind == 'friend-accepted') {
       navigateTo?.call('/v1/$lang/find-friends/requests');
+    } else if (kind == 'rtc-missed-call') {
+      navigateTo?.call('/v1/$lang/rtc/calls');
+    } else if (kind == 'rtc-meeting-invite' && slug != null) {
+      navigateTo?.call('/v1/$lang/rtc/meetings/$slug');
+    } else if (kind == 'rtc-stream-live' && slug != null) {
+      navigateTo?.call('/v1/$lang/rtc/live/$slug');
     } else if (postId != null) {
       navigateTo?.call('/v1/$lang/posts/$postId');
     } else {
