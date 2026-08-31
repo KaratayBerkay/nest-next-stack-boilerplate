@@ -1,4 +1,4 @@
-FROM node:24.20.0-alpine3.24 AS base
+FROM node:26.8.1-alpine3.24 AS base
 RUN apk update && apk upgrade --no-cache && apk add --no-cache tini
 RUN corepack enable && pnpm --version
 
