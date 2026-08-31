@@ -25,7 +25,8 @@ void main() {
     expect(navigated, ['/v1/en/messages?user=u1']);
   });
 
-  test('friend-request and friend-accepted pushes open the requests tab '
+  test(
+      'friend-request and friend-accepted pushes open the requests tab '
       '(not bare find-friends — the old web sw.js drift)', () {
     service.navigateFromData({'kind': 'friend-request', 'lang': 'en'});
     service.navigateFromData({'kind': 'friend-accepted', 'lang': 'tr'});
@@ -58,7 +59,8 @@ void main() {
     expect(navigated, ['/v1/en/rtc/live/live-9']);
   });
 
-  test('rtc kinds missing their slug fall through to the notification page '
+  test(
+      'rtc kinds missing their slug fall through to the notification page '
       'instead of navigating to a broken route', () {
     service.navigateFromData({'kind': 'rtc-stream-live', 'lang': 'en'});
     expect(navigated, ['/v1/en/notification']);
