@@ -94,6 +94,13 @@ export function useLiveKitMeetingRoom(
   const [localMicEnabled, setLocalMicEnabled] = useState(true);
   const [localCameraEnabled, setLocalCameraEnabled] = useState(true);
   const [localScreenShareEnabled, setLocalScreenShareEnabled] = useState(false);
+  // Re-entrancy guards for the three toggle callbacks below — see the 1:1
+  // call hook (useLiveKitRoom.ts) for the production incident (rapid
+  // re-clicking after a permission hiccup firing overlapping toggle calls)
+  // that motivated these. Plain refs, not state: a click must not re-render.
+  const micTogglingRef = useRef(false);
+  const cameraTogglingRef = useRef(false);
+  const screenShareTogglingRef = useRef(false);
   // A ref, not useState: this only needs to be *current* at the moment
   // rebuildParticipants reads it — it never needs to be reactive on its own.
   // LiveKit fires ActiveSpeakersChanged continuously during any conversation;
@@ -214,28 +221,25 @@ export function useLiveKitMeetingRoom(
         setDuplicateKicked(false);
         telemetry("meeting.livekit.connected", { phase: "connected" });
         try {
-          await room.localParticipant.setMicrophoneEnabled(true);
+          // Acquire mic + camera together via LiveKit's own helper — one
+          // combined getUserMedia() call so the browser shows a SINGLE
+          // permission prompt instead of two back-to-back ones. Firefox in
+          // particular can end up dismissing the second of two separate
+          // requests fired moments apart, which reads as "clicking Allow
+          // does nothing" — see the 1:1 call hook (useLiveKitRoom.ts) for
+          // the production incident that traced this down.
+          await room.localParticipant.enableCameraAndMicrophone();
         } catch (error) {
-          telemetry("meeting.media.microphone_enable_failed", {
-            exceptionType: "CLIENT_ERROR",
-            error,
-            mediaType: "audio",
-            phase: "connected",
-          });
-          // Keep the control bar honest: the optimistic `true` initial state
-          // would otherwise show an unmuted mic that never actually enabled
-          // (permission denied / no device).
-          setLocalMicEnabled(false);
-        }
-        try {
-          await room.localParticipant.setCameraEnabled(true);
-        } catch (error) {
-          telemetry("meeting.media.camera_enable_failed", {
+          telemetry("meeting.media.camera_microphone_enable_failed", {
             exceptionType: "CLIENT_ERROR",
             error,
             mediaType: "video",
             phase: "connected",
           });
+          // Keep the control bar honest: the optimistic `true` initial state
+          // would otherwise show an unmuted mic / on camera that never
+          // actually enabled (permission denied / no device).
+          setLocalMicEnabled(false);
           setLocalCameraEnabled(false);
         }
         rebuildParticipants();
@@ -268,7 +272,8 @@ export function useLiveKitMeetingRoom(
 
   const toggleMic = useCallback(() => {
     const room = roomRef.current;
-    if (!room) return;
+    if (!room || micTogglingRef.current) return;
+    micTogglingRef.current = true;
     const next = !localMicEnabled;
     setLocalMicEnabled(next);
     void room.localParticipant
@@ -289,12 +294,16 @@ export function useLiveKitMeetingRoom(
         // show "unmuted" while the mic call actually failed and stayed
         // muted (or vice versa), with no way to tell from the UI.
         setLocalMicEnabled(!next);
+      })
+      .finally(() => {
+        micTogglingRef.current = false;
       });
   }, [localMicEnabled, meetingId, rebuildParticipants, roomName]);
 
   const toggleCamera = useCallback(() => {
     const room = roomRef.current;
-    if (!room) return;
+    if (!room || cameraTogglingRef.current) return;
+    cameraTogglingRef.current = true;
     const next = !localCameraEnabled;
     setLocalCameraEnabled(next);
     void room.localParticipant
@@ -312,12 +321,16 @@ export function useLiveKitMeetingRoom(
           error,
         });
         setLocalCameraEnabled(!next);
+      })
+      .finally(() => {
+        cameraTogglingRef.current = false;
       });
   }, [localCameraEnabled, meetingId, rebuildParticipants, roomName]);
 
   const toggleScreenShare = useCallback(() => {
     const room = roomRef.current;
-    if (!room) return;
+    if (!room || screenShareTogglingRef.current) return;
+    screenShareTogglingRef.current = true;
     const next = !localScreenShareEnabled;
     setLocalScreenShareEnabled(next);
     void room.localParticipant
@@ -337,6 +350,9 @@ export function useLiveKitMeetingRoom(
         // User cancelled the browser's screen-share picker (or it failed) —
         // revert the optimistic toggle rather than showing a stuck-on state.
         setLocalScreenShareEnabled(false);
+      })
+      .finally(() => {
+        screenShareTogglingRef.current = false;
       });
   }, [localScreenShareEnabled, meetingId, rebuildParticipants, roomName]);
 

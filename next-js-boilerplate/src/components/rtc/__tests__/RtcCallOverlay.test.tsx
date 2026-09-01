@@ -19,6 +19,13 @@ const t = {
   speakerOff: "SPEAKER_OFF",
   cameraOn: "CAMERA_ON",
   cameraOff: "CAMERA_OFF",
+  screenShareOn: "SCREEN_SHARE_ON",
+  screenShareOff: "SCREEN_SHARE_OFF",
+  yourScreenLabel: "Your screen",
+  participantScreenLabel: "{name}'s screen",
+  zoomIn: "ZOOM_IN",
+  zoomOut: "ZOOM_OUT",
+  resetZoom: "RESET_ZOOM",
 };
 
 const rtcCallState = vi.hoisted(() => ({
@@ -60,6 +67,8 @@ const livekitState = vi.hoisted(() => ({
   connected: true,
   remoteConnected: true,
   remoteCameraLive: true,
+  remoteScreenShareLive: false,
+  screenShareEnabled: false,
   livekitError: null as string | null,
   micEnabled: true,
   cameraEnabled: true,
@@ -69,6 +78,7 @@ vi.mock("@/hooks/rtc/useLiveKitRoom", () => ({
     ...livekitState,
     toggleMic: vi.fn(),
     toggleCamera: vi.fn(),
+    toggleScreenShare: vi.fn(),
   }),
 }));
 
@@ -134,6 +144,8 @@ describe("RtcCallOverlay camera-off placeholders", () => {
     livekitState.connected = true;
     livekitState.remoteConnected = true;
     livekitState.remoteCameraLive = true;
+    livekitState.remoteScreenShareLive = false;
+    livekitState.screenShareEnabled = false;
     livekitState.cameraEnabled = true;
     livekitState.micEnabled = true;
     livekitState.livekitError = null;
@@ -177,6 +189,98 @@ describe("RtcCallOverlay camera-off placeholders", () => {
     expect(
       container.querySelector('[data-testid="self-camera-placeholder"]'),
     ).toBeNull();
+  });
+});
+
+// Same "camera never disappears behind the share" mechanics as the meeting
+// room (RtcMeetingRoomView), applied to 1:1 calls: a screen share becomes
+// the call's main stage while both cameras shrink to small tiles, rather
+// than replacing the sharer's video outright.
+describe("RtcCallOverlay screen sharing", () => {
+  const videoCallState: RtcCallState = {
+    phase: "connected",
+    callId: "call-1",
+    peer: basePeer,
+    hasVideo: true,
+    livekit: { token: "tok", roomName: "room-1" },
+    warningSecondsRemaining: null,
+    lastError: null,
+    actionPending: null,
+    connectedAt: null,
+  };
+
+  beforeEach(() => {
+    rtcCallState.current = videoCallState;
+    livekitState.connected = true;
+    livekitState.remoteConnected = true;
+    livekitState.remoteCameraLive = true;
+    livekitState.remoteScreenShareLive = false;
+    livekitState.screenShareEnabled = false;
+    livekitState.cameraEnabled = true;
+    livekitState.micEnabled = true;
+    livekitState.livekitError = null;
+  });
+
+  // The zoom scroll container (the video's immediate parent) carries the
+  // hidden/visible toggle now, not the video itself — the video's own
+  // className instead reflects the zoom-driven width/height.
+  function screenTileWrapper(labelText: string): HTMLElement {
+    const video = screen.getByLabelText(labelText);
+    return video.parentElement as HTMLElement;
+  }
+
+  it("shows the peer's shared screen as the main stage and shrinks their camera to a small tile — never removing it", () => {
+    livekitState.remoteScreenShareLive = true;
+
+    const { container } = render(<RtcCallOverlay />);
+
+    expect(screenTileWrapper("Alice's screen").className).not.toContain(
+      "hidden",
+    );
+    expect(screenTileWrapper(t.yourScreenLabel).className).toContain("hidden");
+
+    // The peer's camera video must still be mounted and visible — shrunk
+    // to a corner tile, not removed the way it used to disappear behind
+    // the meeting room's screen share before that fix.
+    const peerCamera = container.querySelector(
+      "video:not([aria-label])",
+    ) as HTMLVideoElement;
+    expect(peerCamera).toBeTruthy();
+    expect(peerCamera.className).not.toContain("inset-0");
+    expect(peerCamera.className).not.toContain("opacity-0");
+
+    // Zoom controls appear once a share is the main stage.
+    expect(screen.getByRole("button", { name: t.zoomIn })).toBeTruthy();
+    expect(screen.getByRole("button", { name: t.zoomOut })).toBeTruthy();
+  });
+
+  it("shows no zoom controls when nobody is sharing", () => {
+    render(<RtcCallOverlay />);
+
+    expect(screen.queryByRole("button", { name: t.zoomIn })).toBeNull();
+    expect(screen.queryByRole("button", { name: t.zoomOut })).toBeNull();
+  });
+
+  it("shows your own shared screen as the main stage when you're presenting", () => {
+    livekitState.screenShareEnabled = true;
+
+    render(<RtcCallOverlay />);
+
+    expect(screenTileWrapper(t.yourScreenLabel).className).not.toContain(
+      "hidden",
+    );
+    expect(screenTileWrapper("Alice's screen").className).toContain("hidden");
+  });
+
+  it("keeps both screen-share tiles hidden and the peer camera full-stage when nobody is sharing", () => {
+    const { container } = render(<RtcCallOverlay />);
+
+    expect(screenTileWrapper("Alice's screen").className).toContain("hidden");
+    expect(screenTileWrapper(t.yourScreenLabel).className).toContain("hidden");
+    const peerCamera = container.querySelector(
+      "video:not([aria-label])",
+    ) as HTMLVideoElement;
+    expect(peerCamera.className).toContain("inset-0");
   });
 });
 

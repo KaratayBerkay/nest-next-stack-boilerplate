@@ -53,6 +53,25 @@ String _formatMmSs(int totalSeconds) {
   return '$mins:${secs.toString().padLeft(2, '0')}';
 }
 
+/// Which side's screen share (if any) owns the call's main stage — same
+/// mechanics as the meeting room: an active share takes over the video
+/// area and both cameras shrink to small tiles. If both sides happen to
+/// share at once (rare — LiveKit allows it, a real 1:1 UI never intends
+/// it), the peer's share wins since watching the other person's content is
+/// the more useful default. Extracted as a pure function (mirroring
+/// [formatCallTimer] above) so this precedence is unit-testable without
+/// pumping the whole call overlay widget tree.
+enum CallShareSource { remote, local }
+
+CallShareSource? resolveActiveCallShare({
+  required bool remoteSharing,
+  required bool localSharing,
+}) {
+  if (remoteSharing) return CallShareSource.remote;
+  if (localSharing) return CallShareSource.local;
+  return null;
+}
+
 /// Global overlay for the whole 1:1-call lifecycle — incoming-ring sheet,
 /// outgoing-ring/connecting screen, and the in-call video/audio + controls.
 /// Mounted once at the app root (app.dart), same level as the biometric-lock
@@ -74,10 +93,17 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
   String? _connectedForCallId;
   lk.VideoTrack? _localVideoTrack;
   lk.VideoTrack? _remoteVideoTrack;
+  // Own shared-screen preview and the peer's incoming share — kept apart
+  // from the camera tracks above so a share never overwrites the camera
+  // reference the way a single shared "remote video" slot used to (both
+  // are Track.Kind.video; only the source distinguishes them).
+  lk.VideoTrack? _localScreenShareTrack;
+  lk.VideoTrack? _remoteScreenShareTrack;
   bool _connected = false;
   bool _remoteConnected = false;
   bool _micEnabled = true;
   bool _cameraEnabled = true;
+  bool _screenShareEnabled = false;
   bool _speakerEnabled = true;
 
   @override
@@ -98,10 +124,13 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
       setState(() {
         _localVideoTrack = null;
         _remoteVideoTrack = null;
+        _localScreenShareTrack = null;
+        _remoteScreenShareTrack = null;
         _connected = false;
         _remoteConnected = false;
         _micEnabled = true;
         _cameraEnabled = true;
+        _screenShareEnabled = false;
         _speakerEnabled = true;
       });
     }
@@ -128,13 +157,20 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
 
     listener
       ..on<lk.TrackSubscribedEvent>((event) {
-        if (event.track is lk.VideoTrack && mounted) {
-          setState(() => _remoteVideoTrack = event.track as lk.VideoTrack);
+        if (event.track is! lk.VideoTrack || !mounted) return;
+        final track = event.track as lk.VideoTrack;
+        if (event.publication.source == lk.TrackSource.screenShareVideo) {
+          setState(() => _remoteScreenShareTrack = track);
+        } else {
+          setState(() => _remoteVideoTrack = track);
         }
       })
       ..on<lk.TrackUnsubscribedEvent>((event) {
-        if (identical(event.track, _remoteVideoTrack) && mounted) {
+        if (!mounted) return;
+        if (identical(event.track, _remoteVideoTrack)) {
           setState(() => _remoteVideoTrack = null);
+        } else if (identical(event.track, _remoteScreenShareTrack)) {
+          setState(() => _remoteScreenShareTrack = null);
         }
       })
       ..on<lk.ParticipantConnectedEvent>((_) {
@@ -349,6 +385,40 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
     );
   }
 
+  void _toggleScreenShare() {
+    final room = _room;
+    if (room == null) return;
+    final next = !_screenShareEnabled;
+    setState(() => _screenShareEnabled = next);
+    room.localParticipant?.setScreenShareEnabled(next).then<void>(
+      (pub) {
+        if (!mounted) return;
+        final track = pub?.track;
+        if (next && track is lk.VideoTrack) {
+          final videoTrack = track as lk.VideoTrack;
+          setState(() => _localScreenShareTrack = videoTrack);
+        } else if (!next) {
+          setState(() => _localScreenShareTrack = null);
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        logRtcEvent(
+          event: 'call.media.screen_share_toggle_failed',
+          rtcKind: 'call',
+          rtcId: _connectedForCallId,
+          mediaType: 'video',
+          exceptionType: 'CLIENT_ERROR',
+          error: error,
+          stackTrace: stackTrace,
+          phase: 'connected',
+        );
+        // User cancelled the OS screen-capture prompt (or it failed) —
+        // revert the optimistic toggle rather than showing a stuck-on state.
+        if (mounted) setState(() => _screenShareEnabled = !next);
+      },
+    );
+  }
+
   void _toggleSpeaker() {
     if (_room == null) return;
     final next = !_speakerEnabled;
@@ -434,11 +504,15 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
           remoteConnected: _remoteConnected,
           micEnabled: _micEnabled,
           cameraEnabled: _cameraEnabled,
+          screenShareEnabled: _screenShareEnabled,
           speakerEnabled: _speakerEnabled,
           localVideoTrack: _localVideoTrack,
           remoteVideoTrack: _remoteVideoTrack,
+          localScreenShareTrack: _localScreenShareTrack,
+          remoteScreenShareTrack: _remoteScreenShareTrack,
           onToggleMic: _toggleMic,
           onToggleCamera: _toggleCamera,
+          onToggleScreenShare: _toggleScreenShare,
           onToggleSpeaker: _toggleSpeaker,
           onEnd: state.phase == RtcCallPhase.connected
               ? notifier.hangupCall
@@ -530,11 +604,15 @@ class _ActiveCallScreen extends StatefulWidget {
   final bool remoteConnected;
   final bool micEnabled;
   final bool cameraEnabled;
+  final bool screenShareEnabled;
   final bool speakerEnabled;
   final lk.VideoTrack? localVideoTrack;
   final lk.VideoTrack? remoteVideoTrack;
+  final lk.VideoTrack? localScreenShareTrack;
+  final lk.VideoTrack? remoteScreenShareTrack;
   final VoidCallback onToggleMic;
   final VoidCallback onToggleCamera;
+  final VoidCallback onToggleScreenShare;
   final VoidCallback onToggleSpeaker;
   final VoidCallback onEnd;
 
@@ -546,11 +624,15 @@ class _ActiveCallScreen extends StatefulWidget {
     required this.remoteConnected,
     required this.micEnabled,
     required this.cameraEnabled,
+    required this.screenShareEnabled,
     required this.speakerEnabled,
     required this.localVideoTrack,
     required this.remoteVideoTrack,
+    required this.localScreenShareTrack,
+    required this.remoteScreenShareTrack,
     required this.onToggleMic,
     required this.onToggleCamera,
+    required this.onToggleScreenShare,
     required this.onToggleSpeaker,
     required this.onEnd,
   });
@@ -632,8 +714,22 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
     final colors = widget.colors;
     final t = widget.t;
     final isConnected = state.phase == RtcCallPhase.connected;
-    final showVideo =
-        isConnected && state.hasVideo && widget.remoteVideoTrack != null;
+    final shareSource = resolveActiveCallShare(
+      remoteSharing: widget.remoteScreenShareTrack != null,
+      localSharing:
+          widget.screenShareEnabled && widget.localScreenShareTrack != null,
+    );
+    final activeShareTrack = switch (shareSource) {
+      CallShareSource.remote => widget.remoteScreenShareTrack,
+      CallShareSource.local => widget.localScreenShareTrack,
+      null => null,
+    };
+    final isSharing = activeShareTrack != null;
+    final showShare = isConnected && state.hasVideo && isSharing;
+    final showVideo = !showShare &&
+        isConnected &&
+        state.hasVideo &&
+        widget.remoteVideoTrack != null;
     final actionPending = state.actionPending != null;
 
     return Material(
@@ -641,7 +737,11 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
       child: SafeArea(
         child: Stack(
           children: [
-            if (showVideo)
+            if (showShare)
+              Positioned.fill(
+                child: lk.VideoTrackRenderer(activeShareTrack),
+              )
+            else if (showVideo)
               Positioned.fill(
                 child: lk.VideoTrackRenderer(widget.remoteVideoTrack!),
               )
@@ -663,6 +763,22 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: lk.VideoTrackRenderer(widget.localVideoTrack!),
+                  ),
+                ),
+              ),
+            // Peer's camera moves into a small tile once their (or your
+            // own) screen share takes the main stage above — it must not
+            // just disappear behind the share.
+            if (showShare && widget.remoteVideoTrack != null)
+              Positioned(
+                right: 16,
+                top: 182,
+                child: SizedBox(
+                  width: 110,
+                  height: 150,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: lk.VideoTrackRenderer(widget.remoteVideoTrack!),
                   ),
                 ),
               ),
@@ -731,6 +847,18 @@ class _ActiveCallScreenState extends State<_ActiveCallScreen> {
                             ? t.rtcCameraOff
                             : t.rtcCameraOn,
                         onPressed: widget.onToggleCamera,
+                      ),
+                    if (state.hasVideo) const SizedBox(width: 20),
+                    if (state.hasVideo)
+                      _CallActionButton(
+                        icon: widget.screenShareEnabled
+                            ? Icons.stop_screen_share
+                            : Icons.screen_share,
+                        color: Colors.white24,
+                        label: widget.screenShareEnabled
+                            ? t.rtcScreenShareOff
+                            : t.rtcScreenShareOn,
+                        onPressed: widget.onToggleScreenShare,
                       ),
                     const SizedBox(width: 20),
                   ],

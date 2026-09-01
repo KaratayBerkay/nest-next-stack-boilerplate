@@ -44,4 +44,36 @@ void main() {
       expect(formatCallTimer(137, 0), '2:17');
     });
   });
+
+  // Same "camera never disappears behind the share" mechanics as the
+  // meeting room's buildMeetingStageTiles, applied to 1:1 calls.
+  group('resolveActiveCallShare', () {
+    test('nobody sharing stays on the camera stage', () {
+      expect(
+        resolveActiveCallShare(remoteSharing: false, localSharing: false),
+        isNull,
+      );
+    });
+
+    test('the peer sharing takes the main stage', () {
+      expect(
+        resolveActiveCallShare(remoteSharing: true, localSharing: false),
+        CallShareSource.remote,
+      );
+    });
+
+    test('you sharing takes the main stage', () {
+      expect(
+        resolveActiveCallShare(remoteSharing: false, localSharing: true),
+        CallShareSource.local,
+      );
+    });
+
+    test('the peer wins the main stage if both happen to share at once', () {
+      expect(
+        resolveActiveCallShare(remoteSharing: true, localSharing: true),
+        CallShareSource.remote,
+      );
+    });
+  });
 }

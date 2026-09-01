@@ -6031,6 +6031,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rtcCameraOff => 'Kamerayı kapat';
 
   @override
+  String get rtcScreenShareOn => 'Ekranı paylaş';
+
+  @override
+  String get rtcScreenShareOff => 'Paylaşımı durdur';
+
+  @override
   String rtcCallLimitWarning(Object seconds) {
     return 'Arama $seconds sn içinde sona eriyor — daha uzun aramalar için yükseltin';
   }
@@ -6218,6 +6224,14 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcYouLabel => 'Siz';
+
+  @override
+  String get rtcYourScreenLabel => 'Ekranınız';
+
+  @override
+  String rtcParticipantScreenLabel(Object name) {
+    return '$name ekranı';
+  }
 
   @override
   String get rtcBackToMeetings => 'Toplantılara dön';

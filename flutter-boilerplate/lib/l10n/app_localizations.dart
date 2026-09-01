@@ -11360,6 +11360,18 @@ abstract class AppLocalizations {
   /// **'Turn off camera'**
   String get rtcCameraOff;
 
+  /// No description provided for @rtcScreenShareOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Share screen'**
+  String get rtcScreenShareOn;
+
+  /// No description provided for @rtcScreenShareOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop sharing'**
+  String get rtcScreenShareOff;
+
   /// No description provided for @rtcCallLimitWarning.
   ///
   /// In en, this message translates to:
@@ -11701,6 +11713,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You'**
   String get rtcYouLabel;
+
+  /// No description provided for @rtcYourScreenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your screen'**
+  String get rtcYourScreenLabel;
+
+  /// No description provided for @rtcParticipantScreenLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}\'s screen'**
+  String rtcParticipantScreenLabel(Object name);
 
   /// No description provided for @rtcBackToMeetings.
   ///

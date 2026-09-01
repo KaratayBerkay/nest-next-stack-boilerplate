@@ -11,7 +11,10 @@ import {
   type RemoteTrack,
 } from "livekit-client";
 import { clientEnv } from "@/lib/env";
-import { hasLiveRemoteCamera } from "@/lib/rtc/remote-camera";
+import {
+  hasLiveRemoteCamera,
+  hasLiveRemoteScreenShare,
+} from "@/lib/rtc/remote-camera";
 import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 import { useWakeLock } from "@/hooks/rtc/useWakeLock";
 import { useMediaSessionActive } from "@/hooks/rtc/useMediaSessionActive";
@@ -21,6 +24,10 @@ export interface UseLiveKitRoomElements {
   localVideoRef: React.RefObject<HTMLVideoElement | null>;
   remoteVideoRef: React.RefObject<HTMLVideoElement | null>;
   remoteAudioRef: React.RefObject<HTMLAudioElement | null>;
+  /** Own shared-screen preview — mirrors the meeting room's "Your screen"
+   *  tile so a presenter can confirm what's live. */
+  localScreenShareRef: React.RefObject<HTMLVideoElement | null>;
+  remoteScreenShareRef: React.RefObject<HTMLVideoElement | null>;
 }
 
 export interface UseLiveKitRoomResult {
@@ -31,6 +38,10 @@ export interface UseLiveKitRoomResult {
    *  avatar placeholder. A muted/withdrawn camera track otherwise renders
    *  as a frozen or black rectangle. */
   remoteCameraLive: boolean;
+  /** Peer currently publishing an unmuted screen share — same idea as
+   *  `remoteCameraLive`, gates the call's main stage switching to their
+   *  shared screen (camera moves to a small tile, Meet-style). */
+  remoteScreenShareLive: boolean;
   /** False while the peer's microphone is muted — drives the on-tile mute
    *  badge. True whenever no peer is connected (no badge to show). */
   remoteMicEnabled: boolean;
@@ -41,19 +52,26 @@ export interface UseLiveKitRoomResult {
   livekitError: "connection" | "microphone" | "camera" | null;
   micEnabled: boolean;
   cameraEnabled: boolean;
+  screenShareEnabled: boolean;
   toggleMic: () => void;
   toggleCamera: () => void;
+  toggleScreenShare: () => void;
 }
 
 interface LiveKitMediaState {
   token: string | null;
   micEnabled: boolean;
   cameraEnabled: boolean;
+  screenShareEnabled: boolean;
   error: "connection" | "microphone" | "camera" | null;
 }
 
-function attachCameraTrack(pub: TrackPublication, el: HTMLVideoElement | null) {
-  if (pub.track && pub.source === Track.Source.Camera && el) {
+function attachLocalTrack(
+  pub: TrackPublication,
+  el: HTMLVideoElement | null,
+  source: Track.Source,
+) {
+  if (pub.track && pub.source === source && el) {
     pub.track.attach(el);
   }
 }
@@ -86,11 +104,29 @@ export function useLiveKitRoom(
   callId?: string | null,
   roomName?: string | null,
 ): UseLiveKitRoomResult {
-  const { localVideoRef, remoteVideoRef, remoteAudioRef } = elements;
+  const {
+    localVideoRef,
+    remoteVideoRef,
+    remoteAudioRef,
+    localScreenShareRef,
+    remoteScreenShareRef,
+  } = elements;
   const roomRef = useRef<Room | null>(null);
+  // Re-entrancy guards for the three toggle callbacks below — a production
+  // incident showed a user rapid-clicking the camera button ~10 times in
+  // under 4 seconds after a permission hiccup, firing that many overlapping
+  // setCameraEnabled() calls (each its own getUserMedia() attempt). Firefox
+  // in particular can end up refusing every one of them once a prompt gets
+  // dismissed rather than explicitly allowed/denied, which reads as
+  // "clicking Allow does nothing." Plain refs (not state) — a toggle click
+  // must not cause a render, only gate the next click.
+  const micTogglingRef = useRef(false);
+  const cameraTogglingRef = useRef(false);
+  const screenShareTogglingRef = useRef(false);
   const [connected, setConnected] = useState(false);
   const [remoteConnected, setRemoteConnected] = useState(false);
   const [remoteCameraLive, setRemoteCameraLive] = useState(false);
+  const [remoteScreenShareLive, setRemoteScreenShareLive] = useState(false);
   const [remoteMicEnabled, setRemoteMicEnabled] = useState(true);
   const [remoteSpeaking, setRemoteSpeaking] = useState(false);
   const [localSpeaking, setLocalSpeaking] = useState(false);
@@ -98,6 +134,7 @@ export function useLiveKitRoom(
     token: null,
     micEnabled: true,
     cameraEnabled: hasVideo,
+    screenShareEnabled: false,
     error: null,
   });
   const isCurrentMediaState = mediaState.token === token;
@@ -105,6 +142,9 @@ export function useLiveKitRoom(
   const cameraEnabled = isCurrentMediaState
     ? mediaState.cameraEnabled
     : hasVideo;
+  const screenShareEnabled = isCurrentMediaState
+    ? mediaState.screenShareEnabled
+    : false;
   const livekitError = isCurrentMediaState ? mediaState.error : null;
 
   /** Re-scan the remote participant's tracks and attach any that are missing
@@ -116,16 +156,17 @@ export function useLiveKitRoom(
           if (!pub.track) continue;
           if (pub.kind === Track.Kind.Audio) {
             attachRemoteTrack(pub.track, remoteAudioRef.current);
-          } else if (
-            pub.kind === Track.Kind.Video &&
-            pub.source === Track.Source.Camera
-          ) {
-            attachRemoteTrack(pub.track, remoteVideoRef.current);
+          } else if (pub.kind === Track.Kind.Video) {
+            if (pub.source === Track.Source.Camera) {
+              attachRemoteTrack(pub.track, remoteVideoRef.current);
+            } else if (pub.source === Track.Source.ScreenShare) {
+              attachRemoteTrack(pub.track, remoteScreenShareRef.current);
+            }
           }
         }
       }
     },
-    [remoteAudioRef, remoteVideoRef],
+    [remoteAudioRef, remoteVideoRef, remoteScreenShareRef],
   );
 
   useEffect(() => {
@@ -163,6 +204,7 @@ export function useLiveKitRoom(
 
     const syncRemoteMedia = () => {
       setRemoteCameraLive(hasLiveRemoteCamera(room));
+      setRemoteScreenShareLive(hasLiveRemoteScreenShare(room));
       // Peer mic state for the on-tile mute badge. Defaults to true (no
       // badge) while nobody is connected yet.
       const peer = room.remoteParticipants.values().next().value;
@@ -170,13 +212,14 @@ export function useLiveKitRoom(
     };
 
     room
-      .on(RoomEvent.TrackSubscribed, (track) => {
-        attachRemoteTrack(
-          track,
+      .on(RoomEvent.TrackSubscribed, (track, publication) => {
+        const el =
           track.kind === Track.Kind.Audio
             ? remoteAudioRef.current
-            : remoteVideoRef.current,
-        );
+            : publication.source === Track.Source.ScreenShare
+              ? remoteScreenShareRef.current
+              : remoteVideoRef.current;
+        attachRemoteTrack(track, el);
         syncRemoteMedia();
       })
       .on(RoomEvent.TrackUnsubscribed, (track) => {
@@ -200,10 +243,19 @@ export function useLiveKitRoom(
         });
       })
       .on(RoomEvent.LocalTrackPublished, (pub) => {
-        attachCameraTrack(pub, localVideoRef.current);
+        attachLocalTrack(pub, localVideoRef.current, Track.Source.Camera);
+        attachLocalTrack(
+          pub,
+          localScreenShareRef.current,
+          Track.Source.ScreenShare,
+        );
       })
       .on(RoomEvent.LocalTrackUnpublished, (pub) => {
-        if (pub.track && pub.source === Track.Source.Camera) {
+        if (
+          pub.track &&
+          (pub.source === Track.Source.Camera ||
+            pub.source === Track.Source.ScreenShare)
+        ) {
           pub.track.detach();
         }
       })
@@ -224,6 +276,7 @@ export function useLiveKitRoom(
         setConnected(false);
         setRemoteConnected(false);
         setRemoteCameraLive(false);
+        setRemoteScreenShareLive(false);
         setRemoteMicEnabled(true);
         setRemoteSpeaking(false);
         setLocalSpeaking(false);
@@ -298,34 +351,26 @@ export function useLiveKitRoom(
           token,
           micEnabled: true,
           cameraEnabled: hasVideo,
+          screenShareEnabled: false,
           error: null,
         });
 
-        try {
-          await room.localParticipant.setMicrophoneEnabled(true);
-          if (disposed) return;
-        } catch (error) {
-          if (disposed) return;
-          telemetry("call.media.microphone_enable_failed", {
-            exceptionType: "CLIENT_ERROR",
-            error,
-            phase: "connected",
-          });
-          setMediaState((current) =>
-            current.token === token
-              ? { ...current, micEnabled: false, error: "microphone" }
-              : current,
-          );
-        }
-
         if (hasVideo) {
           try {
-            const pub = await room.localParticipant.setCameraEnabled(true);
+            // Acquire mic + camera together via LiveKit's own helper — one
+            // combined getUserMedia() call so the browser shows a SINGLE
+            // permission prompt instead of two back-to-back ones. Firefox
+            // in particular queues separate audio-only/video-only prompts
+            // oddly close together, which read as "clicking Allow does
+            // nothing" when the second prompt (for the other device)
+            // appears right as the first is dismissed. The resulting
+            // publications attach to localVideoRef via the
+            // LocalTrackPublished listener registered above.
+            await room.localParticipant.enableCameraAndMicrophone();
             if (disposed) return;
-            if (pub) attachCameraTrack(pub, localVideoRef.current);
           } catch (error) {
             if (disposed) return;
-            telemetry("call.media.camera_enable_failed", {
+            telemetry("call.media.camera_microphone_enable_failed", {
               exceptionType: "CLIENT_ERROR",
               error,
               phase: "connected",
@@ -334,9 +379,27 @@ export function useLiveKitRoom(
               current.token === token
                 ? {
                     ...current,
+                    micEnabled: false,
                     cameraEnabled: false,
-                    error: current.error ?? "camera",
+                    error: "camera",
                   }
+                : current,
+            );
+          }
+        } else {
+          try {
+            await room.localParticipant.setMicrophoneEnabled(true);
+            if (disposed) return;
+          } catch (error) {
+            if (disposed) return;
+            telemetry("call.media.microphone_enable_failed", {
+              exceptionType: "CLIENT_ERROR",
+              error,
+              phase: "connected",
+            });
+            setMediaState((current) =>
+              current.token === token
+                ? { ...current, micEnabled: false, error: "microphone" }
                 : current,
             );
           }
@@ -357,6 +420,7 @@ export function useLiveKitRoom(
                   token,
                   micEnabled: true,
                   cameraEnabled: hasVideo,
+                  screenShareEnabled: false,
                   error: "connection",
                 },
           );
@@ -371,6 +435,7 @@ export function useLiveKitRoom(
       setConnected(false);
       setRemoteConnected(false);
       setRemoteCameraLive(false);
+      setRemoteScreenShareLive(false);
       setRemoteMicEnabled(true);
       setRemoteSpeaking(false);
       setLocalSpeaking(false);
@@ -401,12 +466,19 @@ export function useLiveKitRoom(
 
   const toggleMic = useCallback(async () => {
     const room = roomRef.current;
-    if (!room || !connected) return;
+    if (!room || !connected || micTogglingRef.current) return;
+    micTogglingRef.current = true;
     const next = !micEnabled;
     setMediaState((current) => ({
       ...(current.token === token
         ? current
-        : { token, micEnabled: true, cameraEnabled: hasVideo, error: null }),
+        : {
+            token,
+            micEnabled: true,
+            cameraEnabled: hasVideo,
+            screenShareEnabled: false,
+            error: null,
+          }),
       micEnabled: next,
     }));
     try {
@@ -427,23 +499,32 @@ export function useLiveKitRoom(
           ? { ...current, micEnabled: !next, error: "microphone" }
           : current,
       );
+    } finally {
+      micTogglingRef.current = false;
     }
   }, [callId, connected, hasVideo, micEnabled, roomName, token]);
 
   const toggleCamera = useCallback(async () => {
     const room = roomRef.current;
-    if (!room || !connected) return;
+    if (!room || !connected || cameraTogglingRef.current) return;
+    cameraTogglingRef.current = true;
     const next = !cameraEnabled;
     setMediaState((current) => ({
       ...(current.token === token
         ? current
-        : { token, micEnabled: true, cameraEnabled: hasVideo, error: null }),
+        : {
+            token,
+            micEnabled: true,
+            cameraEnabled: hasVideo,
+            screenShareEnabled: false,
+            error: null,
+          }),
       cameraEnabled: next,
     }));
     try {
       const pub = await room.localParticipant.setCameraEnabled(next);
       if (next && pub) {
-        attachCameraTrack(pub, localVideoRef.current);
+        attachLocalTrack(pub, localVideoRef.current, Track.Source.Camera);
       } else if (!next && pub?.track) {
         pub.track.detach();
       }
@@ -463,6 +544,8 @@ export function useLiveKitRoom(
           ? { ...current, cameraEnabled: !next, error: "camera" }
           : current,
       );
+    } finally {
+      cameraTogglingRef.current = false;
     }
   }, [
     callId,
@@ -474,17 +557,79 @@ export function useLiveKitRoom(
     token,
   ]);
 
+  const toggleScreenShare = useCallback(async () => {
+    const room = roomRef.current;
+    if (!room || !connected || screenShareTogglingRef.current) return;
+    screenShareTogglingRef.current = true;
+    const next = !screenShareEnabled;
+    setMediaState((current) => ({
+      ...(current.token === token
+        ? current
+        : {
+            token,
+            micEnabled: true,
+            cameraEnabled: hasVideo,
+            screenShareEnabled: false,
+            error: null,
+          }),
+      screenShareEnabled: next,
+    }));
+    try {
+      const pub = await room.localParticipant.setScreenShareEnabled(next);
+      if (next && pub) {
+        attachLocalTrack(
+          pub,
+          localScreenShareRef.current,
+          Track.Source.ScreenShare,
+        );
+      } else if (!next && pub?.track) {
+        pub.track.detach();
+      }
+    } catch (error) {
+      logRtcEvent({
+        event: "call.media.screen_share_toggle_failed",
+        rtcKind: "call",
+        rtcId: callId,
+        roomName,
+        mediaType: "video",
+        phase: "connected",
+        exceptionType: "CLIENT_ERROR",
+        error,
+      });
+      // User cancelled the browser's screen-share picker (or it failed) —
+      // revert the optimistic toggle rather than showing a stuck-on state.
+      setMediaState((current) =>
+        current.token === token
+          ? { ...current, screenShareEnabled: false }
+          : current,
+      );
+    } finally {
+      screenShareTogglingRef.current = false;
+    }
+  }, [
+    callId,
+    connected,
+    hasVideo,
+    localScreenShareRef,
+    roomName,
+    screenShareEnabled,
+    token,
+  ]);
+
   return {
     connected,
     remoteConnected,
     remoteCameraLive,
+    remoteScreenShareLive,
     remoteMicEnabled,
     remoteSpeaking,
     localSpeaking,
     livekitError,
     micEnabled,
     cameraEnabled,
+    screenShareEnabled,
     toggleMic,
     toggleCamera,
+    toggleScreenShare,
   };
 }

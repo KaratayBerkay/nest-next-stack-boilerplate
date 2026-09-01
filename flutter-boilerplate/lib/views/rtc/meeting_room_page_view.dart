@@ -43,7 +43,11 @@ String roomPhaseMessage(RoomPhase phase, AppLocalizations t) => switch (phase) {
       _ => t.rtcMeetingEndedNotice,
     };
 
-class _ParticipantView {
+/// Public (not `_`-prefixed) so `buildMeetingStageTiles` is unit-testable
+/// without pumping the whole widget tree — same reasoning as
+/// `roomPhaseForJoinFailure` above.
+@visibleForTesting
+class MeetingParticipantView {
   final String identity;
   final String name;
   final bool isLocal;
@@ -53,7 +57,7 @@ class _ParticipantView {
   final bool cameraEnabled;
   final bool screenShareEnabled;
 
-  const _ParticipantView({
+  const MeetingParticipantView({
     required this.identity,
     required this.name,
     required this.isLocal,
@@ -63,6 +67,53 @@ class _ParticipantView {
     required this.cameraEnabled,
     required this.screenShareEnabled,
   });
+}
+
+@visibleForTesting
+enum MeetingStageVideoMode { camera, screen }
+
+/// One tile on the meeting grid. Each participant contributes a camera
+/// tile, plus a second screen-share tile while they're presenting — the
+/// two render independently so a presenter's face never disappears behind
+/// their own shared screen (the grid used to hold one tile per participant
+/// and picked screenShareTrack over videoTrack whenever both existed).
+@visibleForTesting
+class MeetingStageTile {
+  final String key;
+  final MeetingParticipantView participant;
+  final MeetingStageVideoMode mode;
+
+  const MeetingStageTile({
+    required this.key,
+    required this.participant,
+    required this.mode,
+  });
+}
+
+@visibleForTesting
+List<MeetingStageTile> buildMeetingStageTiles(
+  List<MeetingParticipantView> participants,
+) {
+  final tiles = <MeetingStageTile>[];
+  for (final p in participants) {
+    if (p.screenShareTrack != null) {
+      tiles.add(
+        MeetingStageTile(
+          key: '${p.identity}::screen',
+          participant: p,
+          mode: MeetingStageVideoMode.screen,
+        ),
+      );
+    }
+    tiles.add(
+      MeetingStageTile(
+        key: p.identity,
+        participant: p,
+        mode: MeetingStageVideoMode.camera,
+      ),
+    );
+  }
+  return tiles;
 }
 
 /// Group-meeting room — an N-participant analog of RtcCallOverlay's LiveKit
@@ -90,7 +141,7 @@ class _RtcMeetingRoomPageContentState
     extends ConsumerState<RtcMeetingRoomPageContent> {
   lk.Room? _room;
   lk.EventsListener<lk.RoomEvent>? _listener;
-  List<_ParticipantView> _participants = [];
+  List<MeetingParticipantView> _participants = [];
   bool _localMicEnabled = true;
   bool _localCameraEnabled = true;
   bool _localScreenShareEnabled = false;
@@ -322,7 +373,7 @@ class _RtcMeetingRoomPageContentState
     });
   }
 
-  _ParticipantView _toView(lk.Participant p) {
+  MeetingParticipantView _toView(lk.Participant p) {
     lk.VideoTrack? findVideo(lk.TrackSource source) {
       for (final pub in p.videoTrackPublications) {
         if (pub.source == source && pub.track is lk.VideoTrack) {
@@ -332,7 +383,7 @@ class _RtcMeetingRoomPageContentState
       return null;
     }
 
-    return _ParticipantView(
+    return MeetingParticipantView(
       identity: p.identity,
       name: p.name.isNotEmpty ? p.name : p.identity,
       isLocal: p is lk.LocalParticipant,
@@ -598,6 +649,7 @@ class _RtcMeetingRoomPageContentState
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final colors = AppColors.of(context);
+    final stageTiles = buildMeetingStageTiles(_participants);
 
     ref.listen<MeetingSignal>(meetingSignalProvider(widget.slug), (
       prev,
@@ -752,9 +804,16 @@ class _RtcMeetingRoomPageContentState
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
               ),
-              itemCount: _participants.length,
-              itemBuilder: (context, index) =>
-                  _ParticipantTile(participant: _participants[index], t: t),
+              itemCount: stageTiles.length,
+              itemBuilder: (context, index) {
+                final tile = stageTiles[index];
+                return _ParticipantTile(
+                  key: ValueKey(tile.key),
+                  participant: tile.participant,
+                  mode: tile.mode,
+                  t: t,
+                );
+              },
             ),
           ),
           Row(
@@ -834,20 +893,36 @@ class _RtcMeetingRoomPageContentState
 }
 
 class _ParticipantTile extends StatelessWidget {
-  final _ParticipantView participant;
+  final MeetingParticipantView participant;
+  final MeetingStageVideoMode mode;
   final AppLocalizations t;
 
-  const _ParticipantTile({required this.participant, required this.t});
+  const _ParticipantTile({
+    super.key,
+    required this.participant,
+    this.mode = MeetingStageVideoMode.camera,
+    required this.t,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final track = participant.screenShareTrack ?? participant.videoTrack;
-    // A screen share renders regardless of the camera toggle — gating it on
-    // cameraEnabled hid an active share behind the avatar the moment the
-    // sharer turned their camera off. Only the camera feed follows the
-    // camera toggle.
-    final showVideo = participant.screenShareTrack != null ||
-        (participant.videoTrack != null && participant.cameraEnabled);
+    final isScreenShare = mode == MeetingStageVideoMode.screen;
+    // Camera tiles only ever show the camera track — a presenter's own
+    // face used to disappear behind their shared screen because this tile
+    // fell back to screenShareTrack whenever one was live. Screen-share
+    // tiles are now a separate tile the grid renders alongside the camera
+    // tile, so both show up at once (Meet-style) instead of one hiding
+    // the other.
+    final track =
+        isScreenShare ? participant.screenShareTrack : participant.videoTrack;
+    final showVideo = isScreenShare
+        ? participant.screenShareTrack != null
+        : (participant.videoTrack != null && participant.cameraEnabled);
+    final label = isScreenShare
+        ? (participant.isLocal
+            ? t.rtcYourScreenLabel
+            : t.rtcParticipantScreenLabel(participant.name))
+        : (participant.isLocal ? t.rtcYouLabel : participant.name);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
@@ -867,12 +942,12 @@ class _ParticipantTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      participant.isLocal ? t.rtcYouLabel : participant.name,
+                      label,
                       style: const TextStyle(color: Colors.white, fontSize: 12),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  if (participant.screenShareTrack != null)
+                  if (isScreenShare)
                     const Padding(
                       padding: EdgeInsets.only(right: 4),
                       child: Icon(
@@ -881,7 +956,7 @@ class _ParticipantTile extends StatelessWidget {
                         size: 14,
                       ),
                     ),
-                  if (!participant.micEnabled)
+                  if (!isScreenShare && !participant.micEnabled)
                     const Icon(Icons.mic_off, color: Colors.white, size: 14),
                 ],
               ),
@@ -921,7 +996,7 @@ class _ChatPanel extends ConsumerWidget {
 }
 
 class _ParticipantsPanel extends ConsumerWidget {
-  final List<_ParticipantView> participants;
+  final List<MeetingParticipantView> participants;
   final bool isHost;
   final String slug;
   final AppLocalizations t;

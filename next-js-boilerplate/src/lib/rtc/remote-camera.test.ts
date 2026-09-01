@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Track, type Room } from "livekit-client";
-import { hasLiveRemoteCamera } from "./remote-camera";
+import { hasLiveRemoteCamera, hasLiveRemoteScreenShare } from "./remote-camera";
 
 type Pub = { source: Track.Source; track: object | null; isMuted: boolean };
 
@@ -63,6 +63,41 @@ describe("hasLiveRemoteCamera", () => {
       hasLiveRemoteCamera({
         remoteParticipants: new Map(),
       } as unknown as Pick<Room, "remoteParticipants">),
+    ).toBe(false);
+  });
+});
+
+// Same mechanics as hasLiveRemoteCamera, gating the call overlay's screen
+// share main stage instead of the camera tile.
+describe("hasLiveRemoteScreenShare", () => {
+  it("is live for an unmuted screen share track", () => {
+    expect(
+      hasLiveRemoteScreenShare(
+        roomWith([
+          { source: Track.Source.ScreenShare, track: {}, isMuted: false },
+        ]),
+      ),
+    ).toBe(true);
+  });
+
+  it("is not live when the screen share track is muted", () => {
+    expect(
+      hasLiveRemoteScreenShare(
+        roomWith([
+          { source: Track.Source.ScreenShare, track: {}, isMuted: true },
+        ]),
+      ),
+    ).toBe(false);
+  });
+
+  it("ignores non-screen-share tracks (camera, microphone)", () => {
+    expect(
+      hasLiveRemoteScreenShare(
+        roomWith([
+          { source: Track.Source.Camera, track: {}, isMuted: false },
+          { source: Track.Source.Microphone, track: {}, isMuted: false },
+        ]),
+      ),
     ).toBe(false);
   });
 });

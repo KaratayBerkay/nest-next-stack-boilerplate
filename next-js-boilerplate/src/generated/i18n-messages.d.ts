@@ -23956,6 +23956,11 @@ export type I18nMessages = {
       "noChatMessages": string;
       "screenShareOn": string;
       "screenShareOff": string;
+      "yourScreenLabel": string;
+      "participantScreenLabel": string;
+      "zoomIn": string;
+      "zoomOut": string;
+      "resetZoom": string;
       "muteParticipant": string;
       "removeParticipant": string;
       "removeParticipantConfirm": string;

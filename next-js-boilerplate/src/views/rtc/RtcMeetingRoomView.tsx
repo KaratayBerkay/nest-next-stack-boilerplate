@@ -59,48 +59,106 @@ import { logRtcEvent } from "@/lib/rtc/rtc-telemetry";
 
 type RtcMessages = I18nMessages["rtc"];
 
-/** Grid of equal tiles, or — when a participant is focused — a Meet-style
- *  spotlight: the focused person fills the stage and everyone else shrinks
+/** Explicit "back to grid" focus target — distinct from `null` (which means
+ *  "no manual choice yet, auto-pin an active screen share if there is
+ *  one"). Without this sentinel, dismissing an auto-pinned share bounced
+ *  straight back to it: `null` re-derives to the same auto-pin. */
+const GRID_VIEW = "__grid__";
+
+interface StageTile {
+  key: string;
+  participant: MeetingParticipantView;
+  mode: "camera" | "screen";
+}
+
+/** Each participant contributes a camera tile, plus a second screen-share
+ *  tile while they're presenting — the two render independently so a
+ *  presenter's face never disappears behind their own shared screen. */
+function buildStageTiles(participants: MeetingParticipantView[]): StageTile[] {
+  const tiles: StageTile[] = [];
+  for (const p of participants) {
+    if (p.screenShareTrack) {
+      tiles.push({
+        key: `${p.identity}::screen`,
+        participant: p,
+        mode: "screen",
+      });
+    }
+    tiles.push({ key: p.identity, participant: p, mode: "camera" });
+  }
+  return tiles;
+}
+
+function stageTileLabel(
+  tile: StageTile,
+  youLabel: string,
+  t: RtcMessages,
+): string | undefined {
+  if (tile.mode !== "screen") return undefined;
+  return tile.participant.isLocal
+    ? t.yourScreenLabel
+    : t.participantScreenLabel.replace("{name}", tile.participant.name);
+}
+
+/** Grid of equal tiles, or — when a tile is focused — a Meet-style
+ *  spotlight: the focused tile fills the stage and everyone else shrinks
  *  into a horizontal filmstrip below. Clicking a tile focuses it; clicking
- *  the spotlighted tile exits focus. */
+ *  the spotlighted tile exits focus. An active screen share auto-pins to
+ *  the spotlight (like Meet) whenever nothing else is explicitly focused. */
 function VideoStage({
   participants,
   youLabel,
-  focusedIdentity,
+  focusedKey,
   onFocusChange,
   t,
 }: {
   participants: MeetingParticipantView[];
   youLabel: string;
-  focusedIdentity: string | null;
-  onFocusChange: (identity: string | null) => void;
+  focusedKey: string | null;
+  onFocusChange: (key: string | null) => void;
   t: RtcMessages;
 }) {
-  // Derived, never trusted from state alone: if the focused participant left
-  // the meeting, fall back to the grid instead of a blank spotlight.
+  const tiles = buildStageTiles(participants);
+  const activeShareTile = tiles.find((tile) => tile.mode === "screen") ?? null;
+  // Derived, never trusted from state alone: if the pinned tile's
+  // participant left (or stopped sharing), fall back to the active share —
+  // or the plain grid — instead of a blank spotlight.
   const focused =
-    participants.find((p) => p.identity === focusedIdentity) ?? null;
+    focusedKey === GRID_VIEW
+      ? null
+      : (focusedKey && tiles.find((tile) => tile.key === focusedKey)) ||
+        activeShareTile;
 
   if (focused) {
-    const others = participants.filter((p) => p.identity !== focused.identity);
+    const others = tiles.filter((tile) => tile.key !== focused.key);
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2 p-2">
         <div className="min-h-0 flex-1">
           <MeetingParticipantTile
-            participant={focused}
+            participant={focused.participant}
             youLabel={youLabel}
-            onClick={() => onFocusChange(null)}
+            videoMode={focused.mode}
+            label={stageTileLabel(focused, youLabel, t)}
+            onClick={() => onFocusChange(GRID_VIEW)}
             clickLabel={t.unfocusParticipant}
+            // Zoom only on the spotlighted tile — a filmstrip/grid
+            // thumbnail is too small for the controls to be worth it.
+            zoomable={focused.mode === "screen"}
+            zoomInLabel={t.zoomIn}
+            zoomOutLabel={t.zoomOut}
+            resetZoomLabel={t.resetZoom}
           />
         </div>
         {others.length > 0 && (
           <div className="flex h-20 shrink-0 gap-2 overflow-x-auto sm:h-24">
-            {others.map((p) => (
-              <div key={p.identity} className="aspect-video h-full shrink-0">
+            {others.map((tile) => (
+              <div key={tile.key} className="aspect-video h-full shrink-0">
                 <MeetingParticipantTile
-                  participant={p}
+                  participant={tile.participant}
                   youLabel={youLabel}
-                  onClick={() => onFocusChange(p.identity)}
+                  videoMode={tile.mode}
+                  label={stageTileLabel(tile, youLabel, t)}
+                  onClick={() => onFocusChange(tile.key)}
                   clickLabel={t.focusParticipant}
                 />
               </div>
@@ -111,7 +169,7 @@ function VideoStage({
     );
   }
 
-  const count = participants.length;
+  const count = tiles.length;
   const cols =
     count <= 1
       ? "grid-cols-1"
@@ -127,12 +185,14 @@ function VideoStage({
     <div
       className={`grid min-h-0 flex-1 gap-2 ${cols} auto-rows-fr overflow-hidden p-2`}
     >
-      {participants.map((p) => (
+      {tiles.map((tile) => (
         <MeetingParticipantTile
-          key={p.identity}
-          participant={p}
+          key={tile.key}
+          participant={tile.participant}
           youLabel={youLabel}
-          onClick={() => onFocusChange(p.identity)}
+          videoMode={tile.mode}
+          label={stageTileLabel(tile, youLabel, t)}
+          onClick={() => onFocusChange(tile.key)}
           clickLabel={t.focusParticipant}
         />
       ))}
@@ -450,9 +510,11 @@ export function RtcMeetingRoomView() {
   const supersededRef = useRef(false);
   const [join, setJoin] = useState<JoinMeetingResult | null>(null);
   const [sidebar, setSidebar] = useState<"chat" | "people" | null>(null);
-  // Identity of the spotlighted participant; null = equal grid. The stage
-  // falls back to the grid on its own if this participant leaves.
-  const [focusedIdentity, setFocusedIdentity] = useState<string | null>(null);
+  // Key of the spotlighted stage tile (a participant identity, or
+  // `${identity}::screen` for a screen share); null = no manual choice yet,
+  // which auto-pins an active screen share if one exists. The stage falls
+  // back to the grid on its own if this tile's participant leaves.
+  const [focusedKey, setFocusedKey] = useState<string | null>(null);
 
   // Gated on the join having landed (same trick the stream viewer uses):
   // the history endpoint 403s until this user's participant row exists, so
@@ -677,8 +739,8 @@ export function RtcMeetingRoomView() {
             <VideoStage
               participants={livekit.participants}
               youLabel={t.youLabel}
-              focusedIdentity={focusedIdentity}
-              onFocusChange={setFocusedIdentity}
+              focusedKey={focusedKey}
+              onFocusChange={setFocusedKey}
               t={t}
             />
 

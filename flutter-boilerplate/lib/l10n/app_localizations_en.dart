@@ -6017,6 +6017,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rtcCameraOff => 'Turn off camera';
 
   @override
+  String get rtcScreenShareOn => 'Share screen';
+
+  @override
+  String get rtcScreenShareOff => 'Stop sharing';
+
+  @override
   String rtcCallLimitWarning(Object seconds) {
     return 'Call ends in ${seconds}s — upgrade for longer calls';
   }
@@ -6201,6 +6207,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcYouLabel => 'You';
+
+  @override
+  String get rtcYourScreenLabel => 'Your screen';
+
+  @override
+  String rtcParticipantScreenLabel(Object name) {
+    return '$name\'s screen';
+  }
 
   @override
   String get rtcBackToMeetings => 'Back to meetings';

@@ -32,6 +32,11 @@ export interface ActiveCallOverlayProps {
   /** Peer currently publishing an unmuted camera track — gates their video
    *  element vs the avatar placeholder. */
   remoteCameraLive: boolean;
+  /** Peer currently publishing an unmuted screen share — switches the main
+   *  stage to their shared screen, same mechanics as the meeting room: both
+   *  cameras shrink to small tiles while a share is live. */
+  remoteScreenShareLive: boolean;
+  screenShareEnabled: boolean;
   /** False while the peer's mic is muted — shows the on-tile mute badge. */
   remoteMicEnabled: boolean;
   /** Active-speaker flags for the breathing speak ring/glow. */
@@ -51,8 +56,11 @@ export interface ActiveCallOverlayProps {
   remoteVideoRef: RefObject<HTMLVideoElement | null>;
   localVideoRef: RefObject<HTMLVideoElement | null>;
   remoteAudioRef: RefObject<HTMLAudioElement | null>;
+  remoteScreenShareRef: RefObject<HTMLVideoElement | null>;
+  localScreenShareRef: RefObject<HTMLVideoElement | null>;
   onToggleMic: () => void;
   onToggleCamera: () => void;
   onToggleSpeaker: () => void;
+  onToggleScreenShare: () => void;
   onHangup: () => void;
 }
