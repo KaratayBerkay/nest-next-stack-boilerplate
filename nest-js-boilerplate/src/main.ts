@@ -3,7 +3,7 @@ import {
   ValidationPipe,
   type ValidationError,
 } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
@@ -191,7 +191,7 @@ async function bootstrap() {
 
   app.useGlobalInterceptors(
     new PerformanceInterceptor(),
-    new IdCodecInterceptor(),
+    new IdCodecInterceptor(app.get(Reflector)),
   );
   app.useGlobalPipes(
     new ValidationPipe({

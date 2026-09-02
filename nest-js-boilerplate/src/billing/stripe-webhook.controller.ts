@@ -9,11 +9,17 @@ import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
 import { ConfigService } from '@nestjs/config';
 import { OutboxService } from '../outbox/outbox.service';
+import { SkipIdCodec } from '../common/id-codec/skip-id-codec.decorator';
 
 const MAX_WEBHOOK_BODY_BYTES = 1024 * 1024; // 1 MB
 
+// Stripe's own payload carries its own "id"-shaped fields (evt_..., cus_...,
+// sub_...) that aren't our internal encrypted uuids — the global id-codec
+// boundary must not touch this route's body. See SkipIdCodec's own doc
+// comment: every real webhook delivery 400'd with "Invalid id" without this.
 @Controller('stripe')
 @SkipThrottle()
+@SkipIdCodec()
 export class StripeWebhookController {
   private readonly logger = new Logger(StripeWebhookController.name);
 

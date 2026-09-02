@@ -5,10 +5,12 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { deepDecryptIds, deepEncryptIds } from './id-codec.util';
+import { SKIP_ID_CODEC_KEY } from './skip-id-codec.decorator';
 
 // Global REST id encrypt/decrypt boundary — decrypts request.body/params
 // before the controller runs, encrypts the response body afterward. Query
@@ -26,8 +28,16 @@ import { deepDecryptIds, deepEncryptIds } from './id-codec.util';
 // encrypt every GraphQL id a second time.
 @Injectable()
 export class IdCodecInterceptor implements NestInterceptor {
+  constructor(private readonly reflector: Reflector) {}
+
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
     if (context.getType() !== 'http') return next.handle();
+
+    const skip = this.reflector.getAllAndOverride<boolean>(SKIP_ID_CODEC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (skip) return next.handle();
 
     const httpCtx = context.switchToHttp();
     const request = httpCtx.getRequest<Request>();
