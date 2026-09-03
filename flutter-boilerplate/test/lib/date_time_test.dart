@@ -1,5 +1,6 @@
 import 'package:flutter_boilerplate/lib/date_time.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:timezone/data/latest_10y.dart' as tzdata;
 
 void main() {
   group('DateTimeHelper', () {
@@ -55,6 +56,41 @@ void main() {
         expect(end.second, 59);
         expect(end.millisecond, 999);
       });
+    });
+  });
+
+  // CROSS-019: the profile timezone drives rendering, not the device zone.
+  group('DateTimeHelper.setPreferredTimeZone', () {
+    setUpAll(tzdata.initializeTimeZones);
+    tearDown(() => DateTimeHelper.setPreferredTimeZone(null));
+
+    test('renders wall-clock times in the preferred zone', () {
+      DateTimeHelper.setPreferredTimeZone('Asia/Tokyo');
+      // 00:00Z is 09:00 in Tokyo.
+      expect(DateTimeHelper.formatTime(DateTime.utc(2026, 9, 3)), '9:00 AM');
+      expect(
+        DateTimeHelper.formatDateTime(DateTime.utc(2026, 9, 3, 22, 30)),
+        'Sep 4, 2026 7:30 AM',
+      );
+      expect(DateTimeHelper.preferredTimeZone, 'Asia/Tokyo');
+    });
+
+    test('isSameDay compares calendar days in the preferred zone', () {
+      DateTimeHelper.setPreferredTimeZone('Pacific/Kiritimati'); // UTC+14
+      expect(
+        DateTimeHelper.isSameDay(
+          DateTime.utc(2026, 9, 3, 22),
+          DateTime.utc(2026, 9, 4, 2),
+        ),
+        isTrue,
+      );
+    });
+
+    test('an unknown zone falls back to device-local instead of throwing', () {
+      DateTimeHelper.setPreferredTimeZone('Mars/Olympus_Mons');
+      expect(DateTimeHelper.preferredTimeZone, isNull);
+      final local = DateTime(2026, 9, 3, 14, 5);
+      expect(DateTimeHelper.formatTime(local), '2:05 PM');
     });
   });
 }

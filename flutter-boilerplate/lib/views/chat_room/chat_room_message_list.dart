@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../components/ui/attachment_preview/attachment_preview.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/button/button.dart';
+import '../../components/ui/context_menu/context_menu.dart';
+import '../../constants/chat.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/messages/message.dart';
@@ -17,6 +19,11 @@ class ChatRoomMessageList extends StatelessWidget {
   final bool msgsLoading;
   final bool msgsError;
   final ScrollController? scrollController;
+  // CROSS-024: when wired, live messages get a long-press menu with
+  // Reply / Delete for me / Delete for everyone (sender, inside the window).
+  final ValueChanged<ChatMessage>? onReply;
+  final ValueChanged<ChatMessage>? onDeleteForMe;
+  final ValueChanged<ChatMessage>? onDeleteForEveryone;
 
   const ChatRoomMessageList({
     super.key,
@@ -29,7 +36,17 @@ class ChatRoomMessageList extends StatelessWidget {
     this.msgsLoading = false,
     this.msgsError = false,
     this.scrollController,
+    this.onReply,
+    this.onDeleteForMe,
+    this.onDeleteForEveryone,
   });
+
+  String _replySnippet(AppLocalizations t, ReplyPreview reply) {
+    if (reply.deletedAt != null) return t.messagesDeletedMessage;
+    if (reply.body != null && reply.body!.isNotEmpty) return reply.body!;
+    if (reply.hasAttachments) return t.messagesAttachmentLabel;
+    return '';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,8 +100,14 @@ class ChatRoomMessageList extends StatelessWidget {
         }
         final msg = messages[i - (hasMore ? 1 : 0)];
         final isMe = msg.senderId == userId;
+        final t = AppLocalizations.of(context);
+        final isDeleted = msg.deletedAt != null;
+        final canDeleteForEveryone = isMe &&
+            !isDeleted &&
+            DateTime.now().difference(msg.createdAt) <
+                ChatConstants.deleteForEveryoneWindow;
 
-        return Padding(
+        final row = Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,17 +157,91 @@ class ChatRoomMessageList extends StatelessWidget {
                           ),
                         ),
                       ),
-                    for (final att in msg.attachments)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: AttachmentPreview(
-                          url: att.url,
-                          type: att.type,
-                          name: att.name,
-                          thumbnailUrl: att.thumbnailUrl,
+                    if (!isDeleted && msg.replyTo != null)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.65,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border(
+                            left: BorderSide(color: colors.brand, width: 2),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              msg.replyTo!.senderId == userId
+                                  ? t.messagesYou
+                                  : (msg.replyTo!.senderName ?? ''),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: colors.brand,
+                              ),
+                            ),
+                            Text(
+                              _replySnippet(t, msg.replyTo!),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colors.fgMuted,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    if (msg.content.isNotEmpty)
+                    if (isDeleted)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: colors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.block, size: 13, color: colors.fgMuted),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                t.messagesDeletedMessage,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                  color: colors.fgMuted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    if (!isDeleted)
+                      for (final att in msg.attachments)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: AttachmentPreview(
+                            url: att.url,
+                            type: att.type,
+                            name: att.name,
+                            thumbnailUrl: att.thumbnailUrl,
+                          ),
+                        ),
+                    if (!isDeleted && msg.content.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -175,6 +272,33 @@ class ChatRoomMessageList extends StatelessWidget {
               ),
             ],
           ),
+        );
+
+        if (isDeleted || onReply == null) return row;
+        return ContextMenu(
+          entries: [
+            ContextMenuEntry(
+              value: 'reply',
+              label: t.messagesReply,
+              icon: Icons.reply,
+              onTap: () => onReply!(msg),
+            ),
+            if (onDeleteForMe != null)
+              ContextMenuEntry(
+                value: 'delete-for-me',
+                label: t.messagesDeleteForMe,
+                icon: Icons.delete_outline,
+                onTap: () => onDeleteForMe!(msg),
+              ),
+            if (canDeleteForEveryone && onDeleteForEveryone != null)
+              ContextMenuEntry(
+                value: 'delete-for-everyone',
+                label: t.messagesDeleteForEveryone,
+                icon: Icons.delete_forever_outlined,
+                onTap: () => onDeleteForEveryone!(msg),
+              ),
+          ],
+          child: row,
         );
       },
     );

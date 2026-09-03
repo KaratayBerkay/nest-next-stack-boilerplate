@@ -3589,49 +3589,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get pricingUpgrade => 'Yükselt';
 
   @override
-  String get pricingFeaturesBasic0 => 'Temel erişim';
-
-  @override
-  String get pricingFeaturesBasic1 => 'Topluluk desteği';
-
-  @override
-  String get pricingFeaturesMedium0 => 'Tümü Ücretsiz';
-
-  @override
-  String get pricingFeaturesMedium1 => 'Öncelikli destek';
-
-  @override
-  String get pricingFeaturesMedium2 => 'Temel analitik';
-
-  @override
-  String get pricingFeaturesPremium0 => 'Tümü Medium';
-
-  @override
-  String get pricingFeaturesPremium1 =>
-      'Gönderi istatistikleri ve tepki dağılımı';
-
-  @override
-  String get pricingFeaturesPremium2 => 'VIP oda erişimi';
-
-  @override
-  String get pricingFeaturesPremium3 => 'Önerilen arkadaşlar';
-
-  @override
-  String get pricingFeaturesPro0 => 'Tümü Premium';
-
-  @override
-  String get pricingFeaturesPro1 => 'Tepki verenler listesi';
-
-  @override
-  String get pricingFeaturesPro2 => 'Veri dışa aktarma';
-
-  @override
-  String get pricingFeaturesPro3 => 'Taç rozeti';
-
-  @override
-  String get pricingFeaturesPro4 => 'Özel destek';
-
-  @override
   String get pricingPriceFree => '\$0';
 
   @override
@@ -6359,4 +6316,76 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get rtcRecordingComingSoonNote =>
       'Kayıt yalnızca sunucu için kaydedilir — video kaydı henüz kullanılamıyor.';
+
+  @override
+  String get chatRoomDeleteForEveryoneConfirm =>
+      'Bu mesaj bu odadaki herkes için kaldırılacak. Bu işlem geri alınamaz.';
+
+  @override
+  String get chatRoomCancelReply => 'Yanıtı iptal et';
+
+  @override
+  String get checkoutDeclinedInsufficientFunds =>
+      'Kartınızda yeterli bakiye yok. Başka bir kart deneyin.';
+
+  @override
+  String get checkoutDeclinedCard =>
+      'Kartınız reddedildi. Başka bir kart deneyin veya bankanızla iletişime geçin.';
+
+  @override
+  String get checkoutAuthenticationRequired =>
+      'Bankanız bu kart için ek doğrulama istiyor.';
+
+  @override
+  String get checkoutAuthenticationFailed =>
+      'Kart doğrulaması tamamlanmadı. Tekrar deneyin veya başka bir kart kullanın.';
+
+  @override
+  String get pricingFeatureBasicAccess => 'Temel erişim';
+
+  @override
+  String get pricingFeatureCommunitySupport => 'Topluluk desteği';
+
+  @override
+  String pricingFeatureEverythingIn(Object tier) {
+    return '$tier planındaki her şey';
+  }
+
+  @override
+  String get pricingFeaturePrioritySupport => 'Öncelikli destek';
+
+  @override
+  String get pricingFeatureBasicAnalytics => 'Temel analitik';
+
+  @override
+  String get pricingFeaturePostStats =>
+      'Gönderi istatistikleri ve tepki dağılımı';
+
+  @override
+  String get pricingFeatureVipRooms => 'VIP oda erişimi';
+
+  @override
+  String get pricingFeatureSuggestedFriends => 'Önerilen arkadaşlar';
+
+  @override
+  String get pricingFeatureWhoReacted => 'Tepki verenler listesi';
+
+  @override
+  String get pricingFeatureExportData => 'Veri dışa aktarma';
+
+  @override
+  String get pricingFeatureCrownBadge => 'Taç rozeti';
+
+  @override
+  String get pricingFeatureDedicatedSupport => 'Özel destek';
+
+  @override
+  String pricingFeatureCallMinutes(Object minutes) {
+    return '$minutes dakikaya kadar arama';
+  }
+
+  @override
+  String pricingFeatureStorageMultiplier(Object multiplier) {
+    return '$multiplier× depolama hakkı';
+  }
 }

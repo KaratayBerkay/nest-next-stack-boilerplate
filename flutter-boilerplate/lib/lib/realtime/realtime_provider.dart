@@ -466,6 +466,25 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
           );
         }
       }
+    case 'room-message-deleted':
+      // CROSS-024. scope "me" is a sync frame to the actor's own other
+      // devices; scope "everyone" is broadcast to every room member.
+      final deletedRoom = frame['room'] as String?;
+      final deletedId = frame['messageId'] as String?;
+      if (deletedRoom != null &&
+          deletedId != null &&
+          ref.exists(roomMessagesProvider(deletedRoom))) {
+        final notifier = ref.read(roomMessagesProvider(deletedRoom).notifier);
+        if (frame['scope'] == 'me') {
+          notifier.removeMessage(deletedId);
+        } else {
+          notifier.markDeleted(
+            deletedId,
+            frame['deletedAt'] as String? ??
+                DateTime.now().toUtc().toIso8601String(),
+          );
+        }
+      }
     case 'room-counts':
       final rooms = frame['rooms'];
       if (rooms is Map) {

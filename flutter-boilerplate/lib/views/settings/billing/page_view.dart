@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart' hide Badge;
+import 'package:flutter_boilerplate/api/server/billing/plan_prices.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
+import 'package:flutter_boilerplate/lib/tier_features.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:go_router/go_router.dart';
@@ -76,38 +78,19 @@ class SettingsBillingPageContent extends ConsumerWidget {
   }
 }
 
-List<String> _tierFeatures(AppLocalizations t, String tier) {
-  switch (tier) {
-    case Tier.basic:
-      return [t.pricingFeaturesBasic0, t.pricingFeaturesBasic1];
-    case Tier.medium:
-      return [
-        t.pricingFeaturesMedium0,
-        t.pricingFeaturesMedium1,
-        t.pricingFeaturesMedium2,
-      ];
-    case Tier.premium:
-      return [
-        t.pricingFeaturesPremium0,
-        t.pricingFeaturesPremium1,
-        t.pricingFeaturesPremium2,
-        t.pricingFeaturesPremium3,
-      ];
-    default:
-      return const [];
-  }
-}
-
+// CROSS-031: feature lists come from the backend's planPrices (see
+// lib/tier_features.dart); `prices` may be null before the query resolves.
 List<({String feature, bool included})> _buildBenefits(
   AppLocalizations t,
   String currentTier,
+  List<PlanPrice>? prices,
 ) {
   final all = <({String feature, bool included})>[];
   final currentTierIndex = Tier.tierOrder[currentTier] ?? 0;
 
   for (var i = 1; i <= currentTierIndex; i++) {
     final tier = Tier.all[i];
-    for (final feature in _tierFeatures(t, tier)) {
+    for (final feature in featuresForTier(t, tier, prices)) {
       if (!all.any((b) => b.feature == feature)) {
         all.add((feature: feature, included: true));
       }
@@ -116,7 +99,7 @@ List<({String feature, bool included})> _buildBenefits(
 
   final nextTierIndex = currentTierIndex + 1;
   if (nextTierIndex < Tier.all.length) {
-    for (final feature in _tierFeatures(t, Tier.all[nextTierIndex])) {
+    for (final feature in featuresForTier(t, Tier.all[nextTierIndex], prices)) {
       if (!all.any((b) => b.feature == feature)) {
         all.add((feature: feature, included: false));
       }
@@ -135,7 +118,11 @@ class _PlanBenefitsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
-    final benefits = _buildBenefits(t, currentTier);
+    final benefits = _buildBenefits(
+      t,
+      currentTier,
+      ref.watch(planPricesProvider).asData?.value,
+    );
 
     return CardWidget(
       child: AccordionWidget(

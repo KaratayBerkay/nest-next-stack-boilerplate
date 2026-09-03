@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../types/messages/message.dart' show ReplyPreview;
 import '../../../types/messages/message_attachment.dart';
 
 final roomMessagesServerProvider =
@@ -53,6 +54,10 @@ class RoomMessage {
   final String body;
   final List<MessageAttachment> attachments;
   final String createdAt;
+  // CROSS-024: "delete for everyone" tombstone + quoted-reply preview,
+  // same contract as the DM message row.
+  final String? deletedAt;
+  final ReplyPreview? replyTo;
 
   const RoomMessage({
     required this.id,
@@ -62,7 +67,22 @@ class RoomMessage {
     required this.body,
     this.attachments = const [],
     required this.createdAt,
+    this.deletedAt,
+    this.replyTo,
   });
+
+  RoomMessage copyWith({String? deletedAt, bool clearContent = false}) =>
+      RoomMessage(
+        id: id,
+        senderId: senderId,
+        senderName: senderName,
+        avatar: avatar,
+        body: clearContent ? '' : body,
+        attachments: clearContent ? const [] : attachments,
+        createdAt: createdAt,
+        deletedAt: deletedAt ?? this.deletedAt,
+        replyTo: replyTo,
+      );
 
   factory RoomMessage.fromJson(Map<String, dynamic> json) {
     return RoomMessage(
@@ -79,6 +99,10 @@ class RoomMessage {
           .map((e) => MessageAttachment.fromJson(e as Map<String, dynamic>))
           .toList(),
       createdAt: json['createdAt'] as String,
+      deletedAt: json['deletedAt'] as String?,
+      replyTo: json['replyTo'] is Map<String, dynamic>
+          ? ReplyPreview.fromJson(json['replyTo'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

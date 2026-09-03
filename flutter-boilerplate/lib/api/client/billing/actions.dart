@@ -43,6 +43,14 @@ class BillingActions {
     );
   }
 
+  /// BE-019: complete a first subscription after the customer passed 3DS.
+  Future<Map<String, dynamic>> finalizeSubscription(
+    String stripeSubscriptionId,
+  ) async {
+    final server = _ref.read(stripeServerProvider);
+    return server.finalizeSubscription(stripeSubscriptionId);
+  }
+
   Future<void> removePaymentMethod(String paymentMethodId) async {
     final server = _ref.read(removePaymentMethodServerProvider);
     await server.call(paymentMethodId);

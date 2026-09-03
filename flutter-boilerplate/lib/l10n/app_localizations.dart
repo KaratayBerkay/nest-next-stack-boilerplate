@@ -6764,90 +6764,6 @@ abstract class AppLocalizations {
   /// **'Upgrade'**
   String get pricingUpgrade;
 
-  /// No description provided for @pricingFeaturesBasic0.
-  ///
-  /// In en, this message translates to:
-  /// **'Basic access'**
-  String get pricingFeaturesBasic0;
-
-  /// No description provided for @pricingFeaturesBasic1.
-  ///
-  /// In en, this message translates to:
-  /// **'Community support'**
-  String get pricingFeaturesBasic1;
-
-  /// No description provided for @pricingFeaturesMedium0.
-  ///
-  /// In en, this message translates to:
-  /// **'Everything in Free'**
-  String get pricingFeaturesMedium0;
-
-  /// No description provided for @pricingFeaturesMedium1.
-  ///
-  /// In en, this message translates to:
-  /// **'Priority support'**
-  String get pricingFeaturesMedium1;
-
-  /// No description provided for @pricingFeaturesMedium2.
-  ///
-  /// In en, this message translates to:
-  /// **'Basic analytics'**
-  String get pricingFeaturesMedium2;
-
-  /// No description provided for @pricingFeaturesPremium0.
-  ///
-  /// In en, this message translates to:
-  /// **'Everything in Medium'**
-  String get pricingFeaturesPremium0;
-
-  /// No description provided for @pricingFeaturesPremium1.
-  ///
-  /// In en, this message translates to:
-  /// **'Post stats & reaction breakdown'**
-  String get pricingFeaturesPremium1;
-
-  /// No description provided for @pricingFeaturesPremium2.
-  ///
-  /// In en, this message translates to:
-  /// **'VIP room access'**
-  String get pricingFeaturesPremium2;
-
-  /// No description provided for @pricingFeaturesPremium3.
-  ///
-  /// In en, this message translates to:
-  /// **'Suggested friends'**
-  String get pricingFeaturesPremium3;
-
-  /// No description provided for @pricingFeaturesPro0.
-  ///
-  /// In en, this message translates to:
-  /// **'Everything in Premium'**
-  String get pricingFeaturesPro0;
-
-  /// No description provided for @pricingFeaturesPro1.
-  ///
-  /// In en, this message translates to:
-  /// **'Who-reacted list'**
-  String get pricingFeaturesPro1;
-
-  /// No description provided for @pricingFeaturesPro2.
-  ///
-  /// In en, this message translates to:
-  /// **'Export data'**
-  String get pricingFeaturesPro2;
-
-  /// No description provided for @pricingFeaturesPro3.
-  ///
-  /// In en, this message translates to:
-  /// **'Crown badge'**
-  String get pricingFeaturesPro3;
-
-  /// No description provided for @pricingFeaturesPro4.
-  ///
-  /// In en, this message translates to:
-  /// **'Dedicated support'**
-  String get pricingFeaturesPro4;
-
   /// No description provided for @pricingPriceFree.
   ///
   /// In en, this message translates to:
@@ -11959,6 +11875,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recording is logged for the host only — video capture isn\'t available yet.'**
   String get rtcRecordingComingSoonNote;
+
+  /// No description provided for @chatRoomDeleteForEveryoneConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'This message will be removed for everyone in this room. This cannot be undone.'**
+  String get chatRoomDeleteForEveryoneConfirm;
+
+  /// No description provided for @chatRoomCancelReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel reply'**
+  String get chatRoomCancelReply;
+
+  /// No description provided for @checkoutDeclinedInsufficientFunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Your card has insufficient funds. Try another card.'**
+  String get checkoutDeclinedInsufficientFunds;
+
+  /// No description provided for @checkoutDeclinedCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Your card was declined. Try another card or contact your bank.'**
+  String get checkoutDeclinedCard;
+
+  /// No description provided for @checkoutAuthenticationRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Your bank requires additional verification for this card.'**
+  String get checkoutAuthenticationRequired;
+
+  /// No description provided for @checkoutAuthenticationFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Card verification was not completed. Try again or use another card.'**
+  String get checkoutAuthenticationFailed;
+
+  /// No description provided for @pricingFeatureBasicAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic access'**
+  String get pricingFeatureBasicAccess;
+
+  /// No description provided for @pricingFeatureCommunitySupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Community support'**
+  String get pricingFeatureCommunitySupport;
+
+  /// No description provided for @pricingFeatureEverythingIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Everything in {tier}'**
+  String pricingFeatureEverythingIn(Object tier);
+
+  /// No description provided for @pricingFeaturePrioritySupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Priority support'**
+  String get pricingFeaturePrioritySupport;
+
+  /// No description provided for @pricingFeatureBasicAnalytics.
+  ///
+  /// In en, this message translates to:
+  /// **'Basic analytics'**
+  String get pricingFeatureBasicAnalytics;
+
+  /// No description provided for @pricingFeaturePostStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Post stats & reaction breakdown'**
+  String get pricingFeaturePostStats;
+
+  /// No description provided for @pricingFeatureVipRooms.
+  ///
+  /// In en, this message translates to:
+  /// **'VIP room access'**
+  String get pricingFeatureVipRooms;
+
+  /// No description provided for @pricingFeatureSuggestedFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested friends'**
+  String get pricingFeatureSuggestedFriends;
+
+  /// No description provided for @pricingFeatureWhoReacted.
+  ///
+  /// In en, this message translates to:
+  /// **'Who-reacted list'**
+  String get pricingFeatureWhoReacted;
+
+  /// No description provided for @pricingFeatureExportData.
+  ///
+  /// In en, this message translates to:
+  /// **'Export data'**
+  String get pricingFeatureExportData;
+
+  /// No description provided for @pricingFeatureCrownBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Crown badge'**
+  String get pricingFeatureCrownBadge;
+
+  /// No description provided for @pricingFeatureDedicatedSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Dedicated support'**
+  String get pricingFeatureDedicatedSupport;
+
+  /// No description provided for @pricingFeatureCallMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Calls up to {minutes} min'**
+  String pricingFeatureCallMinutes(Object minutes);
+
+  /// No description provided for @pricingFeatureStorageMultiplier.
+  ///
+  /// In en, this message translates to:
+  /// **'{multiplier}× storage allowance'**
+  String pricingFeatureStorageMultiplier(Object multiplier);
 }
 
 class _AppLocalizationsDelegate

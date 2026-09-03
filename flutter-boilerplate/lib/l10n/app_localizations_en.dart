@@ -3580,48 +3580,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get pricingUpgrade => 'Upgrade';
 
   @override
-  String get pricingFeaturesBasic0 => 'Basic access';
-
-  @override
-  String get pricingFeaturesBasic1 => 'Community support';
-
-  @override
-  String get pricingFeaturesMedium0 => 'Everything in Free';
-
-  @override
-  String get pricingFeaturesMedium1 => 'Priority support';
-
-  @override
-  String get pricingFeaturesMedium2 => 'Basic analytics';
-
-  @override
-  String get pricingFeaturesPremium0 => 'Everything in Medium';
-
-  @override
-  String get pricingFeaturesPremium1 => 'Post stats & reaction breakdown';
-
-  @override
-  String get pricingFeaturesPremium2 => 'VIP room access';
-
-  @override
-  String get pricingFeaturesPremium3 => 'Suggested friends';
-
-  @override
-  String get pricingFeaturesPro0 => 'Everything in Premium';
-
-  @override
-  String get pricingFeaturesPro1 => 'Who-reacted list';
-
-  @override
-  String get pricingFeaturesPro2 => 'Export data';
-
-  @override
-  String get pricingFeaturesPro3 => 'Crown badge';
-
-  @override
-  String get pricingFeaturesPro4 => 'Dedicated support';
-
-  @override
   String get pricingPriceFree => '\$0';
 
   @override
@@ -6341,4 +6299,75 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get rtcRecordingComingSoonNote =>
       'Recording is logged for the host only — video capture isn\'t available yet.';
+
+  @override
+  String get chatRoomDeleteForEveryoneConfirm =>
+      'This message will be removed for everyone in this room. This cannot be undone.';
+
+  @override
+  String get chatRoomCancelReply => 'Cancel reply';
+
+  @override
+  String get checkoutDeclinedInsufficientFunds =>
+      'Your card has insufficient funds. Try another card.';
+
+  @override
+  String get checkoutDeclinedCard =>
+      'Your card was declined. Try another card or contact your bank.';
+
+  @override
+  String get checkoutAuthenticationRequired =>
+      'Your bank requires additional verification for this card.';
+
+  @override
+  String get checkoutAuthenticationFailed =>
+      'Card verification was not completed. Try again or use another card.';
+
+  @override
+  String get pricingFeatureBasicAccess => 'Basic access';
+
+  @override
+  String get pricingFeatureCommunitySupport => 'Community support';
+
+  @override
+  String pricingFeatureEverythingIn(Object tier) {
+    return 'Everything in $tier';
+  }
+
+  @override
+  String get pricingFeaturePrioritySupport => 'Priority support';
+
+  @override
+  String get pricingFeatureBasicAnalytics => 'Basic analytics';
+
+  @override
+  String get pricingFeaturePostStats => 'Post stats & reaction breakdown';
+
+  @override
+  String get pricingFeatureVipRooms => 'VIP room access';
+
+  @override
+  String get pricingFeatureSuggestedFriends => 'Suggested friends';
+
+  @override
+  String get pricingFeatureWhoReacted => 'Who-reacted list';
+
+  @override
+  String get pricingFeatureExportData => 'Export data';
+
+  @override
+  String get pricingFeatureCrownBadge => 'Crown badge';
+
+  @override
+  String get pricingFeatureDedicatedSupport => 'Dedicated support';
+
+  @override
+  String pricingFeatureCallMinutes(Object minutes) {
+    return 'Calls up to $minutes min';
+  }
+
+  @override
+  String pricingFeatureStorageMultiplier(Object multiplier) {
+    return '$multiplier× storage allowance';
+  }
 }

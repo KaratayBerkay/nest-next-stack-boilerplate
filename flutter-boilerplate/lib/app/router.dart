@@ -394,6 +394,9 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/v1/:lang/premium',
             name: 'v1Premium',
+            // CROSS-035: the tier-gate demo reads admin-only aggregates now.
+            redirect: (_, state) =>
+                requireAdmin(state.pathParameters['lang'] ?? 'en'),
             builder: (_, state) => PremiumPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
             ),

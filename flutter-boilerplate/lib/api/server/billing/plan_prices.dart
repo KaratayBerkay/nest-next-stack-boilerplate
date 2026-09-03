@@ -2,15 +2,32 @@ import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+/// CROSS-031: one entry of the backend's canonical per-tier feature list.
+/// The backend owns the list (built from the constants that enforce the
+/// limits); the app only translates `key` — see lib/tier_features.dart.
+class TierFeature {
+  final String key;
+  final String? value;
+
+  const TierFeature({required this.key, this.value});
+
+  factory TierFeature.fromJson(Map<String, dynamic> json) => TierFeature(
+        key: json['key'] as String,
+        value: json['value'] as String?,
+      );
+}
+
 class PlanPrice {
   final String tier;
   final int priceCents;
   final String currency;
+  final List<TierFeature> features;
 
   const PlanPrice({
     required this.tier,
     required this.priceCents,
     required this.currency,
+    this.features = const [],
   });
 
   factory PlanPrice.fromJson(Map<String, dynamic> json) {
@@ -18,6 +35,9 @@ class PlanPrice {
       tier: json['tier'] as String,
       priceCents: json['priceCents'] as int,
       currency: json['currency'] as String,
+      features: (json['features'] as List<dynamic>? ?? const [])
+          .map((e) => TierFeature.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
   }
 }
@@ -32,6 +52,10 @@ const _query = '''
       tier
       priceCents
       currency
+      features {
+        key
+        value
+      }
     }
   }
 ''';

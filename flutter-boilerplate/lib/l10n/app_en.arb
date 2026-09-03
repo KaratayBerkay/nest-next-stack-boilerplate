@@ -1103,7 +1103,7 @@
   "premiumTotalUsers": "Total Users",
   "premiumActiveUsers": "Active Users",
   "premiumRevenue": "Revenue",
-  "premiumNewUsers7d": "New Users (7d)",
+  "premiumNewUsers7d": "New Users (Last 7 Days)",
   "premiumTotalPosts": "Total Posts",
   "premiumTotalFriendships": "Total Friendships",
   "premiumExportCsv": "Export CSV",
@@ -1115,20 +1115,6 @@
   "pricingCurrentPlan": "Current plan",
   "pricingIncluded": "Included",
   "pricingUpgrade": "Upgrade",
-  "pricingFeaturesBasic0": "Basic access",
-  "pricingFeaturesBasic1": "Community support",
-  "pricingFeaturesMedium0": "Everything in Free",
-  "pricingFeaturesMedium1": "Priority support",
-  "pricingFeaturesMedium2": "Basic analytics",
-  "pricingFeaturesPremium0": "Everything in Medium",
-  "pricingFeaturesPremium1": "Post stats & reaction breakdown",
-  "pricingFeaturesPremium2": "VIP room access",
-  "pricingFeaturesPremium3": "Suggested friends",
-  "pricingFeaturesPro0": "Everything in Premium",
-  "pricingFeaturesPro1": "Who-reacted list",
-  "pricingFeaturesPro2": "Export data",
-  "pricingFeaturesPro3": "Crown badge",
-  "pricingFeaturesPro4": "Dedicated support",
   "pricingPriceFree": "$0",
   "pricingPriceBasic": "$9.99/mo",
   "pricingPriceMedium": "$19.99/mo",
@@ -1664,7 +1650,6 @@
   "premiumGrowthStatsTitle": "Growth Stats",
   "premiumActiveSubs": "Active Subs",
   "premiumNewUsersMonth": "New Users (Month)",
-  "premiumNewUsers7d": "New Users (Last 7 Days)",
   "premiumNewSubsMonth": "New Subs (Month)",
   "premiumGrowthRate": "Growth Rate",
   "premiumCsvCopied": "CSV content copied to clipboard",
@@ -2166,5 +2151,40 @@
   "rtcReportSubmitted": "Thanks — your report has been submitted.",
   "rtcStartRecording": "Start recording",
   "rtcStopRecording": "Stop recording",
-  "rtcRecordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet."
+  "rtcRecordingComingSoonNote": "Recording is logged for the host only — video capture isn't available yet.",
+  "chatRoomDeleteForEveryoneConfirm": "This message will be removed for everyone in this room. This cannot be undone.",
+  "chatRoomCancelReply": "Cancel reply",
+  "checkoutDeclinedInsufficientFunds": "Your card has insufficient funds. Try another card.",
+  "checkoutDeclinedCard": "Your card was declined. Try another card or contact your bank.",
+  "checkoutAuthenticationRequired": "Your bank requires additional verification for this card.",
+  "checkoutAuthenticationFailed": "Card verification was not completed. Try again or use another card.",
+  "pricingFeatureBasicAccess": "Basic access",
+  "pricingFeatureCommunitySupport": "Community support",
+  "pricingFeatureEverythingIn": "Everything in {tier}",
+  "@pricingFeatureEverythingIn": {
+    "placeholders": {
+      "tier": {}
+    }
+  },
+  "pricingFeaturePrioritySupport": "Priority support",
+  "pricingFeatureBasicAnalytics": "Basic analytics",
+  "pricingFeaturePostStats": "Post stats & reaction breakdown",
+  "pricingFeatureVipRooms": "VIP room access",
+  "pricingFeatureSuggestedFriends": "Suggested friends",
+  "pricingFeatureWhoReacted": "Who-reacted list",
+  "pricingFeatureExportData": "Export data",
+  "pricingFeatureCrownBadge": "Crown badge",
+  "pricingFeatureDedicatedSupport": "Dedicated support",
+  "pricingFeatureCallMinutes": "Calls up to {minutes} min",
+  "@pricingFeatureCallMinutes": {
+    "placeholders": {
+      "minutes": {}
+    }
+  },
+  "pricingFeatureStorageMultiplier": "{multiplier}× storage allowance",
+  "@pricingFeatureStorageMultiplier": {
+    "placeholders": {
+      "multiplier": {}
+    }
+  }
 }

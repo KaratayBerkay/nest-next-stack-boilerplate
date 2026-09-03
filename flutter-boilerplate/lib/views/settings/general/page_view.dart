@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -136,6 +137,8 @@ class _GeneralSettingsState extends ConsumerState<_GeneralSettings> {
               timezone: _stagedTimezone,
             );
         ref.read(localeProvider.notifier).setLocale(_stagedLocale);
+        // CROSS-019: apply the zone to every formatter right away.
+        DateTimeHelper.setPreferredTimeZone(_stagedTimezone);
         ref.invalidate(userProfileProvider);
       }
       await ref.read(currencyProvider.notifier).setCurrency(_stagedCurrency);

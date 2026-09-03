@@ -10,6 +10,9 @@ class ReplyPreview {
   final String? body;
   final DateTime? deletedAt;
   final bool hasAttachments;
+  // Only room previews carry this (CROSS-024): a DM quote is always "you"
+  // or the peer, a room quote needs the quoted author's display name.
+  final String? senderName;
 
   const ReplyPreview({
     required this.id,
@@ -17,6 +20,7 @@ class ReplyPreview {
     this.body,
     this.deletedAt,
     required this.hasAttachments,
+    this.senderName,
   });
 
   factory ReplyPreview.fromJson(Map<String, dynamic> json) {
@@ -28,6 +32,7 @@ class ReplyPreview {
           ? DateTime.parse(json['deletedAt'] as String)
           : null,
       hasAttachments: json['hasAttachments'] as bool? ?? false,
+      senderName: json['senderName'] as String?,
     );
   }
 }

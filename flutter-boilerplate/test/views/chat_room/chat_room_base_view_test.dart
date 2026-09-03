@@ -226,5 +226,62 @@ void main() {
         findsNothing,
       );
     });
+
+    // CROSS-024: rooms gained reply-to. Long-press a message → Reply → the
+    // composer shows the quote chip; the close button clears it again.
+    testWidgets('long-press Reply shows the reply chip, close clears it',
+        (tester) async {
+      final mockClient = MockRealtimeClient();
+      when(() => mockClient.status).thenReturn(RealtimeStatus.idle);
+      when(() => mockClient.send(any())).thenReturn(null);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          child: const ChatRoomBaseView(),
+          mockClient: mockClient,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.longPress(find.text('Hello from Alice'));
+      await tester.pumpAndSettle();
+      expect(find.text('Reply'), findsOneWidget);
+      // Alice's message is not mine → no "Delete for everyone" entry.
+      expect(find.text('Delete for everyone'), findsNothing);
+      expect(find.text('Delete for me'), findsOneWidget);
+
+      await tester.tap(find.text('Reply'));
+      await tester.pumpAndSettle();
+      expect(find.text('Replying to Alice'), findsOneWidget);
+      expect(find.text('Hello from Alice'), findsNWidgets(2));
+
+      await tester.tap(find.byTooltip('Cancel reply'));
+      await tester.pumpAndSettle();
+      expect(find.text('Replying to Alice'), findsNothing);
+    });
+
+    testWidgets('my own fresh message offers Delete for everyone',
+        (tester) async {
+      final mockClient = MockRealtimeClient();
+      when(() => mockClient.status).thenReturn(RealtimeStatus.idle);
+      when(() => mockClient.send(any())).thenReturn(null);
+
+      await tester.pumpWidget(
+        buildTestApp(
+          child: const ChatRoomBaseView(),
+          mockClient: mockClient,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 'Reply from me' is testUser's own row but dated 2026-07-26, i.e.
+      // far outside the 15-minute delete-for-everyone window.
+      await tester.longPress(find.text('Reply from me'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delete for me'), findsOneWidget);
+      expect(find.text('Delete for everyone'), findsNothing);
+    });
   });
 }

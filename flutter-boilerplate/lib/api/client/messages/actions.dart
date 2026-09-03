@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../types/messages/message_attachment.dart';
 import '../../server/messages/delete_message.dart';
+import '../../server/messages/delete_room_message.dart';
 import '../../server/messages/favorite.dart';
 import '../../server/messages/send_message.dart';
 import '../../server/messages/upload_attachment.dart';
@@ -75,5 +76,31 @@ class MessageActions {
     final server = _ref.read(favoriteConversationServerProvider);
     await server.setFavorite(peerId, favorite);
     _ref.invalidate(conversationsProvider);
+  }
+
+  /// CROSS-024: room "delete for me" — server first, then drop the row from
+  /// the live room list (the server also syncs the actor's other devices via
+  /// a `room-message-deleted` frame).
+  Future<void> deleteRoomMessageForMe(String room, String messageId) async {
+    await _ref.read(deleteRoomMessageServerProvider).forMe(room, messageId);
+    if (_ref.exists(roomMessagesProvider(room))) {
+      _ref.read(roomMessagesProvider(room).notifier).removeMessage(messageId);
+    }
+  }
+
+  /// CROSS-024: room "delete for everyone" — sender-only within the server's
+  /// window; the broadcast frame tombstones it for every other member.
+  Future<void> deleteRoomMessageForEveryone(
+    String room,
+    String messageId,
+  ) async {
+    await _ref
+        .read(deleteRoomMessageServerProvider)
+        .forEveryone(room, messageId);
+    if (_ref.exists(roomMessagesProvider(room))) {
+      _ref
+          .read(roomMessagesProvider(room).notifier)
+          .markDeleted(messageId, DateTime.now().toUtc().toIso8601String());
+    }
   }
 }

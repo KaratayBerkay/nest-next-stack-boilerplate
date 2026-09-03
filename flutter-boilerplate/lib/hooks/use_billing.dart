@@ -32,6 +32,15 @@ class BillingState {
         );
   }
 
+  /// BE-019: complete a first subscription after the customer passed 3DS.
+  Future<Map<String, dynamic>> finalizeSubscription(
+    String stripeSubscriptionId,
+  ) {
+    return _ref
+        .read(billingActionsProvider)
+        .finalizeSubscription(stripeSubscriptionId);
+  }
+
   Future<void> cancelSubscription() {
     return _ref.read(billingActionsProvider).cancelSubscription();
   }

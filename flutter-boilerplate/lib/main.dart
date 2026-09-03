@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
+import 'package:timezone/data/latest_10y.dart' as tzdata;
 
 import 'app/app.dart';
 import 'lib/activity_logger.dart';
@@ -10,6 +11,9 @@ import 'lib/activity_logger.dart';
 Future<void> main() async {
   usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
+  // CROSS-019: tz database for rendering dates in the profile's timezone
+  // (DateTimeHelper.setPreferredTimeZone). ~10 years of rules is plenty.
+  tzdata.initializeTimeZones();
 
   final originalFlutterError = FlutterError.onError;
   FlutterError.onError = (FlutterErrorDetails details) {

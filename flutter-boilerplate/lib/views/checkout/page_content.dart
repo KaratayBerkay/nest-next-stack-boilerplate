@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/billing/subscribe_flow.dart';
 import 'package:flutter_boilerplate/lib/currency.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -109,11 +110,21 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
       );
 
       final retryKey = _retryKey ??= _generateIdempotencyKey();
-      await billing.subscribe(
+      final initial = await billing.subscribe(
         _tier,
         paymentMethodId: confirmedIntent.paymentMethodId,
         idempotencyKey: retryKey,
         currency: ref.read(currencyProvider),
+      );
+      // BE-019: a declined card used to fall through here as "success"
+      // (the result was never inspected). Check it, and when the bank wants
+      // 3DS run the next action on-device, then let the backend provision.
+      await completeSubscribeWithAuthentication(
+        initial,
+        confirm: (clientSecret) => Stripe.instance.handleNextAction(
+          clientSecret,
+        ),
+        finalize: billing.finalizeSubscription,
       );
       _retryKey = null;
       billing.invalidate();
@@ -122,10 +133,32 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
         setState(() => _success = true);
         _redirectAfter(const Duration(seconds: 2));
       }
+    } on SubscribeDeclined catch (e) {
+      if (mounted) {
+        setState(
+          () =>
+              _error = _declineMessage(AppLocalizations.of(context), e.reason),
+        );
+      }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  String _declineMessage(AppLocalizations t, String reason) {
+    switch (reason) {
+      case 'insufficient_funds':
+        return t.checkoutDeclinedInsufficientFunds;
+      case 'declined':
+        return t.checkoutDeclinedCard;
+      case 'authentication_required':
+        return t.checkoutAuthenticationRequired;
+      case 'authentication_failed':
+        return t.checkoutAuthenticationFailed;
+      default:
+        return t.checkoutPaymentFailedGeneric;
     }
   }
 
@@ -139,6 +172,9 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
     try {
       final billing = ref.read(billingStateProvider);
       final result = await billing.subscribe(_tier);
+      if (result['success'] != true) {
+        throw SubscribeDeclined(result['reason'] as String? ?? 'declined');
+      }
       billing.invalidate();
 
       if (mounted) {
@@ -147,6 +183,13 @@ class _CheckoutPageContentState extends ConsumerState<CheckoutPageContent> {
           _success = true;
         });
         _redirectAfter(const Duration(seconds: 5));
+      }
+    } on SubscribeDeclined catch (e) {
+      if (mounted) {
+        setState(
+          () =>
+              _error = _declineMessage(AppLocalizations.of(context), e.reason),
+        );
       }
     } catch (e) {
       if (mounted) setState(() => _error = e.toString());

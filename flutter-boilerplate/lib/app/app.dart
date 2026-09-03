@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/api/client/profile/query.dart';
 import 'package:flutter_boilerplate/lib/activity_logger.dart';
 import 'package:flutter_boilerplate/lib/biometric_auth.dart';
+import 'package:flutter_boilerplate/lib/date_time.dart';
 import 'package:flutter_boilerplate/lib/i18n/messages_provider.dart';
 import 'package:flutter_boilerplate/lib/oauth_link_handler.dart';
 import 'package:flutter_boilerplate/lib/riverpod_compat.dart';
@@ -118,6 +120,13 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
 
     ref.watch(useRealtimeProvider);
     ref.watch(stripeInitProvider);
+
+    // CROSS-019: dates render in the profile's timezone app-wide. Cleared
+    // again when the profile goes away (sign-out) so a device falls back to
+    // its own zone.
+    ref.listen(userProfileProvider, (prev, next) {
+      DateTimeHelper.setPreferredTimeZone(next.asData?.value.timezone);
+    });
 
     ref.listen(biometricEnabledProvider, (prev, next) {
       final enabled = next.asData?.value ?? false;

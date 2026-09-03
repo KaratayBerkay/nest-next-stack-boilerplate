@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/tier_features.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -104,8 +105,13 @@ class SettingsPageContent extends ConsumerWidget {
                   },
                 ),
                 const SizedBox(height: 12),
+                // CROSS-031: same backend-driven list the Plans page renders.
                 PlanAdvantages(
-                  advantages: _featuresForTier(t, tier),
+                  advantages: featuresForTier(
+                    t,
+                    tier,
+                    ref.watch(planPricesProvider).asData?.value,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 UpgradeActions(
@@ -123,50 +129,6 @@ class SettingsPageContent extends ConsumerWidget {
         ],
       ),
     );
-  }
-
-  List<String> _featuresForTier(AppLocalizations t, String tier) {
-    switch (tier) {
-      case 'free':
-        return [
-          t.pricingFeaturesBasic0,
-          t.pricingFeaturesBasic1,
-        ];
-      case 'basic':
-        return [
-          t.pricingFeaturesMedium0,
-          t.pricingFeaturesMedium1,
-          t.pricingFeaturesMedium2,
-        ];
-      case 'medium':
-        return [
-          t.pricingFeaturesPremium0,
-          t.pricingFeaturesPremium1,
-          t.pricingFeaturesPremium2,
-          t.pricingFeaturesPremium3,
-        ];
-      case 'premium':
-        return [
-          t.pricingFeaturesPro0,
-          t.pricingFeaturesPro1,
-          t.pricingFeaturesPro2,
-          t.pricingFeaturesPro3,
-          t.pricingFeaturesPro4,
-        ];
-      case 'pro':
-        return [
-          t.pricingFeaturesPro0,
-          t.pricingFeaturesPro1,
-          t.pricingFeaturesPro2,
-          t.pricingFeaturesPro3,
-          t.pricingFeaturesPro4,
-        ];
-      default:
-        return [
-          t.pricingFeaturesBasic0,
-          t.pricingFeaturesBasic1,
-        ];
-    }
   }
 }
 

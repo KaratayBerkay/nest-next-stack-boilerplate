@@ -86,13 +86,6 @@ class V1Nav extends ConsumerWidget {
         auth: true,
       ),
       _NavLink(
-        '/premium',
-        const Icon(Icons.workspace_premium_outlined),
-        Icons.workspace_premium,
-        t.v1ShellNavPremium,
-        auth: true,
-      ),
-      _NavLink(
         '/settings/general',
         const Icon(Icons.settings_outlined),
         Icons.settings,
@@ -141,6 +134,18 @@ class V1Nav extends ConsumerWidget {
           );
         }),
         if (isAdmin) ...[
+          // Premium is the tier-gate tech demo backed by admin-only
+          // aggregate queries (CROSS-035), not a subscriber page.
+          _NavItem(
+            icon: currentPath == '$base/premium'
+                ? const Icon(Icons.workspace_premium, size: 18)
+                : const Icon(Icons.workspace_premium_outlined, size: 18),
+            label: t.v1ShellNavPremium,
+            active: currentPath == '$base/premium',
+            colors: colors,
+            target: '$base/premium',
+            onNavigate: onNavigate,
+          ),
           const SizedBox(height: 4),
           _NavSectionHeader(colors: colors, text: t.v1ShellNavAdmin),
           _NavItem(

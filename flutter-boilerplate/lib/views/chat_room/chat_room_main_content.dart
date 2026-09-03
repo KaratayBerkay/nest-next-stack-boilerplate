@@ -33,6 +33,12 @@ class ChatRoomMainContent extends StatelessWidget {
   final VoidCallback? onAttachFile;
   final VoidCallback? onRemoveAttachment;
   final VoidCallback? onToggleEmoji;
+  // CROSS-024: quoted-reply target + per-message actions.
+  final ChatMessage? replyTarget;
+  final VoidCallback? onCancelReply;
+  final ValueChanged<ChatMessage>? onReply;
+  final ValueChanged<ChatMessage>? onDeleteForMe;
+  final ValueChanged<ChatMessage>? onDeleteForEveryone;
 
   const ChatRoomMainContent({
     super.key,
@@ -58,7 +64,19 @@ class ChatRoomMainContent extends StatelessWidget {
     this.onAttachFile,
     this.onRemoveAttachment,
     this.onToggleEmoji,
+    this.replyTarget,
+    this.onCancelReply,
+    this.onReply,
+    this.onDeleteForMe,
+    this.onDeleteForEveryone,
   });
+
+  String _replySnippet(AppLocalizations t, ChatMessage target) {
+    if (target.deletedAt != null) return t.messagesDeletedMessage;
+    if (target.content.isNotEmpty) return target.content;
+    if (target.attachments.isNotEmpty) return t.messagesAttachmentLabel;
+    return '';
+  }
 
   void _insertEmoji(Emoji emoji) {
     insertEmojiAtCursor(messageController, emoji);
@@ -148,6 +166,9 @@ class ChatRoomMainContent extends StatelessWidget {
                   msgsLoading: msgsLoading,
                   msgsError: msgsError,
                   scrollController: scrollController,
+                  onReply: onReply,
+                  onDeleteForMe: onDeleteForMe,
+                  onDeleteForEveryone: onDeleteForEveryone,
                 ),
               ),
               Container(
@@ -163,6 +184,51 @@ class ChatRoomMainContent extends StatelessWidget {
                         height: 260,
                         child: EmojiPicker(
                           onEmojiSelected: (_, emoji) => _insertEmoji(emoji),
+                        ),
+                      ),
+                    if (replyTarget != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          children: [
+                            Icon(Icons.reply, size: 14, color: colors.brand),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    t.messagesReplyingTo(
+                                      replyTarget!.senderId == userId
+                                          ? t.messagesYou
+                                          : replyTarget!.senderName,
+                                    ),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: colors.brand,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    _replySnippet(t, replyTarget!),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: colors.fgMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, size: 16),
+                              tooltip: t.chatRoomCancelReply,
+                              visualDensity: VisualDensity.compact,
+                              onPressed: onCancelReply,
+                            ),
+                          ],
                         ),
                       ),
                     if (pendingAttachment != null)

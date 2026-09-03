@@ -4,6 +4,7 @@ import 'package:flutter_boilerplate/api/client/billing/query.dart';
 import 'package:flutter_boilerplate/api/server/billing/address.dart';
 import 'package:flutter_boilerplate/api/server/billing/history.dart';
 import 'package:flutter_boilerplate/api/server/billing/payment_methods.dart';
+import 'package:flutter_boilerplate/api/server/billing/plan_prices.dart';
 import 'package:flutter_boilerplate/api/server/billing/subscription.dart';
 import 'package:flutter_boilerplate/constants/theme.dart';
 import 'package:flutter_boilerplate/l10n/app_localizations.dart';
@@ -53,6 +54,9 @@ void main() {
       ProviderScope(
         overrides: [
           subscriptionProvider.overrideWith((ref) async => sub),
+          // CROSS-031: the benefits list now reads planPrices; keep the
+          // harness offline.
+          planPricesProvider.overrideWith((ref) async => <PlanPrice>[]),
           paymentMethodsProvider.overrideWith((ref) async => <PaymentMethod>[]),
           billingHistoryProvider.overrideWith((ref) async => <Invoice>[]),
           billingAddressServerProvider

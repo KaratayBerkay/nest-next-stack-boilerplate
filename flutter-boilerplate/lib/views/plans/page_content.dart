@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/currency.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
+import 'package:flutter_boilerplate/lib/tier_features.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -38,7 +39,7 @@ class PlansPageContent extends ConsumerWidget {
           _PlanCard(
             tier: Tier.free,
             price: priceFor(Tier.free, t.pricingPriceFree),
-            features: const ['Basic feed', '5 messages/day', '1 device'],
+            features: featuresForTier(t, Tier.free, livePrices),
             color: colors.surfaceAlt,
             userTier: userTier,
             width: width,
@@ -46,12 +47,7 @@ class PlansPageContent extends ConsumerWidget {
           _PlanCard(
             tier: Tier.basic,
             price: priceFor(Tier.basic, t.pricingPriceBasic),
-            features: const [
-              'Enhanced feed',
-              '50 messages/day',
-              '3 devices',
-              'Basic stats',
-            ],
+            features: featuresForTier(t, Tier.basic, livePrices),
             color: colors.info,
             userTier: userTier,
             onSelect: () => context.go('/v1/$lang/checkout/basic'),
@@ -60,13 +56,7 @@ class PlansPageContent extends ConsumerWidget {
           _PlanCard(
             tier: Tier.medium,
             price: priceFor(Tier.medium, t.pricingPriceMedium),
-            features: const [
-              'Full feed',
-              'Unlimited messages',
-              '10 devices',
-              'Analytics',
-              'Priority support',
-            ],
+            features: featuresForTier(t, Tier.medium, livePrices),
             color: colors.brand,
             userTier: userTier,
             onSelect: () => context.go('/v1/$lang/checkout/medium'),
@@ -75,14 +65,7 @@ class PlansPageContent extends ConsumerWidget {
           _PlanCard(
             tier: Tier.premium,
             price: priceFor(Tier.premium, t.pricingPricePremium),
-            features: const [
-              'Everything',
-              'Unlimited',
-              'All devices',
-              'AI recommendations',
-              'Video calls',
-              'Dedicated support',
-            ],
+            features: featuresForTier(t, Tier.premium, livePrices),
             color: colors.warning,
             userTier: userTier,
             isPremium: true,

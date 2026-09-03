@@ -11,6 +11,7 @@ import '../../api/client/messages/actions.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/server/messages/room_attachments.dart';
 import '../../components/ui/attachment_preview/attachment_gallery_sheet.dart';
+import '../../components/ui/confirm_dialog/confirm_dialog.dart';
 import '../../components/ui/toast/toast.dart';
 import '../../constants/chat.dart';
 import '../../hooks/use_auth.dart';
@@ -46,6 +47,8 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
   MessageAttachment? _pendingAttachment;
   bool _attaching = false;
   bool _emojiOpen = false;
+  // CROSS-024: message the composer is replying to (room quote).
+  ChatMessage? _replyTarget;
 
   List<String> get vipRooms => const [];
   bool get showSelfCrown => false;
@@ -94,6 +97,7 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
 
   void _selectRoom(String r) {
     setState(() {
+      _replyTarget = null;
       _room = r;
       _sidebarOpen = false;
       _lastMessageLastId = null;
@@ -119,18 +123,55 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
     final client = ref.read(realtimeProvider);
     final attachment = _pendingAttachment;
     final attachments = attachment == null ? null : [attachment.toJson()];
+    final replyTarget = _replyTarget;
     client.send({
       'type': 'room-message',
       'room': _room,
       'text': text,
       if (attachments != null) 'attachments': attachments,
+      if (replyTarget != null) 'replyToId': replyTarget.id,
     });
     _messageController.clear();
     setState(() {
       _pendingAttachment = null;
       _emojiOpen = false;
+      _replyTarget = null;
     });
     scrollToBottom();
+  }
+
+  /// CROSS-024: room delete — "for everyone" asks first (same dialog the DM
+  /// bubble uses); both surface failures as a toast and leave the list as-is.
+  Future<void> _deleteRoomMessage(
+    ChatMessage message, {
+    required bool everyone,
+  }) async {
+    final t = AppLocalizations.of(context);
+    if (everyone) {
+      final confirmed = await ConfirmDialogWidget.show(
+        context,
+        title: t.messagesDeleteForEveryoneConfirmTitle,
+        message: t.chatRoomDeleteForEveryoneConfirm,
+        confirmText: t.messagesDeleteForEveryone,
+        cancelText: t.messagesCancel,
+      );
+      if (confirmed != true || !mounted) return;
+    }
+    try {
+      final actions = ref.read(messageActionsProvider);
+      if (everyone) {
+        await actions.deleteRoomMessageForEveryone(_room, message.id);
+      } else {
+        await actions.deleteRoomMessageForMe(_room, message.id);
+      }
+    } catch (_) {
+      if (!mounted) return;
+      showToast(
+        context,
+        t.messagesFailedToDeleteMessage,
+        type: ToastType.error,
+      );
+    }
   }
 
   Future<void> _pickAttachment() async {
@@ -203,6 +244,9 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
               attachments: m.attachments,
               createdAt: DateTime.parse(m.createdAt),
               isRead: true,
+              deletedAt:
+                  m.deletedAt != null ? DateTime.parse(m.deletedAt!) : null,
+              replyTo: m.replyTo,
             ),
           )
           .toList(),
@@ -289,6 +333,11 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
         onAttachFile: _pickAttachment,
         onRemoveAttachment: () => setState(() => _pendingAttachment = null),
         onToggleEmoji: () => setState(() => _emojiOpen = !_emojiOpen),
+        replyTarget: _replyTarget,
+        onCancelReply: () => setState(() => _replyTarget = null),
+        onReply: (m) => setState(() => _replyTarget = m),
+        onDeleteForMe: (m) => _deleteRoomMessage(m, everyone: false),
+        onDeleteForEveryone: (m) => _deleteRoomMessage(m, everyone: true),
       );
     }
 

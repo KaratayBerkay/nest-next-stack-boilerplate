@@ -138,4 +138,27 @@ class PaginatedRoomMessagesNotifier
     if (state.items.any((m) => m.id == message.id)) return;
     state = state.copyWith(items: [...state.items, message]);
   }
+
+  /// "Delete for me" (CROSS-024): drop the row from this viewer's list.
+  void removeMessage(String messageId) {
+    if (!state.items.any((m) => m.id == messageId)) return;
+    state = state.copyWith(
+      items: state.items.where((m) => m.id != messageId).toList(),
+    );
+  }
+
+  /// "Delete for everyone" (CROSS-024): tombstone in place — order and
+  /// length are kept so the list doesn't jump.
+  void markDeleted(String messageId, String deletedAt) {
+    if (!state.items.any((m) => m.id == messageId)) return;
+    state = state.copyWith(
+      items: [
+        for (final m in state.items)
+          if (m.id == messageId)
+            m.copyWith(deletedAt: deletedAt, clearContent: true)
+          else
+            m,
+      ],
+    );
+  }
 }
