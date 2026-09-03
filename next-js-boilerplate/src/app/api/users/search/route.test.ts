@@ -26,7 +26,6 @@ function makeUsers(count: number) {
   return Array.from({ length: count }, (_, i) => ({
     id: `u${i}`,
     name: `User ${i}`,
-    email: `u${i}@example.com`,
   }));
 }
 
@@ -85,5 +84,22 @@ describe("GET /api/users/search", () => {
 
     expect(body.total).toBe(50);
     expect(body.truncated).toBe(false);
+  });
+
+  it("does not select email in the users search query — regression: this route used to select+return email from a global, non-friends-scoped search, leaking every matched user's real address to any authenticated caller", async () => {
+    graphqlFetchMock
+      .mockResolvedValueOnce({ data: { me: { id: "me" } } })
+      .mockResolvedValueOnce({
+        data: { users: makeUsers(3), usersCount: 3 },
+      });
+
+    const { GET } = await import("./route");
+    await GET(
+      new NextRequest("http://localhost/api/users/search?q=a&take=10&skip=0"),
+    );
+
+    const searchCall = graphqlFetchMock.mock.calls[1]!;
+    const searchQuery = searchCall[0] as string;
+    expect(searchQuery).not.toMatch(/\bemail\b/);
   });
 });

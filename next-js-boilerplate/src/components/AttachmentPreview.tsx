@@ -42,9 +42,26 @@ function isPdfByExtension(name: string | null | undefined): boolean {
   return PDF_EXTENSIONS.has(fileExtension(name));
 }
 
-function serveUrl(url: string): string {
-  const pathname = new URL(url).pathname;
-  const objectName = pathname.replace(/^\//, "");
+/**
+ * Maps a stored attachment URL to the authenticated serve endpoint. Exported
+ * for tests. Returns null when `url` isn't a parseable URL: attachments that
+ * arrived over the WebSocket used to skip DTO validation entirely, so one
+ * crafted `url` from a peer threw here and took the whole conversation
+ * render down with it (CROSS-046). The gateway validates now; this is the
+ * client-side belt to that brace, and it also covers legacy rows.
+ */
+export function serveUrl(url: string): string | null {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return null;
+  }
+  // Stored attachment URLs are always the object store's http(s) URLs —
+  // anything else (javascript:, data:, …) has no object name to serve.
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") return null;
+  const objectName = parsed.pathname.replace(/^\//, "");
+  if (!objectName) return null;
   return `${UPLOAD_SERVE_URL}?objectName=${encodeURIComponent(objectName)}`;
 }
 
@@ -81,8 +98,28 @@ export function AttachmentPreview({
   const [thumbFailed, setThumbFailed] = useState(false);
   const label = name || "Attachment";
   const href = serveUrl(url);
+  const thumbHref = thumbnailUrl ? serveUrl(thumbnailUrl) : null;
   const isImage = type?.startsWith("image/") || isImageByExtension(name);
   const isPdf = isPdfByExtension(name);
+
+  // Nothing to open: render the same tile as an inert chip rather than a
+  // button that leads to a broken viewer (or, before the guard, a crash).
+  if (!href) {
+    return (
+      <span
+        data-testid="attachment-unavailable"
+        className={cn(
+          "bg-surface border-border text-muted flex items-center gap-2 rounded-lg border py-1.5 pr-2.5 pl-1.5 text-left",
+          className,
+        )}
+      >
+        <span className="bg-surface-hover flex size-10 shrink-0 items-center justify-center rounded-md">
+          <AttachmentIcon type={type} name={name} />
+        </span>
+        <span className="max-w-[160px] truncate text-xs">{label}</span>
+      </span>
+    );
+  }
 
   return (
     <>
@@ -94,9 +131,9 @@ export function AttachmentPreview({
           className,
         )}
       >
-        {thumbnailUrl && !thumbFailed ? (
+        {thumbHref && !thumbFailed ? (
           <img
-            src={serveUrl(thumbnailUrl)}
+            src={thumbHref}
             alt=""
             className="bg-surface-hover size-10 shrink-0 rounded-md object-cover"
             onError={() => setThumbFailed(true)}

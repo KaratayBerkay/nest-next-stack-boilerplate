@@ -19,7 +19,7 @@ import { onServiceWorkerMessage } from "./V1ShellSW";
 export function V1Shell({ children }: V1ShellProps) {
   const params = useParams<{ lang: string }>();
   const lang = params?.lang ?? "";
-  const { user, token: _token, loading, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const t = useMessages("v1-shell");
   const { data: conversations = [] } = useConversations();
   const pointer = useDeviceType();

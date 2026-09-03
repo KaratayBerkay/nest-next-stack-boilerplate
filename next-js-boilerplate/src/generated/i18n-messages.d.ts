@@ -410,6 +410,7 @@ export type I18nMessages = {
       "loadingSuggestions": string;
       "noSuggestions": string;
       "mutualFriends": string;
+      "unknownUser": string;
       "failedToLoadSuggestions": string;
       "searchFailed": string;
       "failedToSendRequest": string;

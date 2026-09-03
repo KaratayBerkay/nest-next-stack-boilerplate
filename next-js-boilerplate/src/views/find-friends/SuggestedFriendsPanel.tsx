@@ -95,7 +95,7 @@ export function SuggestedFriendsPanel() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
-                  {s.name ?? s.email}
+                  {s.name ?? t.unknownUser}
                 </p>
                 <p className="text-muted text-[10px]">
                   {t.mutualFriends.replace("{count}", String(s.mutualFriends))}

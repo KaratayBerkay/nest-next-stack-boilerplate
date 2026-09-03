@@ -28,6 +28,9 @@ export interface LiveStreamView {
 export interface LiveStreamJoinResult {
   token: string;
   roomName: string;
+  /** Client-facing LiveKit URL from the server; null when it has none
+   *  configured (the client then uses NEXT_PUBLIC_LIVEKIT_URL). */
+  livekitUrl?: string | null;
   stream: LiveStreamView;
 }
 

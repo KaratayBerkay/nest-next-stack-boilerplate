@@ -10,7 +10,7 @@ export default function CsrCookiesPage() {
   useEffect(() => {
     getMeRawServer()
       .then((data) => {
-        setSession("accessToken" in data ? data.accessToken : null);
+        setSession("user" in data && data.user ? data.user.email : null);
         setLoading(false);
       })
       .catch(() => {
@@ -37,9 +37,7 @@ export default function CsrCookiesPage() {
             className={session ? "text-green-600" : "text-zinc-500"}
             data-testid="csr-cookie-status"
           >
-            {session
-              ? `Authenticated: ${session.slice(0, 20)}...`
-              : "Not authenticated"}
+            {session ? `Authenticated: ${session}` : "Not authenticated"}
           </span>
         )}
       </div>

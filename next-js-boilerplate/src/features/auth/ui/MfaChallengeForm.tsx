@@ -144,14 +144,8 @@ export function MfaChallengeForm({
       </h2>
       <p className="text-muted text-xs">
         {isEmailMethod
-          ? t.form.login.mfaEmailDescription.replace(
-              "{email}",
-              mfaState.user.email,
-            )
-          : t.form.login.mfaTotpDescription.replace(
-              "{email}",
-              mfaState.user.email,
-            )}
+          ? t.form.login.mfaEmailDescription.replace("{email}", mfaState.email)
+          : t.form.login.mfaTotpDescription.replace("{email}", mfaState.email)}
       </p>
 
       <form

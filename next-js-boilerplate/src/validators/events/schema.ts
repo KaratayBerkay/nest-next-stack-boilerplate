@@ -13,7 +13,19 @@ const frontendEventSchema = z.object({
   userId: z.string().optional(),
   url: z.string().max(2048).optional(),
   userAgent: z.string().max(512).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  // Capped hard: metadata lands in the ES web-logs index under DYNAMIC
+  // mapping, so unbounded attacker-chosen keys are a mapping-explosion /
+  // type-lock vector (the exact failure mode of the 08-18 `time`-field
+  // incident) — and this endpoint is reachable unauthenticated.
+  metadata: z
+    .record(z.string().max(64), z.unknown())
+    .optional()
+    .refine((m) => m === undefined || Object.keys(m).length <= 20, {
+      message: "metadata may carry at most 20 keys",
+    })
+    .refine((m) => m === undefined || JSON.stringify(m).length <= 8192, {
+      message: "metadata too large",
+    }),
   category: z
     .enum([
       "session",

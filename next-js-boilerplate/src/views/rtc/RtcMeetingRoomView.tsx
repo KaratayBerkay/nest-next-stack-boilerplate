@@ -546,13 +546,24 @@ export function RtcMeetingRoomView() {
           error: err,
           phase: "joining",
         });
-        const status = (err as { exception?: { statusCode?: number } })
-          .exception?.statusCode;
+        const exception = (
+          err as { exception?: { statusCode?: number; exc?: string } }
+        ).exception;
+        const status = exception?.statusCode;
         // Only a 404 means the meeting is genuinely gone/over. Any other
         // failure (500, capacity 403, network) previously rendered the
         // "meeting has ended" screen, which is a lie — show a join-failure
-        // screen instead so the user knows a retry can work.
-        setPhase(status === 404 ? "not-found" : "join-failed");
+        // screen instead so the user knows a retry can work. The one 403
+        // that is final is the host having removed this user: the same
+        // "removed" screen the live rtc:meeting-removed push shows, not a
+        // retry prompt.
+        setPhase(
+          status === 404
+            ? "not-found"
+            : exception?.exc === "EX_MEETING_REMOVED"
+              ? "removed"
+              : "join-failed",
+        );
         toast({
           title: err instanceof Error ? err.message : t.joinMeetingFailed,
           variant: "destructive",
@@ -630,6 +641,7 @@ export function RtcMeetingRoomView() {
     phase === "active" ? (join?.token ?? null) : null,
     slug,
     join?.roomName,
+    join?.livekitUrl,
   );
 
   useEffect(() => {

@@ -105,6 +105,7 @@ export const POST = withLogging(async (request, log) => {
       mfaRequired?: boolean;
       mfaToken?: string;
       mfaMethod?: "TOTP" | "EMAIL";
+      /** Null while mfaRequired — see the 202 branch below. */
       user: unknown;
     };
   }>(
@@ -125,7 +126,10 @@ export const POST = withLogging(async (request, log) => {
 
   const loginData = data.login;
 
-  // MFA challenge: return 202 so the frontend shows the TOTP form.
+  // MFA challenge: return 202 so the frontend shows the TOTP form. No
+  // account data rides along — the backend no longer returns `user` before
+  // the second factor (a password alone proves nothing yet), and the
+  // challenge screen only needs the email the person just typed.
   if (loginData.mfaRequired) {
     log.info({ email }, "login requires MFA challenge");
     return NextResponse.json(
@@ -133,7 +137,6 @@ export const POST = withLogging(async (request, log) => {
         mfaRequired: true,
         mfaToken: loginData.mfaToken,
         mfaMethod: loginData.mfaMethod,
-        user: loginData.user,
       },
       { status: 202 },
     );
@@ -169,7 +172,10 @@ export const POST = withLogging(async (request, log) => {
   }
 
   const response = NextResponse.json(
-    { user: sessionUser, accessToken, deviceToken },
+    // deviceToken stays: client JS seeds the wire-crypto key derivation
+    // from it. accessToken deliberately does NOT — cookies carry it, and
+    // echoing it in the body turns any XSS into durable token theft.
+    { user: sessionUser, deviceToken },
     { status: 200 },
   );
 

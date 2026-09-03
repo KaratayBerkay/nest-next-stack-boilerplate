@@ -38,6 +38,9 @@ export interface MeetingView {
 export interface JoinMeetingResult {
   token: string;
   roomName: string;
+  /** Client-facing LiveKit URL from the server; null when it has none
+   *  configured (the client then uses NEXT_PUBLIC_LIVEKIT_URL). */
+  livekitUrl?: string | null;
   role: string;
   meeting: MeetingView;
 }

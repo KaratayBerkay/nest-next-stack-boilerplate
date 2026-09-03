@@ -22,6 +22,7 @@
   "loadingSuggestions": "Loading...",
   "noSuggestions": "No suggestions yet",
   "mutualFriends": "{count} mutual friends",
+  "unknownUser": "Unknown user",
   "failedToLoadSuggestions": "Failed to load suggestions",
   "searchFailed": "Failed to search users. Try again.",
   "failedToSendRequest": "Failed to send friend request",

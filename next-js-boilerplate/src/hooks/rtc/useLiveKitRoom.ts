@@ -103,6 +103,9 @@ export function useLiveKitRoom(
   elements: UseLiveKitRoomElements,
   callId?: string | null,
   roomName?: string | null,
+  /** Server-supplied client URL (rtc:accepted's `livekitUrl`); falls back
+   *  to NEXT_PUBLIC_LIVEKIT_URL when the backend has none configured. */
+  serverUrl?: string | null,
 ): UseLiveKitRoomResult {
   const {
     localVideoRef,
@@ -170,7 +173,7 @@ export function useLiveKitRoom(
   );
 
   useEffect(() => {
-    const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
+    const url = serverUrl || clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
     if (!token || !url) return;
 
     const roomOpts: RoomOptions = {
@@ -440,7 +443,7 @@ export function useLiveKitRoom(
       setRemoteSpeaking(false);
       setLocalSpeaking(false);
     };
-  }, [callId, roomName, token, hasVideo, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
+  }, [callId, roomName, token, serverUrl, hasVideo, reattachRemoteTracks]); // eslint-disable-line react-hooks/exhaustive-deps -- refs are stable; toggles must not trigger reconnect
 
   // Prevent OS sleep/throttling while the call is up, and mark the tab as
   // active media for the lock screen.

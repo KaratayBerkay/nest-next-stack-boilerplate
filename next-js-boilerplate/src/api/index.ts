@@ -32,7 +32,6 @@ export type { PostStats } from "./server/posts/stats";
 export type { LoginResult } from "./server/auth/login";
 export type { RegisterResult } from "./server/auth/register";
 export type { GetMeResult } from "./server/auth/me";
-export type { RefreshTokenResult } from "./server/auth/token";
 export type { VerifyEmailResult } from "./server/auth/verify-email";
 export type { RequestPasswordResetResult } from "./server/auth/request-password-reset";
 export type { ResetPasswordResult } from "./server/auth/reset-password";

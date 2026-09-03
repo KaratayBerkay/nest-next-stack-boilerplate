@@ -816,6 +816,7 @@ export function RtcCallOverlay() {
     },
     state.callId,
     state.livekit?.roomName,
+    state.livekit?.livekitUrl,
   );
 
   useEffect(() => {

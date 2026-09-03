@@ -33,10 +33,7 @@ export const GET = withLogging(async (_request, log) => {
       // for the rest of the session. Keep this canary pointed at whichever
       // field was added most recently.
       if (cookieUser.sessionId !== undefined) {
-        return NextResponse.json(
-          { user: cookieUser, accessToken },
-          { status: 200 },
-        );
+        return NextResponse.json({ user: cookieUser }, { status: 200 });
       }
     } else {
       log.warn(
@@ -63,10 +60,7 @@ export const GET = withLogging(async (_request, log) => {
       // Self-heal attempt failed but the session itself is still good —
       // keep serving the stale-but-valid cookie rather than logging the
       // user out over a transient GraphQL hiccup.
-      return NextResponse.json(
-        { user: cookieUser, accessToken },
-        { status: 200 },
-      );
+      return NextResponse.json({ user: cookieUser }, { status: 200 });
     }
     log.warn(
       {
@@ -81,10 +75,7 @@ export const GET = withLogging(async (_request, log) => {
 
   log.info({}, "me: GraphQL fallback succeeded");
   const mergedUser = cookieUser ? { ...cookieUser, ...data.me } : data.me;
-  const response = NextResponse.json(
-    { user: mergedUser, accessToken },
-    { status: 200 },
-  );
+  const response = NextResponse.json({ user: mergedUser }, { status: 200 });
   response.cookies.set(
     sessionUserCookieOptions(encodeSessionUserCookie(mergedUser)),
   );

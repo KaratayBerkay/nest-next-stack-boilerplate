@@ -127,7 +127,10 @@ export const POST = withLogging(async (request, log) => {
   }
 
   const response = NextResponse.json(
-    { user: sessionUser, accessToken, deviceToken },
+    // deviceToken stays: client JS seeds the wire-crypto key derivation
+    // from it. accessToken deliberately does NOT — cookies carry it, and
+    // echoing it in the body turns any XSS into durable token theft.
+    { user: sessionUser, deviceToken },
     { status: 200 },
   );
 

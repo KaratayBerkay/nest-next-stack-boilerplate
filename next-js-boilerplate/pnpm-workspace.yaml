@@ -1,3 +1,11 @@
+# Security floors for transitives pinned inside `next` (pnpm audit --prod):
+# sharp<0.35 (libvips CVEs, runtime image optimizer), postcss/nanoid/browserslist
+# advisories. Drop an entry once next's own ranges clear the patched version.
+overrides:
+  sharp: ">=0.35.0"
+  postcss: ">=8.5.23"
+  "nanoid@<4": ">=3.3.18"
+  browserslist: ">=4.28.7"
 allowBuilds:
   esbuild: true
   sharp: true

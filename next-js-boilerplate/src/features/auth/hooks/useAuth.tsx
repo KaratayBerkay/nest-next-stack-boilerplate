@@ -15,7 +15,6 @@ import { loginServer } from "@/api/server/auth/login";
 import { registerServer } from "@/api/server/auth/register";
 import { logoutServer } from "@/api/server/auth/logout";
 import { getMeServer } from "@/api/server/auth/me";
-import { refreshTokenServer } from "@/api/server/auth/token";
 import { refreshSession } from "@/lib/api-client";
 import { deviceHandshakeServer } from "@/api/server/auth/device-handshake";
 import { verifyMfaServer } from "@/api/server/auth/mfa";
@@ -30,7 +29,6 @@ export type { User } from "@/types/auth/User";
 
 type AuthContextValue = {
   user: User | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   verifyMfa: (mfaToken: string, code: string) => Promise<void>;
@@ -58,35 +56,25 @@ function redirectToLoginIfNeeded(): void {
 // Internal channel for the SSR session bridge. Raw inline <script> tags in
 // the body (the old window.__INITIAL_USER__ approach) break React 19
 // hydration, so the session streams in as RSC props via SessionHydrator.
-const AuthHydrateContext = createContext<
-  ((user: User, token: string | null) => void) | null
->(null);
+const AuthHydrateContext = createContext<((user: User) => void) | null>(null);
 
-export function SessionHydrator({
-  user,
-  token,
-}: {
-  user: User;
-  token: string | null;
-}) {
+export function SessionHydrator({ user }: { user: User }) {
   const hydrate = useContext(AuthHydrateContext);
   useEffect(() => {
-    hydrate?.(user, token);
-  }, [hydrate, user, token]);
+    hydrate?.(user);
+  }, [hydrate, user]);
   return null;
 }
 
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser ?? null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(!initialUser);
   const logoutEventRef = useRef(false);
   const ssrHydratedRef = useRef(false);
 
-  const hydrateFromSSR = useCallback((u: User, t: string | null) => {
+  const hydrateFromSSR = useCallback((u: User) => {
     ssrHydratedRef.current = true;
     setUser(u);
-    if (t) setToken(t);
     setLoading(false);
   }, []);
 
@@ -99,12 +87,9 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       // Fire-and-forget: ensure device token is in localStorage for the
       // wire-crypto handshake. The cookie already exists from login, but
       // localStorage may be empty on first SSR load after deploy/re-login.
+      // (No token mirroring here: the raw bearer stays in httpOnly cookies,
+      // never in JS-reachable state — see the /api/auth/token removal.)
       deviceHandshakeServer();
-      refreshTokenServer()
-        .then((t) => {
-          if (t?.accessToken) setToken(t.accessToken);
-        })
-        .catch(() => {});
       return;
     }
 
@@ -115,7 +100,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
         const data = await getMeServer();
         if (data.user) {
           setUser(data.user);
-          setToken(data.accessToken ?? null);
         }
       } catch {
         /* guest or offline */
@@ -142,7 +126,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       if (logoutEventRef.current) return;
       logoutEventRef.current = true;
       setUser(null);
-      setToken(null);
       try {
         // Clear the BFF cookies *before* navigating. Without this, the stale
         // session_user cookie survives into the next full page load, the
@@ -176,7 +159,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     try {
       const data = await loginServer(email, password, readTimezone());
       setUser(data.user);
-      if (data.accessToken) setToken(data.accessToken);
       if (data.deviceToken) {
         const { setDeviceToken } = await import("@/lib/crypto/device-storage");
         setDeviceToken(data.deviceToken);
@@ -199,7 +181,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
           readTimezone(),
         );
         setUser(data.user);
-        if (data.accessToken) setToken(data.accessToken);
         if (data.deviceToken) {
           const { setDeviceToken } =
             await import("@/lib/crypto/device-storage");
@@ -219,7 +200,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     try {
       const data = await verifyMfaServer(mfaToken, code);
       setUser(data.user);
-      if (data.accessToken) setToken(data.accessToken);
       if (data.deviceToken) {
         const { setDeviceToken } = await import("@/lib/crypto/device-storage");
         setDeviceToken(data.deviceToken);
@@ -236,7 +216,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
     const { flushAll } = await import("@/lib/crypto/device-storage");
     await flushAll();
     setUser(null);
-    setToken(null);
     redirectToLoginIfNeeded();
   }, []);
 
@@ -272,7 +251,6 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const value = useMemo(
     () => ({
       user,
-      token,
       loading,
       login,
       verifyMfa,
@@ -280,7 +258,7 @@ export function AuthProvider({ children, initialUser }: AuthProviderProps) {
       logout,
       refreshUser,
     }),
-    [user, token, loading, login, verifyMfa, register, logout, refreshUser],
+    [user, loading, login, verifyMfa, register, logout, refreshUser],
   );
 
   return (

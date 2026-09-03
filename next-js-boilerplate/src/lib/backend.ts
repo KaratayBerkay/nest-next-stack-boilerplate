@@ -91,6 +91,29 @@ export async function backendFetch<T = unknown>(
   return { ok: res.ok, status: res.status, data, headers: res.headers };
 }
 
+const UNSAFE_PROXY_SEGMENT_RE = /[/\\]/;
+
+/**
+ * Guards the catch-all `[...path]` proxy routes (rest/messages/rtc) before
+ * their segments are joined into a backend URL. Next.js matches these
+ * segments while still percent-encoded, so a segment whose *encoded* form
+ * hides a slash (e.g. `..%2Fhealth`) never looks like a `..` path piece to
+ * Next's own router — it only becomes one after this file's
+ * `decodeURIComponent` runs, at which point concatenating it into a URL
+ * string and handing that to `fetch()` lets standard RFC 3986 dot-segment
+ * normalization walk the outbound request out of the intended `/api/*`
+ * prefix and onto arbitrary other backend routes.
+ */
+export function isSafeProxyPath(path: string[]): boolean {
+  return path.every(
+    (segment) =>
+      segment.length > 0 &&
+      segment !== "." &&
+      segment !== ".." &&
+      !UNSAFE_PROXY_SEGMENT_RE.test(segment),
+  );
+}
+
 /**
  * Thin proxy routes (messages/rest/usage/*) forward a raw backend `Response`
  * to the client as-is. When the body isn't valid JSON — a truncated response,

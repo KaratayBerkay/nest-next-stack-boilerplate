@@ -1,5 +1,4 @@
 import { getSessionUser } from "@/lib/auth-ssr";
-import { getAccessToken } from "@/store/ssr-cookies";
 import { SessionHydrator } from "@/features/auth/hooks/useAuth";
 
 // Streams the SSR session into AuthProvider as RSC props. Replaces the old
@@ -9,6 +8,8 @@ export async function SessionBridge() {
   const user = await getSessionUser();
   if (!user) return null;
 
-  const accessToken = await getAccessToken();
-  return <SessionHydrator user={user} token={accessToken ?? null} />;
+  // Only the user snapshot crosses into client state. The access token is
+  // deliberately NOT streamed into the RSC payload: it would sit in the HTML
+  // flight data of every SSR'd page, handing any XSS a durable bearer.
+  return <SessionHydrator user={user} />;
 }

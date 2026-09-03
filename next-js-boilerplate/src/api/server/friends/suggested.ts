@@ -3,10 +3,12 @@ import { GQL_URL } from "@/constants/api/urls";
 import { POST } from "@/constants/api/methods";
 import { JSON_CONTENT_TYPE_HEADER } from "@/constants/api/headers";
 
+// Deliberately no `email`: suggested candidates are strangers to the caller,
+// and the backend always blanks the field anyway (see SuggestedFriend in
+// nest-js-boilerplate's friends.resolver.ts). Don't re-add it to the query.
 export interface SuggestedFriend {
   id: string;
   name?: string;
-  email: string;
   avatarUrl?: string;
   mutualFriends: number;
 }
@@ -18,7 +20,7 @@ export async function fetchSuggestedFriendsServer(): Promise<
     method: POST,
     headers: JSON_CONTENT_TYPE_HEADER,
     body: JSON.stringify({
-      query: `query { suggestedFriends { id name email avatarUrl mutualFriends } }`,
+      query: `query { suggestedFriends { id name avatarUrl mutualFriends } }`,
     }),
   });
   if (res.ok) {

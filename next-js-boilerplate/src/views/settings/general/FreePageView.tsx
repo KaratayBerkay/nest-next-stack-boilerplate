@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingAuth } from "@/components/LoadingAuth";
 import { UnauthenticatedMessage } from "@/components/UnauthenticatedMessage";
@@ -24,6 +25,12 @@ import {
   saveSettings,
 } from "@/lib/settings/handlers";
 import { SettingsSelect } from "./SettingsSelect";
+import {
+  detectLang,
+  isLang,
+  localizePathname,
+  setLangCookie,
+} from "@/lib/i18n/lang-routing";
 import { formatDateLong, formatDateShort, toISOString } from "@/lib/date-time";
 import type { CurrencyCode } from "@/constants/currency";
 import type { DateDisplayFormat } from "@/constants/date-display";
@@ -45,6 +52,25 @@ export function FreePageView({ className }: ClassNameProps) {
   const [saving, setSaving] = useState(false);
   const loadedRef = useRef(false);
   const now = new Date();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+
+  // Make the saved language take effect: the profile field alone never did
+  // anything on web (the header LangSwitcher's cookie + /{lang}/ navigation
+  // is the real switch), so a user picking Turkish here kept seeing English.
+  const applyLocale = useCallback(
+    (target: string) => {
+      if (!isLang(target)) return;
+      const current = detectLang(pathname ?? "");
+      if (current === target) return;
+      setLangCookie(target);
+      const localized = localizePathname(pathname ?? "", current, target);
+      const qs = searchParams.toString();
+      router.push(qs ? `${localized}?${qs}` : localized);
+    },
+    [pathname, searchParams, router],
+  );
 
   useEffect(() => {
     if (!user || loadedRef.current) return;
@@ -126,6 +152,7 @@ export function FreePageView({ className }: ClassNameProps) {
                 t.saveFailed,
                 refreshUser,
                 updateProfile,
+                applyLocale,
               )
             }
             disabled={saving}

@@ -22,6 +22,7 @@
   "loadingSuggestions": "Yükleniyor...",
   "noSuggestions": "Henüz öneri yok",
   "mutualFriends": "{count} ortak arkadaş",
+  "unknownUser": "Bilinmeyen kullanıcı",
   "failedToLoadSuggestions": "Öneriler yüklenemedi",
   "searchFailed": "Kullanıcılar aranamadı. Tekrar deneyin.",
   "failedToSendRequest": "Arkadaşlık isteği gönderilemedi",

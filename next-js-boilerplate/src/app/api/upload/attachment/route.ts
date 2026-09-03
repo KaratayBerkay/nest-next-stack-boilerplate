@@ -8,6 +8,7 @@ import {
   UPLOAD_SCOPE_KIND_HEADER,
 } from "@/constants/api/headers";
 import { MAX_ATTACHMENT_SIZE } from "@/constants/upload";
+import { oversizedBodyResponse, MULTIPART_SLACK } from "@/lib/body-limit";
 import { logger } from "@/lib/logger";
 
 const ALLOWED_TYPES = [
@@ -28,6 +29,12 @@ export async function POST(request: Request) {
     if (!accessToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const tooLarge = oversizedBodyResponse(
+      request,
+      MAX_ATTACHMENT_SIZE + MULTIPART_SLACK,
+    );
+    if (tooLarge) return tooLarge;
 
     const formData = await request.formData();
     const file = formData.get("file");

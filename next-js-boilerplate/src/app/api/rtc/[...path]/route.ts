@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
+import {
+  isSafeProxyPath,
+  parseProxiedResponse,
+  sessionTokenHeaders,
+} from "@/lib/backend";
 import {
   JSON_CONTENT_TYPE_HEADER,
   bearerAuthHeader,
@@ -26,6 +30,9 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
+  if (!isSafeProxyPath(path)) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
   const qs = request.nextUrl.searchParams.toString();
   const url = `${serverEnv().APP_URL}/api/rtc/${path.join("/")}${qs ? "?" + qs : ""}`;
   const headers = await getAuthHeaders();

@@ -1,12 +1,16 @@
 "use server";
 
+// Demo-only: the forms-gallery `Form.tsx` is this action's sole caller. It
+// used to live in features/auth/actions/, where it read as the real
+// registration path (FE-002) — real sign-up is RegisterForm → useAuth()
+// .register() → registerServer().
 import {
   ServerValidateError,
   createServerValidate,
   initialFormState,
 } from "@tanstack/react-form-nextjs";
-import { signupFormOpts } from "@/lib/forms/signup-options";
-import { signupSchema } from "@/validators/auth/signup-schema";
+import { signupFormOpts } from "./signup-options";
+import { signupSchema } from "@/validators/demos/signup-schema";
 
 const serverValidate = createServerValidate({
   ...signupFormOpts,
