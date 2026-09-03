@@ -11,6 +11,9 @@ import { initials, type MessageAttachment } from './messaging.types';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import type { AuthWs as RealtimeAuthWs } from '../realtime/realtime.types';
 import { MAX_ENVELOPE_JSON_BYTES } from './dto/envelope-size.constraint';
+import { MessageAttachmentDto } from './dto/send-message-rest.dto';
+import { plainToInstance } from 'class-transformer';
+import { validateSync } from 'class-validator';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 
 type AuthWs = WebSocket & {
@@ -42,6 +45,42 @@ interface IncomingMessagePayload {
 
 function toAttachments(data: IncomingMessagePayload): MessageAttachment[] {
   return Array.isArray(data.attachments) ? data.attachments : [];
+}
+
+/** Same ceiling the multi-file composer enforces client-side. */
+const MAX_WS_ATTACHMENTS = 10;
+
+/**
+ * WS frames skip the REST/GraphQL DTO pipeline, so `attachments[]` used to be
+ * persisted and broadcast exactly as sent — a crafted `url` (not a URL at
+ * all) then blew up every recipient's render (`new URL(url)` in the web
+ * AttachmentPreview). Validate each entry against the very same
+ * MessageAttachmentDto the REST path uses, and keep only the fields that DTO
+ * declares (size/thumbnailUrl are resolved server-side from PendingUpload,
+ * never trusted from the wire). Returns null when the payload is invalid.
+ */
+export function validateWsAttachments(
+  raw: unknown,
+): MessageAttachment[] | null {
+  if (raw === undefined || raw === null) return [];
+  if (!Array.isArray(raw) || raw.length > MAX_WS_ATTACHMENTS) return null;
+  const out: MessageAttachment[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return null;
+    const dto = plainToInstance(MessageAttachmentDto, entry, {
+      // Only declared DTO properties survive — anything else on the wire
+      // (or a smuggled `size`/`thumbnailUrl`) is dropped, not persisted.
+      excludeExtraneousValues: false,
+    });
+    if (validateSync(dto, { whitelist: true }).length > 0) return null;
+    out.push({
+      url: dto.url,
+      type: dto.type,
+      name: dto.name,
+      ...(dto.storageEnvelope ? { storageEnvelope: dto.storageEnvelope } : {}),
+    });
+  }
+  return out;
 }
 
 function hasTextOrAttachmentOrEnvelope(data: IncomingMessagePayload): boolean {
@@ -154,11 +193,18 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
+    const attachments = validateWsAttachments(data.attachments);
+    if (!attachments) {
+      ws.send(
+        JSON.stringify({ type: 'error', message: 'invalid attachments' }),
+      );
+      return;
+    }
 
     // Data is already decrypted by the gateway's centralized handleMessage.
     const plaintext: { text?: string; attachments?: unknown } = {
       text: data.text,
-      attachments: toAttachments(data),
+      attachments,
     };
 
     // Client-provided E2EE envelope is flattened into v/ct/nonce columns;
@@ -174,7 +220,7 @@ export class MessagingWsGateway implements OnModuleInit {
       data.recipientId,
       plaintext.text ?? '',
       undefined,
-      toAttachments(data),
+      attachments,
       storageEnvelope,
       data.replyToId,
     );
@@ -345,11 +391,18 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.send(JSON.stringify({ type: 'error', message: 'envelope too large' }));
       return;
     }
+    const attachments = validateWsAttachments(data.attachments);
+    if (!attachments) {
+      ws.send(
+        JSON.stringify({ type: 'error', message: 'invalid attachments' }),
+      );
+      return;
+    }
 
     // Data is already decrypted by the gateway's centralized handleMessage.
     const plaintext: { text?: string; attachments?: unknown } = {
       text: data.text,
-      attachments: toAttachments(data),
+      attachments,
     };
 
     // Client-provided E2EE envelope is flattened into v/ct/nonce columns;
@@ -365,7 +418,7 @@ export class MessagingWsGateway implements OnModuleInit {
       ws.userId,
       ws.tier,
       plaintext.text ?? '',
-      toAttachments(data),
+      attachments,
       storageEnvelope,
     );
 

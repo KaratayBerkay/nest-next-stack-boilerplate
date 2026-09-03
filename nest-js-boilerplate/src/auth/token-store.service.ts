@@ -15,6 +15,33 @@ const MFA_CHALLENGE_PREFIX = 'mfa:challenge:';
 const MFA_CHALLENGE_TTL = 300; // 5 minutes
 const EMAIL_OTP_PREFIX = 'email_otp:';
 const EMAIL_OTP_TTL = 600; // 10 minutes
+const MFA_FRESH_PREFIX = 'mfa:fresh:';
+/** How long after passing the second factor a session may still call
+ *  trustCurrentDevice — long enough for the client's immediate follow-up
+ *  mutation, short enough that a later hijacked session can't use it. */
+const MFA_FRESH_TTL = 300; // 5 minutes
+
+/** Sibling key holding an email OTP's wrong-guess count (a plain INCR counter). */
+function otpAttemptsKey(otpKey: string): string {
+  return `${otpKey}:attempts`;
+}
+
+function parseEmailOtp(
+  raw: string | null,
+  attempts: string | null,
+): { codeHash: string; email: string; attempts: number } | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as { codeHash: string; email: string };
+    return {
+      codeHash: parsed.codeHash,
+      email: parsed.email,
+      attempts: Number(attempts ?? 0) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function parseJsonField(raw: string | undefined): string[] {
   if (!raw) return [];
@@ -215,6 +242,29 @@ export class TokenStoreService {
     const key = await this.redis.get(refreshKey);
     if (!key) return null;
     return this.read(key);
+  }
+
+  /**
+   * Revoke the session a refresh token resolves to, looked up through the
+   * refresh index (sessionId → the real compound key) rather than a compound
+   * key the caller rebuilds from request tokens.
+   *
+   * AuthSessionService.refresh() used to rebuild that key from the presented
+   * access/rbac/device/user tokens, but a refresh-after-expiry carries no
+   * valid access token, so the rebuilt key never matched the real one and
+   * revoke() silently no-op'd — the rotated-away refresh token (and its
+   * session) stayed replayable until its own TTL, defeating single-use
+   * rotation. Resolving the real key here (the same lookup
+   * findByRefreshSessionId does) makes rotation actually invalidate the old
+   * token. Returns false when the sessionId no longer maps to a live session
+   * (already revoked/expired).
+   */
+  async revokeByRefreshSessionId(sessionId: string): Promise<boolean> {
+    const refreshKey = this.refreshIndexKey(sessionId);
+    const compoundKey = await this.redis.get(refreshKey);
+    if (!compoundKey) return false;
+    await this.revoke(compoundKey);
+    return true;
   }
 
   async listSessionsForUser(userId: string): Promise<SessionUser[]> {
@@ -474,7 +524,35 @@ export class TokenStoreService {
     return attempts;
   }
 
-  /** Store a 6-digit email OTP hash with purpose-scoped key. */
+  /**
+   * Record that `sessionId` was just issued by a completed second-factor
+   * login. trustCurrentDevice consumes this marker (consumeMfaFresh) — it is
+   * the step-up that mutation otherwise lacked: a device may only be marked
+   * trusted by the session that passed MFA on it, right after passing it,
+   * never by an arbitrary (possibly hijacked) session hours later.
+   */
+  async markMfaFresh(sessionId: string): Promise<void> {
+    await this.redis.set(
+      `${MFA_FRESH_PREFIX}${hashForRedisKey(sessionId)}`,
+      '1',
+      'EX',
+      MFA_FRESH_TTL,
+    );
+  }
+
+  /** One-shot: true iff `sessionId` passed MFA within the last MFA_FRESH_TTL. */
+  async consumeMfaFresh(sessionId: string): Promise<boolean> {
+    const raw = await this.redis.getdel(
+      `${MFA_FRESH_PREFIX}${hashForRedisKey(sessionId)}`,
+    );
+    return raw === '1';
+  }
+
+  /**
+   * Store a 6-digit email OTP hash with purpose-scoped key. The wrong-guess
+   * counter lives in a sibling `:attempts` key (see incrementOtpAttempts)
+   * and is reset here, so a fresh code always starts from zero.
+   */
   async writeEmailOtp(
     purpose: 'REGISTRATION' | 'LOGIN',
     subjectId: string,
@@ -482,12 +560,11 @@ export class TokenStoreService {
     email: string,
   ): Promise<void> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
-    await this.redis.set(
-      key,
-      JSON.stringify({ codeHash, email, attempts: 0 }),
-      'EX',
-      EMAIL_OTP_TTL,
-    );
+    await this.redis
+      .multi()
+      .set(key, JSON.stringify({ codeHash, email }), 'EX', EMAIL_OTP_TTL)
+      .del(otpAttemptsKey(key))
+      .exec();
   }
 
   /** Read and consume (delete) an email OTP. Returns null if expired or missing. */
@@ -496,17 +573,11 @@ export class TokenStoreService {
     subjectId: string,
   ): Promise<{ codeHash: string; email: string; attempts: number } | null> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
-    const raw = await this.redis.getdel(key);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as {
-        codeHash: string;
-        email: string;
-        attempts: number;
-      };
-    } catch {
-      return null;
-    }
+    const [raw, attempts] = await Promise.all([
+      this.redis.getdel(key),
+      this.redis.getdel(otpAttemptsKey(key)),
+    ]);
+    return parseEmailOtp(raw, attempts);
   }
 
   /** Peek at an email OTP without consuming it (for rate-limit check). */
@@ -515,34 +586,38 @@ export class TokenStoreService {
     subjectId: string,
   ): Promise<{ codeHash: string; email: string; attempts: number } | null> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
-    const raw = await this.redis.get(key);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw) as {
-        codeHash: string;
-        email: string;
-        attempts: number;
-      };
-    } catch {
-      return null;
-    }
+    const [raw, attempts] = await Promise.all([
+      this.redis.get(key),
+      this.redis.get(otpAttemptsKey(key)),
+    ]);
+    return parseEmailOtp(raw, attempts);
   }
 
-  /** Increment the attempt counter on an existing email OTP. */
+  /**
+   * Atomically count one wrong guess and return the new total. This used to
+   * be a read-modify-write of an `attempts` field inside the OTP's own JSON
+   * blob, which (a) let a burst of parallel guesses all read the same base
+   * value and slip past the cap, and (b) rewrote the blob with a fresh
+   * 10-minute expiry on every wrong guess, so an attacker could keep one
+   * challenge's guessing window open indefinitely. INCR is atomic, and the
+   * OTP record itself is never touched — its original deadline stands. The
+   * counter carries its own expiry only so it can't outlive its OTP by more
+   * than that window; writeEmailOtp resets it for the next code anyway.
+   */
   async incrementOtpAttempts(
     purpose: 'REGISTRATION' | 'LOGIN',
     subjectId: string,
-  ): Promise<void> {
-    const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
-    const raw = await this.redis.get(key);
-    if (!raw) return;
-    const data = JSON.parse(raw) as {
-      codeHash: string;
-      email: string;
-      attempts: number;
-    };
-    data.attempts += 1;
-    await this.redis.set(key, JSON.stringify(data), 'EX', EMAIL_OTP_TTL, 'XX');
+  ): Promise<number> {
+    const attemptsKey = otpAttemptsKey(
+      `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`,
+    );
+    const results = await this.redis
+      .multi()
+      .incr(attemptsKey)
+      .expire(attemptsKey, EMAIL_OTP_TTL)
+      .exec();
+    const count = results?.[0]?.[1];
+    return typeof count === 'number' ? count : Number(count ?? 0);
   }
 
   /** Invalidate an email OTP (used after max attempts reached). */
@@ -551,7 +626,7 @@ export class TokenStoreService {
     subjectId: string,
   ): Promise<void> {
     const key = `${EMAIL_OTP_PREFIX}${purpose}:${subjectId}`;
-    await this.redis.del(key);
+    await this.redis.del(key, otpAttemptsKey(key));
   }
 
   /** Get the remaining resend cooldown in seconds (0 if no cooldown active). */

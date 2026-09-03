@@ -35,3 +35,5 @@ allowBuilds:
   better-sqlite3: true
   sqlite3: true
   '@firebase/util': true
+minimumReleaseAgeExclude:
+  - nodemailer@9.1.1

@@ -85,8 +85,23 @@ export class EmailOtpService {
 
     const codeHash = this.crypto.sha256(code);
     if (stored.codeHash !== codeHash) {
-      await this.tokenStore.incrementOtpAttempts(purpose, userId);
-      const remaining = MAX_OTP_ATTEMPTS - stored.attempts - 1;
+      // The count comes back from the atomic increment itself, not from the
+      // `stored` snapshot read above — parallel wrong guesses each get their
+      // own distinct number, so the cap holds under concurrency and whoever
+      // lands on it burns the challenge right here.
+      const attempts = await this.tokenStore.incrementOtpAttempts(
+        purpose,
+        userId,
+      );
+      if (attempts >= MAX_OTP_ATTEMPTS) {
+        await this.tokenStore.deleteEmailOtp(purpose, userId);
+        throw new BadRequestException({
+          exc: 'EX_AUTH_OTP_MAX_ATTEMPTS',
+          msg: 'Too many incorrect attempts',
+          key: 'auth.errors.otpMaxAttempts',
+        });
+      }
+      const remaining = MAX_OTP_ATTEMPTS - attempts;
       throw new BadRequestException({
         exc: 'EX_AUTH_OTP_INVALID',
         msg: `Invalid code. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining`,

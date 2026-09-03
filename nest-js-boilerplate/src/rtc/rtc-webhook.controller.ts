@@ -129,6 +129,19 @@ export class RtcWebhookController {
     });
     if (!room) return;
     const userId = fromLivekitIdentity(identity);
+    // A host-removed meeting participant reconnecting on their leftover
+    // token is kicked again here and must NOT get their row resurrected —
+    // this is the one path into the room that bypasses joinMeeting's check.
+    if (
+      room.kind === RtcRoomKind.MEETING &&
+      (await this.rtcMeetingService.enforceRemovalOnRejoin(
+        room.id,
+        livekitRoomName,
+        userId,
+      ))
+    ) {
+      return;
+    }
     await this.prisma.rtcParticipant.updateMany({
       where: {
         roomId: room.id,

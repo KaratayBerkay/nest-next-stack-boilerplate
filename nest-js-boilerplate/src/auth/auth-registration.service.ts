@@ -168,7 +168,10 @@ export class AuthRegistrationService {
     return this.prisma.$transaction(async (tx) => {
       const updated = await tx.user.update({
         where: { id: userId },
-        data: { emailVerifiedAt: new Date(), status: 'ACTIVE' },
+        data: {
+          emailVerifiedAt: new Date(),
+          ...this.activationTransition(user.status),
+        },
       });
       await this.outbox.emit(
         {
@@ -183,6 +186,19 @@ export class AuthRegistrationService {
       );
       return updated;
     });
+  }
+
+  /**
+   * Email verification proves the address, nothing more — only a
+   * PENDING_VERIFICATION account gets promoted to ACTIVE by it. Writing
+   * `status: 'ACTIVE'` unconditionally let an account that was banned or
+   * suspended while still unverified un-ban itself just by finishing the
+   * verification flow (resendEmailCode hands out fresh codes on demand).
+   */
+  private activationTransition(
+    status: User['status'],
+  ): { status: 'ACTIVE' } | Record<string, never> {
+    return status === 'PENDING_VERIFICATION' ? { status: 'ACTIVE' } : {};
   }
 
   async verifyEmail(rawToken: string): Promise<User> {
@@ -210,9 +226,16 @@ export class AuthRegistrationService {
         where: { id: token.id },
         data: { consumedAt: new Date() },
       });
+      const current = await tx.user.findUniqueOrThrow({
+        where: { id: userId },
+        select: { status: true },
+      });
       const updated = await tx.user.update({
         where: { id: userId },
-        data: { emailVerifiedAt: new Date(), status: 'ACTIVE' },
+        data: {
+          emailVerifiedAt: new Date(),
+          ...this.activationTransition(current.status),
+        },
       });
       await this.outbox.emit(
         {

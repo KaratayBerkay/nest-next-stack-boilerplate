@@ -217,4 +217,56 @@ describe('MessagingResolver', () => {
       expect(mockStorageCrypto.toEnvelope).not.toHaveBeenCalled();
     });
   });
+
+  // Regression: this @ResolveField didn't exist at all — `replyTo` is
+  // @HideField()'d on the generated Message type with nothing resolving a
+  // replacement, so every `conversationMessages` query that selected
+  // `replyTo { ... }` (as the Flutter client's does) failed outright with
+  // "Cannot query field \"replyTo\" on type \"Message\"." — a 400 on every
+  // single load, not an intermittent auth/network issue.
+  describe('replyTo (ResolveField)', () => {
+    it('returns a decrypted reply preview when the message has one', () => {
+      const replyTo = {
+        id: 'r1',
+        senderId: 'u2',
+        v: 'v1',
+        ct: 'ct1',
+        nonce: 'n1',
+        deletedAt: null,
+        attachments: [],
+      };
+      const message = { id: 'm1', replyTo };
+      mockStorageCrypto.toEnvelope.mockReturnValue({
+        v: 'v1',
+        ct: 'ct1',
+        nonce: 'n1',
+      });
+      mockStorageCrypto.decryptForRoom.mockReturnValue({ text: 'quoted' });
+
+      const result = resolver.replyTo(
+        message as never,
+        { userId: 'u1', email: 'a@b.com' } as never,
+      );
+
+      expect(result).toEqual({
+        id: 'r1',
+        senderId: 'u2',
+        body: 'quoted',
+        deletedAt: null,
+        hasAttachments: false,
+      });
+    });
+
+    it('returns null when the message is not a reply', () => {
+      const message = { id: 'm1', replyTo: null };
+
+      const result = resolver.replyTo(
+        message as never,
+        { userId: 'u1', email: 'a@b.com' } as never,
+      );
+
+      expect(result).toBeNull();
+      expect(mockStorageCrypto.toEnvelope).not.toHaveBeenCalled();
+    });
+  });
 });

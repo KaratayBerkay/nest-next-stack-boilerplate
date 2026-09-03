@@ -124,6 +124,26 @@ export class UserPrivacyResolver {
   }
 
   /**
+   * `email` was readable by ANY authenticated caller through the general
+   * `users(search)` query — that search is global (not scoped to friends or
+   * contacts), so this amounted to a name+email harvesting oracle over the
+   * whole user base. Real PII, not profile data, so it's redacted the same
+   * way as the other moderation-adjacent fields above, reusing
+   * `canSeeModerationFields` since admins have a legitimate need to see it
+   * (admin search) alongside the row's own owner. The field stays
+   * non-nullable in the schema, so non-privileged viewers get `""` rather
+   * than the `null` used for the nullable fields above.
+   */
+  @ResolveField(() => String)
+  email(
+    @Parent() user: User,
+    @CurrentUser() viewer: JwtUser | undefined,
+  ): string {
+    if (!canSeeModerationFields(user, viewer)) return '';
+    return user.email;
+  }
+
+  /**
    * Owner-only: kept in the schema because the web BFF's verifyEmailCode
    * mutation selects it off the returned (own) row; other users' rows
    * resolve to null.

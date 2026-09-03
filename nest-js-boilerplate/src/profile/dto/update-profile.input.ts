@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsIn,
   IsOptional,
+  IsTimeZone,
   IsUrl,
   Matches,
   MaxLength,
@@ -62,7 +63,11 @@ export class UpdateProfileInput {
   @IsIn(['en', 'tr'])
   locale?: string;
 
+  /** Same IANA-zone rule register/login already enforce — this value is
+   *  persisted and hydrated into the session snapshot, so it must not be
+   *  the one place an arbitrary string can get in. */
   @Field({ nullable: true })
   @IsOptional()
+  @IsTimeZone()
   timezone?: string;
 }

@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -21,11 +22,26 @@ export class MfaService {
     private readonly outbox: OutboxService,
   ) {}
 
-  /** Begin TOTP enrollment: create a pending (unverified) factor with an encrypted secret. */
-  async enroll(userId: string): Promise<MfaEnrollPayload> {
+  /**
+   * Begin TOTP enrollment: create a pending (unverified) factor with an
+   * encrypted secret.
+   *
+   * Re-enrolling while MFA is already on (rotating the authenticator) is a
+   * step-up operation: it must be proven with a code from the *current*
+   * factor (or an unused backup code). Otherwise an already-authenticated
+   * — possibly hijacked — session could install its own second factor and
+   * wipe the owner's backup codes with nothing more than SessionAuthGuard
+   * behind it. First-time enrollment needs no code (there is nothing to
+   * prove it against yet).
+   */
+  async enroll(
+    userId: string,
+    currentCode?: string,
+  ): Promise<MfaEnrollPayload> {
     const user = await this.prisma.user.findUniqueOrThrow({
       where: { id: userId },
     });
+    if (user.mfaEnabled) await this.assertStepUp(userId, currentCode);
 
     const secret = generateSecret();
     const otpauthUrl = generateURI({
@@ -55,7 +71,14 @@ export class MfaService {
     return { otpauthUrl, secret };
   }
 
-  /** Confirm a TOTP code, enable MFA on the user, and issue one-time backup codes. */
+  /**
+   * Confirm a TOTP code, enable MFA on the user, and issue one-time backup
+   * codes. When this completes a re-enrollment (enroll() already required
+   * the step-up to create the pending factor), the previous verified factor
+   * is retired in the same transaction — the rotation replaces the
+   * authenticator, it must not leave two live ones where login picks
+   * whichever is newest.
+   */
   async verify(userId: string, code: string): Promise<MfaVerifyPayload> {
     const factor = await this.findPendingFactor(userId);
 
@@ -64,6 +87,14 @@ export class MfaService {
     const { codes, hashes } = this.generateBackupCodes();
 
     await this.prisma.$transaction(async (tx) => {
+      await tx.mfaFactor.deleteMany({
+        where: {
+          userId,
+          method: 'TOTP',
+          verifiedAt: { not: null },
+          id: { not: factor.id },
+        },
+      });
       await tx.mfaFactor.update({
         where: { id: factor.id },
         data: { verifiedAt: new Date(), lastUsedAt: new Date() },
@@ -159,6 +190,47 @@ export class MfaService {
     });
 
     return true;
+  }
+
+  /**
+   * Step-up for MFA-management on an account that already has MFA on: the
+   * caller must present a valid code from the current verified factor, or
+   * burn one unused backup code. Same 403 either way so a missing code and
+   * a wrong code are indistinguishable to a probing caller.
+   */
+  private async assertStepUp(userId: string, code?: string): Promise<void> {
+    const rejected = () =>
+      new ForbiddenException({
+        exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED',
+        msg: 'Enter a current authenticator or backup code to change two-factor settings',
+        key: 'auth.errors.mfaStepUpRequired',
+      });
+    if (!code) throw rejected();
+
+    const factor = await this.prisma.mfaFactor.findFirst({
+      where: { userId, method: 'TOTP', verifiedAt: { not: null } },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (factor?.secret) {
+      const secret = this.crypto.decrypt(Buffer.from(factor.secret));
+      const result = await verifyTotp({ secret, token: code });
+      if (result.valid) return;
+    }
+
+    // Same atomic single-use claim AuthLoginService.verifyBackupCode makes —
+    // the WHERE re-checks usedAt at write time, so a code can't be spent
+    // twice by concurrent callers.
+    const backup = await this.prisma.mfaBackupCode.findFirst({
+      where: { userId, codeHash: this.crypto.sha256(code), usedAt: null },
+    });
+    if (backup) {
+      const claimed = await this.prisma.mfaBackupCode.updateMany({
+        where: { id: backup.id, usedAt: null },
+        data: { usedAt: new Date() },
+      });
+      if (claimed.count === 1) return;
+    }
+    throw rejected();
   }
 
   private async findVerifiedFactor(userId: string) {

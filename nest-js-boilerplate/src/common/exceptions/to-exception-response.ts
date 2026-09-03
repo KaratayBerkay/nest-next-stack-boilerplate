@@ -23,21 +23,44 @@ const CLASS_MAP = new Map<ExceptionClass, { exc: ExceptionCode; key: string }>([
   [BadRequestException, { exc: 'EX_VALIDATION_FORM', key: 'error.badRequest' }],
 ]);
 
+// Generic, client-safe message for anything that could carry internal
+// detail (a raw driver/library error, a Prisma message that names tables,
+// columns and constraints). The real text is never dropped — it's logged
+// server-side by GlobalHttpExceptionFilter — only withheld from the wire.
+const INTERNAL_ERROR_MSG = 'Internal server error';
+
+// Each Prisma entry carries its OWN safe `msg`: `exception.message` here reads
+// like "Unique constraint failed on the fields: (`email`)" — internal schema
+// disclosure — so it must never be forwarded to the client.
 const PRISMA_MAP = new Map<
   string,
-  { statusCode: number; exc: ExceptionCode; key: string }
+  { statusCode: number; exc: ExceptionCode; key: string; msg: string }
 >([
   [
     'P2002',
-    { statusCode: 409, exc: 'EX_CONFLICT_DUPLICATE', key: 'error.conflict' },
+    {
+      statusCode: 409,
+      exc: 'EX_CONFLICT_DUPLICATE',
+      key: 'error.conflict',
+      msg: 'A record with these values already exists',
+    },
   ],
-  ['P2025', { statusCode: 404, exc: 'EX_NOT_FOUND', key: 'error.notFound' }],
+  [
+    'P2025',
+    {
+      statusCode: 404,
+      exc: 'EX_NOT_FOUND',
+      key: 'error.notFound',
+      msg: 'The requested record was not found',
+    },
+  ],
   [
     'P2003',
     {
       statusCode: 409,
       exc: 'EX_CONFLICT_FOREIGN_KEY',
       key: 'error.foreignKeyConflict',
+      msg: 'This operation conflicts with a related record',
     },
   ],
   [
@@ -46,6 +69,7 @@ const PRISMA_MAP = new Map<
       statusCode: 409,
       exc: 'EX_CONFLICT_RELATION',
       key: 'error.relationConflict',
+      msg: 'This operation conflicts with a required relation',
     },
   ],
   [
@@ -54,6 +78,7 @@ const PRISMA_MAP = new Map<
       statusCode: 400,
       exc: 'EX_INCONSISTENT_DATA',
       key: 'error.inconsistentData',
+      msg: 'The request contained inconsistent data',
     },
   ],
 ]);
@@ -99,7 +124,8 @@ function fromPrisma(
   return {
     statusCode: entry.statusCode,
     exc: entry.exc,
-    msg: exception.message.replace(/\n/g, ' '),
+    // Deliberately NOT exception.message — see PRISMA_MAP's note.
+    msg: entry.msg,
     key: entry.key,
   };
 }
@@ -122,11 +148,16 @@ export function toExceptionResponse(exception: unknown): ExceptionResponse {
     if (mapped) return mapped;
 
     const status = exception.getStatus();
+    const isServerError = status >= 500;
     return {
       statusCode: status,
-      exc: status >= 500 ? 'EX_INTERNAL' : 'EX_VALIDATION_FORM',
-      msg: getMessage(exception),
-      key: status >= 500 ? 'error.internal' : 'error.badRequest',
+      exc: isServerError ? 'EX_INTERNAL' : 'EX_VALIDATION_FORM',
+      // A 5xx message can be a rethrown driver/library error wrapped in an
+      // HttpException — keep it generic. 4xx messages are developer-authored
+      // client errors (e.g. "You can only send messages to friends") and are
+      // meant to be shown, so those pass through unchanged.
+      msg: isServerError ? INTERNAL_ERROR_MSG : getMessage(exception),
+      key: isServerError ? 'error.internal' : 'error.badRequest',
     };
   }
 
@@ -135,12 +166,15 @@ export function toExceptionResponse(exception: unknown): ExceptionResponse {
     if (mapped) return mapped;
   }
 
-  const message =
-    exception instanceof Error ? exception.message : 'Internal server error';
+  // Unknown throwable: a bare Error, a rejected driver promise (ioredis
+  // "ECONNREFUSED 10.0.0.5:6379", a Stripe/S3 SDK error), an unmapped Prisma
+  // code, or a non-Error value. The client only ever gets a generic message —
+  // the real one is logged server-side by GlobalHttpExceptionFilter — so
+  // internal detail can't leak through GraphQL extensions or a REST body.
   return {
     statusCode: 500,
     exc: 'EX_INTERNAL',
-    msg: message,
+    msg: INTERNAL_ERROR_MSG,
     key: 'error.internal',
   };
 }

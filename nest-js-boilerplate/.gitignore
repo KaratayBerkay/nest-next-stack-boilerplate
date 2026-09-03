@@ -38,6 +38,10 @@ yarn-error.log*
 !.env.*.example
 !*.env.example
 
+# LiveKit config embeds a real API secret (see livekit.yaml.example for the
+# tracked template) — same real-file-stays-local convention as .env above.
+docker/livekit/livekit.yaml
+
 # temp directories
 .temp
 .tmp

@@ -22,6 +22,7 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { TIER_RANK } from '../authorization/tier-rank';
 import { TierGuard } from '../authorization/tier.guard';
 import { MinTier } from '../authorization/min-tier.decorator';
+import { LiveKitService } from './livekit.service';
 import { RtcMeetingService } from './rtc-meeting.service';
 import { RtcStreamService } from './rtc-stream.service';
 import { RtcReportService } from './rtc-report.service';
@@ -56,6 +57,11 @@ class JoinMeetingResult {
 
   @Field()
   roomName: string;
+
+  /** Client-facing LiveKit ws(s) URL — see LiveKitService.clientUrl. Null
+   *  when the server has no LIVEKIT_URL configured. */
+  @Field(() => String, { nullable: true })
+  livekitUrl: string | null;
 
   @Field()
   role: string;
@@ -149,6 +155,10 @@ class LiveStreamJoinResult {
   @Field()
   roomName: string;
 
+  /** Client-facing LiveKit ws(s) URL — see LiveKitService.clientUrl. */
+  @Field(() => String, { nullable: true })
+  livekitUrl: string | null;
+
   @Field(() => LiveStream)
   stream: LiveStream;
 }
@@ -166,6 +176,7 @@ export class RtcResolver {
     private readonly streams: RtcStreamService,
     private readonly reports: RtcReportService,
     private readonly recordings: RtcRecordingService,
+    private readonly liveKit: LiveKitService,
   ) {}
 
   @Query(() => RtcTierLimits)
@@ -215,8 +226,9 @@ export class RtcResolver {
   }
 
   @Mutation(() => JoinMeetingResult)
-  joinMeeting(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
-    return this.meetings.joinMeeting(user.userId, slug);
+  async joinMeeting(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
+    const joined = await this.meetings.joinMeeting(user.userId, slug);
+    return { ...joined, livekitUrl: this.liveKit.clientUrl };
   }
 
   @Mutation(() => Boolean)
@@ -301,13 +313,18 @@ export class RtcResolver {
   @UseGuards(TierGuard)
   @MinTier(MIN_TIER_TO_GO_LIVE)
   @Mutation(() => LiveStreamJoinResult)
-  goLive(@CurrentUser() user: JwtUser, @Args('title') title: string) {
-    return this.streams.goLive(user.userId, title);
+  async goLive(@CurrentUser() user: JwtUser, @Args('title') title: string) {
+    const joined = await this.streams.goLive(user.userId, title);
+    return { ...joined, livekitUrl: this.liveKit.clientUrl };
   }
 
   @Mutation(() => LiveStreamJoinResult)
-  joinStreamAsViewer(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
-    return this.streams.joinStreamAsViewer(user.userId, slug);
+  async joinStreamAsViewer(
+    @CurrentUser() user: JwtUser,
+    @Args('slug') slug: string,
+  ) {
+    const joined = await this.streams.joinStreamAsViewer(user.userId, slug);
+    return { ...joined, livekitUrl: this.liveKit.clientUrl };
   }
 
   @Mutation(() => Boolean)
@@ -386,13 +403,13 @@ export class RtcResolver {
   // ==================== Recording (scaffolding — see RtcRecordingService) ====================
 
   @Query(() => RtcRecording, { nullable: true })
-  meetingRecording(@Args('slug') slug: string) {
-    return this.recordings.recordingForRoom('meeting', slug);
+  meetingRecording(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
+    return this.recordings.recordingForRoom('meeting', slug, user.userId);
   }
 
   @Query(() => RtcRecording, { nullable: true })
-  streamRecording(@Args('slug') slug: string) {
-    return this.recordings.recordingForRoom('stream', slug);
+  streamRecording(@CurrentUser() user: JwtUser, @Args('slug') slug: string) {
+    return this.recordings.recordingForRoom('stream', slug, user.userId);
   }
 
   @Mutation(() => RtcRecording)

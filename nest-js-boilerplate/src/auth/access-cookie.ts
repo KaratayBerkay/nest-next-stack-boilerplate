@@ -13,8 +13,22 @@ const ACCESS_TTL_MS = 1000 * 60 * 15; // 15m — mirrors JWT_ACCESS_TTL default
 
 export { isProduction };
 
+/**
+ * DI-free half of {@link accessCookieName} — split out so a caller that
+ * already knows whether it's in prod (e.g. csrf.middleware.ts, which
+ * computes its own `isProd` from `process.env` at module scope because a
+ * ConfigService instance isn't available there) can derive the exact same
+ * name instead of re-hardcoding the two literal strings. That duplication is
+ * exactly how they drifted apart once already: csrf.middleware.ts's copy
+ * checked for `__Host-access_token`, which never matches the real
+ * `__Secure-access_token` cookie this function has always produced in prod.
+ */
+export function accessCookieNameForEnv(isProd: boolean): string {
+  return isProd ? '__Secure-access_token' : 'access_token';
+}
+
 export function accessCookieName(config: ConfigService): string {
-  return isProduction(config) ? '__Secure-access_token' : 'access_token';
+  return accessCookieNameForEnv(isProduction(config));
 }
 
 export function accessCookieOptions(

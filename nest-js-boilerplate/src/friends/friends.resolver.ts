@@ -17,6 +17,11 @@ export class SuggestedFriend {
   @Field({ nullable: true })
   name?: string;
 
+  // Kept non-nullable for schema compat with deployed clients whose queries
+  // still select it (Flutter APKs), but the resolver always returns '' —
+  // suggested candidates are by construction strangers to the caller, and a
+  // real address here is the same PII leak class UserPrivacyResolver.email
+  // closes for the User type (which this hand-written type bypasses).
   @Field()
   email!: string;
 
@@ -61,7 +66,6 @@ export class FriendsResolver {
       select: {
         id: true,
         name: true,
-        email: true,
         avatarUrl: true,
         hideAvatar: true,
       },
@@ -71,7 +75,7 @@ export class FriendsResolver {
       .map((c) => ({
         id: c.id,
         name: c.name ?? undefined,
-        email: c.email,
+        email: '',
         avatarUrl: c.hideAvatar ? undefined : (c.avatarUrl ?? undefined),
         mutualFriends: mutualCounts.get(c.id) ?? 0,
       }))

@@ -123,7 +123,14 @@ export class AuthResolver {
     @Args('input') input: OAuthLoginInput,
     @Context() ctx: { req: Request },
   ): Promise<AuthPayload> {
-    return this.auth.loginWithOAuth(input.state, { req: ctx.req });
+    return this.auth.loginWithOAuth(
+      {
+        state: input.state,
+        claim: input.claim,
+        codeVerifier: input.codeVerifier ?? undefined,
+      },
+      { req: ctx.req },
+    );
   }
 
   @Throttle({ default: { limit: 10, ttl: 60000 } })

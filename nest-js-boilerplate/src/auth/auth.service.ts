@@ -10,17 +10,13 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthProviderType, User } from '@prisma/client';
 import { CryptoService } from '../common/crypto/crypto.service';
-import {
-  DeviceService,
-  type DeviceContext,
-  type RequestContext,
-} from '../devices/device.service';
+import { DeviceService, type RequestContext } from '../devices/device.service';
 import { MailService } from '../mail/mail.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
-import { AuthTokenService } from './auth-token.service';
+import { AuthTokenService, type IssueTokensFn } from './auth-token.service';
 import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
 import { EmailOtpService } from './email-otp.service';
@@ -107,11 +103,12 @@ export class AuthService {
     );
   }
 
-  private readonly boundIssueTokens = (
-    user: User,
-    ctx?: RequestContext,
-    device?: DeviceContext,
-  ): Promise<AuthPayload> => this.authTokens.issueTokens(user, ctx, device);
+  private readonly boundIssueTokens: IssueTokensFn = (
+    user,
+    ctx,
+    device,
+    opts,
+  ) => this.authTokens.issueTokens(user, ctx, device, opts);
 
   private readonly boundIssuePwdResetToken = (
     userId: string,
@@ -277,16 +274,21 @@ export class AuthService {
   }
 
   async loginWithOAuth(
-    state: string,
+    input: { state: string; claim: string; codeVerifier?: string },
     ctx?: RequestContext,
   ): Promise<AuthPayload> {
     // The profile is never trusted from the caller: `state` is a single-use
     // claim ticket that only resolves to a profile once a real provider
     // handshake completed (OAuthService.handleCallback populates it after
-    // exchanging the code server-to-server). This is the only thing standing
-    // between "anyone can log in as anyone by email" and a real OAuth login.
+    // exchanging the code server-to-server). Redeeming it also takes the
+    // one-time `claim` minted on that callback and, for mobile flows, the
+    // PKCE-style verifier registered at initiate (CROSS-032) — so neither
+    // choosing a state up front nor intercepting the callback redirect is
+    // enough on its own to be handed someone else's session.
     const profile = (await this.oauthService.retrieveProfile(
-      state,
+      input.state,
+      input.claim,
+      input.codeVerifier,
     )) as unknown as OAuthProfile;
     const frontendUrl = this.config.get<string>(
       'FRONTEND_URL',

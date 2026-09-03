@@ -1,5 +1,13 @@
-import { UnauthorizedException } from '@nestjs/common';
-import { OAuthService } from './oauth.service';
+import { BadRequestException, UnauthorizedException } from '@nestjs/common';
+import { createHash } from 'node:crypto';
+import { OAuthService, s256CodeChallenge } from './oauth.service';
+
+const sha256Hex = (value: string) =>
+  createHash('sha256').update(value).digest('hex');
+
+// RFC 7636 Appendix B test vector.
+const RFC_VERIFIER = 'dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk';
+const RFC_CHALLENGE = 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM';
 
 interface MockRedis {
   setex: jest.Mock;
@@ -167,6 +175,55 @@ describe('OAuthService', () => {
       ).rejects.toThrow(UnauthorizedException);
       expect(redis.setex).not.toHaveBeenCalled();
     });
+
+    it('rejects an app-scheme redirect_uri that registers no code_challenge — CROSS-032: custom URL schemes are not exclusive on Android/iOS, so without a client-held verifier any app squatting the scheme could redeem the intercepted callback', async () => {
+      const service = buildService();
+
+      await expect(
+        service.buildAuthUrl(
+          'google',
+          's1',
+          'flutterboilerplate://oauth/callback',
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(redis.setex).not.toHaveBeenCalled();
+    });
+
+    it('rejects a malformed code_challenge (anything but a 43-char base64url S256 digest)', async () => {
+      const service = buildService();
+
+      await expect(
+        service.buildAuthUrl(
+          'google',
+          's1',
+          'https://app.example.com/cb',
+          'not-base64url!',
+        ),
+      ).rejects.toThrow(BadRequestException);
+      expect(redis.setex).not.toHaveBeenCalled();
+    });
+
+    it('stores the client code challenge with the pending state so the callback can carry it into the profile record', async () => {
+      const service = buildService();
+
+      await service.buildAuthUrl(
+        'google',
+        's1',
+        'flutterboilerplate://oauth/callback',
+        RFC_CHALLENGE,
+      );
+
+      const stored = JSON.parse(
+        (redis.setex.mock.calls[0] as unknown[])[2] as string,
+      ) as { clientCodeChallenge?: string };
+      expect(stored.clientCodeChallenge).toBe(RFC_CHALLENGE);
+    });
+  });
+
+  describe('s256CodeChallenge', () => {
+    it('matches the RFC 7636 Appendix B vector, so the mobile client can compute the same challenge independently', () => {
+      expect(s256CodeChallenge(RFC_VERIFIER)).toBe(RFC_CHALLENGE);
+    });
   });
 
   describe('handleCallback', () => {
@@ -198,9 +255,14 @@ describe('OAuthService', () => {
         );
       const service = buildService();
 
-      const redirectUri = await service.handleCallback('code-1', 'state-1');
+      const { redirectUri, claim } = await service.handleCallback(
+        'code-1',
+        'state-1',
+      );
 
       expect(redirectUri).toBe('https://app.example.com/done');
+      // A fresh 256-bit one-time claim per completed handshake (CROSS-032).
+      expect(claim).toMatch(/^[A-Za-z0-9_-]{43}$/);
 
       // Token exchange used client_id/client_secret in the body, not Basic auth.
       const tokenCall = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -220,15 +282,46 @@ describe('OAuthService', () => {
       );
       const storedProfile = JSON.parse(
         (redis.setex.mock.calls[0] as unknown[])[2] as string,
-      ) as { email: string; provider: string; providerAccountId: string };
+      ) as {
+        email: string;
+        provider: string;
+        providerAccountId: string;
+        claimHash: string;
+      };
+      // Only the claim's hash is persisted — the claim itself exists solely
+      // on the redirect back to the registered redirect URI.
       expect(storedProfile).toEqual({
         type: 'GOOGLE',
         provider: 'google',
         providerAccountId: 'g-123',
         email: 'alice@example.com',
         name: 'Alice',
+        claimHash: sha256Hex(claim),
       });
       expect(redis.del).toHaveBeenCalledWith('oauth:state:state-1');
+    });
+
+    it('carries the client code challenge registered at initiate into the stored profile record', async () => {
+      redis.get.mockResolvedValue(
+        JSON.stringify({
+          provider: 'google',
+          redirectUri: 'flutterboilerplate://oauth/callback',
+          clientCodeChallenge: RFC_CHALLENGE,
+        }),
+      );
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ access_token: 'tok-abc' }))
+        .mockResolvedValueOnce(
+          jsonResponse({ sub: 'g-123', email: 'alice@example.com' }),
+        );
+      const service = buildService();
+
+      await service.handleCallback('code-1', 'state-1');
+
+      const storedProfile = JSON.parse(
+        (redis.setex.mock.calls[0] as unknown[])[2] as string,
+      ) as { clientCodeChallenge?: string };
+      expect(storedProfile.clientCodeChallenge).toBe(RFC_CHALLENGE);
     });
 
     it('uses HTTP Basic auth and PKCE code_verifier for providers that require it', async () => {
@@ -374,18 +467,23 @@ describe('OAuthService', () => {
   });
 
   describe('retrieveProfile', () => {
+    const profile = {
+      type: 'GOOGLE',
+      provider: 'google',
+      providerAccountId: 'g-1',
+      email: 'alice@example.com',
+    };
+    const claim = 'claim-minted-at-callback';
+
     it('returns and atomically consumes the stored profile via GETDEL — regression for a race where separate GET+DEL calls let two concurrent pickups for the same state (a retried BFF request, a double-loaded callback page) both read the profile before either deleted it, logging in/creating a user twice from one completed OAuth handshake', async () => {
-      const profile = {
-        type: 'GOOGLE',
-        provider: 'google',
-        providerAccountId: 'g-1',
-        email: 'alice@example.com',
-      };
-      redis.getdel.mockResolvedValue(JSON.stringify(profile));
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({ ...profile, claimHash: sha256Hex(claim) }),
+      );
       const service = buildService();
 
-      const result = await service.retrieveProfile('state-1');
+      const result = await service.retrieveProfile('state-1', claim);
 
+      // The binding secrets never leave this method.
       expect(result).toEqual(profile);
       expect(redis.getdel).toHaveBeenCalledWith('oauth:profile:state-1');
       expect(redis.get).not.toHaveBeenCalled();
@@ -396,9 +494,86 @@ describe('OAuthService', () => {
       redis.getdel.mockResolvedValue(null);
       const service = buildService();
 
-      await expect(service.retrieveProfile('gone')).rejects.toThrow(
+      await expect(service.retrieveProfile('gone', claim)).rejects.toThrow(
         UnauthorizedException,
       );
+    });
+
+    it('rejects a wrong claim and still consumes the profile — CROSS-032: `state` is chosen by whoever initiates, so an attacker who started a flow the victim then completed (or intercepted the callback) must not redeem it with state alone', async () => {
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({ ...profile, claimHash: sha256Hex(claim) }),
+      );
+      const service = buildService();
+
+      await expect(
+        service.retrieveProfile('state-1', 'not-the-minted-claim'),
+      ).rejects.toThrow('OAuth claim rejected');
+      expect(redis.getdel).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects a record that carries no claimHash at all (seeded or stored before CROSS-032) rather than treating it as claim-less', async () => {
+      redis.getdel.mockResolvedValue(JSON.stringify(profile));
+      const service = buildService();
+
+      await expect(service.retrieveProfile('state-1', claim)).rejects.toThrow(
+        'OAuth claim rejected',
+      );
+    });
+
+    it('demands the code verifier when the initiating client registered a challenge, even with a correct claim — the claim rides the same interceptable redirect on mobile, the verifier never leaves the app', async () => {
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({
+          ...profile,
+          claimHash: sha256Hex(claim),
+          clientCodeChallenge: RFC_CHALLENGE,
+        }),
+      );
+      const service = buildService();
+
+      await expect(service.retrieveProfile('state-1', claim)).rejects.toThrow(
+        'OAuth code verifier rejected',
+      );
+    });
+
+    it('rejects a code verifier that does not hash to the registered challenge', async () => {
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({
+          ...profile,
+          claimHash: sha256Hex(claim),
+          clientCodeChallenge: RFC_CHALLENGE,
+        }),
+      );
+      const service = buildService();
+
+      await expect(
+        service.retrieveProfile('state-1', claim, 'some-other-verifier'),
+      ).rejects.toThrow('OAuth code verifier rejected');
+    });
+
+    it('releases the profile when both the claim and the verifier match (RFC 7636 S256 vector)', async () => {
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({
+          ...profile,
+          claimHash: sha256Hex(claim),
+          clientCodeChallenge: RFC_CHALLENGE,
+        }),
+      );
+      const service = buildService();
+
+      await expect(
+        service.retrieveProfile('state-1', claim, RFC_VERIFIER),
+      ).resolves.toEqual(profile);
+    });
+
+    it('ignores a stray verifier when no challenge was registered (web BFF flows never send one)', async () => {
+      redis.getdel.mockResolvedValue(
+        JSON.stringify({ ...profile, claimHash: sha256Hex(claim) }),
+      );
+      const service = buildService();
+
+      await expect(
+        service.retrieveProfile('state-1', claim, RFC_VERIFIER),
+      ).resolves.toEqual(profile);
     });
   });
 });

@@ -12,8 +12,11 @@ function createRedisMock() {
 
   return {
     multi: jest.fn(() => {
-      const ops: Array<() => void> = [];
-      return {
+      // Each op returns its own result so exec() can hand back ioredis's
+      // `[error, result][]` shape — incrementOtpAttempts reads INCR's
+      // value out of it.
+      const ops: Array<() => unknown> = [];
+      const chain = {
         hset: (
           key: string,
           fieldOrData: string | Record<string, string>,
@@ -30,35 +33,68 @@ function createRedisMock() {
               });
             }
           });
+          return chain;
         },
         expire: (key: string) => {
           ops.push(() => {
             expires.push(key);
+            return 1;
           });
+          return chain;
         },
         sadd: (key: string, member: string) => {
           ops.push(() => {
             if (!reverse.has(key)) reverse.set(key, new Set());
             reverse.get(key)!.add(member);
           });
+          return chain;
         },
         set: (key: string, value: string) => {
           ops.push(() => strings.set(key, value));
+          return chain;
         },
-        del: (key: string) => ops.push(() => store.delete(key)),
-        srem: (key: string, member: string) =>
-          ops.push(() => reverse.get(key)?.delete(member)),
-        hincrby: (key: string, field: string, delta: number) =>
+        del: (key: string) => {
+          ops.push(() => {
+            store.delete(key);
+            strings.delete(key);
+          });
+          return chain;
+        },
+        srem: (key: string, member: string) => {
+          ops.push(() => reverse.get(key)?.delete(member));
+          return chain;
+        },
+        hincrby: (key: string, field: string, delta: number) => {
           ops.push(() => {
             const existing = store.get(key) ?? {};
             const current = Number(existing[field]) || 0;
             store.set(key, { ...existing, [field]: String(current + delta) });
-          }),
+          });
+          return chain;
+        },
+        incr: (key: string) => {
+          ops.push(() => {
+            const next = (Number(strings.get(key)) || 0) + 1;
+            strings.set(key, String(next));
+            return next;
+          });
+          return chain;
+        },
         exec: () => {
-          ops.forEach((fn) => fn());
-          return Promise.resolve([]);
+          const results = ops.map((fn) => [null, fn()] as [null, unknown]);
+          return Promise.resolve(results);
         },
       };
+      return chain;
+    }),
+    set: jest.fn((key: string, value: string) => {
+      strings.set(key, value);
+      return Promise.resolve('OK');
+    }),
+    getdel: jest.fn((key: string) => {
+      const value = strings.get(key) ?? null;
+      strings.delete(key);
+      return Promise.resolve(value);
     }),
     hgetall: jest.fn((key: string) => Promise.resolve(store.get(key) ?? {})),
     smembers: jest.fn((key: string) =>
@@ -78,13 +114,17 @@ function createRedisMock() {
       Promise.resolve(fields.map((f) => store.get(key)?.[f] ?? null)),
     ),
     get: jest.fn((key: string) => Promise.resolve(strings.get(key) ?? null)),
-    del: jest.fn((key: string) => {
-      const ok = store.has(key);
-      store.delete(key);
-      return Promise.resolve(ok ? 1 : 0);
+    del: jest.fn((...keys: string[]) => {
+      let removed = 0;
+      for (const key of keys) {
+        if (store.delete(key)) removed++;
+        if (strings.delete(key)) removed++;
+      }
+      return Promise.resolve(removed);
     }),
     _store: store,
     _reverse: reverse,
+    _strings: strings,
     _expires: expires,
   };
 }
@@ -209,6 +249,33 @@ describe('TokenStoreService', () => {
     expect(await service.read(key)).not.toBeNull();
     await service.revoke(key);
     expect(await service.read(key)).toBeNull();
+  });
+
+  it('revokeByRefreshSessionId resolves the real compound key via the refresh index and revokes it (single-use rotation), so the old refresh token stops resolving', async () => {
+    const key = service.buildKey('a', 'b', 'c', 'd');
+    await service.write(key, {
+      userId: 'u-rot',
+      email: 'rot@test.com',
+      role: 'USER',
+      tier: 'FREE',
+      sessionId: 's-rot',
+      chatNickname: '',
+      useNickname: false,
+      hideAvatar: false,
+    });
+    // The refresh token (sessionId) resolves to a live session before revoke.
+    expect(await service.findByRefreshSessionId('s-rot')).not.toBeNull();
+
+    const revoked = await service.revokeByRefreshSessionId('s-rot');
+
+    expect(revoked).toBe(true);
+    expect(await service.read(key)).toBeNull();
+    // The rotated-away token no longer resolves to anything.
+    expect(await service.findByRefreshSessionId('s-rot')).toBeNull();
+  });
+
+  it('revokeByRefreshSessionId returns false when the sessionId maps to no live session (already revoked/expired)', async () => {
+    expect(await service.revokeByRefreshSessionId('never-existed')).toBe(false);
   });
 
   it('slides the refresh index TTL alongside the session key', async () => {
@@ -521,5 +588,79 @@ describe('TokenStoreService', () => {
     expect(session!.friends).toEqual([]);
     expect(session!.orgIds).toEqual([]);
     expect(session!.unread).toBe(5);
+  });
+
+  // BE-035: wrong-guess counting must be an atomic INCR on its own key, and
+  // the OTP record's expiry must never be refreshed by a wrong guess.
+  describe('email OTP attempt counter', () => {
+    it('counts wrong guesses atomically and exposes the count on peek', async () => {
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash', 'u@example.com');
+
+      expect(await service.incrementOtpAttempts('LOGIN', 'u1')).toBe(1);
+      expect(await service.incrementOtpAttempts('LOGIN', 'u1')).toBe(2);
+      expect(await service.incrementOtpAttempts('LOGIN', 'u1')).toBe(3);
+
+      const peeked = await service.peekEmailOtp('LOGIN', 'u1');
+      expect(peeked).toEqual({
+        codeHash: 'hash',
+        email: 'u@example.com',
+        attempts: 3,
+      });
+      // The counter is a plain INCR key, not a rewrite of the OTP blob.
+      expect(redis.set).toHaveBeenCalledTimes(0);
+      expect(redis.multi).toHaveBeenCalledTimes(4); // write + 3 increments
+    });
+
+    it('never rewrites the OTP record on a wrong guess (its deadline stands)', async () => {
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash', 'u@example.com');
+      const before = redis._strings.get('email_otp:LOGIN:u1');
+
+      await service.incrementOtpAttempts('LOGIN', 'u1');
+
+      expect(redis._strings.get('email_otp:LOGIN:u1')).toBe(before);
+    });
+
+    it('a fresh code resets the counter', async () => {
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash-1', 'u@example.com');
+      await service.incrementOtpAttempts('LOGIN', 'u1');
+      await service.incrementOtpAttempts('LOGIN', 'u1');
+
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash-2', 'u@example.com');
+
+      expect((await service.peekEmailOtp('LOGIN', 'u1'))?.attempts).toBe(0);
+      expect(await service.incrementOtpAttempts('LOGIN', 'u1')).toBe(1);
+    });
+
+    it('delete and consume both clear the counter too', async () => {
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash', 'u@example.com');
+      await service.incrementOtpAttempts('LOGIN', 'u1');
+      await service.deleteEmailOtp('LOGIN', 'u1');
+      expect(redis._strings.has('email_otp:LOGIN:u1:attempts')).toBe(false);
+
+      await service.writeEmailOtp('LOGIN', 'u1', 'hash', 'u@example.com');
+      await service.incrementOtpAttempts('LOGIN', 'u1');
+      const consumed = await service.consumeEmailOtp('LOGIN', 'u1');
+      expect(consumed?.attempts).toBe(1);
+      expect(redis._strings.has('email_otp:LOGIN:u1:attempts')).toBe(false);
+      expect(await service.peekEmailOtp('LOGIN', 'u1')).toBeNull();
+    });
+  });
+
+  // BE-030: the post-MFA "fresh" marker trustCurrentDevice consumes.
+  describe('MFA-fresh marker', () => {
+    it('is one-shot and only true for the session that was marked', async () => {
+      await service.markMfaFresh('session-a');
+
+      expect(await service.consumeMfaFresh('session-b')).toBe(false);
+      expect(await service.consumeMfaFresh('session-a')).toBe(true);
+      expect(await service.consumeMfaFresh('session-a')).toBe(false);
+    });
+
+    it('never stores the raw session id as the key', async () => {
+      await service.markMfaFresh('session-a');
+      expect(
+        Array.from(redis._strings.keys()).some((k) => k.includes('session-a')),
+      ).toBe(false);
+    });
   });
 });

@@ -39,7 +39,13 @@ export class ActivityLogService {
         eventType: event.eventType,
         clientSessionId: event.clientSessionId,
         timestamp: event.timestamp,
-        userId: user?.userId ?? event.userId ?? null,
+        // Only the id the OptionalAuthGuard resolved from a valid session is
+        // trusted. This endpoint is unauthenticated, so a client-supplied
+        // `event.userId` is attacker-controllable — logging it as `userId`
+        // would let anyone forge activity-log entries attributing actions to
+        // any account. Anonymous events correlate via `clientSessionId`
+        // instead.
+        userId: user?.userId ?? null,
         sessionIdHash: user?.sessionId ? hashSessionId(user.sessionId) : null,
         ip,
         deviceType: resolveDeviceType(event.platform),

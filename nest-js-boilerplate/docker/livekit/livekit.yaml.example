@@ -1,0 +1,44 @@
+port: 7880
+rtc:
+  tcp_port: 7881
+  port_range_start: 50000
+  port_range_end: 60000
+  # The compose service binds to the host network via container ports below,
+  # but LiveKit itself needs to know its own reachable address to hand out
+  # to clients in ICE candidates. When false, LiveKit advertises only its
+  # auto-detected LAN IP — calls then connect ONLY from the home network;
+  # external clients get an unroutable candidate and the call dies after
+  # signaling. With true, LiveKit STUN-discovers the public IP and
+  # advertises it alongside the LAN candidates, so both sides work —
+  # PROVIDED the router forwards UDP 50000-60000 + TCP 7881 to this host
+  # (the reverse proxy only carries the 7880 signal WebSocket, never WebRTC
+  # media).
+  use_external_ip: true
+  # network_mode: host means LiveKit sees every host interface — including
+  # the docker bridges. Those addresses are unreachable for every real
+  # client, yet get advertised as ICE candidates unless excluded, producing
+  # constant "ice reconnected or switched pair" flapping during live calls.
+  # Only advertise addresses a client could actually route to.
+  ips:
+    excludes: ["172.16.0.0/12"]
+# livekit runs with network_mode: host (see docker-compose.yml), so it has
+# no Docker-internal DNS — every other service must be addressed via
+# localhost + its published host port, not its compose service name.
+redis:
+  address: localhost:6379
+# Copy this file to livekit.yaml (gitignored) and replace with a real
+# generated secret — LiveKit requires secrets >= 32 chars, e.g.:
+#   openssl rand -hex 32
+# Must match LIVEKIT_API_KEY/LIVEKIT_API_SECRET wherever this app's backend
+# gets its own env from (.vault-envs/backend.env(.local) locally, Vault
+# secret/production/backend in a real deployment) — the backend mints
+# LiveKit tokens and verifies webhook signatures with that same pair.
+keys:
+  devkey: REPLACE_WITH_A_GENERATED_SECRET_AT_LEAST_32_CHARS_LONG
+webhook:
+  api_key: devkey
+  # No global route prefix in this app (see main.ts) — RtcWebhookController's
+  # @Controller('rtc/webhook') resolves to /rtc/webhook/livekit, not
+  # /api/rtc/webhook/livekit.
+  urls:
+    - http://localhost:3000/rtc/webhook/livekit

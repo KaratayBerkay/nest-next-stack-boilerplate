@@ -66,9 +66,29 @@ export class RtcRecordingService {
     });
   }
 
-  async recordingForRoom(kind: RtcRecordingRoomKind, slug: string) {
+  /**
+   * Read access is participant-scoped, same policy as room chat history
+   * (see RtcMeetingService/RtcStreamService.getChatHistory): being able to
+   * see whether a room is being recorded, since when, and by whom is
+   * room-internal information, not public metadata. `fileUrl`/`egressId`
+   * are always null in this phase (see class doc), but this gate is what
+   * keeps that true once a future phase wires a real value in — without it,
+   * anyone who knows/guesses a slug could read another room's recording
+   * state today and its actual recording file the moment Egress goes live.
+   */
+  async recordingForRoom(
+    kind: RtcRecordingRoomKind,
+    slug: string,
+    userId: string,
+  ) {
     const roomId = await this.resolveRoomId(kind, slug);
     if (!roomId) return null;
+    const participant = await this.prisma.rtcParticipant.findUnique({
+      where: { roomId_userId: { roomId, userId } },
+    });
+    if (!participant) {
+      throw new ForbiddenException(`Not a participant of this ${kind}`);
+    }
     return this.prisma.rtcRecording.findUnique({ where: { roomId } });
   }
 

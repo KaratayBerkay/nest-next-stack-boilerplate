@@ -293,10 +293,27 @@ describe('MessagingFriendService', () => {
           id: { notIn: ['u1'] },
           OR: [
             { name: { contains: 'ali', mode: 'insensitive' } },
-            { email: { contains: 'ali', mode: 'insensitive' } },
+            { username: { contains: 'ali', mode: 'insensitive' } },
           ],
         },
       });
+    });
+
+    it('SECURITY: never matches on email — matching a substring against email turned this global directory search into an email-reconstruction oracle (confirm/rebuild any address character-by-character from the result count, even though the address is redacted from the results). Search is by display name or public username only', async () => {
+      prisma.user.count.mockResolvedValue(0);
+
+      await service.getUsersCount('u1', 'victim@example.com');
+
+      const calls = prisma.user.count.mock.calls as Array<
+        [{ where: { OR?: Array<Record<string, unknown>> } }]
+      >;
+      const whereArg = calls[0][0].where;
+      const serialized = JSON.stringify(whereArg);
+      expect(serialized).not.toContain('email');
+      expect(whereArg.OR).toEqual([
+        { name: { contains: 'victim@example.com', mode: 'insensitive' } },
+        { username: { contains: 'victim@example.com', mode: 'insensitive' } },
+      ]);
     });
 
     it('excludes users with any existing friendship from the count, same as getUsers', async () => {
@@ -314,6 +331,57 @@ describe('MessagingFriendService', () => {
           id: { notIn: ['u1', 'u2', 'u3'] },
         },
       });
+    });
+  });
+
+  describe('getFriendRequests', () => {
+    it('SECURITY: never selects or returns a counterparty email — this list is served as plain REST JSON outside the GraphQL email-redaction layer, and its counterparties can be strangers (any user can send you a request, or be an outgoing target), so returning email was a name+email harvesting channel', async () => {
+      prisma.friendship.findMany
+        // incoming (someone requested me)
+        .mockResolvedValueOnce([
+          {
+            id: 'fr1',
+            createdAt: new Date('2026-01-01T00:00:00Z'),
+            requester: { id: 'u2', name: 'Bob' },
+          },
+        ])
+        // outgoing (I requested someone; nameless, to prove the fallback
+        // never leaks the address as the display name)
+        .mockResolvedValueOnce([
+          {
+            id: 'fr2',
+            createdAt: new Date('2026-01-02T00:00:00Z'),
+            addressee: { id: 'u3', name: null },
+          },
+        ]);
+
+      const result = await service.getFriendRequests('u1');
+
+      // The query itself must not fetch email.
+      const calls = prisma.friendship.findMany.mock.calls as Array<
+        [
+          {
+            include: {
+              requester?: { select: Record<string, unknown> };
+              addressee?: { select: Record<string, unknown> };
+            };
+          },
+        ]
+      >;
+      const incomingSelect = calls[0][0].include.requester!.select;
+      const outgoingSelect = calls[1][0].include.addressee!.select;
+      expect(incomingSelect).not.toHaveProperty('email');
+      expect(outgoingSelect).not.toHaveProperty('email');
+
+      // Nothing email-shaped in the response, and no `email` field at all.
+      for (const row of result) {
+        expect(row.user).not.toHaveProperty('email');
+      }
+      expect(JSON.stringify(result)).not.toContain('@');
+
+      // Nameless counterparty falls back to 'Unknown', not their address.
+      const outgoing = result.find((r) => r.direction === 'outgoing');
+      expect(outgoing?.user.name).toBe('Unknown');
     });
   });
 });

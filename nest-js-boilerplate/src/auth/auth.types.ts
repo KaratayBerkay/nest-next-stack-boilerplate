@@ -145,8 +145,15 @@ export class AuthPayload {
   @Field(() => String, { nullable: true })
   userToken?: string;
 
-  @Field(() => User)
-  user!: User;
+  /**
+   * Null while `mfaRequired` is true. A caller that has only presented a
+   * password has not proven who they are yet, so the challenge response
+   * carries no account data at all — the client already knows the email it
+   * typed, and everything else (role, tier, profile) arrives with the real
+   * session once verifyLoginMfa succeeds.
+   */
+  @Field(() => User, { nullable: true })
+  user?: User;
 
   /** When true, the client must call verifyLoginMfa with a TOTP code to complete auth. */
   @Field(() => Boolean, { nullable: true })

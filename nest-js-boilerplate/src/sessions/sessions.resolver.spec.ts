@@ -10,6 +10,7 @@ describe('SessionsResolver', () => {
     listSessionsWithKeys: jest.Mock;
     revokeSessionBySessionId: jest.Mock;
     revoke: jest.Mock;
+    consumeMfaFresh: jest.Mock;
   };
   let mockGateway: { closeSocketsForSession: jest.Mock };
   let mockPrisma: {
@@ -33,6 +34,8 @@ describe('SessionsResolver', () => {
       listSessionsWithKeys: jest.fn(),
       revokeSessionBySessionId: jest.fn(),
       revoke: jest.fn(),
+      // Default: the session just passed MFA (the legitimate follow-up call).
+      consumeMfaFresh: jest.fn().mockResolvedValue(true),
     };
     mockGateway = {
       closeSocketsForSession: jest.fn(),
@@ -197,6 +200,51 @@ describe('SessionsResolver', () => {
       const result = await resolver.trustCurrentDevice(mockUser);
 
       expect(result).toBe(false);
+    });
+
+    // BE-030: no step-up meant any authenticated (possibly hijacked) session
+    // could mark its device trusted and skip MFA on every future login.
+    it('rejects a session that did not just pass MFA, without touching the device', async () => {
+      mockTokenStore.consumeMfaFresh.mockResolvedValue(false);
+      mockTokenStore.listSessionsWithKeys.mockResolvedValue([
+        {
+          key: 'token-key-1',
+          session: { sessionId: 'sess-1', deviceId: 'dev-1' },
+        },
+      ]);
+
+      await expect(resolver.trustCurrentDevice(mockUser)).rejects.toMatchObject(
+        { response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' } },
+      );
+      expect(mockTokenStore.consumeMfaFresh).toHaveBeenCalledWith('sess-1');
+      expect(mockPrisma.device.update).not.toHaveBeenCalled();
+    });
+
+    it('rejects a session snapshot with no sessionId at all', async () => {
+      await expect(
+        resolver.trustCurrentDevice({ ...mockUser, sessionId: undefined }),
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' },
+      });
+      expect(mockTokenStore.consumeMfaFresh).not.toHaveBeenCalled();
+    });
+
+    it('the marker is single-use: a second call right after is rejected', async () => {
+      mockTokenStore.consumeMfaFresh
+        .mockResolvedValueOnce(true)
+        .mockResolvedValueOnce(false);
+      mockTokenStore.listSessionsWithKeys.mockResolvedValue([
+        {
+          key: 'token-key-1',
+          session: { sessionId: 'sess-1', deviceId: 'dev-1' },
+        },
+      ]);
+
+      expect(await resolver.trustCurrentDevice(mockUser)).toBe(true);
+      await expect(resolver.trustCurrentDevice(mockUser)).rejects.toMatchObject(
+        { response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' } },
+      );
+      expect(mockPrisma.device.update).toHaveBeenCalledTimes(1);
     });
   });
 

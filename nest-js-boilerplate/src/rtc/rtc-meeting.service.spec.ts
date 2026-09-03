@@ -46,8 +46,44 @@ function buildService() {
     return Promise.all(arg as Promise<unknown>[]);
   });
 
-  const liveKit = { createRoom: jest.fn(), mintToken: jest.fn() };
-  const realtime = { broadcastToRoom: jest.fn() };
+  const liveKit = {
+    createRoom: jest.fn(),
+    mintToken: jest.fn(),
+    removeParticipant: jest.fn().mockResolvedValue(undefined),
+    deleteRoom: jest.fn().mockResolvedValue(undefined),
+  };
+  const realtime = { broadcastToRoom: jest.fn(), emitToUser: jest.fn() };
+  // Minimal in-memory stand-in for the ioredis client: only the SET ops the
+  // removed-participant ban uses (sadd/sismember/expire/del via multi).
+  const redisSets = new Map<string, Set<string>>();
+  const redis = {
+    sismember: jest.fn((key: string, member: string) =>
+      Promise.resolve(redisSets.get(key)?.has(member) ? 1 : 0),
+    ),
+    del: jest.fn((key: string) => {
+      const existed = redisSets.delete(key);
+      return Promise.resolve(existed ? 1 : 0);
+    }),
+    multi: jest.fn(() => {
+      const ops: Array<() => unknown> = [];
+      const chain = {
+        sadd: (key: string, member: string) => {
+          ops.push(() => {
+            if (!redisSets.has(key)) redisSets.set(key, new Set());
+            redisSets.get(key)!.add(member);
+            return 1;
+          });
+          return chain;
+        },
+        expire: (_key: string, _ttl: number) => {
+          ops.push(() => 1);
+          return chain;
+        },
+        exec: () => Promise.resolve(ops.map((fn) => [null, fn()])),
+      };
+      return chain;
+    }),
+  };
   const chat = {
     isActiveParticipant: jest.fn(),
     markParticipantLeft: jest.fn(),
@@ -68,11 +104,15 @@ function buildService() {
     friends as never,
     mail as never,
     config as never,
+    redis as never,
   );
 
   return {
     service,
     prisma,
+    redis,
+    redisSets,
+    realtime,
     rtcRoom,
     meeting,
     rtcParticipant,
@@ -217,6 +257,146 @@ describe('RtcMeetingService', () => {
 
       expect(rtcParticipant.count).not.toHaveBeenCalled();
       expect(rtcParticipant.upsert).toHaveBeenCalled();
+    });
+
+    it('bounds the LiveKit token TTL by the meeting duration cap instead of the 4h default', async () => {
+      const { service, meeting, user, rtcParticipant, liveKit } =
+        buildService();
+      meeting.findUnique.mockResolvedValue({
+        ...activeMeeting(),
+        maxDurationMinutes: 45,
+      });
+      user.findUnique.mockResolvedValue({
+        name: 'Bob',
+        email: 'b@x.com',
+        avatarUrl: null,
+      });
+      rtcParticipant.findUnique.mockResolvedValue({ leftAt: null });
+      liveKit.mintToken.mockResolvedValue('token');
+
+      await service.joinMeeting('user2', 'slug1');
+
+      expect(liveKit.mintToken).toHaveBeenCalledWith(
+        expect.objectContaining({ ttlSeconds: 45 * 60 + 10 * 60 }),
+      );
+    });
+  });
+
+  // BE-031: removeMeetingParticipant was a bare LiveKit kick — the removed
+  // user could call joinMeeting again immediately, and their ~4h token kept
+  // working against LiveKit directly. Removal is now a ban for the rest of
+  // the meeting, enforced on both entry paths.
+  describe('removeMeetingParticipant is a ban, not a kick', () => {
+    function hostedMeeting() {
+      return {
+        id: 'm1',
+        roomId: 'room1',
+        hostId: 'host1',
+        maxParticipants: 5,
+        maxDurationMinutes: 60,
+        room: { state: 'ACTIVE', livekitRoomName: 'meeting-room1' },
+      };
+    }
+
+    it('records the removal before kicking, and joinMeeting then refuses the removed user with EX_MEETING_REMOVED', async () => {
+      const { service, meeting, user, rtcParticipant, liveKit, redis } =
+        buildService();
+      meeting.findUnique.mockResolvedValue(hostedMeeting());
+      meeting.findUniqueOrThrow.mockResolvedValue(hostedMeeting());
+
+      await service.removeMeetingParticipant('host1', 'slug1', 'bob');
+
+      expect(liveKit.removeParticipant).toHaveBeenCalledWith(
+        'meeting-room1',
+        'bob',
+      );
+      // The set write must land before the SFU kick (so a lightning-fast
+      // rejoin racing the kick still sees the ban).
+      const sadd = redis.multi.mock.invocationCallOrder[0];
+      const kick = liveKit.removeParticipant.mock.invocationCallOrder[0];
+      expect(sadd).toBeLessThan(kick);
+
+      user.findUnique.mockResolvedValue({
+        name: 'Bob',
+        email: 'b@x.com',
+        avatarUrl: null,
+      });
+      await expect(service.joinMeeting('bob', 'slug1')).rejects.toMatchObject({
+        response: { exc: 'EX_MEETING_REMOVED' },
+      });
+      expect(rtcParticipant.upsert).not.toHaveBeenCalled();
+      expect(liveKit.mintToken).not.toHaveBeenCalled();
+    });
+
+    it('does not block other participants of the same meeting', async () => {
+      const { service, meeting, user, rtcParticipant, liveKit } =
+        buildService();
+      meeting.findUnique.mockResolvedValue(hostedMeeting());
+      meeting.findUniqueOrThrow.mockResolvedValue(hostedMeeting());
+      await service.removeMeetingParticipant('host1', 'slug1', 'bob');
+
+      user.findUnique.mockResolvedValue({
+        name: 'Carol',
+        email: 'c@x.com',
+        avatarUrl: null,
+      });
+      rtcParticipant.findUnique.mockResolvedValue(null);
+      rtcParticipant.count.mockResolvedValue(1);
+      liveKit.mintToken.mockResolvedValue('token');
+
+      await expect(
+        service.joinMeeting('carol', 'slug1'),
+      ).resolves.toBeDefined();
+    });
+
+    it('refuses to let the host remove (and thereby ban) themselves', async () => {
+      const { service, meeting, liveKit, redis } = buildService();
+      meeting.findUnique.mockResolvedValue(hostedMeeting());
+      meeting.findUniqueOrThrow.mockResolvedValue(hostedMeeting());
+
+      await expect(
+        service.removeMeetingParticipant('host1', 'slug1', 'host1'),
+      ).rejects.toThrow(ForbiddenException);
+      expect(redis.multi).not.toHaveBeenCalled();
+      expect(liveKit.removeParticipant).not.toHaveBeenCalled();
+    });
+
+    it('enforceRemovalOnRejoin re-kicks a removed user who reconnected to LiveKit on their old token, and leaves everyone else alone', async () => {
+      const { service, meeting, liveKit } = buildService();
+      meeting.findUnique.mockResolvedValue(hostedMeeting());
+      meeting.findUniqueOrThrow.mockResolvedValue(hostedMeeting());
+      await service.removeMeetingParticipant('host1', 'slug1', 'bob');
+      liveKit.removeParticipant.mockClear();
+
+      expect(
+        await service.enforceRemovalOnRejoin('room1', 'meeting-room1', 'bob'),
+      ).toBe(true);
+      expect(liveKit.removeParticipant).toHaveBeenCalledWith(
+        'meeting-room1',
+        'bob',
+      );
+
+      liveKit.removeParticipant.mockClear();
+      expect(
+        await service.enforceRemovalOnRejoin('room1', 'meeting-room1', 'carol'),
+      ).toBe(false);
+      expect(liveKit.removeParticipant).not.toHaveBeenCalled();
+    });
+
+    it('clears the removed set when the meeting ends', async () => {
+      const { service, meeting, rtcParticipant, rtcRoom, redis, redisSets } =
+        buildService();
+      meeting.findUnique.mockResolvedValue(hostedMeeting());
+      meeting.findUniqueOrThrow.mockResolvedValue(hostedMeeting());
+      rtcParticipant.updateMany.mockResolvedValue({ count: 1 });
+      rtcRoom.update.mockResolvedValue({});
+      await service.removeMeetingParticipant('host1', 'slug1', 'bob');
+      expect(redisSets.get('rtc:meeting:removed:room1')?.has('bob')).toBe(true);
+
+      await service.endMeeting('host1', 'slug1');
+
+      expect(redis.del).toHaveBeenCalledWith('rtc:meeting:removed:room1');
+      expect(redisSets.has('rtc:meeting:removed:room1')).toBe(false);
     });
   });
 

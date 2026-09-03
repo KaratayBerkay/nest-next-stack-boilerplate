@@ -35,6 +35,7 @@ const mockPrisma = {
   },
   user: {
     findUnique: jest.fn(),
+    findUniqueOrThrow: jest.fn(),
     update: jest.fn(),
     create: jest.fn(),
   },
@@ -90,6 +91,7 @@ const mockTokenStore = {
   peekMfaChallenge: jest.fn(),
   deleteMfaChallenge: jest.fn(),
   recordMfaChallengeFailure: jest.fn().mockResolvedValue(1),
+  markMfaFresh: jest.fn().mockResolvedValue(undefined),
 };
 
 describe('AuthService', () => {
@@ -324,6 +326,10 @@ describe('AuthService', () => {
           data: { usedAt: expect.any(Date) as never },
         }),
       );
+      // BE-030: only a session issued by a completed second factor is marked
+      // MFA-fresh — the one-shot proof trustCurrentDevice requires.
+      expect(mockTokenStore.markMfaFresh).toHaveBeenCalledTimes(1);
+      expect(mockTokenStore.markMfaFresh).toHaveBeenCalledWith('rand_token');
     });
 
     it('rejects a used backup code on second attempt (single-use)', async () => {
@@ -540,6 +546,12 @@ describe('AuthService', () => {
       expect(mockTokenStore.writeMfaChallenge).toHaveBeenCalled();
       // Should NOT issue full session tokens
       expect(mockTokenStore.write).not.toHaveBeenCalled();
+      // BE-033: a password alone proves nothing yet — the challenge response
+      // must not carry the account row (role, tier, status, ...).
+      expect(result.user).toBeUndefined();
+      // And a plain password login never leaves the post-MFA marker behind
+      // that trustCurrentDevice consumes.
+      expect(mockTokenStore.markMfaFresh).not.toHaveBeenCalled();
     });
 
     it('skips MFA challenge when device is trusted', async () => {
@@ -778,11 +790,15 @@ describe('AuthService', () => {
         new UnauthorizedException('OAuth profile expired or not found'),
       );
 
-      await expect(service.loginWithOAuth('some-state')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.loginWithOAuth({ state: 'some-state', claim: 'claim-1' }),
+      ).rejects.toThrow(UnauthorizedException);
+      // state + the callback-minted claim (+ the optional mobile verifier)
+      // all go to OAuthService — it, not this layer, decides redeemability.
       expect(mockOAuthService.retrieveProfile).toHaveBeenCalledWith(
         'some-state',
+        'claim-1',
+        undefined,
       );
       // An unverified state must never reach account lookup/creation — this
       // is the account-takeover fix's core guarantee.
@@ -821,11 +837,20 @@ describe('AuthService', () => {
           email: 'racer@example.com',
           username: 'racer_x1a2b3',
           name: 'Racer',
+          // Real tx.user.create() always sets these for a brand-new OAuth
+          // signup (see auth-login.service.ts) — matched here so the new
+          // assertOAuthAccountActive() status gate doesn't reject a
+          // legitimately-new user in this test.
+          status: 'ACTIVE',
+          emailVerifiedAt: new Date('2026-01-01'),
         });
       mockPrisma.account.create.mockResolvedValue({});
       mockJwtService.signAsync.mockResolvedValue('mock-jwt-token');
 
-      await service.loginWithOAuth('race-state');
+      await service.loginWithOAuth({
+        state: 'race-state',
+        claim: 'claim-race',
+      });
 
       expect(usernameService.generate).toHaveBeenCalledTimes(2);
       expect(mockPrisma.user.create).toHaveBeenCalledTimes(2);
@@ -835,6 +860,87 @@ describe('AuthService', () => {
       expect(secondCreateCall[0].data).toMatchObject({
         username: 'racer_x1a2b3',
       });
+    });
+
+    it('rejects a banned user even when a linked OAuth account already exists — ban-bypass fix', async () => {
+      mockOAuthService.retrieveProfile.mockResolvedValueOnce({
+        type: 'oauth',
+        provider: 'google',
+        providerAccountId: 'g-banned-1',
+        email: 'banned@example.com',
+        name: 'Banned User',
+      });
+      mockPrisma.account.findUnique.mockResolvedValue({
+        userId: 'u-banned',
+        user: { id: 'u-banned', status: 'BANNED', email: 'banned@example.com' },
+      });
+
+      await expect(
+        service.loginWithOAuth({ state: 's', claim: 'c' }),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          exc: 'EX_AUTH_ACCOUNT_INACTIVE',
+        }) as object,
+      });
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('refuses to link a new OAuth identity onto an existing but unverified account — pre-hijacking fix', async () => {
+      mockOAuthService.retrieveProfile.mockResolvedValueOnce({
+        type: 'oauth',
+        provider: 'google',
+        providerAccountId: 'g-hijack-1',
+        email: 'victim@example.com',
+        name: 'Victim',
+      });
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u-attacker-stub',
+        email: 'victim@example.com',
+        status: 'PENDING_VERIFICATION',
+        emailVerifiedAt: null,
+      });
+
+      await expect(
+        service.loginWithOAuth({ state: 's', claim: 'c' }),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          exc: 'EX_AUTH_ACCOUNT_UNVERIFIED_CONFLICT',
+        }) as object,
+      });
+      expect(mockPrisma.account.create).not.toHaveBeenCalled();
+      expect(mockPrisma.user.create).not.toHaveBeenCalled();
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
+    });
+
+    it('rejects a banned-but-verified existing account after linking, without issuing tokens', async () => {
+      mockOAuthService.retrieveProfile.mockResolvedValueOnce({
+        type: 'oauth',
+        provider: 'google',
+        providerAccountId: 'g-banned-verified-1',
+        email: 'banned-verified@example.com',
+        name: 'Banned Verified',
+      });
+      mockPrisma.account.findUnique.mockResolvedValue(null);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u-banned-verified',
+        email: 'banned-verified@example.com',
+        status: 'BANNED',
+        emailVerifiedAt: new Date('2026-01-01'),
+      });
+      mockPrisma.account.create.mockResolvedValue({});
+
+      await expect(
+        service.loginWithOAuth({ state: 's', claim: 'c' }),
+      ).rejects.toMatchObject({
+        response: expect.objectContaining({
+          exc: 'EX_AUTH_ACCOUNT_INACTIVE',
+        }) as object,
+      });
+      // Linking itself is harmless (the row was already legitimately
+      // verified) — only issuing tokens for a banned account is the bug.
+      expect(mockPrisma.account.create).toHaveBeenCalled();
+      expect(mockJwtService.signAsync).not.toHaveBeenCalled();
     });
   });
 
@@ -926,6 +1032,112 @@ describe('AuthService', () => {
 
       const emailOtp = module.get<{ resend: jest.Mock }>(EmailOtpService);
       expect(emailOtp.resend).not.toHaveBeenCalled();
+    });
+  });
+
+  // BE-032: both verification paths wrote `status: 'ACTIVE'` unconditionally,
+  // so an account banned/suspended while still PENDING_VERIFICATION could
+  // un-ban itself by finishing email verification.
+  describe('email verification only activates PENDING_VERIFICATION accounts', () => {
+    const emailVerificationToken = {
+      id: 't-verify',
+      type: 'EMAIL_VERIFICATION',
+      userId: 'u1',
+      consumedAt: null,
+      expiresAt: new Date(Date.now() + 3600000),
+    };
+
+    it.each(['BANNED', 'SUSPENDED', 'DEACTIVATED'] as const)(
+      'verifyEmail (link) does not touch the status of a %s account',
+      async (status) => {
+        mockPrisma.verificationToken.findUnique.mockResolvedValue(
+          emailVerificationToken,
+        );
+        mockPrisma.user.findUniqueOrThrow.mockResolvedValue({ status });
+        mockPrisma.user.update.mockResolvedValue({
+          id: 'u1',
+          email: 'u@example.com',
+          status,
+        });
+
+        await service.verifyEmail('raw-token');
+
+        expect(mockPrisma.user.update).toHaveBeenCalledWith({
+          where: { id: 'u1' },
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          data: { emailVerifiedAt: expect.any(Date) },
+        });
+        const calls = mockPrisma.user.update.mock.calls as unknown as Array<
+          [{ data: Record<string, unknown> }]
+        >;
+        expect(calls[0][0].data).not.toHaveProperty('status');
+      },
+    );
+
+    it('verifyEmail (link) still promotes a PENDING_VERIFICATION account to ACTIVE', async () => {
+      mockPrisma.verificationToken.findUnique.mockResolvedValue(
+        emailVerificationToken,
+      );
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
+        status: 'PENDING_VERIFICATION',
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'u1',
+        email: 'u@example.com',
+        status: 'ACTIVE',
+      });
+
+      await service.verifyEmail('raw-token');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: { emailVerifiedAt: expect.any(Date), status: 'ACTIVE' },
+      });
+    });
+
+    it('verifyEmailCode (OTP) leaves a BANNED account BANNED', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'u@example.com',
+        status: 'BANNED',
+        emailVerifiedAt: null,
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'u1',
+        email: 'u@example.com',
+        status: 'BANNED',
+      });
+
+      await service.verifyEmailCode('u1', '123456');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: { emailVerifiedAt: expect.any(Date) },
+      });
+    });
+
+    it('verifyEmailCode (OTP) still promotes a PENDING_VERIFICATION account', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'u@example.com',
+        status: 'PENDING_VERIFICATION',
+        emailVerifiedAt: null,
+      });
+      mockPrisma.user.update.mockResolvedValue({
+        id: 'u1',
+        email: 'u@example.com',
+        status: 'ACTIVE',
+      });
+
+      await service.verifyEmailCode('u1', '123456');
+
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'u1' },
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        data: { emailVerifiedAt: expect.any(Date), status: 'ACTIVE' },
+      });
     });
   });
 });

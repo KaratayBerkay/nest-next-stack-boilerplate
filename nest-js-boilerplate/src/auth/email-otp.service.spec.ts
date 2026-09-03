@@ -24,7 +24,7 @@ describe('EmailOtpService', () => {
       writeEmailOtp: jest.fn().mockResolvedValue(undefined),
       consumeEmailOtp: jest.fn().mockResolvedValue(undefined),
       peekEmailOtp: jest.fn(),
-      incrementOtpAttempts: jest.fn().mockResolvedValue(undefined),
+      incrementOtpAttempts: jest.fn().mockResolvedValue(1),
       deleteEmailOtp: jest.fn().mockResolvedValue(undefined),
       getOtpResendCooldown: jest.fn().mockResolvedValue(0),
       setOtpResendCooldown: jest.fn().mockResolvedValue(undefined),
@@ -101,6 +101,45 @@ describe('EmailOtpService', () => {
       );
       expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(purpose, userId);
       expect(tokenStore.consumeEmailOtp).not.toHaveBeenCalled();
+    });
+
+    // BE-035: the cap must be decided from the atomic increment's own return
+    // value, not the snapshot read before it — otherwise parallel wrong
+    // guesses that all saw `attempts: 4` each concluded "one left" and none
+    // of them burned the challenge.
+    it('burns the OTP on the wrong guess whose atomic count reaches the cap, even when the snapshot was stale', async () => {
+      tokenStore.peekEmailOtp.mockResolvedValue({
+        codeHash: 'hashed-123456',
+        email,
+        attempts: 2, // stale — other guesses landed concurrently
+      });
+      tokenStore.incrementOtpAttempts.mockResolvedValue(5);
+
+      await expect(
+        service.verify(userId, '000000', purpose),
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_AUTH_OTP_MAX_ATTEMPTS' },
+      });
+      expect(tokenStore.deleteEmailOtp).toHaveBeenCalledWith(purpose, userId);
+    });
+
+    it('reports the remaining attempts from the atomic count', async () => {
+      tokenStore.peekEmailOtp.mockResolvedValue({
+        codeHash: 'hashed-123456',
+        email,
+        attempts: 0,
+      });
+      tokenStore.incrementOtpAttempts.mockResolvedValue(3);
+
+      await expect(
+        service.verify(userId, '000000', purpose),
+      ).rejects.toMatchObject({
+        response: {
+          exc: 'EX_AUTH_OTP_INVALID',
+          msg: 'Invalid code. 2 attempts remaining',
+        },
+      });
+      expect(tokenStore.deleteEmailOtp).not.toHaveBeenCalled();
     });
   });
 

@@ -82,10 +82,21 @@ export class LiveKitService {
   private readonly apiSecret: string;
   private readonly roomService: RoomServiceClient;
   private readonly webhookReceiver: WebhookReceiver;
+  /**
+   * The ws(s):// URL *clients* connect to (LIVEKIT_URL), as opposed to
+   * LIVEKIT_HTTP_URL, which is this server's own admin-API endpoint and is
+   * often an internal address (host.docker.internal). Handed back on every
+   * join result / call frame so clients don't each need a compile-time copy
+   * that can silently drift — the Flutter app shipped pointing at its own
+   * loopback for exactly that reason (MOB-034). Null when unset: clients
+   * then fall back to their own configured URL.
+   */
+  readonly clientUrl: string | null;
 
   constructor(private readonly config: ConfigService) {
     this.apiKey = this.config.get<string>('LIVEKIT_API_KEY', 'devkey');
     this.apiSecret = this.config.get<string>('LIVEKIT_API_SECRET', 'devsecret');
+    this.clientUrl = this.config.get<string>('LIVEKIT_URL', '').trim() || null;
     const httpUrl = this.config.get<string>(
       'LIVEKIT_HTTP_URL',
       'http://localhost:7880',

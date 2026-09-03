@@ -64,6 +64,7 @@ describe('AuthSessionService.refresh', () => {
     };
     const tokenStore = {
       findByRefreshSessionId: jest.fn().mockResolvedValue(session),
+      revokeByRefreshSessionId: jest.fn().mockResolvedValue(true),
       buildKey: jest.fn().mockReturnValue('compound-key'),
       revoke: jest.fn().mockResolvedValue(undefined),
       read: jest.fn().mockResolvedValue(session),
@@ -199,6 +200,20 @@ describe('AuthSessionService.refresh', () => {
     expect(result.rbacToken).toBe('rbac-recomputed-for-MEDIUM');
     expect(result.deviceId).toBe('device-1');
     expect(result.deviceToken).toBe('fresh-device-token');
+  });
+
+  it("SECURITY: revokes the OLD session by the resolved sessionId so rotation is single-use — even when the refresh request carries no valid access token (the common refresh-after-expiry case). The old behavior rebuilt the compound key from request tokens; with a blank access slot that key never matched the real one, so revoke() no-op'd and the rotated-away refresh token stayed replayable", async () => {
+    const { service, tokenStore, authTokens } = buildService();
+    // A refresh-after-expiry presents no valid access token.
+    authTokens.extractAccessToken.mockReturnValue(null);
+
+    await service.refresh(buildCtx());
+
+    expect(tokenStore.revokeByRefreshSessionId).toHaveBeenCalledWith(
+      'old-session-id',
+    );
+    // The new session is minted only after the old one is invalidated.
+    expect(authTokens.issueTokens).toHaveBeenCalled();
   });
 
   it('throws when no refresh token is presented', async () => {

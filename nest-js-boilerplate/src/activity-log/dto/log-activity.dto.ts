@@ -10,8 +10,10 @@ import {
   MaxLength,
   MinLength,
   IsIn,
+  Validate,
   ValidateNested,
 } from 'class-validator';
+import { ActivityMetadataConstraint } from './activity-metadata.constraint';
 
 const CATEGORIES = [
   'session',
@@ -60,6 +62,7 @@ export class FrontendEventDto {
 
   @IsOptional()
   @IsObject()
+  @Validate(ActivityMetadataConstraint)
   metadata?: Record<string, unknown>;
 
   @IsOptional()

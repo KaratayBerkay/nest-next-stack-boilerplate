@@ -1,6 +1,11 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../../redis/redis.module';
 import { oauthProviders, type OAuthProfileResult } from './oauth-providers';
@@ -12,11 +17,69 @@ const OAUTH_STATE_PREFIX = 'oauth:state:';
 export const OAUTH_PROFILE_PREFIX = 'oauth:profile:';
 export const OAUTH_TTL_SEC = 600; // 10 minutes
 
+// RFC 7636 §4.2: base64url(SHA-256(verifier)) is always exactly 43 chars.
+const CODE_CHALLENGE_RE = /^[A-Za-z0-9_-]{43}$/;
+
 type PendingState = {
   provider: string;
   redirectUri: string;
+  /** Provider-side PKCE verifier (X etc.), unrelated to the client one below. */
   codeVerifier?: string;
+  /**
+   * S256 challenge the *initiating client* registered (CROSS-032). Required
+   * whenever `redirectUri` is an app scheme: custom schemes aren't exclusive
+   * on Android/iOS, so any app can receive the callback intent — the client
+   * that started the flow must also prove it holds the matching verifier
+   * before `retrieveProfile` hands the session over.
+   */
+  clientCodeChallenge?: string;
 };
+
+/**
+ * What `handleCallback` stores under {@link OAUTH_PROFILE_PREFIX}: the
+ * provider profile plus the secrets `retrieveProfile` checks before it will
+ * release it. Exported so e2e tests seed the same shape a real callback does.
+ */
+export type StoredOAuthProfile = OAuthProfileResult & {
+  /** sha256 hex of the one-time `claim` minted at callback time. */
+  claimHash: string;
+  clientCodeChallenge?: string;
+};
+
+function base64Url(buf: Buffer): string {
+  return buf
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+export function sha256Hex(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+/** RFC 7636 S256: base64url(SHA-256(ascii(verifier))). */
+export function s256CodeChallenge(verifier: string): string {
+  return base64Url(createHash('sha256').update(verifier).digest());
+}
+
+// Constant-time compare that leaks neither content nor length: both sides are
+// hashed to a fixed 32 bytes first, then compared with timingSafeEqual.
+function safeEqual(a: string, b: string): boolean {
+  return timingSafeEqual(
+    createHash('sha256').update(a).digest(),
+    createHash('sha256').update(b).digest(),
+  );
+}
+
+export function isHttpRedirectUri(uri: string): boolean {
+  try {
+    const { protocol } = new URL(uri);
+    return protocol === 'http:' || protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 /**
  * Redis-backed store for OAuth state and profile lookups.
@@ -54,27 +117,43 @@ export class OAuthService {
   }
 
   private generateCodeVerifier(): string {
-    return randomBytes(32)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    return base64Url(randomBytes(32));
   }
 
   private generateCodeChallenge(verifier: string): string {
-    return createHash('sha256')
-      .update(verifier)
-      .digest('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    return s256CodeChallenge(verifier);
   }
 
+  /**
+   * @param clientCodeChallenge S256 challenge from the initiating client
+   *   (`?code_challenge=` on the initiate URL). Optional for http(s) redirect
+   *   URIs (the browser enforces who receives those), mandatory for app-scheme
+   *   ones — see {@link PendingState.clientCodeChallenge}.
+   */
   async buildAuthUrl(
     providerName: string,
     state: string,
     appRedirectUri: string,
+    clientCodeChallenge?: string,
   ): Promise<string> {
+    if (
+      clientCodeChallenge !== undefined &&
+      !CODE_CHALLENGE_RE.test(clientCodeChallenge)
+    ) {
+      throw new BadRequestException({
+        exc: 'EX_VALIDATION_FORM',
+        msg: 'Malformed code_challenge (expected a 43-char base64url S256 digest)',
+        key: 'error.invalidCodeChallenge',
+      });
+    }
+    if (!clientCodeChallenge && !isHttpRedirectUri(appRedirectUri)) {
+      throw new BadRequestException({
+        exc: 'EX_VALIDATION_FORM',
+        msg: 'code_challenge is required for app-scheme redirect URIs',
+        key: 'error.missingCodeChallenge',
+      });
+    }
+
     const { provider, clientId } = this.getProviderOrThrow(providerName);
     const nestCallbackUrl = `${this.config.get<string>('APP_URL', 'http://localhost:3000')}/auth/oauth/${providerName}/callback`;
 
@@ -83,14 +162,16 @@ export class OAuthService {
       codeVerifier = this.generateCodeVerifier();
     }
 
+    const pending: PendingState = {
+      provider: providerName,
+      redirectUri: appRedirectUri,
+      codeVerifier,
+      clientCodeChallenge,
+    };
     await this.redis.setex(
       `${OAUTH_STATE_PREFIX}${state}`,
       OAUTH_TTL_SEC,
-      JSON.stringify({
-        provider: providerName,
-        redirectUri: appRedirectUri,
-        codeVerifier,
-      }),
+      JSON.stringify(pending),
     );
 
     const params = new URLSearchParams({
@@ -109,7 +190,23 @@ export class OAuthService {
     return `${provider.authUrl}?${params.toString()}`;
   }
 
-  async handleCallback(code: string, state: string): Promise<string> {
+  /**
+   * Exchanges the provider code, stores the verified profile for pickup, and
+   * returns where to send the browser plus the one-time `claim` that must
+   * accompany `state` on that redirect (CROSS-032).
+   *
+   * Why a claim: `state` alone is chosen by whoever *initiates* the flow, so
+   * an attacker could start one, phish the victim into completing the
+   * provider consent, and then redeem the victim's profile with the state
+   * they already knew. The claim is minted here, at completion time, and
+   * travels only inside the redirect to the registered redirect URI — so
+   * only the browser that finished the handshake (and the app/BFF it lands
+   * on) ever sees it.
+   */
+  async handleCallback(
+    code: string,
+    state: string,
+  ): Promise<{ redirectUri: string; claim: string }> {
     const raw = await this.redis.get(`${OAUTH_STATE_PREFIX}${state}`);
     if (!raw) {
       throw new UnauthorizedException('Invalid or expired OAuth state');
@@ -170,15 +267,24 @@ export class OAuthService {
       clientId,
     );
 
-    // Store profile for pickup by Next.js BFF
+    // Store profile for pickup by the BFF / mobile app, guarded by the claim
+    // (and the client challenge, when one was registered at initiate).
+    const claim = base64Url(randomBytes(32));
+    const stored: StoredOAuthProfile = {
+      ...profile,
+      claimHash: sha256Hex(claim),
+      ...(pending.clientCodeChallenge
+        ? { clientCodeChallenge: pending.clientCodeChallenge }
+        : {}),
+    };
     await this.redis.setex(
       `${OAUTH_PROFILE_PREFIX}${state}`,
       OAUTH_TTL_SEC,
-      JSON.stringify(profile),
+      JSON.stringify(stored),
     );
 
     await this.redis.del(`${OAUTH_STATE_PREFIX}${state}`);
-    return pending.redirectUri;
+    return { redirectUri: pending.redirectUri, claim };
   }
 
   async getRedirectUri(state: string): Promise<string | null> {
@@ -188,7 +294,19 @@ export class OAuthService {
     return pending.redirectUri;
   }
 
-  async retrieveProfile(state: string): Promise<OAuthProfileResult> {
+  /**
+   * Redeems a completed handshake. Besides `state`, the caller must present
+   * the `claim` delivered on the callback redirect, and — when the initiating
+   * client registered a `code_challenge` — the matching PKCE-style
+   * `codeVerifier` (CROSS-032). Any mismatch consumes the profile: the
+   * secrets are 256-bit random, so a retry can't be a legitimate caller
+   * that simply typo'd, only an interceptor guessing.
+   */
+  async retrieveProfile(
+    state: string,
+    claim: string,
+    codeVerifier?: string,
+  ): Promise<OAuthProfileResult> {
     // GETDEL, not GET+DEL — this key is meant to be consumed exactly once.
     // Two concurrent pickups for the same state (a retried BFF request, a
     // double-loaded callback page) previously could both GET the profile
@@ -199,7 +317,25 @@ export class OAuthService {
     if (!raw) {
       throw new UnauthorizedException('OAuth profile expired or not found');
     }
-    return JSON.parse(raw) as OAuthProfileResult;
+    const { claimHash, clientCodeChallenge, ...profile } = JSON.parse(
+      raw,
+    ) as StoredOAuthProfile;
+    // A record without a claimHash predates CROSS-032 (or was seeded
+    // without one) — never redeemable, there is nothing to bind it to.
+    if (!claimHash || !claim || !safeEqual(sha256Hex(claim), claimHash)) {
+      throw new UnauthorizedException('OAuth claim rejected');
+    }
+    if (
+      clientCodeChallenge &&
+      (!codeVerifier ||
+        !safeEqual(
+          this.generateCodeChallenge(codeVerifier),
+          clientCodeChallenge,
+        ))
+    ) {
+      throw new UnauthorizedException('OAuth code verifier rejected');
+    }
+    return profile;
   }
 
   private async fetchProfile(

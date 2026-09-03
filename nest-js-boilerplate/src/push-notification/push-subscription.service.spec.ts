@@ -130,4 +130,39 @@ describe('PushSubscriptionService', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('subscribe endpoint validation (stored-SSRF guard)', () => {
+    // The endpoint is a URL this server later POSTs to blindly during push
+    // delivery; without shape validation any authenticated user can plant an
+    // internal URL and turn delivery into SSRF.
+    const rejected = [
+      'not a url',
+      'http://push.example.com/abc', // https only
+      'https://user:pass@push.example.com/abc', // credentials
+      'https://127.0.0.1/abc', // IPv4 literal
+      'https://2130706433/abc', // integer IPv4 → canonicalized to 127.0.0.1
+      'https://[::1]/abc', // IPv6 literal
+      'https://localhost/abc',
+      'https://vault.internal/abc',
+      'https://printer.local/abc',
+      'https://intranet-host/abc', // single-label host
+    ];
+
+    it.each(rejected)('rejects %s with BadRequestException', async (bad) => {
+      await expect(
+        service.subscribe('u1', bad, 'p256dh-key', 'auth-secret'),
+      ).rejects.toThrow('Invalid push endpoint');
+      expect(prisma.pushSubscription.upsert).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      'https://fcm.googleapis.com/fcm/send/abc123',
+      'https://updates.push.services.mozilla.com/wpush/v2/xyz',
+      'https://web.push.apple.com/QOtoken',
+    ])('accepts the real-world push service endpoint %s', async (good) => {
+      prisma.pushSubscription.upsert.mockResolvedValue({ id: 's' });
+      await service.subscribe('u1', good, 'p256dh-key', 'auth-secret');
+      expect(prisma.pushSubscription.upsert).toHaveBeenCalled();
+    });
+  });
 });

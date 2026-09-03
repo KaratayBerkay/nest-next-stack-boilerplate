@@ -91,9 +91,17 @@ export class MessagingFriendService {
       id: { notIn: Array.from(excludeIds) },
     };
     if (search)
+      // Search by display name or public username only — deliberately NOT
+      // email. Matching on `email contains` turned this global directory
+      // search into an email-reconstruction oracle: any authenticated user
+      // could confirm or rebuild another user's address character-by-character
+      // from the result count, even though the address itself is never
+      // returned (redacted by UserPrivacyResolver). Username is a public
+      // handle, so matching it is safe and keeps users without a display name
+      // findable.
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
-        { email: { contains: search, mode: 'insensitive' } },
+        { username: { contains: search, mode: 'insensitive' } },
       ];
     return where;
   }
@@ -181,18 +189,26 @@ export class MessagingFriendService {
   }
 
   async getFriendRequests(userId: string) {
+    // Deliberately does NOT select `email`. This list is served as plain REST
+    // JSON (GET /api/friends/requests), outside the GraphQL UserPrivacyResolver
+    // that redacts email everywhere else — and its counterparties can be
+    // strangers (anyone may send you a request, and any user can be an outgoing
+    // target). Returning their email here was a name+email harvesting channel:
+    // send a request to a target, then read their address back. `displayName`
+    // falls back to 'Unknown' for a nameless user rather than leaking the
+    // address as the visible name.
     const [incoming, outgoing] = await Promise.all([
       this.prisma.friendship.findMany({
         where: { addresseeId: userId, status: 'PENDING' },
         include: {
-          requester: { select: { id: true, name: true, email: true } },
+          requester: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.friendship.findMany({
         where: { requesterId: userId, status: 'PENDING' },
         include: {
-          addressee: { select: { id: true, name: true, email: true } },
+          addressee: { select: { id: true, name: true } },
         },
         orderBy: { createdAt: 'desc' },
       }),
@@ -205,7 +221,6 @@ export class MessagingFriendService {
         user: {
           id: r.requester.id,
           name: displayName(r.requester),
-          email: r.requester.email,
           avatar: initials(displayName(r.requester)),
         },
         createdAt: r.createdAt,
@@ -216,7 +231,6 @@ export class MessagingFriendService {
         user: {
           id: r.addressee.id,
           name: displayName(r.addressee),
-          email: r.addressee.email,
           avatar: initials(displayName(r.addressee)),
         },
         createdAt: r.createdAt,

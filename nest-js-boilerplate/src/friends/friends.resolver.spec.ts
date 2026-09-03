@@ -54,6 +54,22 @@ describe('FriendsResolver', () => {
       expect(result[1].mutualFriends).toBe(3);
     });
 
+    it('never selects email from the DB and always returns it empty', async () => {
+      mockFriends.getMutualCounts.mockResolvedValue(new Map([['c1', 2]]));
+      mockPrisma.user.findMany.mockResolvedValue([
+        { id: 'c1', name: 'Alice', avatarUrl: null },
+      ]);
+
+      const result = await resolver.suggestedFriends({ userId: 'u1' } as never);
+
+      const calls = mockPrisma.user.findMany.mock.calls as Array<
+        [{ select: Record<string, boolean> }]
+      >;
+      const findManyArgs = calls[0][0];
+      expect(findManyArgs.select).not.toHaveProperty('email');
+      expect(result[0].email).toBe('');
+    });
+
     it('excludes the user and their existing friends', async () => {
       mockFriends.getMutualCounts.mockResolvedValue(new Map());
       await resolver.suggestedFriends({ userId: 'u1' } as never);

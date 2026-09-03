@@ -176,17 +176,18 @@ export class AuthSessionService {
       ctx,
     );
 
-    const rbacToken = this.authTokens.extractRbacToken(ctx) ?? '';
     const deviceToken = this.authTokens.extractDeviceToken(ctx);
-    const userToken = this.authTokens.extractUserToken(ctx) ?? '';
 
-    const compoundKey = this.tokenStore.buildKey(
-      this.authTokens.extractAccessToken(ctx) ?? '',
-      rbacToken,
-      deviceToken ?? '',
-      userToken,
-    );
-    await this.tokenStore.revoke(compoundKey);
+    // Revoke the OLD session by the sessionId the refresh token resolved to
+    // (resolveRefreshContext found it through the refresh index), NOT a
+    // compound key rebuilt from this request's tokens. A refresh-after-expiry
+    // presents no valid access token, so a rebuilt key never matched the real
+    // one and the revoke silently no-op'd — leaving the just-rotated-away
+    // refresh token replayable until its own TTL (single-use rotation was
+    // effectively off; confirmed by reusing a rotated token successfully in a
+    // live test). Both the web BFF and Flutter already expect the backend to
+    // invalidate the old token on every refresh, so this needs no client change.
+    await this.tokenStore.revokeByRefreshSessionId(session.sessionId);
 
     // Carry the renewing device's identity into the new session. Without
     // this, issueTokens() keys the new session on an empty device-token

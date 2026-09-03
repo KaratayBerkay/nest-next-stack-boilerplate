@@ -20,6 +20,7 @@ function buildController() {
   const rtcMeetingService = {
     handleRoomEndedByLiveKit: jest.fn(),
     notifyParticipantLeftByLiveKit: jest.fn(),
+    enforceRemovalOnRejoin: jest.fn().mockResolvedValue(false),
   };
   const rtcStreamService = {
     handleRoomEndedByLiveKit: jest.fn(),
@@ -190,6 +191,60 @@ describe('RtcWebhookController', () => {
       data: { leftAt: null },
     });
     expect(status).toHaveBeenCalledWith(200);
+  });
+
+  // BE-031: a host-removed participant's token stays valid for a while, so a
+  // direct LiveKit reconnect (never touching joinMeeting) is the one way
+  // back in — the webhook is where that gets refused.
+  it('participant_joined on a MEETING room asks the meeting service to enforce a removal first, and does not resurrect a removed participant row', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, rtcMeetingService, liveKit } =
+      buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_joined',
+      room: { name: 'meeting-r3' },
+      participant: { identity: encryptId(rawUserId) },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r3', kind: 'MEETING' });
+    rtcMeetingService.enforceRemovalOnRejoin.mockResolvedValue(true);
+
+    const { req, res, status } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcMeetingService.enforceRemovalOnRejoin).toHaveBeenCalledWith(
+      'r3',
+      'meeting-r3',
+      rawUserId,
+    );
+    expect(rtcParticipant.updateMany).not.toHaveBeenCalled();
+    expect(status).toHaveBeenCalledWith(200);
+  });
+
+  it('participant_joined on a MEETING room still clears leftAt for a participant who was not removed', async () => {
+    process.env.ENCRYPTION_KEY = 'test-encryption-key-for-rtc-webhook-specs';
+    _resetKeysForTests();
+    const rawUserId = '01890a5d-ac96-774b-bcce-b302099a8061';
+
+    const { controller, rtcRoom, rtcParticipant, rtcMeetingService, liveKit } =
+      buildController();
+    liveKit.verifyWebhookEvent.mockResolvedValue({
+      event: 'participant_joined',
+      room: { name: 'meeting-r3' },
+      participant: { identity: encryptId(rawUserId) },
+    });
+    rtcRoom.findUnique.mockResolvedValue({ id: 'r3', kind: 'MEETING' });
+    rtcMeetingService.enforceRemovalOnRejoin.mockResolvedValue(false);
+    rtcParticipant.updateMany.mockResolvedValue({ count: 1 });
+
+    const { req, res } = fakeReqRes('{}');
+    await controller.handleWebhook(req, res);
+
+    expect(rtcParticipant.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { leftAt: null } }),
+    );
   });
 
   // Regression for the "watching" counter never leaving 0: the join mutation

@@ -11,9 +11,17 @@ import { MfaEnrollPayload, MfaVerifyPayload } from './mfa.types';
 export class MfaResolver {
   constructor(private readonly mfa: MfaService) {}
 
+  /**
+   * `currentCode` is only consulted when MFA is already enabled (rotating
+   * the authenticator) — see MfaService.enroll. Optional so first-time
+   * enrollment and existing clients are unchanged.
+   */
   @Mutation(() => MfaEnrollPayload)
-  enrollMfa(@CurrentUser() user: JwtUser): Promise<MfaEnrollPayload> {
-    return this.mfa.enroll(user.userId);
+  enrollMfa(
+    @CurrentUser() user: JwtUser,
+    @Args('currentCode', { nullable: true }) currentCode?: string,
+  ): Promise<MfaEnrollPayload> {
+    return this.mfa.enroll(user.userId, currentCode ?? undefined);
   }
 
   @Mutation(() => MfaVerifyPayload)

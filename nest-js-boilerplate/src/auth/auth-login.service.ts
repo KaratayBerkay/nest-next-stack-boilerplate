@@ -1,4 +1,8 @@
-import { Logger, UnauthorizedException } from '@nestjs/common';
+import {
+  ConflictException,
+  Logger,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { verify } from '@node-rs/argon2';
 import { Prisma, User } from '@prisma/client';
 import { verify as verifyTotp } from 'otplib';
@@ -16,6 +20,7 @@ import { TokenStoreService } from './token-store.service';
 import { UsernameService } from './username.service';
 import { MailService } from '../mail/mail.service';
 import type { AuthPayload } from './auth.types';
+import type { IssueTokensFn } from './auth-token.service';
 import type { LoginInput } from './dto/login.input';
 import type { OAuthProfile } from './auth.service';
 
@@ -144,7 +149,9 @@ export class AuthLoginService {
         }
       }
 
-      return { mfaRequired: true, mfaMethod, mfaToken, user };
+      // No `user` here on purpose — see AuthPayload.user. Returning the full
+      // row leaked role/tier/status to anyone holding just the password.
+      return { mfaRequired: true, mfaMethod, mfaToken };
     }
 
     // The login-state reset and its audit event must commit together — this
@@ -185,11 +192,7 @@ export class AuthLoginService {
     mfaToken: string,
     code: string,
     ctx: RequestContext | undefined,
-    issueTokens: (
-      user: User,
-      ctx?: RequestContext,
-      device?: DeviceContext,
-    ) => Promise<AuthPayload>,
+    issueTokens: IssueTokensFn,
   ): Promise<AuthPayload> {
     const tokenHash = this.crypto.sha256(mfaToken);
     const challenge = await this.tokenStore.peekMfaChallenge(tokenHash);
@@ -291,7 +294,7 @@ export class AuthLoginService {
       );
     });
 
-    return issueTokens(user, ctx, device);
+    return issueTokens(user, ctx, device, { mfaVerified: true });
   }
 
   async loginWithOAuth(
@@ -323,6 +326,7 @@ export class AuthLoginService {
     });
 
     if (account) {
+      this.assertOAuthAccountActive(account.user);
       const device = ctx
         ? await this.devices.resolveForLogin(account.userId, ctx)
         : undefined;
@@ -353,6 +357,23 @@ export class AuthLoginService {
       try {
         user = await this.prisma.$transaction(async (tx) => {
           const existing = await tx.user.findUnique({ where: { email } });
+          // Classic OAuth "account pre-hijacking": an attacker registers the
+          // victim's email through the normal password flow, never verifies
+          // it, and waits. Without this check, the victim's first "Sign in
+          // with Google" would silently weld their real, provider-verified
+          // identity onto that unverified row — and the attacker's
+          // already-issued refresh token for it (PENDING sessions are
+          // refreshable by design) would keep working afterward. An
+          // unverified row proves nothing about who's asking to link to it,
+          // so refuse instead of merging; the legitimate owner (if any) can
+          // still get in by verifying or resetting that account first.
+          if (existing && !existing.emailVerifiedAt) {
+            throw new ConflictException({
+              exc: 'EX_AUTH_ACCOUNT_UNVERIFIED_CONFLICT',
+              msg: 'An account with this email already exists but has not been verified. Verify it or reset its password before signing in with a social account.',
+              key: 'auth.errors.oauthAccountUnverifiedConflict',
+            });
+          }
           const isNew = !existing;
           const username = isNew
             ? await this.usernames.generate(email, tx)
@@ -407,6 +428,7 @@ export class AuthLoginService {
     // Every loop iteration above either assigns `user` and breaks, or throws
     // — it can never fall through without one of the two.
     if (!user) throw new Error('unreachable: loginWithOAuth resolved no user');
+    this.assertOAuthAccountActive(user);
 
     const device = ctx
       ? await this.devices.resolveForLogin(user.id, ctx)
@@ -432,6 +454,28 @@ export class AuthLoginService {
     }
 
     return issueTokens(user, ctx, device);
+  }
+
+  /**
+   * loginWithOAuth's twin of login()'s `status !== 'ACTIVE'` gate. Without
+   * this, a SUSPENDED/BANNED user with a linked (or linkable) provider
+   * account could bypass the ban entirely just by using "Sign in with
+   * Google" instead of their password.
+   */
+  private assertOAuthAccountActive(user: User): void {
+    if (user.status !== 'ACTIVE') {
+      throw new UnauthorizedException({
+        exc: 'EX_AUTH_ACCOUNT_INACTIVE',
+        msg:
+          user.status === 'PENDING_VERIFICATION'
+            ? 'Please verify your email first'
+            : 'Account is not active',
+        key:
+          user.status === 'PENDING_VERIFICATION'
+            ? 'auth.errors.emailNotVerified'
+            : 'auth.errors.accountInactive',
+      });
+    }
   }
 
   private async verifyTotpCode(userId: string, code: string): Promise<boolean> {

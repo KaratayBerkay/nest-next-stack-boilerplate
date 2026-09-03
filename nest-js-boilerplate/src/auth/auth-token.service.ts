@@ -21,6 +21,19 @@ import {
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import type { AuthPayload, SessionUserInput } from './auth.types';
 
+export interface IssueTokensOptions {
+  /** The session being issued completed a second-factor challenge just now. */
+  mfaVerified?: boolean;
+}
+
+/** Shape of the issueTokens callback the login/registration services receive. */
+export type IssueTokensFn = (
+  user: User,
+  ctx?: RequestContext,
+  device?: DeviceContext,
+  opts?: IssueTokensOptions,
+) => Promise<AuthPayload>;
+
 export class AuthTokenService {
   private readonly logger = new Logger(AuthTokenService.name);
 
@@ -38,6 +51,7 @@ export class AuthTokenService {
     user: User,
     ctx?: RequestContext,
     device?: DeviceContext,
+    opts?: IssueTokensOptions,
   ): Promise<AuthPayload> {
     const accessToken = await this.jwt.signAsync({
       // Encrypted, not the raw uuid — decrypted back right after signature
@@ -77,6 +91,12 @@ export class AuthTokenService {
       sessionId,
       ...snapshot,
     } as SessionUserInput);
+
+    // Written only by the second-factor login path — it is what lets the
+    // client's immediate trustCurrentDevice follow-up succeed (see
+    // SessionsResolver.trustCurrentDevice) without any other session ever
+    // being able to mark a device trusted.
+    if (opts?.mfaVerified) await this.tokenStore.markMfaFresh(sessionId);
 
     this.logger.log({
       category: 'session',

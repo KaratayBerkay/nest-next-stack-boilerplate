@@ -183,20 +183,63 @@ describe('toExceptionResponse', () => {
   });
 
   describe('non-HttpException errors', () => {
-    it('maps a bare Error to EX_INTERNAL / 500', () => {
-      const result = toExceptionResponse(new Error('Something went wrong'));
+    it('SECURITY: maps a bare Error to EX_INTERNAL / 500 with a GENERIC message — the raw error text (which can carry infra detail like an ioredis "ECONNREFUSED host:port", a Stripe/S3 SDK message, or a driver string) must never reach the client; it is logged server-side by GlobalHttpExceptionFilter instead', () => {
+      const result = toExceptionResponse(
+        new Error('ECONNREFUSED 10.0.0.5:6379 while SELECT ... FROM secrets'),
+      );
       expect(result).toEqual({
         statusCode: 500,
         exc: 'EX_INTERNAL',
-        msg: 'Something went wrong',
+        msg: 'Internal server error',
         key: 'error.internal',
       });
+      expect(result.msg).not.toContain('ECONNREFUSED');
+      expect(result.msg).not.toContain('6379');
     });
 
     it('handles non-Error throwables', () => {
       const result = toExceptionResponse('string error');
       expect(result.statusCode).toBe(500);
       expect(result.msg).toBe('Internal server error');
+    });
+  });
+
+  describe('SECURITY: internal detail is never forwarded on error paths', () => {
+    it('a mapped Prisma error returns a generic message, not the schema-revealing text', () => {
+      const prismaErr = new PrismaClientKnownRequestError(
+        'Unique constraint failed on the fields: (`email`)',
+        { code: 'P2002', clientVersion: '7.0.0' },
+      );
+      const result = toExceptionResponse(prismaErr);
+      expect(result.msg).not.toContain('email');
+      expect(result.msg).not.toContain('constraint');
+      expect(result.msg).toBe('A record with these values already exists');
+    });
+
+    it('an unknown Prisma code returns a generic 500 message, not the raw Prisma text', () => {
+      const prismaErr = new PrismaClientKnownRequestError(
+        'Raw connection pool timeout detail leaking internals',
+        { code: 'P2010', clientVersion: '7.0.0' },
+      );
+      const result = toExceptionResponse(prismaErr);
+      expect(result.statusCode).toBe(500);
+      expect(result.msg).toBe('Internal server error');
+      expect(result.msg).not.toContain('pool');
+    });
+
+    it('a 5xx HttpException carrying wrapped internal text is genericized, while a 4xx message is preserved', () => {
+      const server = toExceptionResponse(
+        new HttpException('downstream S3 secretKey=AKIA... failed', 502),
+      );
+      expect(server.exc).toBe('EX_INTERNAL');
+      expect(server.msg).toBe('Internal server error');
+      expect(server.msg).not.toContain('AKIA');
+
+      const client = toExceptionResponse(
+        new HttpException('You can only message friends', 418),
+      );
+      // 4xx developer-authored client errors still surface to the UI.
+      expect(client.msg).toBe('You can only message friends');
     });
   });
 });

@@ -115,9 +115,50 @@ describe('UserPrivacyResolver', () => {
     });
 
     it('passes real values through on viewer-less (public auth-mutation) surfaces, where the row is the caller own', () => {
-      expect(resolver.status(row({ status: 'PENDING_VERIFICATION' }), undefined)).toBe(
-        'PENDING_VERIFICATION',
-      );
+      expect(
+        resolver.status(row({ status: 'PENDING_VERIFICATION' }), undefined),
+      ).toBe('PENDING_VERIFICATION');
+    });
+  });
+
+  describe('email (moderation-adjacent PII — redacted from ordinary peers, same gate as role/status)', () => {
+    it('redacts another user email to "" for a non-privileged viewer — regression: { users(search) { email } } harvested real emails for any session', () => {
+      expect(
+        resolver.email(
+          row({ email: 'victim@example.com' }),
+          viewer('someone-else'),
+        ),
+      ).toBe('');
+    });
+
+    it('keeps the real value for the owner themselves', () => {
+      expect(
+        resolver.email(row({ email: 'owner@example.com' }), viewer('owner-1')),
+      ).toBe('owner@example.com');
+    });
+
+    it('keeps real values for ADMIN and SUPERADMIN viewers — the admin search UI reads them', () => {
+      expect(
+        resolver.email(
+          row({ email: 'target@example.com' }),
+          viewer('adm', 'ADMIN'),
+        ),
+      ).toBe('target@example.com');
+    });
+
+    it('does NOT privilege MODERATOR viewers — no admin surface gates on that role', () => {
+      expect(
+        resolver.email(
+          row({ email: 'target@example.com' }),
+          viewer('mod', 'MODERATOR'),
+        ),
+      ).toBe('');
+    });
+
+    it('passes the real value through on viewer-less (public auth-mutation) surfaces, where the row is the caller own', () => {
+      expect(
+        resolver.email(row({ email: 'self@example.com' }), undefined),
+      ).toBe('self@example.com');
     });
   });
 

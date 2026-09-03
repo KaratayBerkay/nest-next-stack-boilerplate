@@ -16,9 +16,10 @@ import { User } from '../@generated/user/user.model';
 import { MessagingService } from './messaging.service';
 import { Conversation } from './models/conversation.model';
 import { ConversationMessagesPage } from './models/conversation-messages-page.model';
+import { ReplyPreview } from './models/reply-preview.model';
 import { SendMessageInput } from './dto/send-message.input';
 import { StorageCryptoService } from '../wire-crypto/storage-crypto.service';
-import { decryptMessageBody } from './message-body.util';
+import { buildReplyPreview, decryptMessageBody } from './message-body.util';
 
 @UseGuards(SessionAuthGuard)
 @Resolver(() => Message)
@@ -130,5 +131,22 @@ export class MessagingResolver {
       this.storageCrypto,
     );
     return (decrypted.body as string | null) ?? null;
+  }
+
+  // `replyTo` is `@HideField()`'d on the generated Message type (see
+  // reply-preview.model.ts) so clients never pull the raw quoted row's
+  // ciphertext/full sender/recipient objects — this resolves the same safe
+  // ReplyPreview shape REST already returns via decryptMessageBody. The
+  // `include: { replyTo: ... }` in getMessages() still populates the hidden
+  // field on the object itself, just not the auto-generated GraphQL schema.
+  @ResolveField(() => ReplyPreview, { nullable: true })
+  replyTo(
+    @Parent() message: Message,
+    @CurrentUser() user: JwtUser,
+  ): ReturnType<typeof buildReplyPreview> {
+    const replyTo = (
+      message as unknown as { replyTo?: Record<string, unknown> | null }
+    ).replyTo;
+    return buildReplyPreview(replyTo, user.userId, this.storageCrypto);
   }
 }

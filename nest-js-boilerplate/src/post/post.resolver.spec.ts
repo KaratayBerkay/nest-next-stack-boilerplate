@@ -77,20 +77,25 @@ describe('PostResolver', () => {
   });
 
   describe('reactionBreakdown', () => {
+    const reactivePost = makePost({
+      reactions: [
+        { type: 'LIKE', userId: 'u1' },
+        { type: 'LIKE', userId: 'u2' },
+        { type: 'LOVE', userId: 'u3' },
+      ],
+    });
+
     it('returns empty array when no reactions', () => {
-      const result = resolver.reactionBreakdown(makePost());
+      const result = resolver.reactionBreakdown(makePost(), {
+        tier: 'MEDIUM',
+      } as never);
       expect(result).toEqual([]);
     });
 
-    it('groups reactions by type with correct counts', () => {
-      const post = makePost({
-        reactions: [
-          { type: 'LIKE', userId: 'u1' },
-          { type: 'LIKE', userId: 'u2' },
-          { type: 'LOVE', userId: 'u3' },
-        ],
-      });
-      const result = resolver.reactionBreakdown(post);
+    it('groups reactions by type with correct counts for a MEDIUM+ viewer', () => {
+      const result = resolver.reactionBreakdown(reactivePost, {
+        tier: 'MEDIUM',
+      } as never);
       expect(result).toHaveLength(2);
       expect(result.find((r: ReactionCount) => r.type === 'LIKE')?.count).toBe(
         2,
@@ -99,22 +104,43 @@ describe('PostResolver', () => {
         1,
       );
     });
-  });
 
-  describe('whoReacted', () => {
-    it('returns empty array when no reactions', () => {
-      const result = resolver.whoReacted(makePost());
+    // Regression: `@UseGuards(TierGuard)` on a `@ResolveField()` is a silent
+    // no-op under this app's `fieldResolverEnhancers: ['interceptors']`
+    // GraphQL config (guards never run for field resolvers) — the gate has
+    // to be this imperative check, or a FREE-tier caller gets the real data.
+    it('withholds the breakdown from a below-MEDIUM viewer', () => {
+      const result = resolver.reactionBreakdown(reactivePost, {
+        tier: 'FREE',
+      } as never);
       expect(result).toEqual([]);
     });
 
-    it('maps reactions to reactors with user names', () => {
-      const post = makePost({
-        reactions: [
-          { type: 'LIKE', userId: 'u1', user: { name: 'Alice' } },
-          { type: 'LOVE', userId: 'u2', user: null },
-        ],
-      });
-      const result = resolver.whoReacted(post);
+    it('withholds the breakdown when the viewer has no tier at all', () => {
+      const result = resolver.reactionBreakdown(reactivePost, {} as never);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe('whoReacted', () => {
+    const reactivePost = makePost({
+      reactions: [
+        { type: 'LIKE', userId: 'u1', user: { name: 'Alice' } },
+        { type: 'LOVE', userId: 'u2', user: null },
+      ],
+    });
+
+    it('returns empty array when no reactions', () => {
+      const result = resolver.whoReacted(makePost(), {
+        tier: 'PREMIUM',
+      } as never);
+      expect(result).toEqual([]);
+    });
+
+    it('maps reactions to reactors with user names for a PREMIUM viewer', () => {
+      const result = resolver.whoReacted(reactivePost, {
+        tier: 'PREMIUM',
+      } as never);
       expect(result).toHaveLength(2);
       expect(result[0]).toEqual({ userId: 'u1', name: 'Alice', type: 'LIKE' });
       expect(result[1]).toEqual({
@@ -122,6 +148,15 @@ describe('PostResolver', () => {
         name: undefined,
         type: 'LOVE',
       });
+    });
+
+    // Same field-resolver-guards-don't-run regression as reactionBreakdown
+    // above, at the stricter PREMIUM tier this field requires.
+    it('withholds reactor identities from a below-PREMIUM viewer', () => {
+      const result = resolver.whoReacted(reactivePost, {
+        tier: 'MEDIUM',
+      } as never);
+      expect(result).toEqual([]);
     });
   });
 

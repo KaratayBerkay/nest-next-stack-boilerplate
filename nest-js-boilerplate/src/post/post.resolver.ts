@@ -20,6 +20,7 @@ import { CurrentUser } from '../auth/current-user.decorator';
 import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { MinTier } from '../authorization/min-tier.decorator';
 import { TierGuard } from '../authorization/tier.guard';
+import { TIER_RANK } from '../authorization/tier-rank';
 import { DataloaderService } from '../common/dataloader/dataloader.service';
 import { CreatePostInput } from './dto/create-post.input';
 import { UpdatePostInput } from './dto/update-post.input';
@@ -32,6 +33,18 @@ type PostWithReactions = Post & {
     user?: { name: string | null } | null;
   }[];
 };
+
+/** Same rank comparison TierGuard does — used directly here because guards
+ *  never run for `@ResolveField()` methods under this app's GraphQL config
+ *  (see reactionBreakdown's doc comment below). */
+function meetsTier(
+  userTier: string | undefined,
+  required: SubscriptionTier,
+): boolean {
+  const userRank = TIER_RANK[userTier as SubscriptionTier] ?? -1;
+  const requiredRank = TIER_RANK[required] ?? Infinity;
+  return userRank >= requiredRank;
+}
 
 @ObjectType()
 export class PostStats {
@@ -98,10 +111,21 @@ export class PostResolver {
     return post.imageUrl ?? null;
   }
 
-  @UseGuards(TierGuard)
-  @MinTier(SubscriptionTier.MEDIUM)
+  // `@UseGuards`/`@MinTier` do NOT gate this: GraphQLModule is configured with
+  // `fieldResolverEnhancers: ['interceptors']` (see app.module.ts), so Nest
+  // never runs guards for a `@ResolveField()` — decorated or not, class-level
+  // or method-level (confirmed in @nestjs/graphql's resolvers-explorer.service
+  // — `contextOptions.guards` is hard-false for property resolvers unless
+  // 'guards' is in that list). A `@UseGuards(TierGuard)` here would silently
+  // never run, handing every viewer the full breakdown regardless of tier.
+  // The tier check has to be imperative, same pattern UserPrivacyResolver
+  // uses for its own field-level redaction.
   @ResolveField(() => [ReactionCount])
-  reactionBreakdown(@Parent() post: Post): ReactionCount[] {
+  reactionBreakdown(
+    @Parent() post: Post,
+    @CurrentUser() viewer: JwtUser,
+  ): ReactionCount[] {
+    if (!meetsTier(viewer.tier, SubscriptionTier.MEDIUM)) return [];
     const reactions = (post as PostWithReactions).reactions ?? [];
     const counts = new Map<string, number>();
     for (const r of reactions) {
@@ -113,10 +137,10 @@ export class PostResolver {
     }));
   }
 
-  @UseGuards(TierGuard)
-  @MinTier(SubscriptionTier.PREMIUM)
+  // Same field-resolver-guards-don't-run gap as reactionBreakdown above.
   @ResolveField(() => [Reactor])
-  whoReacted(@Parent() post: Post): Reactor[] {
+  whoReacted(@Parent() post: Post, @CurrentUser() viewer: JwtUser): Reactor[] {
+    if (!meetsTier(viewer.tier, SubscriptionTier.PREMIUM)) return [];
     const reactions = (post as PostWithReactions).reactions ?? [];
     return reactions.map((r) => ({
       userId: r.userId,

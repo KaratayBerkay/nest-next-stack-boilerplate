@@ -367,6 +367,7 @@ export class RtcCallService {
         callId,
         token: callerToken,
         roomName: livekitRoomName,
+        livekitUrl: this.liveKit.clientUrl,
         maxDurationMinutes,
       });
       this.realtime.emitToUser(call.calleeId, {
@@ -374,6 +375,7 @@ export class RtcCallService {
         callId,
         token: calleeToken,
         roomName: livekitRoomName,
+        livekitUrl: this.liveKit.clientUrl,
         maxDurationMinutes,
       });
     } catch (err) {
@@ -789,6 +791,7 @@ export class RtcCallService {
       peerAvatarUrl: visibleAvatarUrl(peer),
       token,
       roomName: call.room.livekitRoomName,
+      livekitUrl: this.liveKit.clientUrl,
       maxDurationMinutes: call.maxDurationMinutes ?? undefined,
       // Unlike the live rtc:accepted push (where the client carried these
       // from rtc:invite/startCall), a refreshed client knows neither: without

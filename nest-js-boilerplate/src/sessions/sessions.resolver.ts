@@ -1,4 +1,4 @@
-import { Logger, UseGuards } from '@nestjs/common';
+import { ForbiddenException, Logger, UseGuards } from '@nestjs/common';
 import {
   Args,
   Field,
@@ -137,8 +137,27 @@ export class SessionsResolver {
     return true;
   }
 
+  /**
+   * Marks the current session's device trusted, which makes future logins
+   * from it skip MFA entirely — so it needs a step-up of its own. The only
+   * proof accepted is the one-shot marker verifyLoginMfa's token issuance
+   * leaves behind (TokenStoreService.markMfaFresh): this session passed the
+   * second factor moments ago. Without it, any authenticated session —
+   * including a hijacked one — could quietly entrench itself by trusting
+   * its device behind nothing more than SessionAuthGuard.
+   */
   @Mutation(() => Boolean)
   async trustCurrentDevice(@CurrentUser() user: JwtUser) {
+    if (
+      !user.sessionId ||
+      !(await this.tokenStore.consumeMfaFresh(user.sessionId))
+    ) {
+      throw new ForbiddenException({
+        exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED',
+        msg: 'A device can only be trusted right after completing two-factor sign-in',
+        key: 'auth.errors.mfaStepUpRequired',
+      });
+    }
     const entries = await this.tokenStore.listSessionsWithKeys(user.userId);
     const current = entries.find((e) => e.session.sessionId === user.sessionId);
     if (!current?.session.deviceId) return false;

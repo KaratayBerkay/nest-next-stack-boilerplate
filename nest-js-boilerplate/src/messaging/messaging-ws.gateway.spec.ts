@@ -474,4 +474,123 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
       expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
     });
   });
+
+  // CROSS-046: WS attachments skipped every DTO rule the REST path enforces,
+  // so a crafted `url` was persisted and broadcast as-is and crashed the
+  // recipient's render. The gateway now validates against the same
+  // MessageAttachmentDto.
+  describe('CROSS-046 — WS attachment validation', () => {
+    beforeEach(() => {
+      jest.clearAllMocks();
+    });
+
+    const bad = (
+      attachments: unknown,
+    ): { recipientId: string; text: string; attachments: never } => ({
+      recipientId: 'u2',
+      text: '',
+      attachments: attachments as never,
+    });
+
+    it('rejects a direct-message attachment whose url is not a URL', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(
+        ws,
+        bad([{ url: 'not a url at all', type: 'image/png', name: 'x.png' }]),
+      );
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('invalid attachments'),
+      );
+      expect(mockMs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects a room-message attachment with a missing name / oversized type', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleRoomMessage(ws, {
+        room: 'general',
+        text: '',
+        attachments: [
+          { url: 'https://minio/x.png', type: 'x'.repeat(51) } as never,
+        ],
+      });
+      expect(ws.send).toHaveBeenCalledWith(
+        expect.stringContaining('invalid attachments'),
+      );
+      expect(mockMs.saveRoomMessage).not.toHaveBeenCalled();
+    });
+
+    it('rejects non-array / non-object attachment payloads', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(
+        ws,
+        bad('https://minio/x.png'),
+      );
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(
+        ws,
+        bad(['https://minio/x.png']),
+      );
+      expect(ws.send).toHaveBeenCalledTimes(2);
+      expect(mockMs.sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('strips fields the DTO does not declare (size/thumbnailUrl are resolved server-side)', async () => {
+      const ws = createMockWs('MEDIUM');
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        attachments: [
+          {
+            url: 'https://minio/x.png',
+            type: 'image/png',
+            name: 'x.png',
+            size: 1,
+            thumbnailUrl: 'javascript:alert(1)',
+            __proto__x: 'nope',
+          } as never,
+        ],
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        [{ url: 'https://minio/x.png', type: 'image/png', name: 'x.png' }],
+        undefined,
+        undefined,
+      );
+    });
+
+    it('keeps a well-formed storageEnvelope', async () => {
+      const ws = createMockWs('MEDIUM');
+      const storageEnvelope = { v: '1', nonce: 'n', ct: 'c' };
+      await (gateway as unknown as GatewayInternal).handleDirectMessage(ws, {
+        recipientId: 'u2',
+        text: '',
+        attachments: [
+          {
+            url: 'https://minio/x.png',
+            type: 'image/png',
+            name: 'x.png',
+            storageEnvelope,
+          } as never,
+        ],
+      });
+      expect(mockMs.sendMessage).toHaveBeenCalledWith(
+        'u1',
+        'u2',
+        '',
+        undefined,
+        [
+          {
+            url: 'https://minio/x.png',
+            type: 'image/png',
+            name: 'x.png',
+            storageEnvelope,
+          },
+        ],
+        undefined,
+        undefined,
+      );
+    });
+  });
 });

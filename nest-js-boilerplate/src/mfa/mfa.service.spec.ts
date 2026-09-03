@@ -20,7 +20,12 @@ interface MockPrisma {
     findFirst: jest.Mock;
     update: jest.Mock;
   };
-  mfaBackupCode: { deleteMany: jest.Mock; createMany: jest.Mock };
+  mfaBackupCode: {
+    deleteMany: jest.Mock;
+    createMany: jest.Mock;
+    findFirst: jest.Mock;
+    updateMany: jest.Mock;
+  };
   $transaction: jest.Mock;
 }
 
@@ -33,7 +38,12 @@ function mockPrisma(): MockPrisma {
       findFirst: jest.fn(),
       update: jest.fn(),
     },
-    mfaBackupCode: { deleteMany: jest.fn(), createMany: jest.fn() },
+    mfaBackupCode: {
+      deleteMany: jest.fn(),
+      createMany: jest.fn(),
+      findFirst: jest.fn().mockResolvedValue(null),
+      updateMany: jest.fn().mockResolvedValue({ count: 0 }),
+    },
     $transaction: jest.fn(),
   };
   // Callback-style interactive transaction: run the callback against the same
@@ -119,6 +129,102 @@ describe('MfaService', () => {
       );
       expect(prisma.mfaFactor.create).not.toHaveBeenCalled();
     });
+
+    // BE-030: with MFA already on, enroll() used to hand out a fresh pending
+    // factor to any authenticated session — a hijacked one could then
+    // verify it, replacing the owner's authenticator and backup codes.
+    describe('re-enrollment while MFA is already enabled (step-up)', () => {
+      const verifiedFactor = {
+        id: 'f-old',
+        secret: Buffer.from('encrypted-secret-blob'),
+      };
+
+      beforeEach(() => {
+        prisma.user.findUniqueOrThrow.mockResolvedValue({
+          id: 'u1',
+          email: 'alice@example.com',
+          mfaEnabled: true,
+        });
+        prisma.mfaFactor.findFirst.mockResolvedValue(verifiedFactor);
+      });
+
+      it('rejects with EX_AUTH_MFA_STEP_UP_REQUIRED when no current code is given', async () => {
+        await expect(service.enroll('u1')).rejects.toMatchObject({
+          response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' },
+        });
+        expect(prisma.$transaction).not.toHaveBeenCalled();
+        expect(prisma.mfaFactor.create).not.toHaveBeenCalled();
+      });
+
+      it('rejects a wrong current code with the same error (no oracle)', async () => {
+        mockedVerifyTotp.mockResolvedValue({ valid: false });
+
+        await expect(service.enroll('u1', '000000')).rejects.toMatchObject({
+          response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' },
+        });
+        expect(prisma.mfaFactor.create).not.toHaveBeenCalled();
+      });
+
+      it('accepts a valid code from the current factor and creates the pending factor', async () => {
+        mockedVerifyTotp.mockResolvedValue({ valid: true });
+
+        const result = await service.enroll('u1', '123456');
+
+        expect(result.secret).toBe('BASE32SECRETXXXX');
+        expect(mockedVerifyTotp).toHaveBeenCalledWith({
+          secret: 'BASE32SECRETXXXX',
+          token: '123456',
+        });
+        expect(prisma.mfaFactor.create).toHaveBeenCalledTimes(1);
+      });
+
+      it('accepts (and burns) an unused backup code instead of a TOTP code', async () => {
+        mockedVerifyTotp.mockResolvedValue({ valid: false });
+        prisma.mfaBackupCode.findFirst.mockResolvedValue({ id: 'bc1' });
+        prisma.mfaBackupCode.updateMany.mockResolvedValue({ count: 1 });
+
+        await service.enroll('u1', 'backup-code-1');
+
+        expect(prisma.mfaBackupCode.findFirst).toHaveBeenCalledWith({
+          where: {
+            userId: 'u1',
+            codeHash: 'sha256(backup-code-1)',
+            usedAt: null,
+          },
+        });
+        expect(prisma.mfaBackupCode.updateMany).toHaveBeenCalledWith({
+          where: { id: 'bc1', usedAt: null },
+          data: { usedAt: expect.any(Date) as never },
+        });
+        expect(prisma.mfaFactor.create).toHaveBeenCalledTimes(1);
+      });
+
+      it('rejects a backup code that a concurrent caller already claimed', async () => {
+        mockedVerifyTotp.mockResolvedValue({ valid: false });
+        prisma.mfaBackupCode.findFirst.mockResolvedValue({ id: 'bc1' });
+        prisma.mfaBackupCode.updateMany.mockResolvedValue({ count: 0 });
+
+        await expect(
+          service.enroll('u1', 'backup-code-1'),
+        ).rejects.toMatchObject({
+          response: { exc: 'EX_AUTH_MFA_STEP_UP_REQUIRED' },
+        });
+        expect(prisma.mfaFactor.create).not.toHaveBeenCalled();
+      });
+    });
+
+    it('first-time enrollment (MFA off) still needs no code', async () => {
+      prisma.user.findUniqueOrThrow.mockResolvedValue({
+        id: 'u1',
+        email: 'alice@example.com',
+        mfaEnabled: false,
+      });
+
+      await service.enroll('u1');
+
+      expect(mockedVerifyTotp).not.toHaveBeenCalled();
+      expect(prisma.mfaFactor.create).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('verify', () => {
@@ -170,6 +276,17 @@ describe('MfaService', () => {
         data: {
           verifiedAt: expect.any(Date) as never,
           lastUsedAt: expect.any(Date) as never,
+        },
+      });
+      // BE-030: a completed re-enrollment retires the previous verified
+      // factor in the same transaction — the rotation must not leave two
+      // live authenticators where login picks whichever is newest.
+      expect(prisma.mfaFactor.deleteMany).toHaveBeenCalledWith({
+        where: {
+          userId: 'u1',
+          method: 'TOTP',
+          verifiedAt: { not: null },
+          id: { not: 'f1' },
         },
       });
       expect(prisma.user.update).toHaveBeenCalledWith({

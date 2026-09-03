@@ -1,10 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import {
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
+import Redis from 'ioredis';
+import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveKitService, toLivekitRoomName } from './livekit.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -36,6 +39,19 @@ function chatChannel(slug: string): string {
   // RealtimeGateway's same flat roomSockets keyspace.
   return `rtc-meeting:${slug}`;
 }
+
+/** Redis SET of userIds the host removed from a meeting — see
+ *  removeMeetingParticipant. Keyed by roomId (never client-facing). */
+function removedSetKey(roomId: string): string {
+  return `rtc:meeting:removed:${roomId}`;
+}
+/** Outlives any meeting (the tier duration caps are minutes-to-hours);
+ *  finishMeeting deletes the set explicitly, this is only the safety net. */
+const REMOVED_SET_TTL_SECONDS = 24 * 60 * 60;
+/** Slack past the meeting's own duration cap so a legitimate participant's
+ *  reconnect near the end still carries a valid token; the sweep ends the
+ *  meeting itself at the cap, so nothing legitimate needs longer. */
+const MEETING_TOKEN_TTL_SLACK_SECONDS = 10 * 60;
 
 /** Shared include/orderBy for loading a room's participant rows with the
  *  user fields participantSummaries needs — email only feeds the shared
@@ -107,6 +123,7 @@ export class RtcMeetingService {
     private readonly friends: FriendsService,
     private readonly mail: MailService,
     private readonly config: ConfigService,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   async createMeeting(userId: string, title: string) {
@@ -261,6 +278,19 @@ export class RtcMeetingService {
 
   async joinMeeting(userId: string, slug: string) {
     const meeting = await this.mustFindActiveMeeting(slug);
+    // A host-removed participant stays out for the rest of the meeting —
+    // removal used to be a bare LiveKit kick, so the removed user could
+    // simply call join again (and their old token still worked, see below).
+    if (
+      userId !== meeting.hostId &&
+      (await this.isRemoved(meeting.roomId, userId))
+    ) {
+      throw new ForbiddenException({
+        exc: 'EX_MEETING_REMOVED',
+        msg: 'You were removed from this meeting by the host',
+        key: 'rtc.errors.meetingRemoved',
+      });
+    }
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { name: true, email: true, avatarUrl: true, hideAvatar: true },
@@ -318,6 +348,11 @@ export class RtcMeetingService {
         roomName: meeting.room.livekitRoomName!,
         canPublish: true,
         canSubscribe: true,
+        // Bounded by this meeting's own duration cap instead of the 4h
+        // default, so a removed participant's leftover token can't be
+        // replayed straight against LiveKit for hours after the meeting.
+        ttlSeconds:
+          meeting.maxDurationMinutes * 60 + MEETING_TOKEN_TTL_SLACK_SECONDS,
       });
     } catch (error) {
       this.logger.error(
@@ -483,6 +518,24 @@ export class RtcMeetingService {
       slug,
       'Only the host can remove a participant',
     );
+    if (targetUserId === hostUserId) {
+      // Removing yourself would ban the host from their own meeting;
+      // ending it is the operation they actually want.
+      throw new ForbiddenException({
+        exc: 'EX_FORBIDDEN',
+        msg: 'The host cannot remove themselves — end the meeting instead',
+        key: 'rtc.errors.hostCannotRemoveSelf',
+      });
+    }
+    // Recorded BEFORE the SFU kick: joinMeeting refuses this user from now
+    // on, and enforceRemovalOnRejoin re-kicks them if their still-valid
+    // token reconnects to LiveKit directly (the webhook path). Removal is a
+    // ban for the rest of the meeting, not a "please leave".
+    await this.redis
+      .multi()
+      .sadd(removedSetKey(meeting.roomId), targetUserId)
+      .expire(removedSetKey(meeting.roomId), REMOVED_SET_TTL_SECONDS)
+      .exec();
     if (meeting.room.livekitRoomName) {
       await this.liveKit.removeParticipant(
         meeting.room.livekitRoomName,
@@ -678,6 +731,45 @@ export class RtcMeetingService {
     return meeting;
   }
 
+  /** Whether the host removed `userId` from this meeting (roomId-keyed). */
+  private async isRemoved(roomId: string, userId: string): Promise<boolean> {
+    return (await this.redis.sismember(removedSetKey(roomId), userId)) === 1;
+  }
+
+  /**
+   * Webhook-side half of the ban: a removed participant whose token is
+   * still within its TTL can reconnect to LiveKit without ever touching
+   * joinMeeting. When LiveKit reports such a participant_joined, kick them
+   * again and tell the caller not to resurrect their participant row.
+   * Returns true when the join was refused.
+   */
+  async enforceRemovalOnRejoin(
+    roomId: string,
+    livekitRoomName: string,
+    userId: string,
+  ): Promise<boolean> {
+    if (!(await this.isRemoved(roomId, userId))) return false;
+    try {
+      await this.liveKit.removeParticipant(livekitRoomName, userId);
+    } catch (error) {
+      this.logger.error(
+        rtcErrorLog('meeting.removed_rejoin_kick_failed', error, {
+          roomId,
+          userId,
+          roomName: livekitRoomName,
+        }),
+      );
+    }
+    this.logger.warn(
+      rtcLog('meeting.removed_rejoin_refused', {
+        roomId,
+        userId,
+        roomName: livekitRoomName,
+      }),
+    );
+    return true;
+  }
+
   private async mustFindActiveMeeting(slug: string) {
     // `host` must be loaded here: joinMeeting returns this object through
     // GraphQL, where Meeting.host is non-nullable — omitting the include
@@ -753,6 +845,8 @@ export class RtcMeetingService {
     if (livekitRoomName) {
       await this.liveKit.deleteRoom(livekitRoomName);
     }
+    // The removed set only matters while the meeting can still be joined.
+    await this.redis.del(removedSetKey(roomId));
     this.realtime.broadcastToRoom(chatChannel(slug), {
       type: 'rtc:meeting-ended',
       slug,

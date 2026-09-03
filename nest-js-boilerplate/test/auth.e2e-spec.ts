@@ -2,7 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { getQueueToken } from '@nestjs/bullmq';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Queue } from 'bullmq';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type Redis from 'ioredis';
 import { generateSync } from 'otplib';
 import request from 'supertest';
@@ -235,17 +235,26 @@ describe('Auth + Outbox (e2e)', () => {
     // loginWithOAuth only trusts a profile it retrieves itself via a
     // single-use `state` key (populated the same way a real provider
     // callback would populate it) — never a client-supplied profile, which
-    // is exactly the account-takeover hole this shape closes. Each login
-    // here seeds its own state to model two separate real handshakes that
-    // both happen to resolve to the same provider identity.
-    const seedOAuthState = async (): Promise<string> => {
+    // is exactly the account-takeover hole this shape closes. Redeeming it
+    // also needs the per-handshake `claim` the callback mints (CROSS-032),
+    // seeded here as its sha256 the way OAuthService.handleCallback stores
+    // it. Each login seeds its own state to model two separate real
+    // handshakes that both happen to resolve to the same provider identity.
+    const seedOAuthState = async (): Promise<{
+      state: string;
+      claim: string;
+    }> => {
       const state = randomUUID();
+      const claim = randomUUID();
       await redis.setex(
         `${OAUTH_PROFILE_PREFIX}${state}`,
         OAUTH_TTL_SEC,
-        JSON.stringify(profile),
+        JSON.stringify({
+          ...profile,
+          claimHash: createHash('sha256').update(claim).digest('hex'),
+        }),
       );
-      return state;
+      return { state, claim };
     };
 
     const first = await authService.loginWithOAuth(await seedOAuthState());
@@ -267,7 +276,10 @@ describe('Auth + Outbox (e2e)', () => {
     // handshake — it must never accept a caller-asserted identity (e.g. an
     // arbitrary victim email) directly.
     await expect(
-      authService.loginWithOAuth(`unknown-${randomUUID()}`),
+      authService.loginWithOAuth({
+        state: `unknown-${randomUUID()}`,
+        claim: 'irrelevant-nothing-stored',
+      }),
     ).rejects.toThrow(/oauth profile expired or not found/i);
   });
 });

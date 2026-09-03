@@ -28,7 +28,9 @@ class AttachmentEnvelopeDto {
   ct!: string;
 }
 
-class MessageAttachmentDto {
+/** Exported so the WS gateway can validate `attachments[]` against the exact
+ *  same rules the REST path gets from the global ValidationPipe. */
+export class MessageAttachmentDto {
   @IsUrl({ require_tld: false })
   @ApiProperty({
     description: 'Attachment file URL (from POST /upload/attachment)',
