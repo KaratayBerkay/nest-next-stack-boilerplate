@@ -46,7 +46,14 @@ services:
     restart: unless-stopped
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - "6379:6379"
+      # localhost-only (BE-036): this is the authoritative session store and
+      # runs with no requirepass — bound to all interfaces it let anyone on
+      # the host's LAN read every `sess:*` hash or plant an
+      # `oauth:profile:<state>` key and impersonate loginWithOAuth. The
+      # `app` container reaches it over the compose network regardless;
+      # only host-local tooling (redis-cli, a local `pnpm start:dev`) needs
+      # the published port. Same treatment redis-commander got below.
+      - "127.0.0.1:6379:6379"
     volumes:
       - redisdata:/data
     healthcheck:
