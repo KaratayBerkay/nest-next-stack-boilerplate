@@ -7,13 +7,9 @@ import type { User } from "@/types/auth/User";
 // server component; here the root route's loader resolves the session
 // server-side and passes it down as plain props. Must render inside
 // <AuthProvider>.
-export function SessionBridge({
-  user,
-  token,
-}: {
-  user: User | null;
-  token: string | null;
-}) {
+export function SessionBridge({ user }: { user: User | null }) {
   if (!user) return null;
-  return <SessionHydrator user={user} token={token} />;
+  // Only the user snapshot crosses into client state — never the access
+  // token (see __root.tsx's loader for why).
+  return <SessionHydrator user={user} />;
 }

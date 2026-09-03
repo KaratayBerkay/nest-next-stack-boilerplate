@@ -56,22 +56,16 @@ interface RootLoaderData {
   messages: I18nMessages;
   activeTheme: ThemeName | null;
   sessionUser: User | null;
-  accessToken: string | null;
 }
 
 const getRootData = createServerFn().handler(
   async (): Promise<RootLoaderData> => {
-    const [
-      { getAllMessages },
-      { getCookie },
-      { getSessionUser },
-      { getAccessToken },
-    ] = await Promise.all([
-      import("@/lib/i18n/get-all-messages"),
-      import("@tanstack/react-start/server"),
-      import("@/lib/auth-ssr"),
-      import("@/store/ssr-cookies"),
-    ]);
+    const [{ getAllMessages }, { getCookie }, { getSessionUser }] =
+      await Promise.all([
+        import("@/lib/i18n/get-all-messages"),
+        import("@tanstack/react-start/server"),
+        import("@/lib/auth-ssr"),
+      ]);
     const messages = getAllMessages<I18nMessages>(DEFAULT_LANG);
     const themeCookie = getCookie("theme");
     const activeTheme =
@@ -79,8 +73,10 @@ const getRootData = createServerFn().handler(
         ? (themeCookie as ThemeName)
         : null;
     const sessionUser = await getSessionUser();
-    const accessToken = sessionUser ? ((await getAccessToken()) ?? null) : null;
-    return { messages, activeTheme, sessionUser, accessToken };
+    // Only the user snapshot crosses into loader data. The access token is
+    // deliberately NOT serialized here: loader data ships in the client
+    // payload of every page, handing any XSS a durable bearer.
+    return { messages, activeTheme, sessionUser };
   },
 );
 
@@ -139,7 +135,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
 }
 
 function RootComponent() {
-  const { messages, sessionUser, accessToken } = Route.useLoaderData();
+  const { messages, sessionUser } = Route.useLoaderData();
 
   return (
     <>
@@ -166,7 +162,7 @@ function RootComponent() {
       <ThemeProvider>
         <AuthProvider>
           <Suspense fallback={null}>
-            <SessionBridge user={sessionUser} token={accessToken} />
+            <SessionBridge user={sessionUser} />
           </Suspense>
           <QueryProvider>
             <ToastProvider>

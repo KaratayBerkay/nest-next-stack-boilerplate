@@ -2,6 +2,7 @@ import { trace } from "@opentelemetry/api";
 import { connection } from "next/server";
 
 import { observabilityState } from "@/lib/observability";
+import { getAccessToken } from "@/store/ssr-cookies";
 
 // GET creates one explicit custom span, then reports the observability store:
 // `startedAt` proves the `register()` startup hook ran, and the captured spans
@@ -11,6 +12,13 @@ import { observabilityState } from "@/lib/observability";
 // API is how you keep a Route Handler fresh.
 export async function GET() {
   await connection();
+
+  // Session-gated: span names, recent error strings, and uptime are internal
+  // telemetry — cheap recon for an anonymous scanner. Any logged-in user
+  // (this is a demo/observability surface, not an admin one) may read it.
+  if (!(await getAccessToken())) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const tracer = trace.getTracer("observability-demo");
   tracer.startActiveSpan("observability.check", (span) => {

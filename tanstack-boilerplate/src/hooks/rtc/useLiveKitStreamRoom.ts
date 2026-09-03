@@ -47,6 +47,9 @@ export function useLiveKitStreamRoom(
   isLocalBroadcaster: boolean,
   streamId?: string | null,
   roomName?: string | null,
+  /** Server-supplied client URL (the join result's `livekitUrl`); falls
+   *  back to NEXT_PUBLIC_LIVEKIT_URL when the backend has none configured. */
+  serverUrl?: string | null,
 ): UseLiveKitStreamRoomResult {
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
@@ -96,7 +99,7 @@ export function useLiveKitStreamRoom(
   }, [broadcasterId, isLocalBroadcaster]);
 
   useEffect(() => {
-    const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
+    const url = serverUrl || clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
     if (!token || !url) return;
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
@@ -234,7 +237,14 @@ export function useLiveKitStreamRoom(
       setScreenShareTrack(null);
       setAudioTrack(null);
     };
-  }, [isLocalBroadcaster, rebuildBroadcasterTracks, roomName, streamId, token]);
+  }, [
+    isLocalBroadcaster,
+    rebuildBroadcasterTracks,
+    roomName,
+    serverUrl,
+    streamId,
+    token,
+  ]);
 
   // Prevent OS sleep/throttling while the stream is up (broadcasting or
   // viewing), and mark the tab as active media for the lock screen.

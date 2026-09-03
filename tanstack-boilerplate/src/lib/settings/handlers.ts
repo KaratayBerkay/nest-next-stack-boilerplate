@@ -41,12 +41,21 @@ export async function saveSettings(
   saveFailed: string,
   refreshUser: () => Promise<void>,
   updateProfile: UpdateProfileFn,
+  /**
+   * Runs after a successful save with the locale that was persisted. The
+   * page uses it to actually switch the UI language (cookie + navigation,
+   * same as the header LangSwitcher) — without it the setting was saved to
+   * the profile and then only ever read back to pre-fill this dropdown
+   * (CROSS-019).
+   */
+  applyLocale?: (locale: string) => void,
 ) {
   setSaving(true);
   try {
     await updateProfile({ locale, timezone });
     toast({ title: saveSuccess, variant: "success" });
     await refreshUser();
+    applyLocale?.(locale);
   } catch (err) {
     const exception = (err as Error & { exception?: { msg?: string } })
       .exception;

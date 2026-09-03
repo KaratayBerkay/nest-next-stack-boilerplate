@@ -14,6 +14,7 @@ import {
 } from "@/lib/cookie";
 import { ME_QUERY } from "@/lib/graphql/queries";
 import { encodeSessionUserCookie } from "@/lib/session-user-cookie";
+import { isValidOAuthProviderName } from "@/lib/oauth-provider";
 import {
   DEVICE_TOKEN_HEADER,
   RBAC_TOKEN_HEADER,
@@ -54,9 +55,22 @@ export const GET = async (
   return withLogging(async (_request, log) => {
     const { searchParams } = new URL(request.url);
     const state = searchParams.get("state");
+    const claim = searchParams.get("claim");
     const error = searchParams.get("error");
     const env = serverEnv();
     const loginUrl = new URL("/auth/login", env.NEXT_PUBLIC_APP_URL);
+
+    // Validate before this unvalidated route segment is interpolated into a
+    // cookie path below — see lib/oauth-provider.ts. Checked before the
+    // `state`/`error` branches so a malformed segment never reaches cookies().
+    if (!isValidOAuthProviderName(providerName)) {
+      log.warn(
+        { provider: providerName },
+        "oauth callback: invalid provider segment",
+      );
+      loginUrl.searchParams.set("error", "oauth_unavailable");
+      return NextResponse.redirect(loginUrl, 302);
+    }
 
     if (error) {
       log.warn(
@@ -90,10 +104,25 @@ export const GET = async (
       return NextResponse.redirect(loginUrl, 302);
     }
 
+    // The backend mints `claim` per completed provider handshake and sends
+    // it only on this redirect (CROSS-032). `state` is chosen by whoever
+    // *initiates* a flow, so on its own it would let an attacker start a
+    // flow, phish the victim into finishing the consent screen, and redeem
+    // the victim's profile with the state they already knew — the claim is
+    // what proves this browser is the one that actually completed it.
+    if (!claim) {
+      log.warn(
+        { provider: providerName, state },
+        "oauth callback: missing claim",
+      );
+      loginUrl.searchParams.set("error", "missing_claim");
+      return NextResponse.redirect(loginUrl, 302);
+    }
+
     try {
       // The profile itself is never fetched or seen by this route anymore —
       // loginWithOAuth retrieves it server-to-server on the NestJS side by
-      // redeeming `state` (a single-use claim ticket that only resolves to a
+      // redeeming `state` + `claim` (single-use, and only resolvable to a
       // real profile once OAuthService.handleCallback completed a genuine
       // provider handshake). Forwarding a client-visible profile object here
       // was the account-takeover hole: anyone could fabricate one.
@@ -112,7 +141,13 @@ export const GET = async (
           refreshToken?: string;
           user: unknown;
         };
-      }>(LOGIN_WITH_OAUTH, { input: { state } }, undefined, undefined, true);
+      }>(
+        LOGIN_WITH_OAUTH,
+        { input: { state, claim } },
+        undefined,
+        undefined,
+        true,
+      );
 
       if (errors || !data?.loginWithOAuth) {
         log.warn(

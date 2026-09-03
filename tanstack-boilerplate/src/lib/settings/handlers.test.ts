@@ -54,3 +54,50 @@ describe("saveSettings", () => {
     });
   });
 });
+
+// CROSS-019: the persisted locale must actually switch the UI language —
+// saveSettings hands the saved value to the page's applyLocale after the
+// profile write and refresh succeed, and never after a failed save.
+describe("saveSettings — applying the saved language", () => {
+  it("calls applyLocale with the saved locale after a successful save", async () => {
+    const applyLocale = vi.fn();
+    const refreshUser = vi.fn().mockResolvedValue(undefined);
+
+    await saveSettings(
+      vi.fn(),
+      "tr",
+      "Europe/Istanbul",
+      vi.fn().mockReturnValue("toast-id"),
+      "Saved",
+      "Failed",
+      refreshUser,
+      vi.fn().mockResolvedValue(undefined),
+      applyLocale,
+    );
+
+    expect(applyLocale).toHaveBeenCalledWith("tr");
+    // The session snapshot is refreshed first, so the navigated-to page
+    // already renders against the new profile.
+    expect(refreshUser.mock.invocationCallOrder[0]).toBeLessThan(
+      applyLocale.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("does not apply the locale when the save failed", async () => {
+    const applyLocale = vi.fn();
+
+    await saveSettings(
+      vi.fn(),
+      "tr",
+      "UTC",
+      vi.fn().mockReturnValue("toast-id"),
+      "Saved",
+      "Failed",
+      vi.fn(),
+      vi.fn().mockRejectedValue(new Error("nope")),
+      applyLocale,
+    );
+
+    expect(applyLocale).not.toHaveBeenCalled();
+  });
+});

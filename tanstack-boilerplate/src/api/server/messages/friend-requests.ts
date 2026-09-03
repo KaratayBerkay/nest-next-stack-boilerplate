@@ -2,8 +2,11 @@ import { apiFetch } from "@/lib/api-client";
 import { MESSAGES_FRIENDS_REQUESTS_URL } from "@/constants/api/urls";
 
 export interface FriendRequest {
+  // No `email`: the backend deliberately stops returning a counterparty's
+  // address on GET /api/friends/requests (it was a harvesting channel — the
+  // list can include strangers). Nothing in the UI ever read it.
   id: string;
-  user: { id: string; name: string; email: string };
+  user: { id: string; name: string };
   direction: "incoming" | "outgoing";
 }
 

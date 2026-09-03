@@ -84,18 +84,13 @@ describe("LoginForm", () => {
 
   it("disables resend during cooldown and re-enables once it elapses", async () => {
     vi.useFakeTimers();
-    const user = {
-      id: "u1",
-      email: "alice@example.com",
-      role: "USER",
-      status: "ACTIVE",
-    };
+    // BE-033: the challenge error carries no `user` any more — the form
+    // must get by on the email the person typed.
     loginMock.mockRejectedValueOnce(
       Object.assign(new Error("MFA required"), {
         mfaRequired: true,
         mfaToken: "token-1",
         mfaMethod: "EMAIL",
-        user,
       }),
     );
 

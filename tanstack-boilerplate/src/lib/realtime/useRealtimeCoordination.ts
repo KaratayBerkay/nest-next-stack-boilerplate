@@ -19,7 +19,11 @@ import { resyncAfterConnect } from "./resync";
 type FrameHandler = (data: Record<string, unknown>) => void;
 
 export function useRealtimeCoordination() {
-  const { token, user } = useAuth();
+  const { user } = useAuth();
+  // Stable boolean gate: the raw bearer no longer reaches JS (cookies
+  // authenticate the WS), and depending on the `user` object itself would
+  // tear down the socket on every profile refetch.
+  const hasSession = user != null;
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -67,7 +71,7 @@ export function useRealtimeCoordination() {
   }, []);
 
   useEffect(() => {
-    if (!token) return;
+    if (!hasSession) return;
     let alive = true;
 
     const process = (frame: Record<string, unknown>) => {
@@ -324,10 +328,10 @@ export function useRealtimeCoordination() {
       client.disconnect();
       clientRef.current = null;
     };
-  }, [token, queryClient, wakeTick]);
+  }, [hasSession, queryClient, wakeTick]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!hasSession) return;
     const claim = routeToPageClaim(pathname, searchParams);
     claimRef.current = claim;
 
@@ -340,7 +344,7 @@ export function useRealtimeCoordination() {
         payload: { ...claim, tabId: tabIdRef.current },
       } satisfies Cmd);
     }
-  }, [pathname, searchParams, token]);
+  }, [pathname, searchParams, hasSession]);
 
   const prevStatusRef = useRef<RealtimeStatus | null>(null);
   useEffect(() => {

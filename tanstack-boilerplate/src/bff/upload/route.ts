@@ -8,6 +8,7 @@ import {
   MAX_UPLOAD_SIZE,
   MAX_UPLOAD_SIZE_MB,
 } from "@/constants/upload";
+import { oversizedBodyResponse, MULTIPART_SLACK } from "@/lib/body-limit";
 import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
@@ -16,6 +17,9 @@ export async function POST(request: Request) {
     if (!accessToken) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const tooLarge = oversizedBodyResponse(request, MAX_UPLOAD_SIZE + MULTIPART_SLACK);
+    if (tooLarge) return tooLarge;
 
     const formData = await request.formData();
     const file = formData.get("file");

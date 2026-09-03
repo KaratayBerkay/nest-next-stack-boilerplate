@@ -4,7 +4,6 @@ import type { User } from "@/types/auth/User";
 
 export interface GetMeResult {
   user: User | null;
-  accessToken?: string;
 }
 
 export async function getMeServer(): Promise<GetMeResult> {

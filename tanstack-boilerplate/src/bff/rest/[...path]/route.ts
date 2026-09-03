@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverEnv } from "@/lib/env";
 import { getAccessToken } from "@/store/ssr-cookies";
-import { parseProxiedResponse, sessionTokenHeaders } from "@/lib/backend";
+import {
+  csrfEchoHeaders,
+  isSafeProxyPath,
+  parseProxiedResponse,
+  sessionTokenHeaders,
+} from "@/lib/backend";
 import { POST as POST_METHOD } from "@/constants/api/methods";
 import {
   JSON_CONTENT_TYPE_HEADER,
@@ -24,6 +29,9 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
+  if (!isSafeProxyPath(path)) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
   const qs = request.nextUrl.searchParams.toString();
   const url = `${serverEnv().APP_URL}/api/${path.join("/")}${qs ? "?" + qs : ""}`;
   const headers = await getAuthHeaders();
@@ -40,12 +48,22 @@ export async function POST(
   { params }: { params: Promise<{ path: string[] }> },
 ) {
   const { path } = await params;
+  if (!isSafeProxyPath(path)) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 });
+  }
+  const csrf = await csrfEchoHeaders();
+  if (!csrf) {
+    return NextResponse.json(
+      { error: "Invalid or missing CSRF token" },
+      { status: 403 },
+    );
+  }
   const body = await request.text();
   const url = `${serverEnv().APP_URL}/api/${path.join("/")}`;
   const headers = await getAuthHeaders();
   const res = await fetch(url, {
     method: POST_METHOD,
-    headers,
+    headers: { ...headers, ...csrf },
     body,
   });
   return parseProxiedResponse(res, {

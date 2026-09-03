@@ -34,9 +34,26 @@ test("/security/* pages carry strict CSP with all directives", async ({
   expect(csp).toMatch(NONCE_RE);
 });
 
-test("non-security routes do not carry CSP header", async ({ request }) => {
+test("non-security routes carry the blanket CSP, not the /security/* nonce policy", async ({
+  request,
+}) => {
   const res = await request.get("/");
-  expect(res.headers()["content-security-policy"]).toBeUndefined();
+  const csp = res.headers()["content-security-policy"];
+  expect(csp).toBeTruthy();
+  expect(csp).toContain("frame-ancestors 'none'");
+  expect(csp).not.toMatch(NONCE_RE);
+});
+
+test("global security headers are present on an ordinary page", async ({
+  request,
+}) => {
+  const res = await request.get("/");
+  const headers = res.headers();
+  expect(headers["x-frame-options"]).toBe("DENY");
+  expect(headers["x-content-type-options"]).toBe("nosniff");
+  expect(headers["strict-transport-security"]).toContain("max-age=63072000");
+  expect(headers["referrer-policy"]).toBe("strict-origin-when-cross-origin");
+  expect(headers["cross-origin-opener-policy"]).toBe("same-origin");
 });
 
 test("nonce is unique per request on /security/*", async ({ request }) => {

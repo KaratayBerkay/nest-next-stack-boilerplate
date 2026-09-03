@@ -3,7 +3,6 @@
 import { loginServer } from "@/api/server/auth/login";
 import { registerServer } from "@/api/server/auth/register";
 import { logoutServer } from "@/api/server/auth/logout";
-import { refreshTokenServer } from "@/api/server/auth/token";
 import {
   verifyEmailServer,
   verifyEmailCodeServer,
@@ -37,8 +36,6 @@ export function useAuthActions() {
   ) => registerServer(email, password, name, timezone);
 
   const logout = async () => logoutServer();
-
-  const refreshToken = async () => refreshTokenServer();
 
   const verifyEmail = async (token: string) => verifyEmailServer(token);
 
@@ -75,7 +72,6 @@ export function useAuthActions() {
     login,
     register,
     logout,
-    refreshToken,
     verifyEmail,
     verifyEmailCode,
     resendEmailCode,

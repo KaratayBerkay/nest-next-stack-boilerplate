@@ -84,6 +84,9 @@ export function useLiveKitMeetingRoom(
   token: string | null,
   meetingId?: string | null,
   roomName?: string | null,
+  /** Server-supplied client URL (the join result's `livekitUrl`); falls
+   *  back to NEXT_PUBLIC_LIVEKIT_URL when the backend has none configured. */
+  serverUrl?: string | null,
 ): UseLiveKitMeetingRoomResult {
   const roomRef = useRef<Room | null>(null);
   const [connected, setConnected] = useState(false);
@@ -125,7 +128,7 @@ export function useLiveKitMeetingRoom(
   }, []);
 
   useEffect(() => {
-    const url = clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
+    const url = serverUrl || clientEnv.NEXT_PUBLIC_LIVEKIT_URL;
     if (!token || !url) return;
 
     const room = new Room({ adaptiveStream: true, dynacast: true });
@@ -260,7 +263,7 @@ export function useLiveKitMeetingRoom(
       roomRef.current = null;
       setParticipants([]);
     };
-  }, [meetingId, roomName, token, rebuildParticipants]);
+  }, [meetingId, roomName, token, serverUrl, rebuildParticipants]);
 
   // Prevent OS sleep/throttling while the meeting is up, and mark the tab
   // as active media for the lock screen.

@@ -18,6 +18,8 @@ export interface ActiveCallSnapshot {
   peerAvatarUrl?: string | null;
   token?: string;
   roomName?: string;
+  /** Client-facing LiveKit URL; null/absent when the server has none. */
+  livekitUrl?: string | null;
   maxDurationMinutes?: number;
   /** rtc:accepted recovery only — when the call actually connected, so a
    *  reloaded client's timer doesn't restart from 0:00. */

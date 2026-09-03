@@ -34,7 +34,20 @@ export async function GET(request: NextRequest) {
     status: 200,
     headers: {
       "Content-Type": contentType,
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // `private`, never `public`: this is DECRYPTED per-user-authorized
+      // content (the backend serves it `private` for the same reason — see
+      // upload.controller.ts). `public` invites any shared cache (the prod
+      // openresty, corporate proxies) to store the plaintext and replay it
+      // to a different user requesting the same objectName, bypassing the
+      // backend's uploader/DM-party/room-tier authorization entirely.
+      "Cache-Control": "private, max-age=31536000, immutable",
+      // start.ts's global security headers skip /api/*, and this is the one
+      // BFF route serving raw user-supplied bytes — mirror next.config.ts's
+      // /api/upload/serve override here: framable only same-origin (the PDF
+      // preview iframe), no active content, no sniffing.
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Content-Security-Policy": "default-src 'none'; frame-ancestors 'self';",
     },
   });
 }

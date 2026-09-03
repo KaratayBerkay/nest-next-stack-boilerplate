@@ -2,44 +2,15 @@
 
 import { useCallback, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { LANGS, LANG_COOKIE, type Lang } from "@/constants/i18n";
+import { LANGS, type Lang } from "@/constants/i18n";
 import { IconLanguage } from "@tabler/icons-react";
 import { IconButton } from "@/components/ui/button/icon-button";
 import { useClickOutside } from "@/hooks/useClickOutside";
-
-function setLangCookie(locale: Lang): void {
-  document.cookie = `${LANG_COOKIE}=${locale};path=/;max-age=${60 * 60 * 24 * 365};samesite=lax`;
-}
-
-/** Extract the locale segment from the pathname, if any. */
-function detectLang(pathname: string): Lang | null {
-  const segs = pathname.split("/").filter(Boolean);
-  for (const seg of segs) {
-    if ((LANGS as readonly string[]).includes(seg)) {
-      return seg as Lang;
-    }
-  }
-  return null;
-}
-
-// fallow-ignore-next-line complexity
-function localizePathname(
-  pathname: string,
-  currentLang: string | null,
-  target: Lang,
-): string {
-  if (currentLang && (LANGS as readonly string[]).includes(currentLang)) {
-    const regex = new RegExp(`^/([^/]+/)${currentLang}(/|$)`);
-    if (regex.test(pathname)) {
-      return pathname.replace(regex, `/$1${target}$2`);
-    }
-    const regex2 = new RegExp(`^/${currentLang}(/|$)`);
-    if (regex2.test(pathname)) {
-      return pathname.replace(regex2, `/${target}$1`);
-    }
-  }
-  return pathname;
-}
+import {
+  detectLang,
+  localizePathname,
+  setLangCookie,
+} from "@/lib/i18n/lang-routing";
 
 export function LangSwitcher() {
   const [open, setOpen] = useState(false);

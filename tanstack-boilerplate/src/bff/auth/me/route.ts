@@ -34,7 +34,7 @@ export const GET = withLogging(async (_request, log) => {
       // field was added most recently.
       if (cookieUser.sessionId !== undefined) {
         return NextResponse.json(
-          { user: cookieUser, accessToken },
+          { user: cookieUser },
           { status: 200 },
         );
       }
@@ -64,7 +64,7 @@ export const GET = withLogging(async (_request, log) => {
       // keep serving the stale-but-valid cookie rather than logging the
       // user out over a transient GraphQL hiccup.
       return NextResponse.json(
-        { user: cookieUser, accessToken },
+        { user: cookieUser },
         { status: 200 },
       );
     }
@@ -82,7 +82,7 @@ export const GET = withLogging(async (_request, log) => {
   log.info({}, "me: GraphQL fallback succeeded");
   const mergedUser = cookieUser ? { ...cookieUser, ...data.me } : data.me;
   const response = NextResponse.json(
-    { user: mergedUser, accessToken },
+    { user: mergedUser },
     { status: 200 },
   );
   response.cookies.set(

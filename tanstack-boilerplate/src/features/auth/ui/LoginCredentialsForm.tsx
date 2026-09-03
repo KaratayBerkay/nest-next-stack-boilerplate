@@ -63,7 +63,7 @@ async function handleLoginSubmit(
         mfaMethod:
           (err as Error & { mfaMethod: MfaState["mfaMethod"] }).mfaMethod ??
           "TOTP",
-        user: (err as Error & { user: MfaState["user"] }).user,
+        email,
       });
       return;
     }

@@ -150,6 +150,33 @@ describe("RtcMeetingRoomView join-failure phases", () => {
 
     await waitFor(() => expect(screen.getByText("NOT_FOUND")).toBeTruthy());
   });
+
+  // BE-031: removal is now a ban, so a removed user's rejoin 403s with
+  // EX_MEETING_REMOVED — final, not a retryable join failure.
+  it("shows the removed screen (not a retry prompt) when the host removed this user", async () => {
+    joinMeetingMock.mockRejectedValue(
+      Object.assign(new Error("You were removed from this meeting"), {
+        exception: { statusCode: 403, exc: "EX_MEETING_REMOVED" },
+      }),
+    );
+
+    render(<RtcMeetingRoomView />);
+
+    await waitFor(() => expect(screen.getByText("REMOVED")).toBeTruthy());
+    expect(screen.queryByText("JOIN_FAILED")).toBeNull();
+  });
+
+  it("still shows the join-failed screen for a capacity 403", async () => {
+    joinMeetingMock.mockRejectedValue(
+      Object.assign(new Error("This meeting is at capacity"), {
+        exception: { statusCode: 403, exc: "EX_MEETING_FULL" },
+      }),
+    );
+
+    render(<RtcMeetingRoomView />);
+
+    await waitFor(() => expect(screen.getByText("JOIN_FAILED")).toBeTruthy());
+  });
 });
 
 describe("RtcMeetingRoomView screen share + camera tiles", () => {

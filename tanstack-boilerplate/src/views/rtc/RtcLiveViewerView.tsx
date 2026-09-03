@@ -118,6 +118,7 @@ export function RtcLiveViewerView() {
     false,
     slug,
     join?.roomName,
+    join?.livekitUrl,
   );
 
   const handleLeave = () => {

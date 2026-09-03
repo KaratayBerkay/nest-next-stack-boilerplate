@@ -25,6 +25,7 @@ const TOPIC = "frontend-events";
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX = 10;
+const RATE_LIMIT_MAX_BUCKETS = 10_000;
 const rateBuckets = new Map<string, number[]>();
 
 function evictStaleRateBuckets(): void {
@@ -41,6 +42,18 @@ function checkRateLimit(key: string): boolean {
   const windowStart = now - RATE_LIMIT_WINDOW_MS;
   let timestamps = rateBuckets.get(key);
   if (!timestamps) {
+    // Bound the map before admitting a new key: distinct (spoofed or real)
+    // keys must not grow memory without limit. Evict stale buckets first;
+    // if still full, drop the oldest-inserted one (Map preserves insertion
+    // order), which sheds attacker churn before long-lived legit buckets.
+    if (rateBuckets.size >= RATE_LIMIT_MAX_BUCKETS) {
+      evictStaleRateBuckets();
+      while (rateBuckets.size >= RATE_LIMIT_MAX_BUCKETS) {
+        const oldest = rateBuckets.keys().next().value;
+        if (oldest === undefined) break;
+        rateBuckets.delete(oldest);
+      }
+    }
     timestamps = [];
     rateBuckets.set(key, timestamps);
   }
@@ -88,10 +101,15 @@ const CATEGORY_EVENTS = new Set([
 ]);
 
 export const POST = withLogging(async (request, log) => {
+  // Rate-limit key. x-real-ip first: the fronting proxy (openresty) sets it
+  // from the socket address, so a client can't choose its own bucket. The
+  // FIRST x-forwarded-for hop is client-writable (`curl -H`) — trusting it
+  // let an attacker mint a fresh bucket per request and bypass the limit
+  // entirely; the LAST hop is the one our own proxy appended.
+  const xff = request.headers.get("x-forwarded-for");
+  const lastForwardedHop = xff?.split(",").at(-1)?.trim();
   const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    request.headers.get("x-real-ip") ??
-    "unknown";
+    request.headers.get("x-real-ip")?.trim() || lastForwardedHop || "unknown";
   if (!checkRateLimit(ip)) {
     log.warn(
       { ip, category: "network", event: "network.rate_limited" },

@@ -13,6 +13,7 @@ import {
 import { defaultLocale, isLocale, resolveLocale } from "@/lib/i18n/config";
 import { defaultVersion, isVersion, isVersionLike } from "@/lib/version/config";
 import { LANG_COOKIE } from "@/constants/i18n";
+import { securityHeadersFor } from "@/lib/security-headers";
 import type { Lang } from "@/constants/i18n";
 import { LOGIN_PATH } from "@/constants/routes";
 import { parseCookieHeader, serializeCookie } from "@/compat/next/server";
@@ -75,6 +76,9 @@ function redirectResponse(
     location,
     [REQUEST_ID_HEADER]: requestId,
   });
+  for (const [name, value] of Object.entries(securityHeadersFor(location))) {
+    headers.set(name, value);
+  }
   if (langCookie) {
     headers.append("set-cookie", langCookieHeader(langCookie));
     headers.set("x-lang", langCookie);
@@ -101,6 +105,14 @@ export const proxyRequestMiddleware = createMiddleware({
 
   const { setResponseHeader, setCookie } =
     await import("@tanstack/react-start/server");
+
+  // Global security headers (HSTS/nosniff/XFO/CSP/…) — the twin of
+  // next.config.ts's headers() rules; see lib/security-headers.ts. The
+  // /security/* branch below overwrites Content-Security-Policy with its
+  // stricter nonce-based policy for that demo surface.
+  for (const [name, value] of Object.entries(securityHeadersFor(pathname))) {
+    setResponseHeader(name, value);
+  }
 
   const requestId = parseRequestId(request);
   const requestCookies = parseCookieHeader(request.headers.get("cookie"));

@@ -111,6 +111,7 @@ function RtcGoLiveForm() {
     true,
     slug,
     live?.roomName,
+    live?.livekitUrl,
   );
 
   const handleEnd = async () => {

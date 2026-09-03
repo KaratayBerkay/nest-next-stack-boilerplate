@@ -21,13 +21,19 @@ export interface RtcCallPeer {
 }
 
 export type RtcCallPhase =
-  "idle" | "outgoing-ringing" | "incoming-ringing" | "connected";
+  | "idle"
+  | "outgoing-ringing"
+  | "incoming-ringing"
+  | "connected";
 
 export type RtcCallAction = "accept" | "cancel" | "hangup";
 
 export interface RtcLiveKitInfo {
   token: string;
   roomName: string;
+  /** Client-facing LiveKit URL the backend stamped on rtc:accepted; absent
+   *  when it has none configured (NEXT_PUBLIC_LIVEKIT_URL is used then). */
+  livekitUrl?: string | null;
   maxDurationMinutes?: number;
 }
 
@@ -72,6 +78,7 @@ type Action =
       callId: string;
       token: string;
       roomName: string;
+      livekitUrl?: string | null;
       maxDurationMinutes?: number;
       peer?: RtcCallPeer;
       /** Snapshot recovery only — the live push's client already knows the
@@ -127,6 +134,7 @@ function reducer(state: RtcCallState, action: Action): RtcCallState {
         livekit: {
           token: action.token,
           roomName: action.roomName,
+          livekitUrl: action.livekitUrl ?? null,
           maxDurationMinutes: action.maxDurationMinutes,
         },
         connectedAt: action.acceptedAt ?? new Date().toISOString(),
@@ -247,6 +255,7 @@ export function RtcCallProvider({ children }: RtcCallProviderProps) {
         callId: snapshot.callId,
         token: snapshot.token,
         roomName: snapshot.roomName,
+        livekitUrl: snapshot.livekitUrl ?? null,
         maxDurationMinutes: snapshot.maxDurationMinutes,
         hasVideo:
           snapshot.hasVideo === undefined
@@ -343,6 +352,8 @@ export function RtcCallProvider({ children }: RtcCallProviderProps) {
           source: "live",
           token: data.token,
           roomName: data.roomName,
+          livekitUrl:
+            typeof data.livekitUrl === "string" ? data.livekitUrl : null,
           maxDurationMinutes:
             typeof data.maxDurationMinutes === "number"
               ? data.maxDurationMinutes

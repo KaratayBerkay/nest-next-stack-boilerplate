@@ -2,7 +2,7 @@ import { apiFetchJson } from "@/lib/api-client";
 import { USERS_SEARCH_PREFIX } from "@/constants/api/urls";
 
 export interface UserSearchResult {
-  items: Array<{ id: string; name: string; email: string }>;
+  items: Array<{ id: string; name: string }>;
   total: number;
   truncated: boolean;
 }

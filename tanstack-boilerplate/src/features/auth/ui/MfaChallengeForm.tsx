@@ -146,11 +146,11 @@ export function MfaChallengeForm({
         {isEmailMethod
           ? t.form.login.mfaEmailDescription.replace(
               "{email}",
-              mfaState.user.email,
+              mfaState.email,
             )
           : t.form.login.mfaTotpDescription.replace(
               "{email}",
-              mfaState.user.email,
+              mfaState.email,
             )}
       </p>
 

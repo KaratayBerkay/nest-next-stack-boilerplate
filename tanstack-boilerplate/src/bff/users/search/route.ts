@@ -7,12 +7,16 @@ import { getAccessToken } from "@/store/ssr-cookies";
 // — items can never actually be fetched past this many matches.
 const FETCH_CAP = 50;
 
+// Deliberately does not select `email`: this query is a global directory
+// search (not scoped to friends/contacts), so any authenticated caller could
+// otherwise harvest real email addresses for the whole user base. The
+// backend's UserPrivacyResolver now redacts `email` for non-owner/non-admin
+// viewers regardless, but there's no reason for this BFF layer to even ask.
 const SEARCH_USERS_QUERY = `
   query SearchUsers($search: String) {
     users(search: $search) {
       id
       name
-      email
     }
     usersCount(search: $search)
   }
@@ -49,7 +53,7 @@ export async function GET(request: NextRequest) {
   const [meRes, usersRes] = await Promise.all([
     graphqlFetch<{ me: { id: string } }>(ME_ID_QUERY, undefined, accessToken),
     graphqlFetch<{
-      users: { id: string; name: string; email: string }[];
+      users: { id: string; name: string }[];
       usersCount: number;
     }>(SEARCH_USERS_QUERY, { search: q }, accessToken),
   ]);

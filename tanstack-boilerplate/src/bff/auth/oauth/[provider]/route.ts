@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { serverEnv } from "@/lib/env";
 import { withLogging } from "@/lib/request-logger";
+import { isValidOAuthProviderName } from "@/lib/oauth-provider";
 
 export const GET = async (
   request: NextRequest,
@@ -12,6 +13,17 @@ export const GET = async (
 
   return withLogging(async (_request, log) => {
     const env = serverEnv();
+
+    // Validate before this unvalidated route segment is interpolated into a
+    // cookie path or the backend URL below — see lib/oauth-provider.ts.
+    if (!isValidOAuthProviderName(providerName)) {
+      log.warn({ provider: providerName }, "oauth: invalid provider segment");
+      return NextResponse.redirect(
+        `${env.NEXT_PUBLIC_APP_URL}/auth/login?error=oauth_unavailable`,
+        302,
+      );
+    }
+
     const state = crypto.randomUUID();
 
     const cookieStore = await cookies();

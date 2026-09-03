@@ -9,7 +9,6 @@ export type MfaMethod = "TOTP" | "EMAIL";
 
 export interface LoginResult {
   user: User;
-  accessToken?: string;
   deviceToken?: string;
   mfaRequired?: boolean;
   mfaToken?: string;
@@ -34,16 +33,17 @@ export async function loginServer(
   };
 
   if ((res.status === 202 || !res.ok) && data.mfaRequired) {
+    // Deliberately no `user` here: the challenge response carries no
+    // account data (the caller has only shown a password so far) — the MFA
+    // form displays the email the person typed instead.
     const err = new Error("MFA required") as Error & {
       mfaRequired: boolean;
       mfaToken: string;
       mfaMethod: MfaMethod;
-      user: User;
     };
     err.mfaRequired = true;
     err.mfaToken = data.mfaToken!;
     err.mfaMethod = data.mfaMethod ?? "TOTP";
-    err.user = data.user;
     throw err;
   }
 

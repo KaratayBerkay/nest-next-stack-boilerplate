@@ -56,6 +56,7 @@ export const JOIN_MEETING_MUTATION = `
     joinMeeting(slug: $slug) {
       token
       roomName
+      livekitUrl
       role
       meeting {
         ${MEETING_FIELDS}
@@ -186,6 +187,7 @@ export const GO_LIVE_MUTATION = `
     goLive(title: $title) {
       token
       roomName
+      livekitUrl
       stream {
         ${STREAM_FIELDS}
       }
@@ -198,6 +200,7 @@ export const JOIN_STREAM_AS_VIEWER_MUTATION = `
     joinStreamAsViewer(slug: $slug) {
       token
       roomName
+      livekitUrl
       stream {
         ${STREAM_FIELDS}
       }
