@@ -37,12 +37,13 @@ Every real producer, confirmed by reading each call site directly (not just grep
 | [`notification.processor.ts`](../../../../nest-js-boilerplate/src/notification/notification.processor.ts)'s `FRIEND_POST` BullMQ job (queued by [`post/post.service.ts`](../../../../nest-js-boilerplate/src/post/post.service.ts)'s `create()`) | `POST` | one job per new post; the job fans out into one `Notification` row per friend of the author (`payload: {postId}`) |
 | [`billing/billing.service.ts`](../../../../nest-js-boilerplate/src/billing/billing.service.ts)'s `sendBillingNotification` helper (4 call sites — upgrade, cancel, scheduled plan-change, immediate plan-change) and one direct call in [`billing/stripe-webhook.controller.ts`](../../../../nest-js-boilerplate/src/billing/stripe-webhook.controller.ts) (a failed-payment forced downgrade) | `BILLING` | subscription lifecycle events — none of the 5 call sites pass a `payload`, so a `BILLING` notification never has a click-through target (see [frontend/v1/notification/page.md § Behavior notes](../../../frontend/v1/notification/page.md)) |
 
-`NotificationType` (the Prisma enum) has 9 values; only the 5 above are ever actually written.
-`MENTION`, `FOLLOW`, `SYSTEM`, and `SECURITY` have zero producer anywhere in current backend code —
-confirmed via `grep -rn "type: '<VALUE>'"` per value across `nest-js-boilerplate/src`, zero matches
-for any of the four. Likely forward-provisioned schema, the same shape as
-[BE-008](../../../issues.md#be-008)'s unused `MfaFactor` WebAuthn columns — see ⚠
-[BE-014](../../../issues.md#be-014).
+**2026-09-03 (`BE-014` (resolved — fixed 2026-09-03: `MENTION`/`FOLLOW`/`SYSTEM` were dropped from the enum and `SECURITY` is now produced for password and MFA changes)):** the three `NotificationType` values that never had a producer —
+`MENTION`, `FOLLOW`, `SYSTEM` — were removed from the enum by migration. `SECURITY` stayed and is now
+written by three producers: `AuthRegistrationService.changePassword` ("Your password was changed",
+`payload.kind: security-password-changed`) and `MfaService.verify`/`disable` ("Two-factor
+authentication enabled/disabled", `payload.kind: security-mfa-enabled|security-mfa-disabled`). All
+three are best-effort: a notification failure is logged, never surfaced as an auth error. The RTC
+kinds (`MISSED_CALL`, `MEETING_INVITE`, `STREAM_LIVE`) are produced by the rtc module.
 
 **Direct messages are the one obvious near-miss.** A new DM is a very notification-shaped event, but
 `messaging-dm.service.ts` **never** creates a `Notification` row for one — it calls
@@ -160,8 +161,8 @@ anywhere in `flutter-boilerplate/lib`. See ⚠ `BE-012` (resolved).
   token. The backend-side half of the evidence is above (this module + `push-notification/`'s
   Web-Push-only send path); the app-side half is in
   [mobile/v1/notification/screen.md § Known issues](../../../mobile/v1/notification/screen.md#known-issues).
-- ⚠ [BE-014](../../../issues.md#be-014) — 4 of 9 `NotificationType` enum values have no producer.
-- ⚠ [BE-015](../../../issues.md#be-015) — `push-notification`'s `myPushSubscriptions` GraphQL query
+- ⚠ `BE-014` (resolved) — 4 of 9 `NotificationType` enum values have no producer.
+- ⚠ `BE-015` (resolved — fixed 2026-09-03: the `myPushSubscriptions` query was removed) — `push-notification`'s `myPushSubscriptions` GraphQL query
   (list a user's registered Web Push subscriptions) has no caller on either platform.
 - The category index ([`../README.md`](../README.md)) used to describe `push-notification` as having
   "no direct controller/resolver" — written before `PushSubscriptionResolver` existed (or before it

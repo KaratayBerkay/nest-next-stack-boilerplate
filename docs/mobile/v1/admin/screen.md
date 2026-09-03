@@ -35,7 +35,7 @@ Mobile actually has a ready-made equivalent widget for this
 [`lib/features/statics/`](../../../mobile/flutter-only-infra.md#libfeaturesstatics) — it just isn't
 wired in here. Since the router-level gate fails closed (a `null`/non-admin role always redirects, it
 never fails open), this is a defense-in-depth/consistency observation, not a demonstrated data leak —
-see [CROSS-039](../../../issues.md#cross-039).
+see `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth).
 
 **The real mutation is correctly backend-gated.** `_setTier()` calls `adminActionsProvider.setTier()` →
 [`set_tier.dart`](../../../../flutter-boilerplate/lib/api/server/admin/set_tier.dart) — **direct
@@ -78,4 +78,4 @@ bug's still-broken twin, never given the same fix.
 ## Known issues affecting this screen
 
 - `MOB-025` (resolved) — user search is completely broken (dead URL, every call errors).
-- [CROSS-039](../../../issues.md#cross-039) — the admin-role gate has no in-widget redundancy here, unlike web.
+- `CROSS-039` (resolved) — the admin-role gate has no in-widget redundancy here, unlike web.

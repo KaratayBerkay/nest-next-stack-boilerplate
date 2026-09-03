@@ -16,11 +16,10 @@ NestJS's own bundled official recipe/sample code (`grpc`, `mvc`, `mongoose`, `se
 the app at all. Only the real modules get individual docs here — the rest are listed once in
 [_reference/excluded-modules.md](./_reference/excluded-modules.md).
 
-**Read this before trusting a directory name:** `users/` is demo code with an explicit
-"leaks passwordHash" warning in its own source — the real user/account module is `profile/`. The same
-confusable-name trap recurs three more times in this codebase: `session/` (unwired) vs. `sessions/`
-(real), `tasks/` (demo) vs. `project-tasks/` (real), and `cookies/` (demo) vs. `common/cookies/` (real)
-— see [_reference/excluded-modules.md § Naming collisions](./_reference/excluded-modules.md#naming-collisions--verify-by-content-not-by-name).
+**Directory names (2026-09-03):** the four demo directories that used to shadow real modules are now
+`demo-users/` (the "leaks passwordHash" CRUD demo — the real user/account module is `profile/`),
+`demo-session/` (unwired; `sessions/` is real), `demo-tasks/` (`project-tasks/` is real) and
+`demo-cookies/` (`common/cookies/` is real) — see [_reference/excluded-modules.md § Naming collisions](./_reference/excluded-modules.md#naming-collisions--verify-by-content-not-by-name).
 Separately, five directories are demo-**modules** that nonetheless contain one real, always-on
 **file** each (gRPC's hybrid transport, the global query-complexity plugin, the global rate-limit
 guard, the global perf interceptor, and the global exception filter) — see

@@ -75,7 +75,7 @@ contains a private `createAuditLog` method that bypasses this pattern entirely a
 The `/admin` vertical is fully documented on both platforms — see
 [`v1/admin/page.md`](../../../frontend/v1/admin/page.md) and
 [`v1/admin/screen.md`](../../../mobile/v1/admin/screen.md) for the actual consumer detail (including
-each platform's admin-role gate, and the [CROSS-039](../../../issues.md#cross-039) client-side/router-level
+each platform's admin-role gate, and the `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth) client-side/router-level
 enforcement gap between them). This module's own docs happened to land ahead of the page docs that
 consume it, same relationship as [`csrf`](../csrf/README.md) or
 [`wire-crypto`](../../messaging-realtime/wire-crypto/README.md) being documented before every page

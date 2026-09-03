@@ -10,7 +10,7 @@ below). Screen names below use `screen.md`/`api.md` in place of `page.md`/`api.m
    **Currently broken for a logged-out visitor**, same net effect as web though a different
    mechanism — see `CROSS-029` (resolved).
 2. **[`v1/plans`](./v1/plans/screen.md)** — plan comparison (session-gated). Feature-list *copy* is
-   hardcoded here too, independently from web — see [CROSS-031](../issues.md#cross-031).
+   hardcoded here too, independently from web — see `CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder).
 3. **[`v1/checkout`](./v1/checkout/screen.md)** — payment collection or plan change. Unlike web,
    mobile's paid↔paid tier-change path works correctly (it posts directly to the backend GraphQL
    mutation with no intermediate BFF validation bug) — see `CROSS-030` (resolved) for
@@ -24,7 +24,7 @@ below). Screen names below use `screen.md`/`api.md` in place of `page.md`/`api.m
 Same correction as the web funnel: `v1/premium` was assumed to be step 4 (a post-purchase status
 page) when this effort's plan was first written, before any billing screen had actually been read.
 It's really an unrelated NestJS RBAC tier-gate tech demo — see
-[CROSS-035](../issues.md#cross-035) — documented at [`v1/premium/screen.md`](./v1/premium/screen.md)
+`CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile) — documented at [`v1/premium/screen.md`](./v1/premium/screen.md)
 as its own thing, not as part of this funnel. Its live code additionally has its own real bug,
 permanently-zero growth stats — `MOB-023` (resolved) — and 7 of its 8 source files are
 dead code duplicating the live implementation — `MOB-022` (resolved).

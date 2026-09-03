@@ -13,7 +13,7 @@ live in the **`messaging/` module's** `MessagingController`, backed by `Messagin
 and [messaging-realtime/messaging/endpoints.md § Send / accept / decline a friend request](../../messaging-realtime/messaging/endpoints.md#send--accept--decline-a-friend-request).
 That surprised this doc's author too, coming from the `friends/` directory name — but it's
 consistent with how this repo already documents `users/` vs `profile/`
-([BE-002](../../../issues.md#be-002)): the directory whose name matches the feature isn't always the
+(`BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`)): the directory whose name matches the feature isn't always the
 one that implements it. This module owns two much narrower things instead:
 
 1. **`FriendsService`** — a small, shared, *dependency-only* service (`getFriendIds`, `areFriends`,

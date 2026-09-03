@@ -42,7 +42,7 @@ and textually unrelated to either of web's two independent feature-copy sources 
 [plans page](../../../frontend/v1/plans/page.md)'s i18n bundle or
 [checkout](../../../frontend/v1/checkout/page.md)'s `TIER_FEATURES` constant) — mobile's own copy
 emphasizes concrete product mechanics (message quota, device count, feed tier) that neither web
-source mentions at all. See [CROSS-031](../../../issues.md#cross-031) for the full cross-app
+source mentions at all. See `CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder) for the full cross-app
 picture (now 4 independently-maintained sources of "what does tier X include," counting both of
 web's).
 
@@ -63,7 +63,7 @@ NestJS backend only).
 
 ## Known issues affecting this screen
 
-- ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — see above.
+- ⚠ `CROSS-031` (resolved) (MED) — see above.
 - ⚠ `CROSS-032` (resolved) (MED) — `userTierProvider` (the value this
   screen's "Current Plan"/"Included" badges are computed from) never updates live from the
   `tier-changed` WS frame the backend pushes on a tier change — this app has no handler for that

@@ -39,7 +39,7 @@ infinite-scroll message loading, and connection-state rendering. Wraps `ChatRoom
   `pending: true` row keyed by a `temp-<timestamp>` id, deduped by id so a duplicate frame echo is a
   no-op.
 - **No `replyToId` anywhere in the send payload** — see [page.md § Known issues](../page.md#known-issues-affecting-this-page),
-  [CROSS-024](../../../../issues.md#cross-024).
+  `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter).
 - **Room switching** (`selectChatRoom`) resets `roomMembers` and closes the mobile sidebar overlay,
   then both updates local state and calls `router.replace(?room=...)` (URL sync, no navigation) —
   switching rooms doesn't remount this component, so [`useChatRoomRealtime`](#usechatroomrealtime)

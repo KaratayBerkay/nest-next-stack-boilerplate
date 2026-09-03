@@ -4,12 +4,12 @@
 **Category:** [Platform / Core](../../README.md) · **Parent:** [common](../README.md)
 
 > **Read this before trusting the name:** there is a second, unrelated `cookies/` directory at
-> `nest-js-boilerplate/src/cookies/` — a demo-gated (`DEMO_MODULES`) NestJS cookie-recipe module
+> `nest-js-boilerplate/src/demo-cookies/` — a demo-gated (`DEMO_MODULES`) NestJS cookie-recipe module
 > (`CookiesController`, groups endpoints that read/write a demo cookie). It has nothing to do with this
 > real, always-on directory. See
 > [_reference/excluded-modules.md#cookies](../../../_reference/excluded-modules.md#cookies) — the
 > fourth confirmed name-collision trap in this codebase, alongside `users/`↔`profile/`
-> ([BE-002](../../../../issues.md#be-002)), `session/`↔`sessions/`, and `tasks/`↔`project-tasks/`.
+> (`BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`)), `session/`↔`sessions/`, and `tasks/`↔`project-tasks/`.
 
 ## What this owns
 

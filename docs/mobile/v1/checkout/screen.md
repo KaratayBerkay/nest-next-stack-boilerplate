@@ -10,7 +10,7 @@
 Note a same-named-but-unrelated route exists elsewhere in the router:
 `/v1/:lang/forms/checkout` → `views/forms/checkout/page_content.dart`, a forms-gallery demo page with
 no connection to billing at all. Confirmed distinct files, distinct routes — not a real confusable-name
-trap in practice (unlike e.g. [BE-002](../../../issues.md#be-002)), just worth naming so a future
+trap in practice (unlike e.g. `BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`)), just worth naming so a future
 reader searching for "checkout page_content.dart" knows to check the path.
 
 ## What renders here

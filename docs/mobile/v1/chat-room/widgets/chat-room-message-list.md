@@ -20,7 +20,7 @@ makes relative to web.
 
 - **No per-message actions** — no delete, no reply, no long-press menu. Matches web exactly (the
   backend has no such capability for room messages at all — see
-  [CROSS-024](../../../../issues.md#cross-024)), so this is *not* a mobile-specific gap.
+  `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter)), so this is *not* a mobile-specific gap.
 - **No read/delivered tick** — rooms have no per-user read-tracking; consistent across both platforms.
 - ⚠ Two hardcoded, unlocalized string literals: `'Failed to load messages'` (also hardcoded on web —
   a shared, cross-platform gap, not mobile-only) and `'No messages yet'` (web correctly uses `t.noMessages`

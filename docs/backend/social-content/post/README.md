@@ -76,4 +76,4 @@ directly, not via module import (both injected from elsewhere in the DI graph).
   [share](../../../frontend/v1/share/page.md), mobile
   [share](../../../mobile/v1/share/screen.md)/[posts create](../../../mobile/v1/posts/create/screen.md))
   only ever populate `imageUrl`. No user-visible effect today (`imageUrl` works); the same
-  "provisioned but unused" shape as [BE-008](../../../issues.md#be-008).
+  "provisioned but unused" shape as `BE-008` (resolved — fixed 2026-09-03: the WebAuthn columns were dropped from `MfaFactor` by migration).

@@ -24,7 +24,7 @@ private widgets inside this one file instead of split into siblings.
 
 Same mechanism as [../screen.md § The admin-role gate](../screen.md#the-admin-role-gate): the
 `requireAdmin()` router redirect is the only gate. `AdminAuditLogsPageContent` itself has no in-widget
-role check either, same as the parent admin screen. See [CROSS-039](../../../../issues.md#cross-039).
+role check either, same as the parent admin screen. See `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth).
 
 ## API
 
@@ -53,4 +53,4 @@ and `MOB-025` (resolved).
 
 ## Known issues affecting this screen
 
-- [CROSS-039](../../../../issues.md#cross-039) — no in-widget role-gate redundancy, same as the parent screen.
+- `CROSS-039` (resolved) — no in-widget role-gate redundancy, same as the parent screen.

@@ -129,7 +129,7 @@ Checked directly rather than assumed, per this effort's own house rule
 - `BE-017` (resolved) — sending a message with an `attachments[].url` copied from a
   message/room the sender doesn't own silently re-links that attachment's access control to the new
   message — see [upload/README.md § Known issues](../../../backend/messaging-realtime/upload/README.md#known-issues).
-- [CROSS-024](../../../issues.md#cross-024) — unlike [messages](../messages/page.md), chat-room has **no**
+- `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter) — unlike [messages](../messages/page.md), chat-room has **no**
   reply-to-message and **no** delete-message capability, on any surface — this isn't a
   frontend-only gap (contrast `CROSS-006` (resolved), which is DM reply present
   backend-side but missing only on Flutter): the backend's `RoomMessage`/`RoomMessageAttachment`

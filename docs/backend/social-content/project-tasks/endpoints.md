@@ -39,4 +39,4 @@ JWT user; there is no `reporter` field on this input at all despite the Prisma m
 ## Known issues
 
 See [README.md § Known issues](./README.md#known-issues) — this is the module half of the resolved
-[CROSS-002](../../../issues.md#cross-002) finding.
+`CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core) finding.

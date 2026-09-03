@@ -28,7 +28,7 @@ and [endpoints.md](../../../backend/identity-access/authorization/endpoints.md).
 - `MOB-025` (resolved) — [screen.md](./screen.md)'s user-search feature is completely
   broken: every search call hits a URL with no matching backend route or BFF route, and throws visibly.
   The tier-set action itself works correctly once a `userId` is known by some other means.
-- [CROSS-039](../../../issues.md#cross-039) — neither screen in this vertical has an in-widget role-check
+- `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth) — neither screen in this vertical has an in-widget role-check
   fallback; both rely entirely on the router-level redirect. Contrast
   [web](../../../frontend/v1/admin/README.md), whose page components re-check role a second time and
   render `AccessDeniedPage`. Not a demonstrated data leak on either platform — the real

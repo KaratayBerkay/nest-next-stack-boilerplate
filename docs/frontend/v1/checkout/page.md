@@ -124,9 +124,9 @@ No dedicated hook file exists for this vertical (same as [plans](../plans/page.m
   [plans](../plans/page.md).
 - ⚠ `CROSS-030` (resolved) (HIGH) — see above; paid↔paid changes broken on
   web only.
-- ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — [`PlanSummaryCard`](./components/plan-summary-card.md)'s
+- ⚠ `CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder) (MED) — [`PlanSummaryCard`](./components/plan-summary-card.md)'s
   feature bullets are a third, unlocalized, independently-hardcoded copy of tier feature copy.
-- ⚠ [BE-019](../../../issues.md#be-019) (LOW) — no UI recovery path for a Stripe
+- ⚠ `BE-019` (resolved — fixed 2026-09-03: subscriptions are created with `payment_behavior: allow_incomplete`; an `authentication_required` outcome carries the PaymentIntent `clientSecret` + `stripeSubscriptionId`, the client completes 3DS (Stripe.js `confirmCardPayment` / flutter_stripe `handleNextAction`) and calls the new `finalizeSubscription` mutation, and decline reasons map to readable copy on every client) (LOW) — no UI recovery path for a Stripe
   `authentication_required` (3DS/SCA) decline on the actual subscription charge.
 - ⚠ `FE-014` (resolved) (LOW) — the `subscribe` BFF route publishes a
   Kafka event unconditionally mislabeled `billing.subscription.upgraded`, even for a cancel/downgrade

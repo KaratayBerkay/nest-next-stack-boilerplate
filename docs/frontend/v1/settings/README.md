@@ -62,7 +62,7 @@ auth-bootstrap dependency, not settings-specific.
   fully-formed, unused parallel implementations sitting next to the real one. Logged together as
   `CROSS-013` (resolved) since it's the same failure shape on both platforms in the
   same vertical, not two unrelated one-offs.
-- [CROSS-019](../../../issues.md#cross-019) — General's Language field only actually changes the
+- `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — General's Language field only actually changes the
   rendered UI language on mobile; web only reads `profile.locale` back to pre-fill its own dropdown.
   Timezone persists on both platforms but neither reads it back for real date/time formatting. See
   [general/page.md](./general/page.md#known-issues).

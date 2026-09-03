@@ -8,16 +8,10 @@ All three operations are on
 [`push-subscription.resolver.ts`](../../../../nest-js-boilerplate/src/push-notification/push-subscription.resolver.ts).
 **Auth:** `SessionAuthGuard` on the whole resolver (class-level `@UseGuards`).
 
-### List my push subscriptions
+### ~~List my push subscriptions~~ (removed 2026-09-03)
 
-**Kind:** GraphQL Query · **`myPushSubscriptions`**
-**Source:** [`push-subscription.resolver.ts#L15-L18`](../../../../nest-js-boilerplate/src/push-notification/push-subscription.resolver.ts)
-
-**Response:** `[PushSubscription!]!` — every row for the caller (`endpoint`, `p256dh`, `auth`,
-`userAgent`, `createdAt`).
-
-**Used by:** nobody. ⚠ [BE-015](../../../issues.md#be-015) — no UI on either platform ever lists a
-user's registered push subscriptions/devices.
+The `myPushSubscriptions` query had no caller on any platform and was deleted — `BE-015` (resolved — fixed 2026-09-03: the `myPushSubscriptions` query was removed).
+Subscriptions are still created/removed by the two mutations below; there is no list endpoint.
 
 ### Register a push subscription
 
@@ -68,7 +62,7 @@ subscription row automatically (expired/unsubscribed-at-the-browser-level). See
 
 ## Known issues
 
-- [BE-015](../../../issues.md#be-015) — `myPushSubscriptions` has no caller on either platform.
+- `BE-015` (resolved) — `myPushSubscriptions` has no caller on either platform.
 - `CROSS-021` (resolved) — mobile push notifications are non-functional
   end-to-end (targets FCM; this backend only implements Web Push).
 - Full findings with severity and evidence are filed in [`issues.md`](../../../issues.md).

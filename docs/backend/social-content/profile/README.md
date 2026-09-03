@@ -6,10 +6,10 @@
 ## Read this before trusting the module name — `profile/` vs `users/`
 
 This is the **real** user/account module — display name, username, bio, avatar, locale, timezone,
-chat nickname, avatar-hide privacy toggle. `nest-js-boilerplate/src/users/` is a **different, unrelated
+chat nickname, avatar-hide privacy toggle. `nest-js-boilerplate/src/demo-users/` is a **different, unrelated
 demo module** ("demo CRUD module — leaks passwordHash; must not run in production", per its own source
 comment, gated behind `DEMO_MODULES`) that happens to sit right next to this one with a confusable
-name. See [BE-002](../../../issues.md#be-002) and [backend/README.md](../../README.md)'s own warning
+name. See `BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`) and [backend/README.md](../../README.md)'s own warning
 at the top. If you're looking for the module behind account settings, this is it; if a `users/` import
 shows up in a call chain you're tracing, stop and check which one before assuming.
 
@@ -41,7 +41,7 @@ field subsets rather than each having its own endpoint:
 | Field | Written by | Notes |
 |---|---|---|
 | `name`, `username`, `bio`, `avatarUrl` | Account | `username` also drives `isUsernameAvailable` |
-| `locale`, `timezone` | General | see [CROSS-019](../../../issues.md#cross-019) — both persist correctly, but neither is actually *read back* by the web client to affect rendering (mobile's `locale` save does drive the live UI language; `timezone` doesn't, on either platform) |
+| `locale`, `timezone` | General | see `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — both persist correctly, but neither is actually *read back* by the web client to affect rendering (mobile's `locale` save does drive the live UI language; `timezone` doesn't, on either platform) |
 | `chatNickname`, `useNickname`, `hideAvatar` | Privacy | `chatNickname` update is preserve-on-disable by contract (see the field's own doc comment in [`update-profile.input.ts`](../../../../nest-js-boilerplate/src/profile/dto/update-profile.input.ts)) — toggling `useNickname` off must not erase a saved nickname; only an explicit empty-string submission does (mapped to `null` client-side, see both platforms' `api.md`) |
 
 `avatarUrl` itself is set via this mutation but the actual file bytes go through the separate
@@ -98,6 +98,6 @@ screens use) but only ever for the *caller's own* profile — see
   but this module is the reason a correct fix needs either a new query here or a different data source
   entirely (the friend-list/search rows already carry enough to render the card without a second
   fetch). See [mobile/v1/users/detail/screen.md](../../../mobile/v1/users/detail/screen.md#known-issues).
-- [CROSS-019](../../../issues.md#cross-019) — `locale`/`timezone` persist correctly through this module but
+- `CROSS-019` (resolved) — `locale`/`timezone` persist correctly through this module but
   aren't consistently consumed by either client afterward. See
   [frontend/v1/settings/general/page.md](../../../frontend/v1/settings/general/page.md#known-issues).

@@ -85,4 +85,4 @@ but belongs to [identity-access/auth](../auth/README.md)'s login flow — not du
   but `MfaService` hard-codes `method: 'TOTP'` on every read and write — `grep -rn "WebAuthn\|FIDO2"
   src/mfa` returns nothing beyond the unused columns themselves. Not necessarily a bug (may simply be
   unbuilt), but worth knowing before assuming a second factor type is reachable. Logged as
-  [BE-008](../../../issues.md#be-008).
+  `BE-008` (resolved — fixed 2026-09-03: the WebAuthn columns were dropped from `MfaFactor` by migration).

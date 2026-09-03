@@ -45,7 +45,7 @@ action. Branches on `(currentTier, targetTier)` — full state-machine detail in
 decline, `success: false` with a `reason` string (`insufficient_funds` / `declined` /
 `subscription_failed` / `configuration_error` / `subscription_schedule_failed`) — **not** thrown, the
 mutation resolves normally and the caller must check `result.success`. ⚠
-[BE-019](../../../issues.md#be-019) — an `authentication_required` (3DS/SCA) decline isn't
+`BE-019` (resolved — fixed 2026-09-03: subscriptions are created with `payment_behavior: allow_incomplete`; an `authentication_required` outcome carries the PaymentIntent `clientSecret` + `stripeSubscriptionId`, the client completes 3DS (Stripe.js `confirmCardPayment` / flutter_stripe `handleNextAction`) and calls the new `finalizeSubscription` mutation, and decline reasons map to readable copy on every client) — an `authentication_required` (3DS/SCA) decline isn't
 distinguished from a generic decline; see [stripe.md § Known issues](./stripe.md#known-issues).
 **Used by:** Frontend [checkout page](../../../frontend/v1/checkout/page.md) (`StripeCardForm` for
 FREE→paid; `DowngradeSection` for paid↔paid and paid→FREE — see ⚠
@@ -54,6 +54,24 @@ only**, blocked by the Next.js BFF before this mutation is ever reached); Mobile
 [checkout screen](../../../mobile/v1/checkout/screen.md) (`_handleSubscribe` for FREE→paid,
 `_handleChange` for paid↔paid/paid→FREE — calls this mutation directly, unaffected by
 CROSS-030); Frontend/Mobile `settings/billing` (Phase 4b) — the re-selection escape hatch only.
+
+### Finalize a subscription after 3DS (added 2026-09-03, `BE-019`)
+
+**Kind:** GraphQL Mutation · **`finalizeSubscription(stripeSubscriptionId: String!): SubscribeResult!`**
+**Source:** `billing.resolver.ts` → `BillingService.finalizeSubscription`.
+
+`subscribeToPlan` now creates the Stripe subscription with `payment_behavior: allow_incomplete`. When
+the bank requires customer authentication, the mutation returns `success: false,
+reason: "authentication_required"` **plus** `clientSecret` (the first invoice's PaymentIntent) and
+`stripeSubscriptionId`; nothing is provisioned yet, and the finalize context is parked in Redis
+(`billing:sca:<subscriptionId>`, 24h, bound to the user). The client confirms the PaymentIntent
+on-session (Stripe.js `confirmCardPayment` on web via `/api/billing/subscribe` → `/api/billing/subscribe/finalize`,
+flutter_stripe `handleNextAction` on mobile) and calls this mutation. The backend re-reads the
+subscription; if it is `active` it provisions exactly as the first-subscribe path would (same
+advisory lock, same ledger row keyed by the invoice, tier rewrite, realtime + notification). If
+Stripe still reports `incomplete` the same `authentication_required` payload comes back; a hard
+decline maps to `insufficient_funds` / `declined`. **Errors:** `404 EX_BILLING_NO_PENDING_SUBSCRIPTION`
+when no parked context exists for this user + subscription.
 
 ### Cancel a subscription
 
@@ -101,6 +119,12 @@ subscription-details panel, `PlanDetails`/`PlanBenefits`); Mobile
 ### Get plan prices
 
 **Kind:** GraphQL Query · **`planPrices(currency: String): [PlanPriceInfo!]!`**
+
+**Since 2026-09-03 (`CROSS-031`)** each `PlanPriceInfo` also carries `features: [TierFeatureInfo!]!`
+(`{ key, value }`) — the canonical "what's included" list per tier from `billing/tier-features.ts`,
+with numeric perks (`callMinutes`, `storageMultiplier`) derived from the constants that enforce
+them. Clients translate `key` (web `pricing.featureLabels`, Flutter `pricingFeature*`) and never
+keep their own list.
 **Source:** [`billing.resolver.ts#L244-L249`](../../../../nest-js-boilerplate/src/billing/billing.resolver.ts),
 logic in [`billing.service.ts#L833-L854`](../../../../nest-js-boilerplate/src/billing/billing.service.ts) (`BillingService.getPlanPrices`)
 **Response:** `[PlanPriceInfo]` — one entry per tier (`FREE`, `BASIC`, `MEDIUM`, `PREMIUM`), each
@@ -251,6 +275,6 @@ mobile code is aware this endpoint exists.
 - ⚠ `CROSS-030` (resolved) — `subscribeToPlan`'s paid↔paid path is unreachable
   from the **web** checkout page specifically (a frontend BFF bug, not a bug in this resolver/service
   — confirmed working when called directly, as mobile does).
-- ⚠ [BE-019](../../../issues.md#be-019), `BE-020` (resolved) —
+- ⚠ `BE-019` (resolved), `BE-020` (resolved) —
   see [stripe.md § Known issues](./stripe.md#known-issues).
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

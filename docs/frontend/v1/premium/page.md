@@ -11,13 +11,15 @@ this page has nothing to do with the caller's *own* subscription. It is a live d
 backend's tier-based RBAC mechanism: every tier branch below ultimately calls
 [`AdminResolver`](../../../../nest-js-boilerplate/src/authorization/admin.resolver.ts)'s `premiumStats`/
 `growthStats` GraphQL queries, whose own source comment states plainly: *"Demonstrates the `@MinTier()`
-gate with `SessionAuthGuard`."* Both queries are gated **only** by `@MinTier()` — no `@Roles()` check —
-so any authenticated user at the required tier (not just staff) sees aggregate, platform-wide numbers
+gate with `SessionAuthGuard`."* **Since 2026-09-03 both queries are also `@Roles(ADMIN, SUPERADMIN)`-gated**
+(`CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile)): the page is hidden from the nav for non-admins on web and mobile, the
+server-rendered page denies non-admins outright, and the tier gate applies on top for admins. Before
+that, any paying subscriber (not just staff) could read the aggregate, platform-wide numbers
 (total registered users, active users, a synthetic `revenue` figure computed as
 `totalUsers * 9.99`, new users in the last 7 days, total posts, total friendships). If you came here
 expecting "your plan, your usage, upgrade/downgrade" — that page is
 [settings/billing](../settings/billing/page.md); this is a different, unrelated feature that happens to
-share the "Premium" name. See ⚠ [CROSS-035](../../../issues.md#cross-035).
+share the "Premium" name. See ⚠ `CROSS-035` (resolved).
 
 ## What renders here
 
@@ -72,7 +74,7 @@ above), same pattern as [settings/account](../settings/account/page.md#hooks--ap
 Neither query lives in a module this phase or its parallel (billing) owns — both are defined directly
 on `AdminResolver` (`src/authorization/`), a Phase 1b-documented module, whose own heading names —
 *"Premium stats (**demo tier gate**)"* / *"Growth stats (demo tier gate)"* — already independently
-flag the same thing [CROSS-035](../../../issues.md#cross-035) does here. **Resolved post-Phase-5:**
+flag the same thing `CROSS-035` (resolved) does here. **Resolved post-Phase-5:**
 that doc's "Used by" lines for both queries now point here and at
 [mobile/v1/premium/screen.md](../../../mobile/v1/premium/screen.md) (mobile's real consumer,
 `page_view.dart`, wasn't mentioned there at all before) — this was a placeholder written in
@@ -80,7 +82,7 @@ anticipation of exactly this page, reconciled directly once both sides existed.
 
 ## Known issues affecting this page
 
-- ⚠ [CROSS-035](../../../issues.md#cross-035) — this page's real purpose (an RBAC tier-gate
+- ⚠ `CROSS-035` (resolved) — this page's real purpose (an RBAC tier-gate
   demo, not subscription status) contradicts what its name and nav placement suggest; the two
   underlying queries are tier-gated only, not role-gated, so any sufficiently-paid user (not just
   staff) can read platform-wide aggregate stats.

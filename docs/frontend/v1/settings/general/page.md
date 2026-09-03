@@ -60,7 +60,7 @@ Currency and Date display never reach the backend at all — pure client-side co
 
 ## Known issues
 
-- [CROSS-019](../../../../issues.md#cross-019) — the Language `<select>` on this page persists
+- `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — the Language `<select>` on this page persists
   `profile.locale` to the backend correctly, but **nothing anywhere in the web app reads `user.locale`
   back** to actually change the rendered language — the real mechanism
   ([`LangSwitcher.tsx`](../../../../../next-js-boilerplate/src/components/layout/LangSwitcher.tsx), a

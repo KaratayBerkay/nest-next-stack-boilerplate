@@ -28,7 +28,7 @@ which buckets into date-headed groups; this list renders one flat sequence).
   [ChatMessageBubble](../../messages/components/chat-message-bubble.md), which has a hover-revealed
   reply/delete menu. This isn't a missing affordance; the backend has nothing to call (see
   [page.md § Known issues](../page.md#known-issues-affecting-this-page),
-  [CROSS-024](../../../../issues.md#cross-024)).
+  `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter)).
 - **No read/delivered tick** — rooms have no per-user read-tracking concept at all (no equivalent of
   DM's `message-read`/`message-delivered` WS events for rooms).
 - Decryption-failure detection is the same heuristic as messages' list-level rollup

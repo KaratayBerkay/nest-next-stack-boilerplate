@@ -196,7 +196,7 @@ all Vault-sourced, none present in `.env`/`.env.example`.
   (retry storms, or a bulk "resend events" from the Stripe dashboard) could get `429`'d — and since a
   `429` isn't a `2xx`, Stripe treats it as a failed delivery and keeps retrying, with enough
   consecutive failures on one endpoint risking Stripe auto-disabling it.
-- ⚠ [BE-019](../../../issues.md#be-019) — no code path distinguishes an `authentication_required` (3DS/SCA) decline from
+- ⚠ `BE-019` (resolved — fixed 2026-09-03: subscriptions are created with `payment_behavior: allow_incomplete`; an `authentication_required` outcome carries the PaymentIntent `clientSecret` + `stripeSubscriptionId`, the client completes 3DS (Stripe.js `confirmCardPayment` / flutter_stripe `handleNextAction`) and calls the new `finalizeSubscription` mutation, and decline reasons map to readable copy on every client) — no code path distinguishes an `authentication_required` (3DS/SCA) decline from
   any other Stripe failure. `StripePaymentProvider.createSubscription`'s `catch` block only pattern-
   matches the substrings `"insufficient funds"` and `"card_declined"` in the thrown error's message
   (confirmed: `stripe-payment.provider.spec.ts`'s only failure-mapping test covers

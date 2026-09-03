@@ -59,7 +59,7 @@ Separately — not the same bug, but the same *shape* of bug — the web
 independent, never-localized constant
 ([`lib/checkout/tier-features.ts`](../../../../next-js-boilerplate/src/lib/checkout/tier-features.ts)),
 and mobile's plans screen hardcodes a *fourth* set of feature copy inline in Dart. See
-[CROSS-031](../../../issues.md#cross-031) for the full cross-app picture.
+`CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder) for the full cross-app picture.
 
 ### `TierCard`
 
@@ -104,4 +104,4 @@ Full request chain in [api.md](./api.md).
   already-authenticated visitor (see [pricing page.md](../../pricing/page.md)); a design that intends
   "Plans" to double as the public marketing/pricing surface doesn't currently work that way.
 - ⚠ `FE-013` (resolved) (LOW–MED) — see above.
-- ⚠ [CROSS-031](../../../issues.md#cross-031) (MED) — see above.
+- ⚠ `CROSS-031` (resolved) (MED) — see above.

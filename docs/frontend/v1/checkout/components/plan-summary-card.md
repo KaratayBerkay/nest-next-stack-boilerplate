@@ -28,7 +28,7 @@ Features come from
 `FE-013` (resolved)) feature lists and mobile's own inline Dart feature
 lists. Three independently-maintained tier-feature-copy sources across the app (four counting the
 i18n bundle's own `featuresPro`/`featuresPremium` split) is the drift risk tracked as
-[CROSS-031](../../../../issues.md#cross-031) — precedent:
+`CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder) — precedent:
 `CROSS-008` (resolved) (hardcoded OAuth provider lists, same shape).
 
 ## Calls

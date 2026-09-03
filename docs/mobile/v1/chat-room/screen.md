@@ -106,7 +106,7 @@ and [conventions.md §2](../../../conventions.md#2-file-naming).)
 - No reply-to-message and no delete-message — same as web, and for the same reason (the backend
   `RoomMessage` schema has neither). Not a mobile-specific gap; see
   [chat-room page.md § Known issues](../../../frontend/v1/chat-room/page.md#known-issues-affecting-this-page),
-  [CROSS-024](../../../issues.md#cross-024).
+  `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter).
 
 ## API
 

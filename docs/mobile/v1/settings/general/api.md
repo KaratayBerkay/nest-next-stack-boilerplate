@@ -18,4 +18,4 @@ mechanism.
 
 ## Known issues
 
-- [CROSS-019](../../../../issues.md#cross-019) — see [screen.md § Known issues](./screen.md#known-issues).
+- `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — see [screen.md § Known issues](./screen.md#known-issues).

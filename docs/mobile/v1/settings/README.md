@@ -79,7 +79,7 @@ auth-bootstrap dependency.
   new subpages: `account_avatar_section.dart` (Account) and `settings_select.dart` (General) are
   fully-built, never-imported widgets; both real screens reimplement the same UI inline. Four
   recurrences of this exact pattern now, across api-keys/security/account/general.
-- [CROSS-019](../../../issues.md#cross-019) — General's Language field is the only one of the two
+- `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — General's Language field is the only one of the two
   platforms where changing it actually re-renders the app in the new language; web only persists it.
   Timezone persists on both platforms but neither reads it back for real formatting.
 - ⚠ `CROSS-034` (resolved) — Billing's payment-methods UI is a rare reversal

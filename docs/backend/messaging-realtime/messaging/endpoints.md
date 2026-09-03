@@ -170,6 +170,27 @@ visible messages left with that peer.
 **Used by:** Frontend [`ChatMessageBubble` component](../../../frontend/v1/messages/components/chat-message-bubble.md);
 Mobile [`ChatMessageBubble` widget](../../../mobile/v1/messages/widgets/chat-message-bubble.md).
 
+### Delete a room message (added 2026-09-03, `CROSS-024`)
+
+**Kind:** REST · **`POST /api/messages/rooms/:roomSlug/messages/:messageId/delete-for-me`** and
+**`POST /api/messages/rooms/:roomSlug/messages/:messageId/delete-for-everyone`**
+**Source:** `messaging.controller.ts` → `MessagingRoomService.deleteRoomMessageForMe` /
+`deleteRoomMessageForEveryone` (`messaging-room.service.ts`).
+
+Same contract as the DM pair above. **`delete-for-me`** upserts a `RoomMessageDeletion` row for the
+caller — `GET rooms/:roomSlug/messages` filters those rows out for that viewer only, nobody else is
+affected — and syncs the actor's other devices with a `room-message-deleted` frame (`scope:'me'`).
+**`delete-for-everyone`** is sender-only within `DELETE_FOR_EVERYONE_WINDOW_MS`, idempotent, and
+soft-hides: `RoomMessage.deletedAt` is set, ciphertext/attachments stay at rest, the row is served as
+a tombstone (`body: null`, `attachments: []`, `deletedAt`), and every room member gets one
+`room-message-deleted` frame (`scope:'everyone'`, `room`, `messageId`, `senderId`, `deletedAt`).
+**Errors:** `404` (unknown room, or message not in that room) · `403` (not the sender / window passed).
+
+Room messages also carry a quoted reply now: the `room-message` WS frame accepts `replyToId` (must
+point at a message in the *same* room, else `403`), rows/broadcasts include `replyTo`
+(`{ id, senderId, senderName, body, deletedAt, hasAttachments }` — the DM `ReplyPreview` shape plus
+the quoted author's display name, since rooms have many senders).
+
 ### Mark messages read
 
 **Kind:** REST · **`POST /api/messages/read`**
@@ -312,7 +333,7 @@ guards `new URL()` now as the client-side half.
 | `direct-message` | client→server | `handleDirectMessage` (`#L141`) | Same validation/persist path as REST send; echoes `_tempId` if present; delivers via `emitToUserEncrypted` to every device of both parties. |
 | `delivered-ack` | client→server | `handleDeliveredAck` (`#L203`) | Only the true recipient may ack; stamps `deliveredAt`, emits `message-delivered` back to the sender (page + service scoped). |
 | `join-room` / `leave-room` | client→server | `handleJoinRoom`/`handleLeaveRoom` (`#L252`, `#L286`) | Validates room + tier via `roomJoinError`; broadcasts `user-joined`/`user-left` + a `room-counts` refresh to everyone. One room at a time per socket (`leavePreviousRoom` runs first). |
-| `room-message` | client→server | `handleRoomMessage` (`#L303`) | Same validation as DMs; saved via `MessagingRoomService.saveRoomMessage`; broadcast per-connection-encrypted to all room members via `emitToRoomEncrypted`. |
+| `room-message` | client→server | `handleRoomMessage` (`#L303`) | Same validation as DMs; saved via `MessagingRoomService.saveRoomMessage`; broadcast per-connection-encrypted to all room members via `emitToRoomEncrypted`. Since 2026-09-03 accepts `replyToId` (same-room only) and the broadcast carries `replyTo` + `deletedAt: null`. |
 | `get-room-counts` | client→server | `handleGetRoomCounts` (`#L384`) | On-demand `room-counts` snapshot, no broadcast. |
 | `get-room-members` | client→server | `handleGetRoomMembers` (`#L402`) | On-demand `room-members` snapshot — covers a real race: a client joining after others are already present gets no `user-joined` broadcast for the pre-existing members, so without this pull their online list would silently stay empty. |
 | `typing-start` / `typing-stop` | client→server | `handleTypingStart`/`handleTypingStop` (`#L464`, `#L472`) | Forwarded to the recipient only, page-scoped (`messages`) — not persisted, not broadcast. |
@@ -320,7 +341,7 @@ guards `new URL()` now as the client-side half.
 
 **Server→client event frames emitted by this module** (beyond the direct responses above):
 `direct-message` (new DM, wire-encrypted per-connection), `message-read`, `message-delivered`,
-`message-deleted` (`scope: 'me' | 'everyone'`), `room-message` (new room message, broadcast to room),
+`message-deleted` (`scope: 'me' | 'everyone'`), `room-message-deleted` (`scope: 'me' | 'everyone'`, room counterpart added 2026-09-03), `room-message` (new room message, broadcast to room),
 `user-joined`/`user-left` (room membership), `room-counts`, `room-members`, `error`. See
 [realtime/README.md § Frame families](../realtime/README.md) for the renew-frame side of chrome
 updates (`Messages/Conversation`, `Notifications/DmCount`, `Friends/PendingList`) this module also

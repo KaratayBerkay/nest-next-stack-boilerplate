@@ -48,7 +48,7 @@ never raw card data touching this app's own server.
    (off-session, against the just-verified payment method — see
    [backend stripe.md § Creating a subscription](../../../../backend/billing-usage/billing/stripe.md#creating-a-subscription)
    for why a *second* 3DS challenge is possible here despite step 2 already having verified the card,
-   and [BE-019](../../../../issues.md#be-019) for what happens if it does).
+   and `BE-019` (resolved — fixed 2026-09-03: subscriptions are created with `payment_behavior: allow_incomplete`; an `authentication_required` outcome carries the PaymentIntent `clientSecret` + `stripeSubscriptionId`, the client completes 3DS (Stripe.js `confirmCardPayment` / flutter_stripe `handleNextAction`) and calls the new `finalizeSubscription` mutation, and decline reasons map to readable copy on every client) for what happens if it does).
 
 ## Retry-safe idempotency key
 

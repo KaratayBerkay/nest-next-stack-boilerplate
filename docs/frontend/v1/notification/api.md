@@ -80,7 +80,7 @@ for why).
 
 No frontend file calls the backend's third push-subscription operation,
 `myPushSubscriptions` (list a user's registered subscriptions) — see
-[BE-015](../../../issues.md#be-015).
+`BE-015` (resolved — fixed 2026-09-03: the `myPushSubscriptions` query was removed).
 
 ## Service worker (bypasses the BFF entirely)
 

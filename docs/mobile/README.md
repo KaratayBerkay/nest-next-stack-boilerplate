@@ -33,7 +33,7 @@ file**, with evidence — never assume from a previous vertical's answer. See
 | [Pricing](./pricing/screen.md) | `/pricing` (top-level, redirects to `v1/plans`) | ✅ Phase 4a |
 | [About](./about/screen.md) | `/about` (top-level) — no web equivalent nav link either, see `CROSS-038` (resolved) | ✅ Phase 5 |
 | [Billing](./billing-funnel.md) | `v1/plans`, `v1/checkout`, `v1/settings/billing` — **not** `v1/premium`, see [billing-funnel.md](./billing-funnel.md#correction-to-this-efforts-own-original-plan) | ✅ Phase 4 |
-| [Premium](./v1/premium/screen.md) | `v1/premium` — not part of the billing funnel, see [CROSS-035](../issues.md#cross-035) | ✅ Phase 4b |
+| [Premium](./v1/premium/screen.md) | `v1/premium` — not part of the billing funnel, see `CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile) | ✅ Phase 4b |
 | [Admin](./v1/admin/README.md) | admin | ✅ Phase 5 |
 | [RTC](./v1/rtc/README.md) | `v1/:lang/rtc` (hub), `rtc/calls`, `rtc/meetings(/:slug)`, `rtc/live(/:slug, /go-live)` + the global call overlay at app root | ✅ post-docs addition (RTC phases) |
 | [Settings](./v1/settings/) | `v1/:lang/settings/*` (8 sub-screens, `security` included — **correction:** genuinely routed at `settings/security`, not a top-level route as earlier research claimed; only the Dart *source file* lives outside `lib/views/settings/`, see `CROSS-014` (resolved)) | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing/usage ✅ Phase 4b (usage written post-Phase-5, see [usage/screen.md](./v1/settings/usage/screen.md)) |

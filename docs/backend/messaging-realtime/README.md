@@ -49,7 +49,7 @@ Messaging while this backend only ever implemented Web Push) are the two most si
 `BE-016` (resolved) (HIGH — the VIP chat room has no backing database row; sending a
 message in it fails for every user who reaches it) and `BE-017` (resolved) (MED — an
 attachment-ownership check gap in the room/DM message-send path) round out the backend side.
-[CROSS-024](../../issues.md#cross-024) (chat-room has no reply-to or delete-message capability at all,
+`CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter) (chat-room has no reply-to or delete-message capability at all,
 structurally, unlike 1:1 messaging) and `CROSS-027` (resolved)/`CROSS-028` (resolved)
 (mobile never surfaces server-generated thumbnails, and has no attachment-gallery feature at all —
 resolving a "verify in Phase 3" flag left open since Phase 0) are the standout parity gaps. Full list:

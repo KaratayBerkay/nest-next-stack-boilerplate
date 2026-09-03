@@ -19,7 +19,7 @@ registered as `GoRoute`s under this path prefix in
 | `v1/:lang/users` | [users/README.md](./users/README.md) | ✅ Phase 2a |
 | `v1/:lang/plans` | [plans/screen.md](./plans/screen.md) | ✅ Phase 4a |
 | `v1/:lang/checkout` | [checkout/screen.md](./checkout/screen.md) | ✅ Phase 4a |
-| `v1/:lang/premium` | [premium/screen.md](./premium/screen.md) — not part of the billing funnel, see [CROSS-035](../../issues.md#cross-035) | ✅ Phase 4b |
+| `v1/:lang/premium` | [premium/screen.md](./premium/screen.md) — not part of the billing funnel, see `CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile) | ✅ Phase 4b |
 | `v1/:lang/admin`(`/audit-logs`) | [admin/README.md](./admin/README.md) | ✅ Phase 5 |
 | `v1/:lang/rtc/*` (hub, calls, meetings(+room), live(+viewer, go-live)) | [rtc/README.md](./rtc/README.md) | ✅ post-docs addition (RTC phases) |
 | `v1/:lang/settings/*` (8 sub-screens, incl. `security` — genuinely nested, see `CROSS-014` (resolved)) | [settings/README.md](./settings/README.md) | security/sessions/api-keys ✅ Phase 1b — account/general/privacy ✅ Phase 2a — billing ✅ Phase 4b — usage ✅ (gap closed post-Phase 5, see settings/README.md) |

@@ -27,7 +27,7 @@ tier-based RBAC) that isn't schema-specific.
      `Message`/`RoomMessage`/`PendingUpload` to compute storage totals). Dropping the owning
      component breaks the reader too — each entry below says what it reads from elsewhere.
    - **Unmanaged FK targets.** `team-members` and `project-tasks` require a `Team`/`Project` row to
-     already exist, but nothing in this boilerplate can create one ([CROSS-002](./issues.md#cross-002)).
+     already exist, but nothing in this boilerplate can create one (`CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core)).
      If you keep either component, you're also signing up to build that missing creation path.
 4. Everything in [§ Models with no real feature behind them](#models-with-no-real-feature-behind-them)
    is safe to drop regardless of what you keep — confirmed zero real consumers, project-wide.
@@ -54,13 +54,14 @@ group here has zero real owner at all — see [§ Dead columns](#dead-columns-on
 Every other component that touches `User` (friends, post, messaging, notification, etc.) only ever
 reads `id` to form a foreign key or relation — no additional columns.
 
-### Dead columns on `User`
+### Dropped dead columns on `User` (2026-09-03)
 
-Zero real references anywhere in `src/` — confirmed via project-wide grep, not attributed to any
-component above. See [BE-028](./issues.md#be-028) for the full evidence.
-
-`referredById` / `referredBy` / `referrals` (self-relation), `birthDate`, `quietHoursStart`,
-`interests`, `metadata`, `preferences`, `phoneNumber`, `phoneVerified`, `reputation`.
+Nine columns/relations that no application code ever referenced — `referredById` /
+`referredBy` / `referrals` (self-relation), `birthDate`, `quietHoursStart`, `interests`,
+`metadata`, `preferences`, `phoneNumber`, `phoneVerified`, `reputation` — were **removed** from the
+schema by migration `20260903120000_drop_dead_schema_add_room_message_reply_delete` (every one was
+verified empty in the live database first). `BE-028` (resolved — fixed 2026-09-03: the nine dead `User` columns were dropped by migration). If you need phone verification,
+referrals or quiet hours, add the columns back deliberately together with the feature.
 
 ---
 
@@ -108,7 +109,7 @@ guarded request via `RolesGuard`/`TierGuard`) plus two data-owning query surface
 (admin audit-log viewer — table is populated by [Outbox](#outbox), not by this module despite the
 similar-sounding [Activity Log](#activity-log)), and reads `Post`/`Friendship`/`User` counts (the
 `growthStats`/`premiumStats` admin-dashboard demo resolvers — see
-[CROSS-035](./issues.md#cross-035)).
+`CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile)).
 See [identity-access/authorization](./backend/identity-access/authorization/README.md).
 
 ### Social & Content
@@ -120,15 +121,15 @@ See [social-content/profile](./backend/social-content/profile/README.md).
 #### Friends
 **Tables:** `Friendship`.
 Also written by [Messaging](#messaging)'s REST-facing `MessagingFriendService` (same table, parallel
-transport — see that module's own doc for why). The sibling `Follow` model is dead —
-[BE-027](./issues.md#be-027) — don't build against it.
+transport — see that module's own doc for why). The never-used sibling `Follow` model was dropped on
+2026-09-03 (`BE-027` (resolved — fixed 2026-09-03: the `Follow` model was dropped by migration)); `Friendship` is the only social-graph table.
 See [social-content/friends](./backend/social-content/friends/README.md).
 
 #### Post
 **Tables:** `Post`.
-The `Category`/`Tag` relations exist on `Post` in schema but are entirely unwired — no DTO, resolver,
-or service in `src/post/` references either — [BE-026](./issues.md#be-026). Don't budget schema work
-for `Category`/`Tag` assuming Post's UI will populate them; it can't, today.
+The unwired `Category`/`Tag` models and `Post.categoryId`/`Post.tags` were dropped on 2026-09-03
+(`BE-026` (resolved — fixed 2026-09-03: `Category`/`Tag` and `Post.categoryId`/`tags` were dropped by migration)) — nothing in `src/post/` ever referenced them. Add a taxonomy back only
+together with the DTOs/resolvers that populate it.
 See [social-content/post](./backend/social-content/post/README.md).
 
 #### Comment
@@ -144,7 +145,7 @@ See [social-content/reactions](./backend/social-content/reactions/README.md).
 ⚠ **Requires a pre-existing `Team` row** (and that `Team` requires a pre-existing `Organization`
 row) to `connect` to at creation time — and nothing anywhere in this boilerplate can create either.
 `Organization`/`Team`/`Project` have no resolver, controller, or seed data at all
-([CROSS-002](./issues.md#cross-002)). If you keep this component, you are also signing up to build
+(`CROSS-002` (resolved)). If you keep this component, you are also signing up to build
 an `Organization`/`Team` creation path yourself; the schema and the join-table logic are real, but
 currently unreachable from a fresh database.
 See [social-content/team-members](./backend/social-content/team-members/README.md).
@@ -153,7 +154,7 @@ See [social-content/team-members](./backend/social-content/team-members/README.m
 **Tables:** `Task`.
 ⚠ Same caveat as Team Members, one level down: `Task.projectId` requires a pre-existing `Project`
 row (which itself requires `Organization`), and neither has a creation path
-([CROSS-002](./issues.md#cross-002)).
+(`CROSS-002` (resolved)).
 See [social-content/project-tasks](./backend/social-content/project-tasks/README.md).
 
 ### Messaging & Realtime
@@ -248,7 +249,7 @@ See [platform-core/mail](./backend/platform-core/mail/README.md).
 #### Vault, Prisma, Redis, Health, Logging, Config, Telemetry
 **No Prisma models.** Pure infrastructure — external-system-backed (Vault, Redis, Elasticsearch,
 env vars) or the Prisma client provider itself. `VaultService` additionally has zero consumers of
-its own regardless of schema — [BE-023](./issues.md#be-023).
+its own regardless of schema — `BE-023` (resolved — fixed 2026-09-03: `VaultService`/`VaultModule` were deleted).
 See [platform-core/README.md](./backend/platform-core/README.md) for each.
 
 #### Common
@@ -267,18 +268,22 @@ Confirmed via project-wide `grep` — zero real (non-demo, non-`@generated`) que
 
 | Model | Status | Tracked as |
 |---|---|---|
-| `Organization` | Required as an unmanaged FK target only (`Team`/`Project` both point at it) — no resolver/controller/seed anywhere | [CROSS-002](./issues.md#cross-002) |
-| `Team` | Same — required by [Team Members](#team-members), no creation path | [CROSS-002](./issues.md#cross-002) |
-| `Project` | Same — required by [Project Tasks](#project-tasks), no creation path | [CROSS-002](./issues.md#cross-002) |
-| `Membership` | Zero references anywhere — not even as an FK target. Same never-built "Organization" feature as the row above, one layer further out | [CROSS-002](./issues.md#cross-002) |
-| `Category` | Zero references anywhere; `Post.categoryId` is dead | [BE-026](./issues.md#be-026) |
-| `Tag` | Zero references anywhere; `Post.tags` is dead | [BE-026](./issues.md#be-026) |
-| `Follow` | Zero references anywhere — `Friendship` is what `friends`/`messaging` actually use | [BE-027](./issues.md#be-027) |
+| `Organization` | Required as an unmanaged FK target only (`Team`/`Project` both point at it) — no resolver/controller/seed anywhere | `CROSS-002` (resolved) |
+| `Team` | Same — required by [Team Members](#team-members), no creation path | `CROSS-002` (resolved) |
+| `Project` | Same — required by [Project Tasks](#project-tasks), no creation path | `CROSS-002` (resolved) |
+| `Membership` | Zero references anywhere — not even as an FK target. Same never-built "Organization" feature as the row above, one layer further out | `CROSS-002` (resolved) |
+
+`Category`, `Tag` and `Follow` (plus the implicit `_PostToTag` join table) **no longer exist** — dropped
+2026-09-03 by `20260903120000_drop_dead_schema_add_room_message_reply_delete` (`BE-026`/`BE-027`
+(resolved)). The same migration removed `MfaFactor`'s never-implemented WebAuthn columns
+(`credentialId`, `publicKey`, `counter`, `transports` — `BE-008` (resolved — fixed 2026-09-03: the WebAuthn columns were dropped from `MfaFactor` by migration)) and the producer-less
+`NotificationType` values `MENTION`/`FOLLOW`/`SYSTEM` (`BE-014` (resolved — fixed 2026-09-03: `MENTION`/`FOLLOW`/`SYSTEM` were dropped from the enum and `SECURITY` is now produced for password and MFA changes); `SECURITY` stayed and is
+now produced — see the notification doc). It also added `RoomMessage.replyToId`/`deletedAt` and the
+`RoomMessageDeletion` table for chat-room reply/delete (`CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter)).
 
 If you don't want [Team Members](#team-members)/[Project Tasks](#project-tasks) at all, drop
 `Organization`/`Team`/`Project`/`Membership`/`TeamMember`/`Task` together as one unit — nothing else
-references any of them. `Category`/`Tag`/`Follow` can be dropped independently of everything else,
-regardless of what you keep.
+references any of them.
 
 ---
 

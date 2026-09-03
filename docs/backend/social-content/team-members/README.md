@@ -64,7 +64,7 @@ is already committed by that point).
 
 ## Known issues
 
-**[CROSS-002](../../../issues.md#cross-002) — verified during this phase.** Full write-up, evidence,
+**`CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core) — verified during this phase.** Full write-up, evidence,
 and the recommended disposition are in this phase's report; see the coordinator's updated
 `issues.md` row for the final text. Summary: `team-members` (this module) and
 [`project-tasks`](../project-tasks/) are real, always-on `CORE_MODULES`, confirmed to have **zero**

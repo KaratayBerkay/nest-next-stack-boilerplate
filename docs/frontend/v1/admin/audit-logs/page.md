@@ -29,7 +29,7 @@ Identical mechanism and identical caveat to [../page.md § The admin-role gate](
 `isAdmin` is computed client-side inside `PageContent` from `useAuth()`, with no server-side role check
 in `page.tsx` or the shared `v1/[lang]/layout.tsx`. Here it does double duty — it also gates the React
 Query fetch itself (`enabled: isAdmin` on `auditLogsQueryOptions(...)`), so a non-admin's browser never
-even issues the `auditLogs` request. See [CROSS-039](../../../../issues.md#cross-039).
+even issues the `auditLogs` request. See `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth).
 
 **The backend read is correctly gated independently of the above.** `GET /api/admin/audit-logs`
 ([`route.ts`](../../../../../next-js-boilerplate/src/app/api/admin/audit-logs/route.ts)) does **not**
@@ -50,4 +50,4 @@ architectural inconsistency with `set-tier`'s belt-and-suspenders style (worth n
 
 ## Known issues affecting this page
 
-- [CROSS-039](../../../../issues.md#cross-039) — see [../page.md § Known issues](../page.md#known-issues-affecting-this-page).
+- `CROSS-039` (resolved) — see [../page.md § Known issues](../page.md#known-issues-affecting-this-page).

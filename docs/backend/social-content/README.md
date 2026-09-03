@@ -29,7 +29,7 @@ what the backend or web require), `MOB-008` (resolved)/`MOB-011` (resolved)
 (a post's own author currently has no working edit/delete path anywhere on mobile — a more-complete
 implementation sits dead in the tree while the live screen never wires the callbacks), and
 `CROSS-016` (resolved) (web's `users/list`/`detail` are static demo content while
-mobile's identically-named screens are a real, live, admin-only feature). [CROSS-002](../../issues.md#cross-002)
+mobile's identically-named screens are a real, live, admin-only feature). `CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core)
 (`team-members`/`project-tasks` orphaned) moved from tentative to verified this phase. Full list:
 [issues.md](../../issues.md).
 

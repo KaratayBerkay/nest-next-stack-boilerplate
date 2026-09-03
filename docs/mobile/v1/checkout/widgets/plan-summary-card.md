@@ -31,7 +31,7 @@ the live app. Confirmed via `grep -rn "PlanSummaryCard("` across the entire Flut
 call site, and it doesn't pass this parameter. Contrast web's equivalent
 [`PlanSummaryCard.tsx`](../../../../frontend/v1/checkout/components/plan-summary-card.md), which
 *does* show a feature list (sourced from its own hardcoded `TIER_FEATURES`, see
-[CROSS-031](../../../../issues.md#cross-031)) — this is a minor, cosmetic-only parity gap: web's
+`CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder)) — this is a minor, cosmetic-only parity gap: web's
 checkout recap shows features, mobile's doesn't, despite the widget being fully capable of it. See
 `MOB-018` (resolved).
 

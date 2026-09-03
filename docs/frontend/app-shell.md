@@ -82,7 +82,7 @@ Backend counterpart: [backend realtime](../backend/messaging-realtime/realtime/R
 `V1Nav.tsx` and [`v1/admin/page.md`](./v1/admin/page.md) independently compute the identical
 `isAdmin` client-side check — the nav link and the page's own access gate are two separate call sites
 of the same logic, not one shared source of truth, but they agree with each other. See
-[CROSS-039](../issues.md#cross-039) for the cross-platform comparison of how strong this gate actually is.
+`CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth) for the cross-platform comparison of how strong this gate actually is.
 
 ## Known issues affecting this shell
 

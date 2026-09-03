@@ -80,7 +80,7 @@ see [v1/rtc/README.md](./v1/rtc/README.md).
 
 Same relationship as web: `v1_nav.dart`'s `isAdmin` check and
 [v1/admin/screen.md](./v1/admin/screen.md)'s router-level `requireAdmin()` gate are independently
-computed, not shared code, but agree with each other. See [CROSS-039](../issues.md#cross-039).
+computed, not shared code, but agree with each other. See `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth).
 
 ## Known issues affecting this shell
 

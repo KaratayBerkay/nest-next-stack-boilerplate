@@ -13,7 +13,7 @@ effort's own original plan assumed a 5-step funnel ending in `v1/premium`; Phase
 2. **[`v1/plans`](./v1/plans/page.md)** — the real plan-comparison page (session-gated). Fetches live
    prices from [`billing/endpoints.md#get-plan-prices`](../backend/billing-usage/billing/endpoints.md);
    feature-list *copy* is hardcoded separately here, in step 3, and on mobile — see
-   [CROSS-031](../issues.md#cross-031).
+   `CROSS-031` (resolved — fixed 2026-09-03: tier feature lists are now served by the backend (`planPrices { features { key value } }`, built in `billing/tier-features.ts` from the constants that enforce the limits); clients only translate the keys (web `pricing.featureLabels`, Flutter `pricingFeature*` ARB) and keep the old arrays purely as the pre-fetch placeholder).
 3. **[`v1/checkout/[tier]`](./v1/checkout/page.md)** — payment collection (FREE→paid, via Stripe
    Elements) or a plan change (paid↔paid or paid→FREE, no payment form). **Paid↔paid changes are
    broken from this page** — see `CROSS-030` (resolved); only FREE→paid and paid→FREE
@@ -30,7 +30,7 @@ The original Phase 4 plan (written in Phase 0, before any billing page was actua
 post-purchase "you're premium now" status page. **Phase 4b verified this is wrong**: `v1/premium` is
 an unrelated NestJS `@MinTier()`/RBAC tech demo (`AdminResolver.premiumStats`/`.growthStats`) that
 happens to share nav placement with the real subscription pages — see
-[CROSS-035](../issues.md#cross-035) for the full finding, already independently anticipated by Phase
+`CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile) for the full finding, already independently anticipated by Phase
 1b's `authorization/endpoints.md`. It is documented at [`v1/premium/page.md`](./v1/premium/page.md)
 as its own thing, not as part of this funnel.
 

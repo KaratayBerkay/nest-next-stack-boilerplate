@@ -29,7 +29,7 @@ therefore any network call) simply isn't rendered for a non-admin.
 [`AccessDeniedPage`](../../../../next-js-boilerplate/src/features/statics/access-denied/AccessDeniedPage.tsx)
 is a real, shared static-page component (see
 [flutter-only-infra.md](../../../mobile/flutter-only-infra.md) for why its Flutter counterpart is worth
-a cross-reference). See [CROSS-039](../../../issues.md#cross-039) for how this compares to mobile's
+a cross-reference). See `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth) for how this compares to mobile's
 equivalent gate.
 
 **The two real write/read actions this page triggers are correctly gated end-to-end**, independent of
@@ -64,7 +64,7 @@ the client-side check above:
 
 ## Known issues affecting this page
 
-- [CROSS-039](../../../issues.md#cross-039) — the admin-role gate is client-side-only in this page's own
+- `CROSS-039` (resolved) — the admin-role gate is client-side-only in this page's own
   component tree (contrast [mobile's screen](../../../mobile/v1/admin/screen.md), which gates one layer
   earlier — a router redirect — but has *no* redundant in-widget check at all, unlike this page's
   `AccessDeniedPage` fallback). Not a data-exposure bug on either platform — both platforms' real

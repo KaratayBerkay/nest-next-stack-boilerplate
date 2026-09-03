@@ -81,6 +81,6 @@ since `@IsOptional()` only skips validation for `null`/`undefined`, not `""`).
 
 ## Known issues
 
-- [CROSS-019](../../../issues.md#cross-019) — `locale`/`timezone` round-trip through this mutation/query
+- `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — `locale`/`timezone` round-trip through this mutation/query
   correctly, but neither is read back anywhere to actually change rendered behavior on web (mobile's
   `locale` is the exception — see the issue for the full breakdown by field and platform).

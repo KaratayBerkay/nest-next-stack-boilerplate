@@ -14,7 +14,7 @@ doesn't either: `src/app/auth/` is a **separate, top-level route group** — pre
 redirects an already-signed-in visitor away), and **not localized by route** (no `[lang]` segment;
 these pages read the `LANG_COOKIE` directly where they need a locale — see
 [login-credentials-form.md](./login/components/login-credentials-form.md)). See
-[CROSS-003](../../issues.md#cross-003) for the same "the URL doesn't imply a versioning/localization
+`CROSS-003` (resolved — fixed 2026-09-03: documentation-only note, no code change intended) for the same "the URL doesn't imply a versioning/localization
 guarantee" caution applied elsewhere.
 
 ## Pages

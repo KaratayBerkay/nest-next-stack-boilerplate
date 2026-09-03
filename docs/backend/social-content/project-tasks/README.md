@@ -15,7 +15,7 @@
 (`Organization → Team`/`Project → Task`). List all tasks, or create one. Wired into
 [`app.module.ts`](../../../../nest-js-boilerplate/src/app.module.ts)'s `CORE_MODULES` directly (not
 demo-gated, confirmed by reading the array itself). GraphQL-only — no REST controller. Not to be
-confused with [`src/tasks/`](../../../../nest-js-boilerplate/src/tasks/) — an unrelated
+confused with [`src/demo-tasks/`](../../../../nest-js-boilerplate/src/demo-tasks/) — an unrelated
 `@nestjs/schedule` (Cron/Interval) demo module, `DEMO_MODULES`-gated — the resolver's own source
 comment calls this distinction out explicitly.
 
@@ -64,7 +64,7 @@ for the shared evidence (both modules point at the same `Organization`/`Project`
 
 ## Known issues
 
-**[CROSS-002](../../../issues.md#cross-002) — verified during this phase.** See
+**`CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core) — verified during this phase.** See
 [team-members/README.md § Known issues](../team-members/README.md#known-issues) for the full
 evidence write-up (grep methodology, the two false-positive hits ruled out, and the "no parent
 entity has an API" structural point) — identical conclusion applies to this module. The

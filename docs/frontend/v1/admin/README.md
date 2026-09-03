@@ -6,7 +6,7 @@
 Real, working admin tooling — unlike [users/](../users/README.md) (same-looking "admin-ish" naming,
 but that vertical is 100% hardcoded demo content). Both pages here are gated to `ADMIN`/`SUPERADMIN`
 only, though the gate is enforced at different strengths depending on the layer — see each page's own
-"admin-role gate" section and [CROSS-039](../../../issues.md#cross-039).
+"admin-role gate" section and `CROSS-039` (resolved — fixed 2026-09-03: web now checks the admin role server-side too (Next `admin/layout.tsx`, TanStack route loader data) and denies before rendering; the in-component check stays as defense in depth).
 
 ## Pages
 
@@ -28,7 +28,7 @@ page today.
 
 ## Known issues affecting this vertical
 
-- [CROSS-039](../../../issues.md#cross-039) — the admin-role gate is client-side-only in both pages' own
+- `CROSS-039` (resolved) — the admin-role gate is client-side-only in both pages' own
   component trees on web; see [page.md](./page.md#the-admin-role-gate-is-enforced-correctly-but-is-client-side-only-at-the-page-level).
   The actual privileged mutations/queries are correctly backend-gated regardless.
 - `MOB-025` (resolved) — mobile's equivalent of this vertical's search feature is

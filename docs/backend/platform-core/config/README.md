@@ -22,7 +22,7 @@ module wrapping it, and `grep -rln "ConfigDemoService\|databaseConfig"` outside 
 nothing. [`config.spec.ts`](../../../../nest-js-boilerplate/src/config/config.spec.ts) proves both
 demo pieces work by building its **own**, fully isolated `Test.createTestingModule` (with its own
 `ConfigModule.forRoot({load: [databaseConfig], ...})`) — the same shape this repo's
-`implement-nestjs-feature` skill produces elsewhere (see [CROSS-002](../../../issues.md#cross-002) for
+`implement-nestjs-feature` skill produces elsewhere (see `CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core) for
 a prior instance of this exact pattern, in `project-tasks`/`team-members`). `env.validation.ts`'s Joi
 schema itself is exercised the same way, plus for real every time the app boots.
 

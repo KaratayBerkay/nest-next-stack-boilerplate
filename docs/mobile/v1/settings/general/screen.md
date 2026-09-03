@@ -29,7 +29,7 @@ component, not detailed here) sits above them in the same card:
 dedicated chrome [`LangSwitcher`](../../../../../flutter-boilerplate/lib/components/nav/lang_switcher.dart)
 writes to — confirmed via `grep -rn "localeProvider" flutter-boilerplate/lib`, both are among its only
 consumers. So saving a new Language on this screen takes effect immediately, correctly. This is the
-mobile side of [CROSS-019](../../../../issues.md#cross-019) — web's equivalent field does **not** do this
+mobile side of `CROSS-019` (resolved — fixed 2026-09-03: the saved timezone now drives every date formatter — web reads it from the `timezone` cookie in `lib/date-time.ts` (kept in sync by the auth provider and the settings save), Flutter via `DateTimeHelper.setPreferredTimeZone` (package `timezone`, synced from the profile)) — web's equivalent field does **not** do this
 (see [frontend/v1/settings/general/page.md § Known issues](../../../../frontend/v1/settings/general/page.md#known-issues)).
 
 Timezone has no equivalent live-apply mechanism on either platform — see
@@ -37,7 +37,7 @@ Timezone has no equivalent live-apply mechanism on either platform — see
 
 ## Known issues
 
-- [CROSS-019](../../../../issues.md#cross-019) — this screen's Language field is the *correct* half of a
+- `CROSS-019` (resolved) — this screen's Language field is the *correct* half of a
   cross-platform pair; web's equivalent is broken (persists but never applies). Timezone, on this
   screen and web's, persists correctly but is never read back by either app to affect actual date/time
   formatting or rendering.

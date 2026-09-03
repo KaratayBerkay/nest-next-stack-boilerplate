@@ -65,7 +65,7 @@ provider.
   `hooks/use_auth.dart` and gets the synchronous version. The `queries.dart` version's only reference
   anywhere is a re-export in [`lib/api/index.dart`](../../../flutter-boilerplate/lib/api/index.dart) —
   confirmed via a repo-wide grep, it is never read/watched. Dead code with a confusable name, same
-  family as [BE-002](../../issues.md#be-002). Filed in [`issues.md`](../../issues.md).
+  family as `BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`). Filed in [`issues.md`](../../issues.md).
 - The underlying `me` GraphQL query itself is **not** dead — `me.dart`'s `MeServer.call()` is called
   directly (bypassing the dead `queries.dart` wrapper) from `settings/account/page_view.dart`, out of
   scope for this pass.

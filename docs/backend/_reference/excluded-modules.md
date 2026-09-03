@@ -19,10 +19,12 @@ across the whole `src/` tree returning zero hits outside the directory itself.
 
 ## Naming collisions — verify by content, not by name
 
-Four directory names are easy to misread as a real product module. All four were checked directly
-against source, not assumed:
+**2026-09-03:** the four confusable demo directories were renamed with a `demo-` prefix —
+`demo-cookies/`, `demo-session/`, `demo-tasks/`, `demo-users/` (module classes `DemoCookiesModule`,
+`DemoSessionModule`, `DemoTasksModule`, `DemoUsersModule`) — closing `BE-002`/`BE-025`. The history
+below is kept because the *pattern* (a demo next to a real module of the same name) is worth knowing.
 
-### `cookies/`
+### `demo-cookies/` (formerly `cookies/`)
 
 **Wiring:** `DEMO_MODULES` (`CookiesModule`, groups `CookiesController`'s cookie-read/write demo
 endpoints — own comment: "the cookie-parser middleware itself is registered globally in main.ts; this
@@ -30,16 +32,16 @@ module just groups the endpoints that read/write cookies"). Not to be confused w
 always-on [`common/cookies/`](../platform-core/common/cookies/README.md) (the cookie-hardening options
 factory every real session cookie in the app uses) — a new finding this phase, the fourth confirmed
 instance of this codebase's naming-collision pattern. See
-[BE-025](../../issues.md#be-025) below.
+`BE-025` (resolved — fixed 2026-09-03: the demo directories were renamed `demo-cookies/`, `demo-session/`, `demo-tasks/` (and `demo-users/`)) below.
 
-### `session/` (singular)
+### `demo-session/` (formerly `session/`, singular)
 
 **Wiring:** unwired — `session.module.ts`/`session.controller.ts` exist but nothing in `src/`
 references them; confirmed absent from both `app.module.ts` arrays. Not to be confused with the real,
 always-on [`identity-access/sessions/`](../identity-access/sessions/README.md) (plural — the
 active-sessions-list GraphQL resolver, Phase 1).
 
-### `tasks/`
+### `demo-tasks/` (formerly `tasks/`)
 
 **Wiring:** `DEMO_MODULES` (`TasksModule`, `@nestjs/schedule` cron-job examples). Not to be confused
 with the real, always-on [`social-content/project-tasks/`](../social-content/project-tasks/README.md)
@@ -47,12 +49,12 @@ with the real, always-on [`social-content/project-tasks/`](../social-content/pro
 which notes this `tasks/` directory specifically when explaining that the outbox relay is
 BullMQ-queue-driven, not cron-polled.
 
-### `users/`
+### `demo-users/` (formerly `users/`)
 
 **Wiring:** `DEMO_MODULES` (`UsersModule`) — its own source comment reads "demo CRUD module — leaks
 passwordHash; must not run in production." Not to be confused with the real, always-on
 [`social-content/profile/`](../social-content/profile/README.md) (Phase 2). Already tracked as
-[BE-002](../../issues.md#be-002) (Phase 0) — the first of this pattern found in this effort; the three
+`BE-002` (resolved — fixed 2026-09-03: the demo directory is now `demo-users/` (`DemoUsersModule`), so it can no longer be mistaken for `profile/`) (Phase 0) — the first of this pattern found in this effort; the three
 above are additional instances confirmed this phase.
 
 ## `caching/`
@@ -153,10 +155,10 @@ for the full account.
 
 ## Known issues
 
-- [BE-025](../../issues.md#be-025) (LOW) — `cookies/` (`DEMO_MODULES`, a NestJS cookie-recipe demo) sits
+- `BE-025` (resolved) (LOW) — `cookies/` (`DEMO_MODULES`, a NestJS cookie-recipe demo) sits
   next to the real, always-on `common/cookies/` (the cookie-hardening options factory) with a
   confusable name — the fourth instance of this codebase's `users/`↔`profile/`-style naming-collision
   pattern found across this whole documentation effort (after `users/`↔`profile/`
-  ([BE-002](../../issues.md#be-002)), `session/`↔`sessions/`, and `tasks/`↔`project-tasks/`, all
+  (`BE-002` (resolved)), `session/`↔`sessions/`, and `tasks/`↔`project-tasks/`, all
   re-confirmed this phase).
 - Full list: [issues.md](../../issues.md).

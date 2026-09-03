@@ -44,6 +44,6 @@ relying on the guard's cookie fallback) → this module's `subscribePush`/`unsub
   anywhere in the backend) implements; this module only ever speaks Web Push. See
   [notification/README.md § Known issues](../notification/README.md#known-issues) for the full,
   three-part breakdown (this was found while documenting the `notification` vertical, not this one).
-- [BE-015](../../../issues.md#be-015): `myPushSubscriptions` (list a user's own registered
+- `BE-015` (resolved — fixed 2026-09-03: the `myPushSubscriptions` query was removed): `myPushSubscriptions` (list a user's own registered
   subscriptions) has no caller on either platform — users can subscribe/unsubscribe but never see or
   manage a list of their registered devices.

@@ -83,6 +83,6 @@ subfolder for this vertical (no standalone, live widget files — see the dead-c
 - ⚠ `MOB-022` (resolved) — 7 of 8 files in this vertical are dead code.
 - `MOB-023` (resolved) — "New Subs (Month)"/"Growth Rate" never load real
   data; `totalPosts`/`totalFriendships` are fetched but never shown.
-- ⚠ [CROSS-035](../../../issues.md#cross-035) — inherited from the web page (same backend
+- ⚠ `CROSS-035` (resolved — fixed 2026-09-03: `premiumStats`/`growthStats` are `@Roles(ADMIN, SUPERADMIN)`-gated on top of the tier gate, and the Premium nav entry/page is admin-only on web and mobile) — inherited from the web page (same backend
   queries): this whole vertical is an RBAC tier-gate demo, not subscription status — see
   [premium (web) page.md](../../../frontend/v1/premium/page.md#-this-is-not-a-subscription-statusupsell-page--verify-before-assuming-otherwise).

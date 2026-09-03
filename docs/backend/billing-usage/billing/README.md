@@ -163,8 +163,8 @@ write path populates), and never reads or writes `.balance` anywhere. Confirmed 
 `grep -rn "\.balance\b"` and `grep -rn "toWalletId" ` across all non-generated backend source: zero
 real (non-spec, non-`@generated`) hits beyond that one defensive `OR` clause. See ⚠
 `BE-021` (resolved) — this is forward-provisioned schema with no feature
-built on top of it, the same pattern as [BE-008](../../../issues.md#be-008) (`MfaFactor`'s unused
-WebAuthn columns) and [CROSS-002](../../../issues.md#cross-002) (`Organization`/`Team`/`Project` with
+built on top of it, the same pattern as `BE-008` (resolved — fixed 2026-09-03: the WebAuthn columns were dropped from `MfaFactor` by migration) (`MfaFactor`'s unused
+WebAuthn columns) and `CROSS-002` (resolved — fixed 2026-09-03: already structural-only — `ProjectTasksModule`/`TeamMembersModule` live in `DEMO_MODULES`, not in the always-on core) (`Organization`/`Team`/`Project` with
 no API surface). Every real `Wallet`/`WalletTransaction` reference in the backend lives in exactly
 three files: this one, `billing.service.ts`, and `stripe-webhook.controller.ts` — nothing under
 `usage/` (Phase 4b's module) touches either model.
@@ -208,7 +208,7 @@ Per-endpoint "Used by" detail (including which specific component calls which op
   visitor see real tier/pricing data: this resolver's class-level `SessionAuthGuard` has no exception
   for `planPrices`, and the frontend's own public pricing route never reaches a page that could call
   it anyway.
-- ⚠ `BE-018` (resolved), [BE-019](../../../issues.md#be-019),
+- ⚠ `BE-018` (resolved), `BE-019` (resolved — fixed 2026-09-03: subscriptions are created with `payment_behavior: allow_incomplete`; an `authentication_required` outcome carries the PaymentIntent `clientSecret` + `stripeSubscriptionId`, the client completes 3DS (Stripe.js `confirmCardPayment` / flutter_stripe `handleNextAction`) and calls the new `finalizeSubscription` mutation, and decline reasons map to readable copy on every client),
   `BE-020` (resolved) — Stripe webhook throttling, 3DS/SCA handling, and
   ledger-accuracy-pending-reconciliation gaps; see [stripe.md § Known issues](./stripe.md#known-issues).
 - ⚠ `BE-021` (resolved) — `Wallet`/`WalletTransaction`'s balance/transfer

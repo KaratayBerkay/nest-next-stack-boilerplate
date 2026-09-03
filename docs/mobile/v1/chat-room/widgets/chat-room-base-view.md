@@ -48,7 +48,7 @@ goes through `roomMessagesProvider(_room)`, exactly like web's `ChatRoomBaseView
 - **No reply state, no delete UI** — see
   [screen.md § Confirmed gaps](../screen.md#confirmed-gaps-vs-web-found-while-documenting-this-screen).
   For the room branch this matches the backend (no reply/delete capability exists for `RoomMessage`
-  at all — [CROSS-024](../../../../issues.md#cross-024)); for the (unreachable) DM branch it's a real gap
+  at all — `CROSS-024` (resolved — fixed 2026-09-03: chat rooms now have reply-to and delete (for me / for everyone) end to end — `RoomMessage.replyToId`/`deletedAt` + `RoomMessageDeletion`, `POST rooms/:roomSlug/messages/:messageId/delete-for-me|delete-for-everyone`, a `room-message-deleted` WS frame, and matching UI in both web apps and Flutter)); for the (unreachable) DM branch it's a real gap
   relative to [messages' own DM screen](../../messages/screen.md), which does support delete-for-me/
   delete-for-everyone.
 - `_setupRealtime()` only sends `get-room-counts` when `_isNamedRoom` — joining the room itself is
