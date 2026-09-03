@@ -1,6 +1,16 @@
 "use client";
 
-import { forwardRef } from "react";
+import { forwardRef, useState } from "react";
+import { IconBan, IconDotsVertical } from "@tabler/icons-react";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { IconButton } from "@/components/ui/button/icon-button";
+import { DELETE_FOR_EVERYONE_WINDOW_MS } from "@/constants/messages";
 import { Avatar } from "@/components/ui/Avatar";
 import { SkeletonChatMessage } from "@/components/ui/skeleton-shapes";
 import { AttachmentPreview } from "@/components/AttachmentPreview";
@@ -24,12 +34,30 @@ export const ChatRoomMessageList = forwardRef<
     onFetchNextPage,
     bottomRef,
     t,
+    onReply,
+    onDelete,
   },
   ref,
 ) {
+  // Delete-for-everyone window is a soft UI gate (the server re-checks it) —
+  // "as of when this list mounted" is close enough, same as the DM bubble.
+  const [renderedAt] = useState(() => Date.now());
   const hasDecryptionFailure = messages.some(
-    (m) => (m.body == null || m.body === "") && !m.attachments?.length,
+    (m) =>
+      !m.deletedAt &&
+      (m.body == null || m.body === "") &&
+      !m.attachments?.length,
   );
+  const replyPreviewText = (msg: (typeof messages)[number]) =>
+    !msg.replyTo
+      ? null
+      : msg.replyTo.deletedAt
+        ? t.deletedMessage
+        : msg.replyTo.body
+          ? msg.replyTo.body
+          : msg.replyTo.hasAttachments
+            ? t.attachmentPreview
+            : t.decryptionFailed;
 
   return (
     <div
@@ -62,12 +90,21 @@ export const ChatRoomMessageList = forwardRef<
       {hasNextPage && <LoadEarlierButton onClick={() => onFetchNextPage()} />}
       {messages.map((msg, i) => {
         const isMe = msg.senderId === userId;
+        const isDeleted = !!msg.deletedAt;
         const decryptionFailed =
-          (msg.body == null || msg.body === "") && !msg.attachments?.length;
+          !isDeleted &&
+          (msg.body == null || msg.body === "") &&
+          !msg.attachments?.length;
+        const showActions =
+          !!onDelete && !!onReply && !isDeleted && !msg.pending && !msg.failed;
+        const canDeleteForEveryone =
+          isMe &&
+          renderedAt - new Date(msg.createdAt).getTime() <
+            DELETE_FOR_EVERYONE_WINDOW_MS;
         return (
           <div
             key={msg.id}
-            className={`animate-fade-in-up flex items-start gap-2 ${isMe ? "flex-row-reverse" : ""}`}
+            className={`animate-fade-in-up group flex items-start gap-2 ${isMe ? "flex-row-reverse" : ""}`}
             style={{ animationDelay: `${i * 15}ms` }}
           >
             {!isMe && (
@@ -87,7 +124,31 @@ export const ChatRoomMessageList = forwardRef<
                   {msg.senderName}
                 </p>
               )}
-              {msg.attachments?.length ? (
+              {isDeleted ? (
+                <span
+                  className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
+                    isMe ? "bg-brand/60 text-brand-fg" : "bg-surface text-muted"
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5 text-xs italic">
+                    <IconBan size={13} stroke={1.75} />
+                    <span>{t.deletedMessage}</span>
+                  </span>
+                </span>
+              ) : null}
+              {!isDeleted && msg.replyTo ? (
+                <div className="bg-surface border-l-brand mb-1 max-w-full rounded-lg border-l-2 px-2.5 py-1.5">
+                  <div className="text-brand truncate text-[11px] font-medium">
+                    {msg.replyTo.senderId === userId
+                      ? t.you
+                      : (msg.replyTo.senderName ?? "")}
+                  </div>
+                  <div className="text-muted truncate text-xs">
+                    {replyPreviewText(msg)}
+                  </div>
+                </div>
+              ) : null}
+              {!isDeleted && msg.attachments?.length ? (
                 <div className="flex flex-wrap gap-2">
                   {msg.attachments.map((att) => (
                     <AttachmentPreview
@@ -101,7 +162,7 @@ export const ChatRoomMessageList = forwardRef<
                   ))}
                 </div>
               ) : null}
-              {msg.body != null && msg.body !== "" ? (
+              {!isDeleted && msg.body != null && msg.body !== "" ? (
                 <>
                   <span
                     className={`inline-block rounded-xl px-3 py-1.5 text-sm ${
@@ -130,6 +191,46 @@ export const ChatRoomMessageList = forwardRef<
                 </p>
               )}
             </div>
+            {showActions && (
+              <ConfirmDialog
+                title={t.deleteForEveryoneConfirmTitle}
+                description={t.deleteForEveryoneConfirmDescription}
+                confirmLabel={t.deleteForEveryone}
+                onConfirm={() => onDelete(msg.id, "everyone")}
+              >
+                {(openDeleteForEveryone) => (
+                  <div className="self-center opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <IconButton
+                          icon={<IconDotsVertical size={16} stroke={1.5} />}
+                          label={t.messageActions}
+                          size="icon-xs"
+                        />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => onReply(msg)}>
+                          {t.reply}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onDelete(msg.id, "me")}
+                        >
+                          {t.deleteForMe}
+                        </DropdownMenuItem>
+                        {canDeleteForEveryone && (
+                          <DropdownMenuItem
+                            className="text-error"
+                            onClick={openDeleteForEveryone}
+                          >
+                            {t.deleteForEveryone}
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                )}
+              </ConfirmDialog>
+            )}
           </div>
         );
       })}

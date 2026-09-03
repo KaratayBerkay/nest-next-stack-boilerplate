@@ -11,8 +11,11 @@ import {
   formatDurationShort,
   formatTimeShort,
   getCurrentLocale,
+  getTimezone,
+  formatDate,
   type DateDisplayPreference,
 } from "./date-time";
+import { setTimezoneCookie } from "./timezone-cookie";
 
 describe("getCurrentLocale", () => {
   afterEach(() => {
@@ -171,5 +174,36 @@ describe("formatDurationShort", () => {
 
   it("clamps a negative span to 0s instead of rendering nonsense", () => {
     expect(formatDurationShort(at(5_000), start)).toBe("0s");
+  });
+});
+
+// CROSS-019: the profile timezone drives rendering, not the browser's zone.
+describe("preferred timezone (profile setting)", () => {
+  afterEach(() => setTimezoneCookie(null));
+
+  it("renders wall-clock times in the cookie's zone", () => {
+    setTimezoneCookie("Asia/Tokyo");
+    // 00:00Z is 09:00 in Tokyo.
+    expect(formatTimeShort("2026-09-03T00:00:00Z", "en-US")).toBe("9:00 AM");
+    expect(formatDateTimeShort("2026-09-03T00:00:00Z", "en-US")).toContain(
+      "9:00 AM",
+    );
+    expect(getTimezone()).toBe("Asia/Tokyo");
+  });
+
+  it("moves the calendar date across midnight in the preferred zone", () => {
+    setTimezoneCookie("Pacific/Kiritimati"); // UTC+14
+    expect(formatDate("2026-09-03T22:00:00Z", "en-US")).toBe("9/4/2026");
+    expect(formatDateLong("2026-09-03T22:00:00Z", "en-US")).toBe(
+      "September 4, 2026",
+    );
+  });
+
+  it("ignores an invalid zone and falls back to the environment", () => {
+    setTimezoneCookie("Mars/Olympus_Mons");
+    expect(document.cookie).not.toContain("Mars");
+    expect(getTimezone()).toBe(
+      Intl.DateTimeFormat().resolvedOptions().timeZone,
+    );
   });
 });

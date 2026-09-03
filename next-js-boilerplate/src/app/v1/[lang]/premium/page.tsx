@@ -7,6 +7,8 @@ import { BasicPageView } from "@/views/premium/BasicPageView";
 import { MediumPageView } from "@/views/premium/MediumPageView";
 import { PremiumPageView } from "@/views/premium/PremiumPageView";
 import type { I18nMessages } from "@/generated/i18n-messages";
+import { isAdminRole } from "@/lib/auth/admin-role";
+import { AccessDeniedPage } from "@/features/statics";
 
 export const metadata: Metadata = {
   title: "Premium",
@@ -29,6 +31,13 @@ export default async function PremiumPage({
   const { lang } = await params;
   const messages = getAllMessages<I18nMessages>(lang);
   const t = messages.premium;
+
+  // CROSS-035: this is the tier-gate tech demo and its premiumStats /
+  // growthStats queries are admin-only aggregates now — deny non-admins here
+  // instead of serving a page of failing queries.
+  if (!isAdminRole(user.role)) {
+    return <AccessDeniedPage message={messages.admin.accessDenied} />;
+  }
 
   return (
     <div className="flex flex-col gap-6">

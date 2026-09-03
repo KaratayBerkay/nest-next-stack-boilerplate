@@ -4,6 +4,7 @@ import { CURRENCY_COOKIE } from "@/constants/currency";
 import type { DateDisplayFormat } from "@/constants/date-display";
 import { DATE_DISPLAY_COOKIE } from "@/constants/date-display";
 import type { ToastOptions } from "@/types/ui/Toast-types";
+import { setTimezoneCookie } from "@/lib/timezone-cookie";
 
 type ToastFn = (opts: ToastOptions) => string;
 
@@ -53,6 +54,8 @@ export async function saveSettings(
   setSaving(true);
   try {
     await updateProfile({ locale, timezone });
+    // CROSS-019: the formatters read the zone from this cookie synchronously.
+    setTimezoneCookie(timezone);
     toast({ title: saveSuccess, variant: "success" });
     await refreshUser();
     applyLocale?.(locale);

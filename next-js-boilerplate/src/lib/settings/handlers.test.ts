@@ -101,3 +101,39 @@ describe("saveSettings — applying the saved language", () => {
     expect(applyLocale).not.toHaveBeenCalled();
   });
 });
+
+// CROSS-019: the saved timezone must also land in the cookie the date
+// formatters read, or the setting would keep being "stored but never used".
+describe("saveSettings timezone cookie", () => {
+  it("writes the timezone cookie after a successful save", async () => {
+    const updateProfile = vi.fn().mockResolvedValue(undefined);
+    await saveSettings(
+      vi.fn(),
+      "en",
+      "Europe/Istanbul",
+      vi.fn().mockReturnValue("toast-id"),
+      "ok",
+      "fail",
+      vi.fn().mockResolvedValue(undefined),
+      updateProfile,
+    );
+    expect(document.cookie).toContain("timezone=Europe%2FIstanbul");
+    document.cookie = "timezone=; path=/; max-age=0";
+  });
+
+  it("does not touch the cookie when the save fails", async () => {
+    document.cookie = "timezone=; path=/; max-age=0";
+    const updateProfile = vi.fn().mockRejectedValue(new Error("nope"));
+    await saveSettings(
+      vi.fn(),
+      "en",
+      "Asia/Tokyo",
+      vi.fn().mockReturnValue("toast-id"),
+      "ok",
+      "fail",
+      vi.fn().mockResolvedValue(undefined),
+      updateProfile,
+    );
+    expect(document.cookie).not.toContain("Asia%2FTokyo");
+  });
+});

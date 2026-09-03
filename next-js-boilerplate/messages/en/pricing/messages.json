@@ -32,5 +32,21 @@
   "pricePremium": "$49.99/mo",
   "changePending": "Change pending",
   "planChangeScheduled": "Your plan will change to {tier} on {date}.",
-  "downgrade": "Downgrade"
+  "downgrade": "Downgrade",
+  "featureLabels": {
+    "basicAccess": "Basic access",
+    "communitySupport": "Community support",
+    "everythingIn": "Everything in {tier}",
+    "prioritySupport": "Priority support",
+    "basicAnalytics": "Basic analytics",
+    "postStats": "Post stats & reaction breakdown",
+    "vipRooms": "VIP room access",
+    "suggestedFriends": "Suggested friends",
+    "whoReacted": "Who-reacted list",
+    "exportData": "Export data",
+    "crownBadge": "Crown badge",
+    "dedicatedSupport": "Dedicated support",
+    "callMinutes": "Calls up to {value} min",
+    "storageMultiplier": "{value}× storage allowance"
+  }
 }

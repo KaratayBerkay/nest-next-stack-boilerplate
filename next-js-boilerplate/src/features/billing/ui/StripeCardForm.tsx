@@ -21,6 +21,10 @@ import { useCurrencyCookie } from "@/hooks/useCurrencyCookie";
 import { useMessages } from "@/lib/i18n/MessagesProvider";
 import { tierLabel } from "@/lib/tier";
 import type { I18nMessages } from "@/generated/i18n-messages";
+import {
+  completeSubscribeWithAuthentication,
+  declineMessage,
+} from "@/lib/billing/subscribe-flow";
 
 export function StripeCardForm({
   tier,
@@ -78,6 +82,7 @@ async function handleStripeSubmit(
   retryKeyRef: React.MutableRefObject<string | null>,
   currency: string,
   t: I18nMessages["checkout"],
+  finalize: (stripeSubscriptionId: string) => Promise<SubscribeResult>,
 ) {
   e.preventDefault();
   if (!stripe || !elements) return;
@@ -118,17 +123,30 @@ async function handleStripeSubmit(
     // kept on failure so a timeout-then-retry never double-charges.
     const retryKey =
       retryKeyRef.current ?? (retryKeyRef.current = crypto.randomUUID());
-    const result = await subscribe(
+    const initial = await subscribe(
       tier,
       setupIntent.payment_method as string | undefined,
       retryKey,
       undefined,
       currency,
     );
+    // BE-019: the bank wants 3DS for this card — run it on-session and let
+    // the backend provision once Stripe reports the subscription active.
+    const result = await completeSubscribeWithAuthentication(initial, {
+      confirm: async (clientSecret) => {
+        const { error: confirmError } =
+          await stripe.confirmCardPayment(clientSecret);
+        return confirmError
+          ? (confirmError.message ?? t.authenticationFailed)
+          : null;
+      },
+      finalize,
+      authenticationFailedMessage: t.authenticationFailed,
+    });
     retryKeyRef.current = null;
     onSuccess(result);
   } catch (err) {
-    onError((err as Error).message ?? t.subscriptionFailed);
+    onError(declineMessage(err, t));
   } finally {
     setSubmitting(false);
   }
@@ -143,7 +161,7 @@ function StripeCardFormInner({
   const stripe = useStripe();
   const elements = useElements();
   const [submitting, setSubmitting] = useState(false);
-  const { subscribe } = useBillingActions();
+  const { subscribe, finalizeSubscription } = useBillingActions();
   const retryKeyRef = useRef<string | null>(null);
   const currency = useCurrencyCookie();
 
@@ -166,6 +184,7 @@ function StripeCardFormInner({
           retryKeyRef,
           currency,
           t,
+          finalizeSubscription,
         )
       }
       className="flex flex-col gap-4"

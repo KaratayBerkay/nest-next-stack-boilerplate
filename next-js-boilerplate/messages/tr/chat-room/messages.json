@@ -38,5 +38,15 @@
   "allUploadsNoResults": "Filtrelerinize uyan yükleme yok",
   "allUploadsClearFilters": "Filtreleri temizle",
   "loadMore": "Daha fazla yükle",
-  "attachmentLimitReached": "Tek seferde en fazla {count} ek gönderilebilir"
+  "attachmentLimitReached": "Tek seferde en fazla {count} ek gönderilebilir",
+  "deletedMessage": "Bu mesaj silindi",
+  "deleteForMe": "Benden sil",
+  "deleteForEveryone": "Herkesten sil",
+  "deleteForEveryoneConfirmTitle": "Herkesten silinsin mi?",
+  "deleteForEveryoneConfirmDescription": "Bu mesaj bu odadaki herkes için kaldırılacak. Bu işlem geri alınamaz.",
+  "deleteMessageFailed": "Mesaj silinemedi. Tekrar deneyin.",
+  "reply": "Yanıtla",
+  "you": "Sen",
+  "messageActions": "Mesaj işlemleri",
+  "attachmentPreview": "Ek"
 }

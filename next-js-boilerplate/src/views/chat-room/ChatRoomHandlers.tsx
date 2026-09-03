@@ -11,6 +11,8 @@ import {
 } from "@/lib/realtime/event-dispatch";
 import { sendMessageSchema } from "@/validators/messages/schema";
 import type { MessageAttachment } from "@/types/messages/MessageAttachment-types";
+import type { RoomReplyTarget } from "@/types/chat-room/ChatRoomMessage-types";
+import { applyRoomMessageDeletion } from "@/lib/chat/room-message-deletion";
 
 export async function chatRoomHandleSend(
   input: string,
@@ -23,6 +25,7 @@ export async function chatRoomHandleSend(
   setMessageError: Dispatch<SetStateAction<string | null>>,
   messageTooLongError: string,
   attachments?: MessageAttachment[],
+  replyTo?: RoomReplyTarget | null,
 ) {
   // Unlike DMs (ChatView-utils.ts's sendMessageSchema check), room messages
   // had no client-side length check at all — an over-limit message just sat
@@ -43,7 +46,8 @@ export async function chatRoomHandleSend(
     // mirrors useMessageActions.sendMessage's optimistic insert for DMs.
     queryClient.setQueryData(["room", room], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
@@ -56,6 +60,7 @@ export async function chatRoomHandleSend(
           senderName: user.name ?? "Unknown",
           body: text,
           attachments,
+          replyTo: replyTo ?? null,
           createdAt: new Date().toISOString(),
           pending: true,
         },
@@ -69,7 +74,8 @@ export async function chatRoomHandleSend(
     scheduleSendTimeout(tempId, () => {
       queryClient.setQueryData(["room", room], (old: unknown) => {
         const data = old as
-          { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+          | { pages: { messages: Record<string, unknown>[] }[] }
+          | undefined;
         if (!data?.pages?.length) return old;
         const pages = data.pages.map((page) => ({
           ...page,
@@ -88,9 +94,38 @@ export async function chatRoomHandleSend(
     text,
     tempId,
     ...(attachments && attachments.length > 0 ? { attachments } : {}),
+    ...(replyTo ? { replyToId: replyTo.id } : {}),
   });
   setInput("");
   scrollToBottom();
+}
+
+/**
+ * Delete a room message (CROSS-024) — optimistic cache patch first, server
+ * call second, rollback on failure. Mirrors useMessageActions.deleteMessage
+ * for DMs; the room list is an infinite-query page list under ["room", slug].
+ */
+export async function chatRoomDeleteMessage(
+  queryClient: ReturnType<typeof useQueryClient>,
+  room: string,
+  messageId: string,
+  scope: "me" | "everyone",
+) {
+  const queryKey = ["room", room];
+  const previous = queryClient.getQueryData(queryKey);
+  queryClient.setQueryData(queryKey, (old: unknown) =>
+    applyRoomMessageDeletion(old, messageId, scope, new Date().toISOString()),
+  );
+  try {
+    const { deleteRoomMessageForMeServer, deleteRoomMessageForEveryoneServer } =
+      await import("@/api/server/messages/delete-room-message");
+    await (scope === "me"
+      ? deleteRoomMessageForMeServer(room, messageId)
+      : deleteRoomMessageForEveryoneServer(room, messageId));
+  } catch (err) {
+    queryClient.setQueryData(queryKey, previous);
+    throw err;
+  }
 }
 
 export function selectChatRoom(

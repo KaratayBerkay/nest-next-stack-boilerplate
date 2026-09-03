@@ -1,6 +1,8 @@
 export const STRIPE_CREATE_SETUP_INTENT_URL =
   "/api/billing/create-setup-intent" as const;
 export const STRIPE_SUBSCRIBE_URL = "/api/billing/subscribe" as const;
+export const STRIPE_SUBSCRIBE_FINALIZE_URL =
+  "/api/billing/subscribe/finalize" as const;
 
 export const AUTH_OAUTH_PREFIX = "/api/auth/oauth/" as const;
 export const AUTH_REFRESH_URL = "/api/auth/refresh" as const;

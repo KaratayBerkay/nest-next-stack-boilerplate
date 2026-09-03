@@ -2,6 +2,7 @@ import type { useQueryClient } from "@tanstack/react-query";
 import { markMessagesReadServer } from "@/api/server/messages/mark-read";
 import { getActivePeerId } from "@/lib/realtime/active-peer";
 import { patchConversationList } from "@/lib/realtime/renew-dispatch";
+import { applyRoomMessageDeletion } from "@/lib/chat/room-message-deletion";
 
 const sentTempIds = new Set<string>();
 
@@ -84,13 +85,15 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
       if (first.messages.some((m) => m.id === msg.id)) return old;
       const echoTempId = (msg as Record<string, unknown>)._tempId as
-        string | undefined;
+        | string
+        | undefined;
       if (echoTempId && sentTempIds.has(echoTempId)) {
         sentTempIds.delete(echoTempId);
         first.messages = first.messages.map((m) =>
@@ -126,7 +129,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -148,7 +152,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -181,7 +186,8 @@ export async function dispatchEvent(
     }
     qc.setQueryData(["messages", peerId], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = data.pages.map((page) => ({
         ...page,
@@ -227,7 +233,8 @@ export async function dispatchEvent(
     // recently fetched, newest-messages page) ever needs a live append.
     qc.setQueryData(["room", room], (old: unknown) => {
       const data = old as
-        { pages: { messages: Record<string, unknown>[] }[] } | undefined;
+        | { pages: { messages: Record<string, unknown>[] }[] }
+        | undefined;
       if (!data?.pages?.length) return old;
       const pages = [...data.pages];
       const first = { ...pages[0] };
@@ -243,5 +250,27 @@ export async function dispatchEvent(
       pages[0] = first;
       return { ...data, pages };
     });
+  }
+
+  // CROSS-024: room-message deletions. scope "me" is a sync frame to the
+  // actor's own other tabs/devices; scope "everyone" is broadcast to every
+  // room member. Same cache patch the optimistic delete applies.
+  if (t === "room-message-deleted") {
+    const room = frame.room as string | undefined;
+    const messageId = frame.messageId as string | undefined;
+    const scope = frame.scope as "me" | "everyone" | undefined;
+    if (!room || !messageId || !scope) return;
+    if (!qc.getQueryData(["room", room])) {
+      qc.invalidateQueries({ queryKey: ["room", room] });
+      return;
+    }
+    qc.setQueryData(["room", room], (old: unknown) =>
+      applyRoomMessageDeletion(
+        old,
+        messageId,
+        scope,
+        (frame.deletedAt as string | undefined) ?? new Date().toISOString(),
+      ),
+    );
   }
 }

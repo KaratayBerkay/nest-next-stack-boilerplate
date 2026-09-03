@@ -56,7 +56,6 @@ export function V1Nav({ onNav }: V1NavProps) {
     { href: "/rtc", label: t.navRtc, Icon: IconVideo, auth: true },
     { href: FIND_FRIENDS_PATH, label: t.navFindFriends, Icon: IconUserPlus },
     { href: FRIENDS_PATH, label: t.navFriends, Icon: IconUsers },
-    { href: "/premium", label: t.navPremium, Icon: IconShield, auth: true },
     {
       href: "/settings/general",
       label: t.navSettings,
@@ -71,7 +70,15 @@ export function V1Nav({ onNav }: V1NavProps) {
   ];
 
   const isAdmin = user?.role === "ADMIN" || user?.role === "SUPERADMIN";
+  // Premium is the tier-gate tech demo backed by admin-only aggregate
+  // queries (CROSS-035), not a subscriber page — hide it from non-admins.
   if (isAdmin) {
+    links.push({
+      href: "/premium",
+      label: t.navPremium,
+      Icon: IconShield,
+      auth: true,
+    });
     links.push({
       href: "/admin",
       label: t.navAdmin,

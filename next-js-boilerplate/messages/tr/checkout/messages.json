@@ -40,5 +40,9 @@
   "noPaymentMethodReturned": "Ödeme yöntemi alınamadı",
   "subscriptionFailed": "Abonelik başarısız oldu",
   "upgradeToTier": "{tier} planına yükselt",
-  "changeToTier": "{tier} planına geç"
+  "changeToTier": "{tier} planına geç",
+  "declinedInsufficientFunds": "Kartınızda yeterli bakiye yok. Başka bir kart deneyin.",
+  "declinedCard": "Kartınız reddedildi. Başka bir kart deneyin veya bankanızla iletişime geçin.",
+  "authenticationRequired": "Bankanız bu kart için ek doğrulama istiyor.",
+  "authenticationFailed": "Kart doğrulaması tamamlanmadı. Tekrar deneyin veya başka bir kart kullanın."
 }

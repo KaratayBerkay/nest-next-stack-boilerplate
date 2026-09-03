@@ -298,6 +298,16 @@ export type I18nMessages = {
       "allUploadsClearFilters": string;
       "loadMore": string;
       "attachmentLimitReached": string;
+      "deletedMessage": string;
+      "deleteForMe": string;
+      "deleteForEveryone": string;
+      "deleteForEveryoneConfirmTitle": string;
+      "deleteForEveryoneConfirmDescription": string;
+      "deleteMessageFailed": string;
+      "reply": string;
+      "you": string;
+      "messageActions": string;
+      "attachmentPreview": string;
     }
 
   "checkout": {
@@ -343,6 +353,10 @@ export type I18nMessages = {
       "subscriptionFailed": string;
       "upgradeToTier": string;
       "changeToTier": string;
+      "declinedInsufficientFunds": string;
+      "declinedCard": string;
+      "authenticationRequired": string;
+      "authenticationFailed": string;
     }
 
   "error": {
@@ -23865,6 +23879,22 @@ export type I18nMessages = {
       "changePending": string;
       "planChangeScheduled": string;
       "downgrade": string;
+      "featureLabels": {
+        "basicAccess": string;
+        "communitySupport": string;
+        "everythingIn": string;
+        "prioritySupport": string;
+        "basicAnalytics": string;
+        "postStats": string;
+        "vipRooms": string;
+        "suggestedFriends": string;
+        "whoReacted": string;
+        "exportData": string;
+        "crownBadge": string;
+        "dedicatedSupport": string;
+        "callMinutes": string;
+        "storageMultiplier": string;
+      };
     }
 
   "rtc": {

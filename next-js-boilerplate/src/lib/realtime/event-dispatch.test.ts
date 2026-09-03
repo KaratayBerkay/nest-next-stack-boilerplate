@@ -775,3 +775,83 @@ describe("scheduleSendTimeout", () => {
     expect(onTimeout).not.toHaveBeenCalled();
   });
 });
+
+// CROSS-024: room-message deletions patch the ["room", slug] cache.
+describe("room-message-deleted", () => {
+  const seed = () => {
+    const qc = new QueryClient();
+    qc.setQueryData(["room", "general"], {
+      pages: [
+        {
+          messages: [
+            { id: "r1", body: "one" },
+            { id: "r2", body: "two", attachments: [{ url: "x" }] },
+            { id: "r3", body: "three" },
+          ],
+        },
+      ],
+      pageParams: [undefined],
+    });
+    return qc;
+  };
+  const rows = (qc: QueryClient) =>
+    (
+      qc.getQueryData(["room", "general"]) as {
+        pages: { messages: Record<string, unknown>[] }[];
+      }
+    ).pages[0].messages;
+
+  it("scope 'me' removes the row", async () => {
+    const qc = seed();
+    await dispatchEvent(
+      qc,
+      {
+        type: "room-message-deleted",
+        scope: "me",
+        room: "general",
+        messageId: "r1",
+      },
+      "user-1",
+    );
+    expect(rows(qc).map((m) => m.id)).toEqual(["r2", "r3"]);
+  });
+
+  it("scope 'everyone' tombstones in place, keeping order and length", async () => {
+    const qc = seed();
+    await dispatchEvent(
+      qc,
+      {
+        type: "room-message-deleted",
+        scope: "everyone",
+        room: "general",
+        messageId: "r2",
+        senderId: "user-2",
+        deletedAt: "2026-09-03T10:05:00.000Z",
+      },
+      "user-1",
+    );
+    const after = rows(qc);
+    expect(after.map((m) => m.id)).toEqual(["r1", "r2", "r3"]);
+    expect(after[1]).toMatchObject({
+      body: null,
+      attachments: [],
+      deletedAt: "2026-09-03T10:05:00.000Z",
+    });
+  });
+
+  it("invalidates instead of patching when the room is not cached", async () => {
+    const qc = new QueryClient();
+    const spy = vi.spyOn(qc, "invalidateQueries");
+    await dispatchEvent(
+      qc,
+      {
+        type: "room-message-deleted",
+        scope: "everyone",
+        room: "vip-lounge",
+        messageId: "r9",
+      },
+      "user-1",
+    );
+    expect(spy).toHaveBeenCalledWith({ queryKey: ["room", "vip-lounge"] });
+  });
+});
