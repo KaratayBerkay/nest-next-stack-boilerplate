@@ -36,7 +36,7 @@ correctly wraps the real `myPostStats` GraphQL query, but has **zero readers any
 the two definition sites, no `ref.watch`/`ref.read` call anywhere).
 
 This is the same "scaffolded-then-not-fully-wired" shape as
-[CROSS-013](../../../../issues.md#cross-013)/`FE-007` (resolved) from earlier
+`CROSS-013` (resolved)/`FE-007` (resolved) from earlier
 phases — one new instance in this vertical. Filed as `MOB-009` (resolved) (see
 [issues.md](../../../../issues.md)). The one-line fix is wiring
 `onLoadStats: () => ref.read(postStatsServerProvider).call()` (or reading `postStatsProvider`

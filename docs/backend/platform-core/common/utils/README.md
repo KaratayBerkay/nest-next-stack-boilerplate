@@ -55,7 +55,7 @@ in every current call site: `identity-access/auth`'s DTOs (`register.input.ts`,
 `reset-password.input.ts`, `change-password.input.ts`) already enforce `@MinLength(8)` and a
 `@Matches` regex requiring lower+upper+digit via `class-validator`, ahead of this function ever
 running — only the common-password blocklist check adds anything the DTO layer doesn't already
-guarantee. See [BE-004](../../../../issues.md#be-004) (documented in Phase 1,
+guarantee. See `BE-004` (resolved) (documented in Phase 1,
 [identity-access/auth/endpoints.md](../../../identity-access/auth/endpoints.md#known-issues)) for the
 full account — not re-litigated here, this module is just where the function itself lives.
 
@@ -77,5 +77,5 @@ See each function above — spans `identity-access/auth`, `messaging-realtime/me
 
 ## Known issues
 
-None specific to this module beyond the already-tracked [BE-004](../../../../issues.md#be-004) noted
+None specific to this module beyond the already-tracked `BE-004` (resolved) noted
 above.

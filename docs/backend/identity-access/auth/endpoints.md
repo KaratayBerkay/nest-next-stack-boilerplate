@@ -19,7 +19,7 @@ logic in [`auth-registration.service.ts#L41-L121`](../../../../nest-js-boilerpla
 **Auth:** none (pre-session).
 **Request:** [`RegisterInput`](../../../../nest-js-boilerplate/src/auth/dto/register.input.ts) —
 `email`, `password` (8-128 chars, `@Matches` requires lower+upper+digit — see ⚠
-[BE-004](../../../issues.md#be-004)), optional `name`, `timezone`.
+`BE-004` (resolved)), optional `name`, `timezone`.
 **Response:** [`AuthPayload`](../../../../nest-js-boilerplate/src/auth/auth.types.ts) — the full
 token quadruple (`accessToken`, `rbacToken`, `deviceToken`, `userToken`, `refreshToken`) plus `user`.
 Cookies are also set directly on the response (see [README.md § Session model](./README.md)).
@@ -33,7 +33,7 @@ the user in; verifying the email is not a login gate (see `AuthLoginService.logi
 `EX_AUTH_ACCOUNT_INACTIVE`/`PENDING_VERIFICATION` check, which only bites a *subsequent* login after
 the initial session eventually ends).
 **Errors:** `409 EX_AUTH_EMAIL_TAKEN` (email already registered) · `400 EX_AUTH_WEAK_PASSWORD` (from
-`validatePasswordStrength` — see [BE-004](../../../issues.md#be-004)) · standard `400`
+`validatePasswordStrength` — see `BE-004` (resolved)) · standard `400`
 class-validator errors for a malformed DTO.
 **Used by:** Frontend [register page](../../../frontend/auth/register/page.md); Mobile
 [register screen](../../../mobile/auth/register/screen.md).
@@ -47,8 +47,12 @@ logic in [`auth-login.service.ts#L43-L151`](../../../../nest-js-boilerplate/src/
 **Request:** [`LoginInput`](../../../../nest-js-boilerplate/src/auth/dto/login.input.ts) — `email`,
 `password`, optional `timezone`.
 **Response:** `AuthPayload` — either the full token quadruple + `user` (success), or
-`{mfaRequired: true, mfaMethod: 'TOTP'|'EMAIL', mfaToken, user}` with every token field `null`/absent
-(MFA challenge — see [Verify a login MFA code](#verify-a-login-mfa-code)). GraphQL itself always
+`{mfaRequired: true, mfaMethod: 'TOTP'|'EMAIL', mfaToken}` with every token field **and `user`**
+`null`/absent (MFA challenge — see [Verify a login MFA code](#verify-a-login-mfa-code)). `user` is
+nullable on the type since `BE-033` (resolved 2026-09-03): a correct password alone used to be
+answered with the full row (role, tier, status, …) before the second factor; the challenge now
+carries no account data at all, and every client renders the code step from the email it already
+typed. GraphQL itself always
 returns `200`; the **frontend BFF** is what maps the `mfaRequired` case to a distinct HTTP `202` (see
 [frontend api.md](../../../frontend/auth/api.md)) — the GraphQL layer has no separate status for it.
 **Behavior:** looks up the user by lowercased email; if no `passwordHash` exists (e.g. OAuth-only
@@ -119,10 +123,16 @@ logic in [`auth.service.ts#L241-L264`](../../../../nest-js-boilerplate/src/auth/
 **Auth:** none — authenticated by possession of a `state` value that only resolves to a real profile
 after [`OAuthService.handleCallback`](../../../../nest-js-boilerplate/src/auth/oauth/oauth.service.ts)
 completed a genuine provider code exchange (see the [REST § Handle an OAuth provider callback](#handle-an-oauth-provider-callback)
-entry below). **The profile is never accepted as caller-supplied input** — only a `state` string
-(`OAuthLoginInput.state`) — this is the fix for a since-resolved account-takeover hole where an
-earlier version of this flow trusted a client-submitted profile object directly (see the inline
-comment on `AuthService.loginWithOAuth`).
+entry below), **plus** the one-time `claim` that callback minted and delivered only on its redirect
+(`OAuthLoginInput.claim`, required) and — when the initiating client registered a `code_challenge`
+(the mobile app always does) — the matching PKCE-style `codeVerifier` (`OAuthLoginInput.codeVerifier`).
+`CROSS-032`: `state` alone was a bearer credential chosen by whoever *started* the flow, so an
+attacker-initiated flow the victim completed, or a squatted mobile URL scheme, both yielded the
+victim's session; the claim binds redemption to the browser that finished the handshake, the
+verifier to the app that started it. Any mismatch consumes the record (GETDEL) and 401s.
+**The profile is never accepted as caller-supplied input** — this is the fix for a since-resolved
+account-takeover hole where an earlier version of this flow trusted a client-submitted profile object
+directly (see the inline comment on `AuthService.loginWithOAuth`).
 **Response:** `AuthPayload`, same shape as a successful `login`. Never MFA-challenged — OAuth login
 bypasses the `mfaEnabled` check entirely (no `mfaEnabled`/`device.trusted` branch in this path, unlike
 `AuthLoginService.login`).
@@ -355,17 +365,20 @@ their own identical 6-provider list instead of fetching this.
 
 ### Start an OAuth flow
 
-**Kind:** REST · **`GET /auth/oauth/:provider`** · query `state` (required), `redirect_uri` (required)
+**Kind:** REST · **`GET /auth/oauth/:provider`** · query `state` (required), `redirect_uri` (required),
+`code_challenge` (RFC 7636 S256 digest of a verifier the client keeps to itself; **required** when
+`redirect_uri` is an app scheme, optional for http(s) — `CROSS-032`)
 **Source:** [`oauth.controller.ts#L74-L97`](../../../../nest-js-boilerplate/src/auth/oauth/oauth.controller.ts)
 (`@Redirect()`)
 **Behavior:** validates `redirect_uri`'s origin against an allow-list (`FRONTEND_URL` and
 `MOBILE_OAUTH_REDIRECT_ORIGIN`, default `flutterboilerplate://oauth` — compared by scheme+host, since
 `URL.origin` is the opaque string `"null"` for custom app URI schemes), stores `{provider,
-redirectUri, codeVerifier?}` in Redis keyed by `state` (10-minute TTL), and issues a `302` to the
-real provider's authorization endpoint (PKCE code-challenge attached when the provider supports it —
-currently only `x`).
-**Errors:** `400 EX_VALIDATION_FORM` (missing `state`/`redirect_uri`, or `redirect_uri` origin not
-allow-listed).
+redirectUri, codeVerifier?, clientCodeChallenge?}` in Redis keyed by `state` (10-minute TTL), and
+issues a `302` to the real provider's authorization endpoint (the provider-side PKCE code-challenge is
+attached when the provider supports it — currently only `x`; it is unrelated to the client
+`code_challenge` above, which the *app* must later prove it holds the verifier for).
+**Errors:** `400 EX_VALIDATION_FORM` (missing `state`/`redirect_uri`, `redirect_uri` origin not
+allow-listed, app-scheme `redirect_uri` without a `code_challenge`, or a malformed `code_challenge`).
 **Used by:** Frontend — the browser never calls this directly; the
 [`/api/auth/oauth/[provider]` BFF route](../../../frontend/auth/api.md#oauth--no-apiserver-file-at-all)
 fetches it server-to-server (`redirect: "manual"`) and relays the `Location` header. Mobile —
@@ -380,10 +393,14 @@ no BFF hop.
 **Behavior:** the provider redirects here after the user consents. Exchanges `code` for a provider
 access token server-to-server
 ([`oauth.service.ts#L112-L182`](../../../../nest-js-boilerplate/src/auth/oauth/oauth.service.ts)),
-fetches the provider profile, stores it in Redis under the **same** `state` key (`oauth:profile:` prefix,
-10-minute TTL) — this is the profile `loginWithOAuth` later redeems — then `302`s to whichever
-`redirect_uri` was recorded for this `state` (validated against the same allow-list as above,
-falling back to `frontendOrigin` if unsafe), appending `?state=...`.
+fetches the provider profile, mints a 256-bit one-time `claim`, and stores the profile together with
+`claimHash` (sha256 of the claim) and the `clientCodeChallenge` registered at initiate, if any, in
+Redis under the **same** `state` key (`oauth:profile:` prefix, 10-minute TTL) — this is the record
+`loginWithOAuth` later redeems — then `302`s to whichever `redirect_uri` was recorded for this `state`
+(validated against the same allow-list as above, falling back to `frontendOrigin` if unsafe),
+appending `?state=...&claim=...`. The claim exists only on that redirect (`CROSS-032`): whoever
+receives it proves they are the browser/app that completed the handshake, not merely someone who
+knew (or chose) the `state`.
 **Errors:** provider-side `error` query param, or a token-exchange/profile-fetch failure, both `302`
 to `{origin}/auth/login?error=...` rather than a JSON error (this is a browser redirect target, not
 an API a client parses).
@@ -435,7 +452,7 @@ native route, not a frontend-namespaced one — see
 
 ## Known issues
 
-- [BE-004](../../../issues.md#be-004) — `register`/`resetPassword`/`changePassword`'s
+- `BE-004` (resolved) — `register`/`resetPassword`/`changePassword`'s
   `validatePasswordStrength()` length/variety checks are unreachable dead code; the DTO's
   class-validator rule is already stricter.
 - `BE-005` (resolved) — `GET /auth/oauth/:provider/profile` has no auth guard

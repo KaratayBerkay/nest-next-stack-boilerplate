@@ -109,7 +109,7 @@ correctly shows for the exact same rows (web checks `=== "COMPLETED"`, the real 
   vertical's own `payment_methods.dart` (`PaymentMethods` widget class) was dead code — `_PaymentMethodsSection` above reimplements the same
   UI inline instead of using it. The same "scaffolded then inlined, original left behind" pattern this
   effort has found repeatedly elsewhere (e.g.
-  [CROSS-013](../../../../issues.md#cross-013)/`MOB-006` (resolved)).
+  `CROSS-013` (resolved)/`MOB-006` (resolved)).
 - ⚠ `MOB-021` (resolved) — invoice status badge always renders as
   "warning," never "success," and shows a raw unlocalized enum string.
 - ⚠ `MOB-024` (resolved) —

@@ -23,30 +23,17 @@ Free/Basic use the base class as-is (`FreePageView extends ChatRoomBaseView`,
 override three getters — `vipRooms`, `useNativeControls`, `showSelfCrown` — rather than duplicating
 the widget. See [screen.md](../screen.md#what-renders-here) for the full table.
 
-## Dual-purpose: named rooms and legacy 1:1 DMs
+## Named rooms only (the DM branch is gone)
 
-This is the one place mobile's architecture genuinely diverges from web's. `_isNamedRoom` (a getter
-checking `ChatConstants.chatRooms`/`vipRooms`/the `vip-` prefix — mirroring the backend's own
-`isValidRoom`) decides, **per current `_room` value**, which of two message models and two WS send
-shapes this widget uses:
-
-```dart
-bool get _isNamedRoom =>
-    ChatConstants.chatRooms.contains(_room) ||
-    vipRooms.contains(_room) ||
-    _room.startsWith('vip-');
-```
-
-When `_isNamedRoom` is false, `_room` is actually a DM peer's user id (only reachable today via the
-legacy `/v1/:lang/chat/:conversationId` route — see
-[screen.md § Two routes, one widget, one real branch](../screen.md#two-routes-one-widget-one-real-branch)),
-and this widget behaves as a second, complete 1:1 chat implementation:
-`conversationMessagesProvider(_room)` instead of `roomMessagesProvider(_room)`, and a
-`{type: "direct-message", recipientId: _room, ...}` WS frame instead of `{type: "room-message", room:
-_room, ...}`. Both branches share every other piece of UI (header, sidebar, composer) unchanged — the
-sidebar's room list/online-tab layout renders even when viewing what is actually a DM, which only
-makes sense given this branch's current unreachability (see
-[MOB-016](../../../../issues.md#mob-016)).
+Until 2026-09-03 this widget was dual-purposed: an `_isNamedRoom` getter switched, per `_room` value,
+between the named-room path and a second, complete 1:1 DM implementation
+(`conversationMessagesProvider(_room)` + `{type: "direct-message", recipientId: _room}` frames) that
+only the retired `/v1/:lang/chat/:conversationId` route could reach — see `MOB-016` (resolved). That
+branch has been removed. The same room check survives as `_isNamedRoom(String room)`
+(`ChatConstants.chatRooms` / the tier's `vipRooms` / the `vip-` prefix — mirroring the backend's own
+`isValidRoom`), but it now runs once, in `initState`, to validate `initialRoom` and fall back to
+`general` for anything that isn't a named room. Every send is a `room-message` frame and every read
+goes through `roomMessagesProvider(_room)`, exactly like web's `ChatRoomBaseView`.
 
 ## Behavior notes
 

@@ -32,6 +32,6 @@ flutter-boilerplate/lib` returns nothing at all, not even a stub.
 The **dead** `api_key_handlers.dart` (`ApiKeyHandlers`, a `Provider`-wrapped class with its own
 `create`/`revoke` methods duplicating what `page_content.dart` does inline through
 `apiKeyActionsProvider` directly) is not part of this call chain at all — see
-[screen.md § Known issues](./screen.md#known-issues) ([CROSS-013](../../../../issues.md#cross-013)). Don't
+[screen.md § Known issues](./screen.md#known-issues) (`CROSS-013` (resolved)). Don't
 mistake it for a second, alternate API layer; it's unreachable code sharing this folder's naming
 convention.

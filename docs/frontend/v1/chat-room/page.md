@@ -137,9 +137,8 @@ Checked directly rather than assumed, per this effort's own house rule
   `replyToId`, and no delete-room-message endpoint exists anywhere (REST, GraphQL, or WS). This is
   consistent — and therefore not a cross-platform parity bug — but is a real feature gap relative to
   1:1 messaging.
-- [CROSS-026](../../../issues.md#cross-026) — this page's own deep-link query param is `?room=` (built by
+- `CROSS-026` (resolved 2026-09-03) — this page's deep-link query param is `?room=` (built by
   [`MessagesSidebarRooms`](../messages/components/messages-sidebar-rooms.md) as
-  `` /v1/{lang}/chat-room?room={slug} ``); mobile's equivalent in-app deep link
-  (`header_message_banner.dart`) builds `?conversation=` instead, matching its own router registration
-  — each platform is internally consistent, but the two param names don't match, so a URL built for
-  one platform's convention won't pre-select a room on the other.
+  `` /v1/{lang}/chat-room?room={slug} ``); mobile used to build and read `?conversation=` instead,
+  so a URL built for one platform wouldn't pre-select a room on the other. Mobile now uses `?room=`
+  as well.

@@ -60,7 +60,7 @@ auth-bootstrap dependency, not settings-specific.
   `create_api_key_form.dart`/`api_key_handlers.dart` (see
   [mobile api-keys/screen.md](../../../mobile/v1/settings/api-keys/screen.md#known-issues)) are both
   fully-formed, unused parallel implementations sitting next to the real one. Logged together as
-  [CROSS-013](../../../issues.md#cross-013) since it's the same failure shape on both platforms in the
+  `CROSS-013` (resolved) since it's the same failure shape on both platforms in the
   same vertical, not two unrelated one-offs.
 - [CROSS-019](../../../issues.md#cross-019) — General's Language field only actually changes the
   rendered UI language on mobile; web only reads `profile.locale` back to pre-fill its own dropdown.

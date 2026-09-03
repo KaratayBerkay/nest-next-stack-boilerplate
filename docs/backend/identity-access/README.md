@@ -21,6 +21,6 @@ Notable findings from this phase: `BE-005` (resolved) (unguarded dead OAuth endp
 `BE-007` (resolved)/`CROSS-012` (resolved) (real mutations with zero UI
 trigger — ban/suspend, MFA reset, API key rename), `CROSS-009` (resolved)/`CROSS-010` (resolved)/`CROSS-011` (resolved)
 (three independent mobile-vs-web auth-UX parity gaps), and
-[CROSS-013](../../issues.md#cross-013)/`FE-007` (resolved) (the same
+`CROSS-013` (resolved)/`FE-007` (resolved) (the same
 scaffolded-then-inlined dead-code pattern recurring on both platforms). Full list:
 [issues.md](../../issues.md).

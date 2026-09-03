@@ -60,8 +60,8 @@ NotificationPageContent
 - **Visiting this page marks every notification read, automatically, once.** A `useRef` guard
   (`markedRef`) fires `markAllRead()` unconditionally the first time `notifications.length > 0` after
   mount — not gated on scroll position, visibility, or which items the user actually looked at. There
-  is no way to browse the list without immediately losing every item's unread state. Contrast with
-  mobile, which has no equivalent auto-effect — see ⚠ [CROSS-023](../../../issues.md#cross-023).
+  is no way to browse the list without immediately losing every item's unread state. Mobile now
+  does the same (`CROSS-023` (resolved 2026-09-03)).
 - **Sort order is client-side and unread-first**: `[...notifications].sort(...)` puts unread items
   before read ones, then newest-first within each group — this happens *after* the auto-mark-all-read
   effect has already fired for that render pass, so by the time a user actually looks at the sorted
@@ -107,8 +107,8 @@ NotificationPageContent
 
 - `CROSS-022` (resolved) — the in-app click target above and the push notification's
   service-worker click target disagree for the same notification kinds.
-- ⚠ [CROSS-023](../../../issues.md#cross-023) — this page auto-marks every notification read on first load;
-  mobile requires an explicit tap.
+- `CROSS-023` (resolved 2026-09-03) — this page auto-marks every notification read on first load;
+  mobile used to require an explicit tap and now mirrors this.
 - ⚠ `FE-011` (resolved) — a second, dead implementation of mark-read
   (`useMarkNotificationRead`) sits unused alongside the real one this page calls — see
   [hooks.md](./hooks.md).

@@ -39,7 +39,7 @@ layout).
   "AccountAvatarSection" flutter-boilerplate/lib` returns only its own definition file) — the real
   screen reimplements the same avatar-preview-plus-change-button UI inline instead. Same
   "scaffolded then inlined, original left behind" shape as
-  [CROSS-013](../../../../issues.md#cross-013)/`FE-007` (resolved) — see that
+  `CROSS-013` (resolved)/`FE-007` (resolved) — see that
   issue's Notes for the sibling instance in [general](../general/screen.md#known-issues), and the two
   Phase 1b instances (web's `mfa-handlers.ts`, mobile's api-keys widget trio) this now makes a
   four-vertical recurring pattern.

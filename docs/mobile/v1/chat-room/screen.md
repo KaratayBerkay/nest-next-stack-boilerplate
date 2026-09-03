@@ -1,8 +1,10 @@
 # Chat Room (screen)
 
-**Routes:** `/v1/:lang/chat-room` (GoRouter name `v1ChatRoom`, query param `?conversation=`) **and**
-`/v1/:lang/chat/:conversationId` (GoRouter name `v1ChatRoomLegacy`) — both wire to the same
-`ChatRoomPageContent`. See [router.dart#L474-490](../../../../flutter-boilerplate/lib/app/router.dart).
+**Routes:** `/v1/:lang/chat-room` (GoRouter name `v1ChatRoom`, query param `?room=` — the same
+name web's deep link uses, since `CROSS-026` (resolved) on 2026-09-03; the retired
+`/v1/:lang/chat/:conversationId` legacy route and its `?conversation=` spelling are gone, see
+`MOB-016` (resolved)). See the `v1ChatRoom` entry in
+[router.dart](../../../../flutter-boilerplate/lib/app/router.dart).
 **Entry widget:** `ChatRoomPageContent` in
 [`page_view.dart`](../../../../flutter-boilerplate/lib/views/chat_room/page_view.dart)
 **Web equivalent:** [chat-room page](../../../frontend/v1/chat-room/page.md)
@@ -24,27 +26,17 @@ variants elsewhere in this app — genuinely **clean inheritance**, not four sep
 `useNativeControls` is the one flag Medium/Premium set that Free/Basic don't — ⚠ see
 `MOB-014` (resolved): it has no observable effect anywhere.
 
-## Two routes, one widget, one real branch
+## One widget, named rooms only
 
-`ChatRoomPageContent` → `TierGate` → the tier widget above → `ChatRoomBaseView`. The `_room` state
-field this widget manages is **not always a room** — a doc comment in
-[`chat_room_base_view.dart#L51-56`](../../../../flutter-boilerplate/lib/views/chat_room/chat_room_base_view.dart)
-explains that `ChatRoomBaseView` is also reused, unmodified, as a *second, independent 1:1 DM chat
-screen* for the legacy `/v1/:lang/chat/:conversationId` route, where `_room` is actually a peer's user
-id. A getter, `_isNamedRoom` (mirroring the backend's own `isValidRoom`/`VIP_ROOM_PREFIX` check),
-decides per-value which of two completely different code paths runs:
-
-| | Named room (`_isNamedRoom == true`) | DM (`_isNamedRoom == false`) |
-|---|---|---|
-| Message provider | `roomMessagesProvider(_room)` | `conversationMessagesProvider(_room)` |
-| Send frame | `{type: "room-message", room: _room, ...}` | `{type: "direct-message", recipientId: _room, ...}` |
-| Realtime setup | `get-room-counts` on init | none |
-
-This makes `ChatRoomBaseView` mobile's **second, parallel implementation of 1:1 DM chat**, structurally
-unrelated to [messages](../messages/screen.md)' own `chat_view.dart` — same architectural split as
-web (separate component tree from messages) but arrived at differently: web's chat-room tree simply
-never handles DMs at all, while mobile's does, via this dual-purpose branch. See
-[MOB-016](../../../issues.md#mob-016) for whether the DM branch is actually reachable.
+`ChatRoomPageContent` → `TierGate` → the tier widget above → `ChatRoomBaseView`. Until 2026-09-03
+this widget was dual-purposed: an `_isNamedRoom` getter switched, per `_room` value, between the
+named-room path and a second, independent 1:1 DM implementation (`conversationMessagesProvider` +
+`direct-message` frames) that only the retired `/v1/:lang/chat/:conversationId` route could reach —
+see `MOB-016` (resolved). That branch is gone. `_room` is always a named room now: `initState`
+validates `initialRoom` against `ChatConstants.chatRooms` / the tier's `vipRooms` / the `vip-`
+prefix (the same rule as the backend's `isValidRoom`) and falls back to `general` for anything
+else, so a stray deep link can no longer put the widget into a nonsense state. 1:1 DMs live only in
+[messages](../messages/screen.md)' `chat_view.dart` — the same split web has always had.
 
 ## Layout: mobile vs. desktop
 
@@ -83,13 +75,12 @@ and [conventions.md §2](../../../conventions.md#2-file-naming).)
 
 ## Confirmed gaps vs. web (found while documenting this screen)
 
-- ⚠ **Deep-link query param name doesn't match web's** — this screen's own router reads
-  `?conversation=` (matching its one real caller, `header_message_banner.dart`); web's equivalent
-  in-app deep link ([`MessagesSidebarRooms`](../../../frontend/v1/messages/components/messages-sidebar-rooms.md))
-  builds `?room=` instead. Each platform is internally consistent on its own, but a URL built for one
-  wouldn't pre-select a room on the other. See
+- `CROSS-026` (resolved 2026-09-03) — the deep-link query param used to be `?conversation=` here vs.
+  `?room=` on web ([`MessagesSidebarRooms`](../../../frontend/v1/messages/components/messages-sidebar-rooms.md)),
+  so a URL built for one platform wouldn't pre-select a room on the other. Mobile now reads and
+  builds `?room=` too (`router.dart`, `header_message_banner.dart`, `route_claim.dart`). See
   [chat-room page.md § Known issues](../../../frontend/v1/chat-room/page.md#known-issues-affecting-this-page),
-  [CROSS-026](../../../issues.md#cross-026).
+  `CROSS-026` (resolved).
 - ⚠ **Attachment uploads never carry an upload scope** — `messageActionsProvider.uploadAttachment()`
   has no `scope` parameter anywhere in its call chain, so every attachment upload from this screen
   (and from [messages](../messages/screen.md)) lands in the backend's default DM storage folder,
@@ -110,8 +101,8 @@ and [conventions.md §2](../../../conventions.md#2-file-naming).)
   See `CROSS-027` (resolved).
 - ⚠ **`useNativeControls` is dead** — threaded through 6 files, read in none of them. See
   `MOB-014` (resolved).
-- ⚠ **The legacy DM route appears unreachable** — `v1ChatRoomLegacy` is registered and fully
-  functional but nothing in the current app navigates to it. See [MOB-016](../../../issues.md#mob-016).
+- `MOB-016` (resolved 2026-09-03) — the unreachable legacy DM route (`v1ChatRoomLegacy`) and the
+  widget's DM branch behind it have been removed.
 - No reply-to-message and no delete-message — same as web, and for the same reason (the backend
   `RoomMessage` schema has neither). Not a mobile-specific gap; see
   [chat-room page.md § Known issues](../../../frontend/v1/chat-room/page.md#known-issues-affecting-this-page),

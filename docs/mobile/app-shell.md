@@ -38,7 +38,7 @@ panel), and hand-written `InkWell` + `Positioned`/`Container` badge circles for 
 message icons — no shared `BadgeWidget`, no auto-pop-on-arrival behavior like web's `MessageDropdown`.
 This is the same "scaffolded, then reimplemented inline, original left behind" pattern already on
 record for api-keys/security/account/general (see
-[CROSS-013](../issues.md#cross-013)/`FE-007` (resolved)/`MOB-006` (resolved)) —
+`CROSS-013` (resolved)/`FE-007` (resolved)/`MOB-006` (resolved)) —
 this app-shell cluster is a fourth, previously-unrecorded instance of it, and larger (3 files at once).
 
 **`page_nav_wrapper.dart`'s `PageNavWrapper` is also dead** (zero instantiations anywhere) — and even

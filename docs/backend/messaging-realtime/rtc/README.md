@@ -49,9 +49,16 @@ covers the post-hardening state.
 - **Config:** [`nest-js-boilerplate/docker/livekit/livekit.yaml`](../../../../nest-js-boilerplate/docker/livekit/livekit.yaml) —
   note `ips.excludes: ["172.16.0.0/12"]`: with host networking LiveKit would otherwise advertise
   every Docker bridge as an ICE candidate, causing constant ICE flapping in live calls.
-- **Backend env:** `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` / `LIVEKIT_HTTP_URL`
-  ([`livekit.service.ts#L86-L99`](../../../../nest-js-boilerplate/src/rtc/livekit.service.ts)).
-  Clients get the socket URL separately (web: `NEXT_PUBLIC_LIVEKIT_URL`; mobile: its `.env`).
+- **Backend env:** `LIVEKIT_API_KEY` / `LIVEKIT_API_SECRET` / `LIVEKIT_HTTP_URL` (the server's own
+  admin-API endpoint, often internal) and, optionally, `LIVEKIT_URL` — the **client-facing** `ws(s)://`
+  URL ([`livekit.service.ts`](../../../../nest-js-boilerplate/src/rtc/livekit.service.ts),
+  `LiveKitService.clientUrl`). When set, it is returned as `livekitUrl` on `joinMeeting`, `goLive`,
+  `joinStreamAsViewer`, and on the `rtc:accepted` call frame (live push and the refresh-recovery
+  snapshot), and clients prefer it over their own compile-time copy (web: `NEXT_PUBLIC_LIVEKIT_URL`;
+  mobile: `LIVEKIT_URL` in its `.env`) — those stay as the fallback when the field is null. Added for
+  `MOB-034`, where the mobile app shipped connecting to its own loopback because only the client-side
+  copy existed and nothing kept it in sync. In production it lives in Vault (`secret/production/backend`,
+  add it with `kv patch`).
 - **Flow:** the backend mints a signed access token per join (grants scoped to one room; calls also
   cap `maxParticipants: 2`); the client connects **directly** to LiveKit with that token — media
   never touches NestJS.

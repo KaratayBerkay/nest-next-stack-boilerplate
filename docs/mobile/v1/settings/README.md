@@ -70,7 +70,7 @@ auth-bootstrap dependency.
 
 - `CROSS-012` (resolved) — `updateApiKey` has zero UI on mobile too (not just web) —
   `grep -rn "updateApiKey" flutter-boilerplate/lib` returns nothing at all.
-- [CROSS-013](../../../issues.md#cross-013) — this vertical's api-keys sub-screen has the *exact* same
+- `CROSS-013` (resolved) — this vertical's api-keys sub-screen has the *exact* same
   dead-parallel-implementation pattern web's security page does: 3 whole widget files
   (`api_key_list.dart`, `create_api_key_form.dart`, `api_key_handlers.dart`) are fully built and
   completely unused — the real screen (`page_content.dart`) reimplements everything inline instead.

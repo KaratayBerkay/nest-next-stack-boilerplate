@@ -54,7 +54,7 @@ actually reads.
 ### Dead and broken duplicates found while documenting this file
 
 ⚠ `MOB-013` (resolved) — same "scaffolded-then-inlined, original left behind" pattern
-as `FE-007` (resolved)/[CROSS-013](../../../issues.md#cross-013), twice over in this
+as `FE-007` (resolved)/`CROSS-013` (resolved), twice over in this
 one API layer:
 
 - the since-deleted `api/client/notifications/mark_read.dart`'s

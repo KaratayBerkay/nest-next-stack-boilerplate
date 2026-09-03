@@ -24,7 +24,7 @@ files matches only [`sitemap.ts`](../../../next-js-boilerplate/src/app/sitemap.t
 not a clickable link — and [`proxy.ts`](../../../next-js-boilerplate/src/proxy.ts)'s unrelated
 `/old-about → /about` legacy-redirect demo). The page works correctly and isn't gated behind
 auth — it's simply undiscoverable by clicking around the app; a visitor reaches it only via a direct
-URL, the sitemap, or a search engine. See [CROSS-038](../../issues.md#cross-038) — mobile has the identical
+URL, the sitemap, or a search engine. See `CROSS-038` (resolved) — mobile has the identical
 gap, via a richer page.
 
 ## Backend endpoints this page depends on
@@ -33,4 +33,4 @@ None.
 
 ## Known issues affecting this page
 
-- [CROSS-038](../../issues.md#cross-038) — no discoverable nav entry point on either platform (see above).
+- `CROSS-038` (resolved) — no discoverable nav entry point on either platform (see above).

@@ -92,8 +92,10 @@ can actually work end-to-end — see [Known issues](#known-issues) for the full,
   behavior (see [frontend api.md § Service worker](../../../frontend/v1/notification/api.md#service-worker-bypasses-the-bff-entirely)).
   Unlike web, mobile's `postId` case is *not* affected — it correctly targets `/v1/$lang/posts/$postId`
   on both the in-app and push paths.
-- ⚠ [CROSS-023](../../../issues.md#cross-023) — web auto-marks every notification read on first page load;
-  this screen has no equivalent effect, only the explicit "Mark all read" button and per-item taps.
+- `CROSS-023` (resolved 2026-09-03) — this screen now auto-marks every notification read the first
+  time it has unread ones to show (a one-shot guard on `_FreeNotificationPageState`, mirroring web's
+  `markedRef` effect; a failed call un-flips the guard so a later load retries). The explicit
+  "Mark all read" button and per-item taps remain.
 - ⚠ `CROSS-020` (resolved) — this screen's GraphQL query selects and renders
   `actor.avatarUrl` as a real image ([`Avatar`](../../../../flutter-boilerplate/lib/components/ui/avatar/avatar.dart)
   widget, via `NotificationItem.imageUrl`), and the backend resolver behind it doesn't redact that

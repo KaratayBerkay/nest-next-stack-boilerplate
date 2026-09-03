@@ -34,7 +34,7 @@ public symbol these seven files export (`FreePremiumPage`, `BasicPremiumPage`, `
 `refreshPremiumData`) — every match is inside this same dead cluster, referencing itself. This is the
 largest single instance (by file count) of this doc effort's recurring "scaffolded, then reimplemented
 inline, original left behind" pattern (compare
-[CROSS-013](../../../issues.md#cross-013)/`MOB-006` (resolved), 2-3 files each) — but,
+`CROSS-013` (resolved)/`MOB-006` (resolved), 2-3 files each) — but,
 unlike `MOB-008` (resolved), the live and dead versions are functionally equivalent
 (same providers, same fields, same bugs — see below), so there's no capability gap between them, just
 duplicated, unreachable code. See ⚠ `MOB-022` (resolved).

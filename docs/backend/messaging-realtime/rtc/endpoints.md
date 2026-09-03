@@ -59,7 +59,7 @@ and [`rtc-chat-ws.gateway.ts`](../../../../nest-js-boilerplate/src/rtc/rtc-chat-
 | Frame | Payload | Effect |
 |---|---|---|
 | `rtc:invite` | `calleeId`, `hasVideo` | Start a 1:1 call: creates `RtcRoom`+`CallSession` (RINGING), LiveKit room `call-<enc id>`, mints both tokens, pushes `rtc:ringing` to callee + `rtc:invite`-ack to caller; 45s ring timeout → MISSED. Duration cap = MIN(caller, callee) tier |
-| `rtc:accept` | `callId` | Callee accepts: state → CONNECTED, both sides get `rtc:accepted` (LiveKit token/room + `maxDurationMinutes`), cap timers start |
+| `rtc:accept` | `callId` | Callee accepts: state → CONNECTED, both sides get `rtc:accepted` (LiveKit token/room + `livekitUrl` + `maxDurationMinutes`), cap timers start |
 | `rtc:reject` | `callId` | Callee declines → `rtc:rejected` to caller, state REJECTED |
 | `rtc:cancel` | `callId` | Caller cancels the ring → `rtc:cancelled` to callee, state CANCELLED |
 | `rtc:hangup` | `callId` | Either side ends a connected call → `rtc:hangup` to the peer, state ENDED, LiveKit room deleted |
@@ -125,11 +125,11 @@ the *other* party's tier too). Values: [README.md § Tier limits](./README.md#ti
 | `meetingBySlug(slug)` | Query | Nullable single-meeting read |
 | `meetingChatMessages(slug, before?, take?)` | Query | Paginated chat history — 403s until the caller has a participant row (clients gate the fetch on join) |
 | `createMeeting(title)` | Mutation | Atomic `RtcRoom`+`Meeting` create (PENDING) → LiveKit room create → ACTIVE. Caps snapshot the host's tier at create time |
-| `joinMeeting(slug)` | Mutation | Capacity-locked join (row lock + count vs `maxParticipants`), returns `{ token, roomName, role, meeting }`; host relation always loaded (GraphQL `Meeting.host` is non-nullable) |
+| `joinMeeting(slug)` | Mutation | Capacity-locked join (row lock + count vs `maxParticipants`), returns `{ token, roomName, livekitUrl, role, meeting }` — `livekitUrl` is the server's client-facing `LIVEKIT_URL` (null when unset; clients fall back to their own config — `MOB-034`); host relation always loaded (GraphQL `Meeting.host` is non-nullable). A user the host removed gets `403 EX_MEETING_REMOVED` (`rtc.errors.meetingRemoved`) for the rest of the meeting (`BE-031`). The LiveKit token TTL is the meeting's `maxDurationMinutes` + 10 min slack, not the 4 h default |
 | `inviteToMeeting(slug, userId)` | Mutation | Any **active participant or the host** (host may invite before their own join lands — the create-dialog flow) → in-app notification + fire-and-forget [`meeting-invite` email](../../platform-core/mail/README.md) |
 | `leaveMeeting(slug)` | Mutation | Stamps own `leftAt` + notifies channel |
 | `endMeeting(slug)` | Mutation | Host-only; backfills every open `leftAt`, broadcasts `rtc:meeting-ended`, deletes the LiveKit room |
-| `removeMeetingParticipant(slug, userId)` / `muteMeetingParticipant(slug, userId, muted)` | Mutation | Host controls — enforced server-side through LiveKit (`removeParticipant` / track mute), plus the targeted WS frames above |
+| `removeMeetingParticipant(slug, userId)` / `muteMeetingParticipant(slug, userId, muted)` | Mutation | Host controls — enforced server-side through LiveKit (`removeParticipant` / track mute), plus the targeted WS frames above. Removal is a **ban for the rest of the meeting** (`BE-031`, resolved 2026-09-03): the userId is added to a Redis set (`rtc:meeting:removed:<roomId>`, cleared by `finishMeeting`) *before* the SFU kick, `joinMeeting` refuses it, and a direct LiveKit reconnect on the leftover token is re-kicked from the `participant_joined` webhook (`enforceRemovalOnRejoin`) without resurrecting the participant row. Hosts cannot remove themselves (`403`, end the meeting instead) |
 | `Meeting.participants` | ResolveField | `[MeetingParticipantSummary]` (separate `RtcMeetingResolver` class) — the client-safe attendee list |
 
 ### Live streams
@@ -139,8 +139,8 @@ the *other* party's tier too). Values: [README.md § Tier limits](./README.md#ti
 | `liveStreams` | Query | Public discovery list of currently-live streams (broadcaster summary + `viewerCount`) |
 | `streamBySlug(slug)` | Query | Nullable single-stream read |
 | `streamChatMessages(slug, before?, take?)` | Query | Chat history (participant-gated like meetings) |
-| `goLive(title)` | Mutation | Tier-gated (`MEDIUM`+): creates room + `LiveStream`, returns broadcaster token |
-| `joinStreamAsViewer(slug)` | Mutation | Viewer join: participant upsert + viewer-count broadcast + subscribe-only token. **Broadcaster-safe:** the broadcaster opening their own viewer page skips all viewer side effects (their participant row is what keeps their chat alive) |
+| `goLive(title)` | Mutation | Tier-gated (`MEDIUM`+): creates room + `LiveStream`, returns broadcaster token (+ `livekitUrl`, as for `joinMeeting`) |
+| `joinStreamAsViewer(slug)` | Mutation | Viewer join: participant upsert + viewer-count broadcast + subscribe-only token (+ `livekitUrl`). **Broadcaster-safe:** the broadcaster opening their own viewer page skips all viewer side effects (their participant row is what keeps their chat alive) |
 | `leaveStreamAsViewer(slug)` | Mutation | Stamps viewer `leftAt` + broadcasts the new count (no-op for the broadcaster) |
 | `endStream(slug)` | Mutation | Broadcaster-only; idempotent (a double-end or a race with LiveKit's own room_finished no-ops) |
 | `LiveStream.viewerCount` | ResolveField | Count of non-departed `VIEWER` participant rows (DB, not LiveKit's list — that read lagged the join mutation, so the first viewer's joined frame said `0` and the counter never moved) |

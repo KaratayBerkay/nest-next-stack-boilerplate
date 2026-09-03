@@ -153,7 +153,7 @@ import in `messaging.module.ts`; the coupling is entirely through the shared Pri
 - `BE-017` — attachment `url`s are resolved and re-linked (`messageId`/
   `roomMessageId` backfill) with no check that the `PendingUpload` was uploaded by the sender or
   scoped to the conversation/room the message lands in.
-- [FE-012](../../../issues.md#fe-012) — the buffered BFF route `POST /api/upload/attachment` on web
+- `FE-012` (resolved) — the buffered BFF route `POST /api/upload/attachment` on web
   never forwards the `x-scope-kind`/`x-scope-id` headers to the backend (its streamed sibling route
   does). Currently dead code — nothing on web calls the buffered path.
 - `CROSS-027` (resolved) — mobile's shared `AttachmentPreview` widget has no `thumbnailUrl`

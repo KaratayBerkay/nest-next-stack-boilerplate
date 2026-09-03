@@ -26,7 +26,9 @@ CSRF-guards — see [README.md § Used by](./README.md#used-by) for the concrete
 method, so it **is** blocked without a valid `x-csrf-token` header matching the `csrf-token` cookie.
 **Request:** any JSON body.
 **Response:** `{ received: <the same body> }`.
-**Errors:** `403` — invalid or missing CSRF token.
-**Used by:** ⚠ nobody found in either frontend or mobile source — see
-[README.md § Known issues](./README.md#known-issues) ([BE-009](../../../issues.md#be-009)). Looks like
-a manual/QA verification route for the CSRF mechanism itself, not a real product contract.
+**Errors:** `403` — invalid or missing CSRF token · `404` when `NODE_ENV=production` (`BE-009`,
+resolved 2026-09-03 — the route is a test fixture, not a product contract, so it no longer exists
+outside test/development).
+**Used by:** `test/csrf.e2e-spec.ts` only — the e2e proof that the middleware 403s a write without
+a token and lets one through with it. No frontend or mobile caller; see
+[README.md § Known issues](./README.md#known-issues).

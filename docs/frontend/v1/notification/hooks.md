@@ -45,7 +45,7 @@ a second, complete implementation of the same two actions, `useMarkNotificationR
 (`api/client/notifications/mark-read.ts` — a different file from the BFF wrapper of the same name
 under `api/server/`, which still exists), was exported from the barrel `src/api/index.ts` but had zero
 real callers anywhere in the app. Same "scaffolded-then-inlined, original left behind" shape as
-`FE-007` (resolved) and [CROSS-013](../../../issues.md#cross-013).
+`FE-007` (resolved) and `CROSS-013` (resolved).
 
 ### `usePushNotifications`
 

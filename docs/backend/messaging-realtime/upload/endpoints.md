@@ -56,7 +56,7 @@ quota).
 [chat-room](../../../mobile/v1/chat-room/screen.md) (`upload_attachment.dart`, the only attachment
 upload path Flutter uses — see [chat-room api.md](../../../mobile/v1/chat-room/api.md)). Web has a
 matching BFF route (`POST /api/upload/attachment`) but nothing currently calls it — ⚠ see
-[FE-012](../../../issues.md#fe-012).
+`FE-012` (resolved).
 
 ### Stream a chat attachment upload
 
@@ -79,7 +79,7 @@ returns one; contrast the buffered route above).
 [`useAttachmentUploads`](../../../frontend/v1/messages/hooks.md#useattachmentuploads) hook →
 [`uploadAttachmentStreamServer`](../../../frontend/v1/messages/api.md#everything-else), which is the
 **only** upload path either web vertical actually calls (the buffered route above and its BFF proxy
-exist but are unused — see [FE-012](../../../issues.md#fe-012)).
+exist but are unused — see `FE-012` (resolved)).
 
 ### Serve a decrypted attachment
 

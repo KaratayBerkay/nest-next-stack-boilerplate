@@ -51,9 +51,16 @@ sockets for every remaining one in parallel (`Promise.all`).
 
 **Kind:** GraphQL Mutation · **`trustCurrentDevice: Boolean!`**
 **Source:** [`sessions.resolver.ts#L140-152`](../../../../nest-js-boilerplate/src/sessions/sessions.resolver.ts)
-**Behavior:** finds the `Device` row backing the caller's *current* session (matched by
-`session.sessionId === user.sessionId`) and sets `trusted: true`. Returns `false` if the current
-session has no associated `deviceId` (shouldn't normally happen post-login, but not asserted).
+**Behavior:** step-up first (`BE-030`, resolved 2026-09-03): the mutation consumes the one-shot
+Redis marker (`mfa:fresh:<hash(sessionId)>`, 5-minute TTL) that `verifyLoginMfa`'s token issuance
+leaves behind — i.e. it only works for a session that passed the second factor moments ago, which
+is exactly the login-flow follow-up both clients make. Any other session (including a hijacked one)
+gets `403 EX_AUTH_MFA_STEP_UP_REQUIRED` (`auth.errors.mfaStepUpRequired`); before this, plain
+`SessionAuthGuard` was the only gate, so any authenticated session could quietly mark its device
+trusted and skip MFA on every future login. Then finds the `Device` row backing the caller's
+*current* session (matched by `session.sessionId === user.sessionId`) and sets `trusted: true`.
+Returns `false` if the current session has no associated `deviceId` (shouldn't normally happen
+post-login, but not asserted).
 **Used by:** ⚠ **not** the sessions settings page on either platform — the login MFA-challenge "remember
 this device" flow only. See
 [README.md § `trustCurrentDevice`](./README.md#trustcurrentdevice--a-sessions-module-mutation-with-an-auth-flow-only-caller)

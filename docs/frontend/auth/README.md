@@ -61,11 +61,12 @@ scope.
 - ⚠ [`src/views/auth/`](../../../next-js-boilerplate/src/views/auth/) is not dead code — its one file
   is the real forgot-password implementation, just organized outside the `features/auth/ui/` pattern
   every other page follows. See [forgot-password/page.md § Known issues](./forgot-password/page.md#known-issues).
-- ⚠ `src/features/auth/actions/signup.ts` (a `"use server"` Tanstack-form action) looks like it should
-  be the real registration path given its location, but it's dead relative to the actual
-  [register page](./register/page.md) — its only caller is the unrelated forms-gallery demo,
-  [`views/(demos)/form/Form.tsx`](../../../next-js-boilerplate/src/views/(demos)/form/Form.tsx).
-  Real registration is `RegisterForm` → `useAuth().register()` → `registerServer()`.
+- `FE-002` (resolved 2026-09-03): the forms-gallery demo's `"use server"` Tanstack-form action used to
+  sit at `src/features/auth/actions/signup.ts`, where it read as the real registration path. It now
+  lives with its only caller as
+  [`views/(demos)/form/signup-action.ts`](../../../next-js-boilerplate/src/views/(demos)/form/signup-action.ts)
+  (options alongside it, schema under `validators/demos/`); `features/auth/` no longer has an
+  `actions/` directory. Real registration is `RegisterForm` → `useAuth().register()` → `registerServer()`.
 - ⚠ `me-raw.ts`'s response type doesn't match reality, and `meQueryOptions()` is dead code — see
   [api.md § Known issues](./api.md#known-issues).
 - ⚠ No UI path to an MFA backup code on web (Flutter has one) — see

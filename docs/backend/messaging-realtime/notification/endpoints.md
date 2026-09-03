@@ -79,8 +79,8 @@ see [frontend api.md](../../../frontend/v1/notification/api.md)); Mobile
 **automatically, once, on first successful load** (not just from the explicit "Mark all read"
 button — see [page.md § Behavior notes](../../../frontend/v1/notification/page.md)), and also from
 that button, and from `NotificationDropdown` opening while unread items exist; Mobile
-[notification screen](../../../mobile/v1/notification/screen.md) — **button-only**, no auto-mark-on-
-open — see ⚠ [CROSS-023](../../../issues.md#cross-023) for this parity gap.
+[notification screen](../../../mobile/v1/notification/screen.md) — the same auto-mark-on-open plus
+its button, since `CROSS-023` (resolved 2026-09-03).
 
 ## Known issues
 
@@ -89,5 +89,5 @@ open — see ⚠ [CROSS-023](../../../issues.md#cross-023) for this parity gap.
 - `BE-012` (resolved) — the whole REST surface above is dead.
 - `MOB-012` (resolved) — a mobile file misnamed/miswired to hit
   `unreadNotificationCount` instead of a DM-count operation.
-- [CROSS-023](../../../issues.md#cross-023) — web auto-marks-all-read on page open; mobile doesn't.
+- `CROSS-023` (resolved 2026-09-03) — mobile used to be button-only; it now auto-marks on open like web.
 - Full findings with severity are filed in [`issues.md`](../../../issues.md).

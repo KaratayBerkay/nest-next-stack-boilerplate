@@ -31,7 +31,7 @@ file**, with evidence — never assume from a previous vertical's answer. See
 | [Notifications](./v1/notification/screen.md) | notification | ✅ Phase 3a |
 | [Users](./v1/users/) | users (list/detail) | ✅ Phase 2a |
 | [Pricing](./pricing/screen.md) | `/pricing` (top-level, redirects to `v1/plans`) | ✅ Phase 4a |
-| [About](./about/screen.md) | `/about` (top-level) — no web equivalent nav link either, see [CROSS-038](../issues.md#cross-038) | ✅ Phase 5 |
+| [About](./about/screen.md) | `/about` (top-level) — no web equivalent nav link either, see `CROSS-038` (resolved) | ✅ Phase 5 |
 | [Billing](./billing-funnel.md) | `v1/plans`, `v1/checkout`, `v1/settings/billing` — **not** `v1/premium`, see [billing-funnel.md](./billing-funnel.md#correction-to-this-efforts-own-original-plan) | ✅ Phase 4 |
 | [Premium](./v1/premium/screen.md) | `v1/premium` — not part of the billing funnel, see [CROSS-035](../issues.md#cross-035) | ✅ Phase 4b |
 | [Admin](./v1/admin/README.md) | admin | ✅ Phase 5 |

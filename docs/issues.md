@@ -18,6 +18,51 @@ missed by the 08-29 purge (`FE-004`, `FE-005`, `FE-015`, `BE-024`, `MOB-004`, `M
 `rtc-*` kinds like web's `sw.js` instead of dumping on the notification page). Every row still
 below was individually re-confirmed against source on this date.
 
+**2026-09-01 (Live QA):** first live, manual pass over the Flutter app on two real devices (two
+emulators, two real accounts messaging/calling each other), rather than a source-reading audit.
+It produced eleven findings (`MOB-030` through `MOB-040`); ten were fixed in the same session and
+have since been purged from this register (see 2026-09-03 below) — only `MOB-034` remains, because
+its fix is a local, gitignored `.env` value rather than a code change (`Status: verified`). Areas
+swept clean with no findings this pass: chat-room switching/presence/attachment upload, API key
+create/view/revoke, and the forgot-password flow. Not reached: live streams, a full register-flow
+submission.
+
+**2026-09-03:** purge of every `fixed` entry. Removed: the ten fixed Live-QA findings above
+(`MOB-030`–`MOB-033`, `MOB-035`–`MOB-040`); the 2026-09-02 Flutter security-audit batch
+(`CROSS-032` OAuth claim + PKCE binding, `MOB-041`–`MOB-048`), which had detail sections but had
+never been added to the summary table; and `CROSS-045`/`MOB-049`, which were still labelled
+`verified` but had been closed by that same batch (`CROSS-045` by `CROSS-032`'s binding, `MOB-049`
+by `MOB-041`/`MOB-042`) — re-confirmed against source before removal. Unlike the 08-29 purge, none
+of these 21 entries had been committed when they were removed (`3736c9b3`, HEAD at the time,
+predates all of them), so their writeups are not in git history. `BE-029` (`fixed (deploy
+pending)`) is kept deliberately until the pushed fix is actually deployed.
+
+**2026-09-03 (fix pass):** 17 more entries fixed and removed the same day, each with a regression
+test (backend 998, next-js 1080, tanstack 1090, Flutter 638 green; the 2 remaining web failures are
+the pre-existing pages-gallery ones). Backend: `BE-030` (MFA step-up — re-enrolling while MFA is on
+needs a current TOTP/backup code via `enrollMfa(currentCode)`, the completed rotation retires the
+old factor, and `trustCurrentDevice` only works for a session that passed the second factor moments
+ago — a one-shot Redis marker `verifyLoginMfa` leaves behind), `BE-031` (meeting removal is now a
+ban: Redis removed-set checked in `joinMeeting`, re-kick on the `participant_joined` webhook, token
+TTL bounded by the meeting's duration cap, web + Flutter render the "removed" screen on a
+`EX_MEETING_REMOVED` rejoin), `BE-032` (email verification only promotes `PENDING_VERIFICATION`),
+`BE-033` (`AuthPayload.user` is null while `mfaRequired`; both web apps + Flutter no longer read it),
+`BE-034` (`@IsTimeZone` on `UpdateProfileInput`), `BE-035` (atomic `INCR` attempt counter on its own
+key, OTP deadline never refreshed by a wrong guess), `BE-009` (`POST /csrf/echo` 404s in production;
+stays as the e2e self-test target), `BE-004` (already resolved — `validatePasswordStrength` is now
+blocklist-only). Cross-app: `CROSS-046` (WS `attachments[]` validated against the REST
+`MessageAttachmentDto`; web `AttachmentPreview.serveUrl` returns null instead of throwing),
+`MOB-034` (backend `LIVEKIT_URL` → `livekitUrl` on every join result + `rtc:accepted` frame; Flutter
+and both web apps prefer it over their compile-time copy), `FE-002` (demo signup action moved next to
+its only caller under `views/(demos)/form/`), `FE-012` (already resolved — buffered upload route
+forwards scope headers; test added), `CROSS-013` (both halves already resolved — dead files gone on
+web and mobile), `MOB-016` (chat-room widget's unreachable DM branch removed; unknown rooms fall back
+to `general`), `CROSS-026` (mobile deep link is `?room=` like web; legacy `/chat/:id` claim mapping
+dropped), `CROSS-038` (Flutter landing page links About; web already did), `CROSS-023` (mobile
+auto-marks notifications read on open, like web). Partially fixed and still listed: `CROSS-019`
+(language now applied on save; timezone half open), `BE-019` (3DS reason distinguished; no recovery
+flow), `BE-036` (compose now binds Redis to `127.0.0.1` — not yet applied to the running host).
+
 **ID scheme:** `BE-###` backend-only · `FE-###` frontend-only · `MOB-###` mobile-only ·
 `CROSS-###` spans ≥2 apps (parity gaps, shared-architecture/doc-accuracy notes).
 **Severity:** `HIGH` / `MED` / `LOW` / `INFO` (`INFO` = documentation-clarity note, not a bug).
@@ -31,29 +76,22 @@ against source) → `fixed` | `wontfix`.
 | [BE-002](#be-002) | MED | Backend | `users/` (demo, leaks passwordHash) vs `profile/` (real) naming trap | verified | Phase 0 |
 | [CROSS-002](#cross-002) | MED | Backend + Frontend + Mobile | `project-tasks` + `team-members` are real `CORE_MODULES` with no frontend/mobile consumer — confirmed structural, not just an unbuilt page | verified | Phase 0, verified Phase 2b |
 | [CROSS-003](#cross-003) | INFO | Backend + Frontend + Mobile | No real backend API versioning exists; frontend's "v1" is a frontend-only URL convention | verified | Phase 0 |
-| [BE-004](#be-004) | LOW | Backend | `validatePasswordStrength()`'s length/variety checks are unreachable dead code — the DTO validator is already stricter | verified | Phase 1a |
-| [FE-002](#fe-002) | LOW | Frontend | Dead `signup.ts` server action sits inside `features/auth/actions/`, used only by an unrelated forms-gallery demo | verified | Phase 1a |
 | [BE-008](#be-008) | INFO | Backend | `MfaFactor`'s schema has WebAuthn columns; `MfaService` only ever implements TOTP | verified | Phase 1b |
-| [BE-009](#be-009) | LOW | Backend | `POST /csrf/echo` (a CSRF self-test route) has no caller anywhere | verified | Phase 1b |
-| [CROSS-013](#cross-013) | LOW | Frontend + Mobile | Same "scaffolded-then-inlined, original left behind" dead-code pattern independently on both platforms in the api-keys screen | verified | Phase 1b |
-| [CROSS-019](#cross-019) | MED | Frontend + Mobile | Settings language/timezone persist correctly but don't (fully) take effect — language only live on mobile, timezone unused by either | verified | Phase 2a |
+| [CROSS-019](#cross-019) | LOW | Frontend + Mobile | Settings timezone persists on both platforms but is read back by neither — dates render in the device/browser zone regardless *(language half fixed 2026-09-03: web now applies the saved locale on save)* | verified (partial) | Phase 2a |
 | [BE-014](#be-014) | INFO | Backend | 4 of 9 `NotificationType` enum values have no producer anywhere in current backend code | verified | Phase 3a |
 | [BE-015](#be-015) | LOW | Backend | `myPushSubscriptions` GraphQL query has no caller on either platform | verified | Phase 3a |
-| [CROSS-023](#cross-023) | LOW | Frontend + Mobile | Web auto-marks all notifications read on page load; mobile has no equivalent, requires explicit tap | verified | Phase 3a |
 | [CROSS-024](#cross-024) | LOW | Frontend + Mobile | Chat-room has no reply-to-message and no delete-message capability at all, on any surface | verified | Phase 3b |
-| [FE-012](#fe-012) | LOW | Frontend | Buffered multipart upload BFF route never forwards upload-scope headers; dead code today | verified | Phase 3b |
-| [MOB-016](#mob-016) | LOW | Mobile | Mobile's chat-room widget is dual-purposed as a second, unreachable 1:1 DM implementation | verified | Phase 3b |
-| [CROSS-026](#cross-026) | LOW | Frontend + Mobile | Web's and mobile's own chat-room deep-link query param names don't match each other | verified | Phase 3b |
-| [BE-019](#be-019) | LOW | Backend | Nothing distinguishes a Stripe 3DS/SCA decline from any other subscription-charge failure; neither client offers a recovery path for it | verified | Phase 4a |
+| [BE-019](#be-019) | LOW | Backend | A Stripe 3DS/SCA decline is now a distinct `authentication_required` reason, but neither client offers a recovery path (no PaymentIntent `client_secret` round-trip) and web shows the raw reason code | verified (partial) | Phase 4a |
 | [CROSS-035](#cross-035) | LOW | Frontend + Backend | The "Premium" nav page is not a subscription page — it's a live NestJS tier-gate tech demo with no role check, reachable by any paid user | verified | Phase 4b |
 | [BE-023](#be-023) | LOW | Backend | `VaultService` (`@Global()`) has zero consumers anywhere in the app — the real vault-read path bypasses it entirely | verified | Phase 5a |
 | [BE-025](#be-025) | LOW | Backend | `cookies/` (demo) vs `common/cookies/` (real) — a fourth confirmed module-naming collision trap | verified | Phase 5a |
-| [CROSS-038](#cross-038) | LOW | Frontend + Mobile | The About page has no discoverable in-app nav link on either platform | verified | Phase 5b |
 | [CROSS-031](#cross-031) | MED | Frontend + Mobile + Backend | Tier feature copy exists in four divergent hardcoded sets (web pricing, web plans, backend seed/config, mobile plans Dart) — no single source of truth | verified | Phase 4a *(entry reconstructed 2026-08-29 — was referenced by 8 docs but never written)* |
 | [CROSS-039](#cross-039) | INFO | Frontend + Mobile | Both platforms' admin role-gate is client-side-only at the render layer (at different points); real mutations are correctly backend-gated regardless | verified | Phase 5b |
 | [BE-026](#be-026) | LOW | Backend | `Post.category`/`Post.tags` have zero application-code references anywhere in `src/post/` — not even in a DTO | verified | schema.md |
 | [BE-027](#be-027) | LOW | Backend | The `Follow` model has zero application-code references anywhere in `src/` — no module queries or writes it | verified | schema.md |
 | [BE-028](#be-028) | LOW | Backend | 9 `User` columns/relations (`referredBy` self-relation, `birthDate`, `quietHoursStart`, `interests`, `metadata`, `preferences`, `phoneNumber`, `phoneVerified`, `reputation`) have zero application-code references anywhere | verified | schema.md |
+| [BE-029](#be-029) | HIGH | Backend | Stripe webhook id-codec 400 fix is committed + pushed (`3736c9b3`) but **not yet deployed** — until it ships, every real Stripe webhook is still rejected in prod; hard deadline 2026-09-08 | fixed (deploy pending) | Security audit 2026-09-02 |
+| [BE-036](#be-036) | MED | Backend (deploy) | Deploy-host Redis (the session store) is published on `0.0.0.0:6379` with no `requirepass` — `docker-compose.yml` now binds it to `127.0.0.1` (2026-09-03), but the running container is unchanged until `redis` is recreated | fixed (apply pending) | Security audit 2026-09-02 |
 
 ## Details
 
@@ -109,43 +147,6 @@ call) vs [`next-js-boilerplate/src/app/v1/`](../next-js-boilerplate/src/app/v1/)
 **Notes:** documented explicitly in [backend/README.md](./backend/README.md),
 [frontend/v1/README.md](./frontend/v1/README.md), and [architecture.md](./architecture.md).
 
-### BE-004
-
-**Severity:** LOW · **Area:** Backend · **Status:** verified
-**Summary:** `register`, `resetPassword`, and `changePassword` each run two independent
-password-strength checks in sequence: the DTO's class-validator decorators
-(`@MinLength(8)`/`@Matches(PASSWORD_COMPLEXITY_REGEX)`, enforced by the global `ValidationPipe`
-before the resolver body runs) and an explicit `validatePasswordStrength()` call inside the service.
-Because the DTO regex already guarantees length ≥8 and lower+upper+digit (3 of the 4 character
-classes `validatePasswordStrength` counts), two of that function's three checks (`length < 8`,
-`variety < 3`) can never fire from any of its three current call sites — only its common-password
-blocklist check adds anything the DTO doesn't already cover.
-**Evidence:** [`nest-js-boilerplate/src/common/utils/password.ts`](../nest-js-boilerplate/src/common/utils/password.ts)
-vs. [`nest-js-boilerplate/src/auth/dto/register.input.ts`](../nest-js-boilerplate/src/auth/dto/register.input.ts)
-(and `reset-password.input.ts`/`change-password.input.ts`, same `@Matches` rule); exactly 3 call
-sites confirmed via `grep -rn "validatePasswordStrength" nest-js-boilerplate/src`
-(`auth-registration.service.ts` L59/257/335); global `ValidationPipe` confirmed in
-[`main.ts`](../nest-js-boilerplate/src/main.ts) L148-149.
-**Notes:** Not a security issue — the DTO check is strictly stronger. Worth a follow-up decision:
-delete the redundant branches, or loosen the DTO if independent defense-in-depth was the intent.
-Documented in [backend/identity-access/auth/endpoints.md § Known issues](./backend/identity-access/auth/endpoints.md#known-issues).
-
-### FE-002
-
-**Severity:** LOW · **Area:** Frontend · **Status:** verified
-**Summary:** `src/features/auth/actions/signup.ts` (a `"use server"` Tanstack-form action, with
-matching `lib/forms/signup-options.ts` and `validators/auth/signup-schema.ts`) sits inside
-`features/auth/actions/`, where it reads as the real registration path — but it's dead relative to
-the actual register page. Its only caller is the unrelated forms-gallery demo,
-`src/views/(demos)/form/Form.tsx`. Real registration is `RegisterForm` → `useAuth().register()` →
-`registerServer()`.
-**Evidence:** `grep -rln "signupAction\|signupFormOpts\|signupSchema" next-js-boilerplate/src` →
-`features/auth/actions/signup.ts`, `lib/forms/signup-options.ts`, `validators/auth/signup-schema.ts`,
-and exactly one consumer, `src/views/(demos)/form/Form.tsx`; confirmed
-[`next-js-boilerplate/src/features/auth/ui/register-form.tsx`](../next-js-boilerplate/src/features/auth/ui/register-form.tsx)
-uses `useAuth().register()` instead.
-**Notes:** Same confusable-location trap as [BE-002](#be-002), frontend-side this time.
-
 ### BE-008
 
 **Severity:** INFO · **Area:** Backend · **Status:** verified
@@ -158,45 +159,18 @@ hard-codes `method: 'TOTP'` everywhere — no WebAuthn code exists.
 **Notes:** Not necessarily a bug — may simply be unbuilt, forward-provisioned schema. Documented in
 [backend/identity-access/mfa/README.md](./backend/identity-access/mfa/README.md#known-issues).
 
-### BE-009
-
-**Severity:** LOW · **Area:** Backend · **Status:** verified
-**Summary:** `POST /csrf/echo` (a self-test endpoint that echoes a CSRF-validated body back) has no
-caller anywhere in frontend or mobile source.
-**Evidence:** [`nest-js-boilerplate/src/csrf/csrf.controller.ts#L18-21`](../nest-js-boilerplate/src/csrf/csrf.controller.ts) —
-the only `/api/echo`-shaped route on web is an unrelated CSR demo page hitting a different backend
-endpoint entirely.
-**Notes:** Reads as a manual/QA verification route for the CSRF mechanism, not a real product
-contract. Documented in
-[backend/identity-access/csrf/README.md](./backend/identity-access/csrf/README.md#known-issues).
-
-### CROSS-013
-
-**Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** The same "scaffolded-then-inlined, original files left behind" dead-code pattern shows
-up independently on both platforms in one vertical. Web: `FE-007`'s `mfa-handlers.ts`.
-Mobile: **three** whole widget files under `flutter-boilerplate/lib/views/settings/api_keys/` —
-`api_key_list.dart` (`ApiKeyList`/`ApiKeyItem`), `create_api_key_form.dart` (`CreateApiKeyForm`),
-`api_key_handlers.dart` (`ApiKeyHandlers`) — are fully built and never imported anywhere; the real
-screen (`page_content.dart`) reimplements the identical list/create/revoke UI entirely inline.
-**Evidence:** `grep -rln "ApiKeyList(\|CreateApiKeyForm(\|apiKeyHandlersProvider"
-flutter-boilerplate/lib` returns only each file's own definition (a same-named but distinct
-`ApiKeyList` in `views/forms/api_key/` is the unrelated forms-gallery demo, confirmed as a different
-class).
-**Notes:** Same failure shape, two platforms, one vertical — worth a broader sweep rather than
-treating as two unrelated one-offs. Documented in
-[frontend/v1/settings/README.md](./frontend/v1/settings/README.md#known-issues-affecting-this-vertical),
-[mobile/v1/settings/README.md](./mobile/v1/settings/README.md#known-issues-affecting-this-vertical),
-and both api-keys page/screen+api docs.
-
 ### CROSS-019
 
-**Severity:** MED · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Settings → General's Language field persists correctly on both platforms but only
-actually changes the rendered UI language on mobile — web's real language switch (`LangSwitcher`, a
-cookie + navigation) is entirely independent of the persisted `profile.locale`, which web only ever
-reads back to pre-fill its own dropdown. Timezone persists on both platforms but is read back by
-neither — both apps instead derive the "real" timezone live from the OS/browser at render time.
+**Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified (partial)
+**Summary:** *Language half fixed 2026-09-03:* Settings → General's Language field now takes effect
+on web too — `saveSettings` hands the persisted locale to the page's `applyLocale`, which sets the
+lang cookie and navigates to the same pathname under the new `/{lang}/` segment via the shared
+`lib/i18n/lang-routing.ts` helpers the header `LangSwitcher` also uses (both web apps; mobile already
+applied it live). *Still open:* timezone persists on both platforms but is read back by neither —
+both apps derive the "real" timezone live from the OS/browser at render time, and none of the
+date-formatting helpers accept a user-chosen zone. Making `profile.timezone` drive rendering is a
+cross-cutting change (every `formatDate*`/`Intl` call on web + Dart's local `DateTime` on mobile),
+and arguably a product decision (device-local vs. profile zone), so it was left for a dedicated pass.
 **Evidence:** `grep -rn "\.locale\b" next-js-boilerplate/src` (excluding Intl/date noise) shows
 exactly one read of `user.locale` app-wide,
 [`views/settings/general/FreePageView.tsx#L52`](../next-js-boilerplate/src/views/settings/general/FreePageView.tsx),
@@ -237,19 +211,6 @@ Push subscriptions) has no caller on either platform.
 own registered push subscriptions/devices. Documented in
 [push-notification/endpoints.md](./backend/messaging-realtime/push-notification/endpoints.md#known-issues).
 
-### CROSS-023
-
-**Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Web's notification page automatically marks every notification read on first load;
-mobile has no equivalent, requiring an explicit tap.
-**Evidence:** `NotificationPageContent.tsx:45-52` — a `markedRef` guard fires `markAllRead()`
-unconditionally the first time `notifications.length > 0` after mount, no gating on scroll/visibility.
-`free_page_view.dart` (`FreeNotificationPage`, a stateless `ConsumerWidget`) has no equivalent effect
-anywhere in its `build()` — only the explicit "Mark all read" button and per-item mark-on-tap.
-**Notes:** Not obviously a bug on either side — reasonable UX choices exist on both ends — filed as a
-parity/behavior-difference finding per this effort's convention, for the team to decide whether to
-reconcile. Documented in [notification/page.md](./frontend/v1/notification/page.md#known-issues-affecting-this-page).
-
 ### CROSS-024
 
 **Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified
@@ -266,65 +227,25 @@ in the usual sense, but a real feature gap relative to 1:1 messaging. Documented
 [chat-room page.md](./frontend/v1/chat-room/page.md#known-issues-affecting-this-page) and
 [chat-room screen.md (mobile)](./mobile/v1/chat-room/screen.md#confirmed-gaps-vs-web-found-while-documenting-this-screen).
 
-### FE-012
-
-**Severity:** LOW · **Area:** Frontend · **Status:** verified
-**Summary:** Web's buffered multipart upload BFF route (`POST /api/upload/attachment`) never forwards
-the `x-scope-kind`/`x-scope-id` headers to the backend; its streamed sibling route does. Currently
-dead code.
-**Evidence:** `app/api/upload/attachment/route.ts` calls `backendFormFetch(...)` with no `headers`
-passed at all. Contrast `app/api/upload/attachment-stream/route.ts#L37-66`, which explicitly forwards
-both scope headers when present — `backendFormFetch` fully supports a headers passthrough, so this is
-an omission, not an API limitation. Confirmed unreachable: `useMessageUpload()`, shared by both
-`messages` and `chat-room` composers, always calls `uploadAttachmentStreamServer`, never the buffered
-wrapper.
-**Notes:** Low severity because dead today. Documented in
-[upload/README.md](./backend/messaging-realtime/upload/README.md#known-issues) and
-[upload/endpoints.md § Upload a chat attachment](./backend/messaging-realtime/upload/endpoints.md#upload-a-chat-attachment).
-
-### MOB-016
-
-**Severity:** LOW · **Area:** Mobile · **Status:** verified
-**Summary:** Mobile's `ChatRoomBaseView` is dual-purposed — also serving as a second, independent 1:1
-DM implementation for a legacy route with no reachable caller anywhere in the app.
-**Evidence:** `chat_room_base_view.dart#L51-60`'s own doc comment states it's reused, unmodified, for
-`/v1/:lang/chat/:conversationId` (`router.dart#L483-490`, name `v1ChatRoomLegacy`), where `_room` is a
-DM peer id. `grep -rn "v1ChatRoomLegacy"` outside `router.dart`, and a repo-wide grep for the legacy
-path, both return nothing. Push-notification deep-linking routes DMs via `/v1/$lang/messages?user=`
-only (its own comment notes a `conversationId`-keyed payload "never matched anything real" and was
-removed). The one live in-app deep link that reaches chat-room always targets the real `v1ChatRoom`
-route (`?conversation=`), never the legacy path-param one.
-**Notes:** Same "registered but unreachable" shape as `MOB-001`/`MOB-004` (both resolved). If ever
-reactivated, this branch has none of the real DM screen's reply/delete/multi-attachment capability.
-Documented in [chat-room screen.md § Two routes, one widget, one real branch](./mobile/v1/chat-room/screen.md#two-routes-one-widget-one-real-branch).
-
-### CROSS-026
-
-**Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Web's and mobile's own chat-room deep-link query param names don't match each other
-(`?room=` vs `?conversation=`).
-**Evidence:** Web (`MessagesSidebarRooms.tsx`) builds `/v1/{lang}/chat-room?room={slug}`;
-`chat-room/page.tsx` reads `sp.room`. Mobile's router reads `state.uri.queryParameters['conversation']`,
-matching its one real caller, `header_message_banner.dart`.
-**Notes:** Each platform is internally self-consistent; nothing is currently broken since no
-shared/universal deep-link scheme exists between them today. Documented in
-[chat-room page.md](./frontend/v1/chat-room/page.md#known-issues-affecting-this-page).
-
 ### BE-019
 
-**Severity:** LOW · **Area:** Backend · **Status:** verified
-**Summary:** No code distinguishes a Stripe `authentication_required` (3DS/SCA) decline on the actual
-subscription charge from any other failure, and neither client offers a recovery path for it.
-**Evidence:** `stripe-payment.provider.ts`'s `createSubscription` catch block only pattern-matches
-`"insufficient funds"` and `"card_declined"` substrings; anything else (including
-`authentication_required`) falls through to a generic `subscription_failed` reason.
+**Severity:** LOW · **Area:** Backend · **Status:** verified (partial)
+**Summary:** A Stripe `authentication_required` (3DS/SCA) decline on the subscription charge is now
+a distinct reason, but neither client offers a recovery path for it, and web surfaces the raw reason
+code as the error text.
+**Evidence:** `stripe-payment.provider.ts`'s `createSubscription` catch block maps `"insufficient
+funds"` / `"card_declined"` / `"authentication_required"` substrings to `insufficient_funds` /
+`declined` / `authentication_required` (re-checked 2026-09-03 — the third branch exists now);
+anything else still falls through to `subscription_failed`. The web BFF (`api/billing/subscribe`)
+returns that reason verbatim as `msg` with `key: "billing.errors.declined"`, a key no messages file
+defines, so the user reads `authentication_required` literally.
 `stripe/stripe.service.ts`'s `createSubscription` passes `off_session: true` (a deliberate pattern —
 verify via SetupIntent first, charge off-session after — but one that doesn't *guarantee* the
 off-session charge itself never needs authentication). Neither `StripeCardForm.tsx` (web) nor
 `page_content.dart`'s `_handleSubscribe` (mobile) has any UI branch for "please complete verification
 with your bank."
 **Notes:** Plausible, not confirmed-live (no reproduction, no incident evidence) — same evidentiary
-bar as [BE-004](#be-004). Documented in
+bar as `BE-004` (resolved). Documented in
 [billing/stripe.md](./backend/billing-usage/billing/stripe.md#known-issues).
 
 ### CROSS-035
@@ -375,20 +296,6 @@ re-confirmed this phase). Called out atop
 [backend/platform-core/common/cookies/README.md](./backend/platform-core/common/cookies/README.md)
 and in [backend/_reference/excluded-modules.md](./backend/_reference/excluded-modules.md)'s
 naming-collisions section.
-
-### CROSS-038
-
-**Severity:** LOW · **Area:** Frontend + Mobile · **Status:** verified
-**Summary:** Neither platform's About page has any in-app nav link pointing at it. Web's
-`(marketing)` header nav has exactly one link ("Pricing"); mobile's nav has no "about" reference at
-all. Both pages work correctly and aren't gated behind auth — they're simply unreachable by clicking
-around the app on either platform.
-**Evidence:** `next-js-boilerplate/src/app/(marketing)/layout.tsx`,
-`next-js-boilerplate/src/views/v1/[lang]/V1Nav.tsx` vs.
-`flutter-boilerplate/lib/views/v1/v1_nav.dart`.
-**Notes:** Not gated/broken, purely a discoverability gap — a direct URL, deep link, sitemap crawl,
-or search-engine result is the only way to reach it on either platform. Documented in
-[frontend/about/page.md](./frontend/about/page.md) and [mobile/about/screen.md](./mobile/about/screen.md).
 
 ### CROSS-039
 
@@ -489,4 +396,36 @@ already disagree in wording and can silently disagree in substance after any one
 [frontend/v1/plans/page.md](./frontend/v1/plans/page.md),
 [frontend/pricing/page.md](./frontend/pricing/page.md),
 [mobile/v1/plans/screen.md](./mobile/v1/plans/screen.md), and both `billing-funnel.md` hubs.
+
+### BE-029
+
+**Severity:** HIGH · **Area:** Backend · **Status:** fixed (deploy pending)
+**Summary:** The fix for the global id-codec interceptor 400ing every real Stripe webhook is
+committed and pushed (`3736c9b3`) but has **not been deployed to production**. Until it ships, prod
+still rejects every genuine Stripe webhook with "Invalid id" on the `evt_...` payload before the
+signature check runs — so subscription/billing state driven by webhooks keeps drifting. Hard
+deadline **2026-09-08** (Stripe's retry/cutoff window for the undelivered events).
+**Evidence:** Root-caused and fixed 2026-09-02; the interceptor now skips the Stripe webhook route
+before attempting id decoding, with a regression test. Committed + pushed but not yet on the running
+deployment (see memory `stripe-webhook-id-codec-400-fix-2026-09-02`).
+**Fix direction:** operational only — deploy the pushed commit before 2026-09-08 and confirm a live
+webhook is accepted. No further code change required.
+
+### BE-036
+
+**Severity:** MED · **Area:** Backend (deploy) · **Status:** fixed (apply pending)
+**Summary:** On the deployment host, Redis — which is the authoritative session store — is published
+on all interfaces with no password. Anyone able to reach the host on its LAN can read every session
+hash (`sess:*`) or write an `oauth:profile:<state>` key and then call `loginWithOAuth` to
+impersonate any user.
+**Evidence:** `docker-compose.yml` `redis` service runs `redis-server --appendonly yes` (no
+`--requirepass`) with `ports: ["6379:6379"]`; the host has a routable LAN address. `PING` succeeds
+with no auth from the host. (Not internet-exposed behind the current NAT, but LAN-exposed.)
+**Fix direction:** operational — drop the public port binding (bind to `127.0.0.1:6379` or rely on
+the compose network only) and/or set `requirepass` via Vault. No application code change.
+**2026-09-03:** `docker-compose.yml` now publishes `127.0.0.1:6379:6379` (same treatment
+`redis-commander` already had). Not yet applied: the running `boilers-redis-1` keeps its old binding
+until the service is recreated (`docker compose up -d redis` — Redis only; do not restart `app`
+without a rebuilt image, see the migrate-service trap). `requirepass` is still unset; the backend
+already honours `REDIS_PASSWORD` if one is ever added via Vault.
 

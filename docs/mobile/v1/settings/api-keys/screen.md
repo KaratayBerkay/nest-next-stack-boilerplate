@@ -56,7 +56,7 @@ files call the NestJS backend directly over GraphQL.
   own definition site (a second, unrelated `ApiKeyList` in `views/forms/api_key/api_key_list.dart`, the
   forms-gallery demo, is a different class in a different file — not a false negative here). The real
   screen, `page_content.dart`, reimplements the same list/create/revoke UI entirely inline instead.
-  Logged jointly with the web-side instance as [CROSS-013](../../../../issues.md#cross-013), since the
+  Logged jointly with the web-side instance as `CROSS-013` (resolved), since the
   same failure shape appearing on both platforms in the same vertical looks like a pattern (a
   scaffolded-then-inlined page leaving its original component files behind) worth someone's attention,
   not two unrelated one-offs.

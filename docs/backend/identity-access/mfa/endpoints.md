@@ -13,13 +13,21 @@ repeated per entry.
 
 ### Enroll in MFA
 
-**Kind:** GraphQL Mutation · **`enrollMfa: MfaEnrollPayload!`**
+**Kind:** GraphQL Mutation · **`enrollMfa(currentCode: String): MfaEnrollPayload!`**
 **Source:** [`mfa.resolver.ts#L14-17`](../../../../nest-js-boilerplate/src/mfa/mfa.resolver.ts),
 service [`mfa.service.ts#L25-50`](../../../../nest-js-boilerplate/src/mfa/mfa.service.ts), payload
 [`mfa.types.ts`](../../../../nest-js-boilerplate/src/mfa/mfa.types.ts)
 **Response (`MfaEnrollPayload`):** `{ otpauthUrl, secret }` — `secret` (Base32) is shown once for
 manual entry; `otpauthUrl` is rendered as a QR code client-side. Calling this again before verifying
 silently replaces the pending factor (no error).
+**Step-up (`BE-030`, resolved 2026-09-03):** when MFA is *already enabled*, this is a rotation of
+the authenticator and requires `currentCode` — a valid TOTP from the current factor or one unused
+backup code (which is burned) — otherwise `403 EX_AUTH_MFA_STEP_UP_REQUIRED`
+(`auth.errors.mfaStepUpRequired`; a missing and a wrong code are indistinguishable). Without this,
+any authenticated session could install its own second factor and, via `verifyMfa`, wipe the owner's
+backup codes. First-time enrollment needs no code, so neither client changed (neither offers a
+re-enroll UI while MFA is on). The completed rotation's `verifyMfa` also deletes the previous
+verified factor in the same transaction, so login never has two live authenticators to pick between.
 **Used by:** Frontend [settings/security](../../../frontend/v1/settings/security/page.md) via
 [api.md § One file, two owners](../../../frontend/v1/settings/security/api.md#one-file-two-owners); Mobile
 [security screen](../../../mobile/v1/settings/security/screen.md)'s

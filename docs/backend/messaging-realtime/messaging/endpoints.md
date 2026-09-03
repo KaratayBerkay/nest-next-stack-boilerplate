@@ -298,8 +298,14 @@ WS frames bypass the REST/GraphQL DTO pipeline entirely — no `ValidationPipe`/
 `EnvelopeSizeConstraint` runs on a raw parsed WS message — so this gateway re-implements the
 text-or-attachment-or-envelope check and the 32KB envelope cap **by hand**
 (`hasTextOrAttachmentOrEnvelope`/`isEnvelopeTooLarge` at the top of the file) rather than reusing the
-REST DTO's `class-validator` constraints. Worth checking for other REST-only validations with the
-same gap when auditing this file further.
+REST DTO's `class-validator` constraints. `attachments[]` used to be the one thing that slipped
+through with no check at all — persisted and broadcast as sent, so a crafted `url` crashed every
+recipient's web render (`CROSS-046`, resolved 2026-09-03). `validateWsAttachments` now runs each entry
+through the exported REST `MessageAttachmentDto` (`IsUrl`, `type` ≤ 50, `name` ≤ 255, optional
+`storageEnvelope`), caps the list at 10, keeps only the DTO's declared fields (a smuggled
+`size`/`thumbnailUrl` is dropped — those are resolved server-side), and answers an `error` frame
+(`invalid attachments`) instead of persisting anything on failure; the web `AttachmentPreview` also
+guards `new URL()` now as the client-side half.
 
 | Event | Direction | Handler | Behavior |
 |---|---|---|---|

@@ -23,7 +23,7 @@ route isn't under the `/v1` or `/auth` prefixes the global router redirect inter
 Same gap as web, independently confirmed: `grep -n "about" lib/views/v1/v1_nav.dart` (mobile's
 authenticated-shell nav) returns nothing, and no other screen constructs a route/link to `/about`.
 Reachable only via direct deep link or the app's own `GoRouter` route table — not through normal
-in-app navigation on either platform. See [CROSS-038](../../issues.md#cross-038).
+in-app navigation on either platform. See `CROSS-038` (resolved).
 
 ## Backend endpoints this screen depends on
 
@@ -31,4 +31,4 @@ None.
 
 ## Known issues affecting this screen
 
-- [CROSS-038](../../issues.md#cross-038) — no discoverable nav entry point on either platform (see above).
+- `CROSS-038` (resolved) — no discoverable nav entry point on either platform (see above).

@@ -86,9 +86,11 @@ does).
 
 ## Known issues
 
-- `POST /csrf/echo` (a self-test endpoint — echoes the request body back once CSRF-validated) has no
+- `POST /csrf/echo` (a self-test endpoint — echoes the request body back once CSRF-validated; since
+  `BE-009` (resolved 2026-09-03) it 404s when `NODE_ENV=production`, existing only for
+  `test/csrf.e2e-spec.ts`) has no
   caller anywhere in either frontend or mobile source (confirmed: the only `/api/echo`-shaped route on
   web is an unrelated CSR demo page, `views/demos/csr/PageContent.tsx`, hitting a completely different
   backend endpoint). Looks like a manual-testing utility route rather than a real contract — low
-  severity, but logged as [BE-009](../../../issues.md#be-009) since an unused-but-live endpoint is
+  severity, but logged as `BE-009` (resolved) since an unused-but-live endpoint is
   exactly the kind of thing worth a second look before assuming it's intentional.
