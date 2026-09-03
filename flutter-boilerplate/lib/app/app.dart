@@ -147,10 +147,24 @@ class _FlutterBoilerplateAppState extends ConsumerState<FlutterBoilerplateApp>
       // sibling with no ancestor to resolve AppLocalizations.of(context)
       // from) — the documented way to lay a global overlay on top of
       // whatever route is active.
+      //
+      // RtcCallOverlay gets its own Overlay here rather than relying on
+      // `child`'s — `child` holds MaterialApp.router's own Navigator/Overlay,
+      // but as a Stack *sibling* (not a descendant) of it, so anything in
+      // RtcCallOverlay needing Overlay.of(context) — every call button goes
+      // through a shared Tooltip-wrapped button — had no ancestor to find.
+      // Every incoming call crashed instantly with "No Overlay widget
+      // found" the moment the ringing sheet tried to render (MOB-033).
       builder: (context, child) => Stack(
         children: [
           if (child != null) child,
-          const Positioned.fill(child: RtcCallOverlay()),
+          Positioned.fill(
+            child: Overlay(
+              initialEntries: [
+                OverlayEntry(builder: (_) => const RtcCallOverlay()),
+              ],
+            ),
+          ),
         ],
       ),
     );

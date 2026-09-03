@@ -44,7 +44,9 @@ class ChatMessageBubble extends ConsumerWidget {
   Future<void> _deleteForMe(BuildContext context, WidgetRef ref) async {
     final t = AppLocalizations.of(context);
     try {
-      await ref.read(messageActionsProvider).deleteMessageForMe(message.id);
+      await ref
+          .read(messageActionsProvider)
+          .deleteMessageForMe(message.conversationId, message.id);
     } catch (_) {
       if (context.mounted) {
         showToast(
@@ -70,7 +72,7 @@ class ChatMessageBubble extends ConsumerWidget {
     try {
       await ref
           .read(messageActionsProvider)
-          .deleteMessageForEveryone(message.id);
+          .deleteMessageForEveryone(message.conversationId, message.id);
     } catch (_) {
       if (context.mounted) {
         showToast(

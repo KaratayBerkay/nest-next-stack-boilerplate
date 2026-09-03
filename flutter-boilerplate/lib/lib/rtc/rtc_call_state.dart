@@ -20,11 +20,16 @@ class RtcCallPeer {
 class RtcLiveKitInfo {
   final String token;
   final String roomName;
+
+  /// Client-facing LiveKit URL the backend stamped on rtc:accepted; null when
+  /// it has none configured (resolveLivekitUrl falls back to AppConfig).
+  final String? livekitUrl;
   final int? maxDurationMinutes;
 
   const RtcLiveKitInfo({
     required this.token,
     required this.roomName,
+    this.livekitUrl,
     this.maxDurationMinutes,
   });
 }

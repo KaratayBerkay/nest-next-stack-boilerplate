@@ -1,10 +1,10 @@
 typedef PageClaim = ({String? page, Map<String, String>? params});
 
 /// Mirrors next-js-boilerplate's `routeToPageClaim` (route-mapping.ts) so
-/// the mobile app claims the same server-side pages the web app does.
-/// Flutter's own `chat-room` route uses the query param `conversation`,
-/// not `room` like the web app (see `app/router.dart`'s `v1ChatRoom` route)
-/// — this follows Flutter's router, not the web constant name.
+/// the mobile app claims the same server-side pages the web app does. The
+/// `chat-room` deep link uses the same `?room=` query param as the web app
+/// (CROSS-026 — it used to be `?conversation=`, so the two platforms' links
+/// weren't interchangeable).
 PageClaim routeToPageClaim(Uri uri) {
   final seg = uri.pathSegments.where((s) => s.isNotEmpty).toList();
   final route = seg.length > 2 ? seg.sublist(2).join('/') : '';
@@ -30,12 +30,7 @@ PageClaim routeToPageClaim(Uri uri) {
     return (page: 'feed', params: null);
   }
   if (route == 'chat-room') {
-    final room = qp['conversation'] ?? 'general';
-    return (page: 'chat-room', params: {'room': room});
-  }
-  if (route.startsWith('chat/')) {
-    final parts = route.split('/');
-    final room = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : 'general';
+    final room = qp['room'] ?? 'general';
     return (page: 'chat-room', params: {'room': room});
   }
   // Web's route-mapping.ts also produces `rtc-meeting`/`rtc-stream` claims

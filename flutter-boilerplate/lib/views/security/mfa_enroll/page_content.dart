@@ -1,7 +1,8 @@
-import 'dart:io';
+import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/share_temp_file.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
@@ -82,14 +83,18 @@ class _MfaEnrollPageContentState extends ConsumerState<MfaEnrollPageContent> {
   Future<void> _exportBackupCodes() async {
     try {
       final codes = _verifyData!.backupCodes;
-      final dir = await getTemporaryDirectory();
-      final file = File('${dir.path}/backup-codes.txt');
-      await file.writeAsString(codes.join('\n'));
-
-      await SharePlus.instance.share(
-        ShareParams(
-          files: [XFile(file.path)],
-          subject: 'Two-factor backup codes',
+      // The codes only touch disk inside a throwaway file that is deleted
+      // again once the share sheet returns — they used to stay in the cache
+      // directory for the life of the install (MOB-044).
+      await shareBytesViaTempFile(
+        baseDir: await getTemporaryDirectory(),
+        fileName: 'backup-codes.txt',
+        bytes: utf8.encode(codes.join('\n')),
+        share: (path) => SharePlus.instance.share(
+          ShareParams(
+            files: [XFile(path)],
+            subject: 'Two-factor backup codes',
+          ),
         ),
       );
     } catch (e) {

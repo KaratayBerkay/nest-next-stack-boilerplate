@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/api/server/auth/refresh_token.dart';
+import 'package:flutter_boilerplate/hooks/use_auth.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 class _RecordingAdapter implements HttpClientAdapter {
@@ -37,6 +38,39 @@ class _RecordingAdapter implements HttpClientAdapter {
           },
         },
       }),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+class _GraphQlErrorAdapter implements HttpClientAdapter {
+  _GraphQlErrorAdapter(this.errorBody);
+
+  final Map<String, dynamic> errorBody;
+
+  @override
+  Future<ResponseBody> fetch(
+    RequestOptions options,
+    Stream<Uint8List>? requestStream,
+    Future<void>? cancelFuture,
+  ) async {
+    if (options.method == 'GET' && options.path == '/csrf/token') {
+      return ResponseBody.fromString(
+        jsonEncode({'token': 'csrf-token-value'}),
+        200,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
+    return ResponseBody.fromString(
+      jsonEncode(errorBody),
       200,
       headers: {
         Headers.contentTypeHeader: [Headers.jsonContentType],
@@ -89,6 +123,73 @@ void main() {
       expect(query, contains('rbacToken'));
       expect(query, contains('deviceToken'));
       expect(query, contains('userToken'));
+    },
+  );
+
+  test(
+    'call() surfaces a GraphQL-level 401 (dead refresh token) as '
+    'response.statusCode 401 rather than a bare exception — '
+    'use_auth.dart\'s classifyRefreshFailure only inspects '
+    'error.response?.statusCode to tell a real rejection apart from a '
+    'transient network blip, and without this a permanently-dead refresh '
+    'token never triggers logout and instead retries forever',
+    () async {
+      final adapter = _GraphQlErrorAdapter({
+        'errors': [
+          {
+            'message': 'Unauthorized',
+            'extensions': {'statusCode': 401},
+          },
+        ],
+      });
+      final dio = Dio(BaseOptions(baseUrl: 'http://test'));
+      dio.httpClientAdapter = adapter;
+      final server = RefreshTokenServer(dio);
+
+      await expectLater(
+        server.call(
+          'dead-refresh-token',
+          rbacToken: 'rbac-token-value',
+          deviceToken: 'device-token-value',
+          userToken: 'user-token-value',
+        ),
+        throwsA(
+          isA<DioException>().having(
+            (e) => e.response?.statusCode,
+            'response.statusCode',
+            401,
+          ),
+        ),
+      );
+    },
+  );
+
+  test(
+    'call() does not fabricate a 401/403 when a GraphQL error carries no '
+    'extensions.statusCode — classifyRefreshFailure must read it as '
+    'networkError (a guess here would wrongly log the user out on an '
+    'ambiguous error instead of just leaving stale tokens for the next try)',
+    () async {
+      final adapter = _GraphQlErrorAdapter({
+        'errors': [
+          {'message': 'boom'},
+        ],
+      });
+      final dio = Dio(BaseOptions(baseUrl: 'http://test'));
+      dio.httpClientAdapter = adapter;
+      final server = RefreshTokenServer(dio);
+
+      try {
+        await server.call(
+          'refresh-token-value',
+          rbacToken: 'rbac-token-value',
+          deviceToken: 'device-token-value',
+          userToken: 'user-token-value',
+        );
+        fail('expected a DioException');
+      } on DioException catch (e) {
+        expect(classifyRefreshFailure(e), RefreshResult.networkError);
+      }
     },
   );
 }

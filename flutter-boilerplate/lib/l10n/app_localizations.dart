@@ -2090,6 +2090,24 @@ abstract class AppLocalizations {
   /// **'Add Friend'**
   String get findFriendsAddFriend;
 
+  /// No description provided for @findFriendsFailedToSendRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send friend request'**
+  String get findFriendsFailedToSendRequest;
+
+  /// No description provided for @findFriendsFailedToAcceptRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to accept friend request'**
+  String get findFriendsFailedToAcceptRequest;
+
+  /// No description provided for @findFriendsFailedToDeclineRequest.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to decline friend request'**
+  String get findFriendsFailedToDeclineRequest;
+
   /// No description provided for @findFriendsPrev.
   ///
   /// In en, this message translates to:
@@ -9494,6 +9512,12 @@ abstract class AppLocalizations {
   /// **'View Pricing'**
   String get homeViewPricing;
 
+  /// No description provided for @homeViewAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get homeViewAbout;
+
   /// No description provided for @formsAdvancedPageTitle.
   ///
   /// In en, this message translates to:
@@ -11371,6 +11395,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Stop sharing'**
   String get rtcScreenShareOff;
+
+  /// No description provided for @rtcScreenShareNotificationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen sharing'**
+  String get rtcScreenShareNotificationTitle;
+
+  /// No description provided for @rtcScreenShareNotificationText.
+  ///
+  /// In en, this message translates to:
+  /// **'Your screen is being shared in the meeting.'**
+  String get rtcScreenShareNotificationText;
 
   /// No description provided for @rtcCallLimitWarning.
   ///

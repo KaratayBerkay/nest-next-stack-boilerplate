@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
     show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/livekit_url.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,7 +14,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
-import '../../app_config.dart';
 import '../../components/rtc/rtc_chat_panel.dart';
 import '../../components/rtc/rtc_report_dialog.dart';
 import '../../hooks/use_auth.dart';
@@ -85,6 +85,7 @@ class _RtcLiveViewerPageContentState
         result.token,
         result.stream.broadcaster.id,
         result.roomName,
+        result.livekitUrl,
       );
     } catch (error, stackTrace) {
       logRtcEvent(
@@ -104,6 +105,7 @@ class _RtcLiveViewerPageContentState
     String token,
     String broadcasterId,
     String roomName,
+    String? livekitUrl,
   ) async {
     final room = lk.Room();
     _room = room;
@@ -188,7 +190,7 @@ class _RtcLiveViewerPageContentState
       });
 
     try {
-      await room.connect(AppConfig.livekitUrl, token);
+      await room.connect(resolveLivekitUrl(livekitUrl), token);
       if (!mounted || _room != room) {
         await room.disconnect();
         return;

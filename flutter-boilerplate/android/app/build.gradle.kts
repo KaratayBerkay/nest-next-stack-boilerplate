@@ -11,6 +11,25 @@ val keystoreProperties = Properties().apply {
     val f = rootProject.file("key.properties")
     if (f.exists()) load(FileInputStream(f))
 }
+val hasReleaseKeystore = rootProject.file("key.properties").exists()
+
+// A release build with no key.properties used to fall back to the debug
+// keystore *silently* (MOB-047). Say so on every such build, and let CI /
+// store builds make it fatal:
+//   flutter build apk --release --android-project-arg=requireReleaseSigning=true
+// Scoped to release tasks (assembleRelease/bundleRelease) so plain debug
+// builds and `flutter run` stay quiet.
+val buildingRelease = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (!hasReleaseKeystore && buildingRelease) {
+    val required = (project.findProperty("requireReleaseSigning") as String?) == "true"
+    val message =
+        "android/key.properties not found — this release build is signed with the DEBUG " +
+            "keystore and must not be distributed (README § Release builds)"
+    if (required) throw GradleException(message)
+    logger.warn("WARNING: $message")
+}
 
 android {
     namespace = "tr.gen.eys.app"
@@ -45,7 +64,7 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (rootProject.file("key.properties").exists())
+            signingConfig = if (hasReleaseKeystore)
                 signingConfigs.getByName("release")
             else
                 signingConfigs.getByName("debug")

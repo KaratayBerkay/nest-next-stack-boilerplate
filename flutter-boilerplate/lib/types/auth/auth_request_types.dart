@@ -8,16 +8,14 @@ class LoginSuccess extends LoginResult {
   LoginSuccess(this.response);
 }
 
+/// The backend answers a correct password on an MFA-enabled account with a
+/// challenge only — no `user` (a password alone proves nothing yet; role,
+/// tier and profile arrive with the real session after verifyLoginMfa).
 class LoginMfaRequired extends LoginResult {
   final String mfaToken;
   final String? mfaMethod;
-  final AuthenticatedUser user;
 
-  LoginMfaRequired({
-    required this.mfaToken,
-    this.mfaMethod,
-    required this.user,
-  });
+  LoginMfaRequired({required this.mfaToken, this.mfaMethod});
 }
 
 class LoginRequest {

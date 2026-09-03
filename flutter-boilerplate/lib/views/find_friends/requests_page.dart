@@ -5,6 +5,7 @@ import '../../api/client/friends/actions.dart';
 import '../../api/client/friends/query.dart';
 import '../../components/ui/avatar/avatar.dart';
 import '../../components/ui/empty/empty.dart';
+import '../../components/ui/toast/toast.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 
@@ -22,9 +23,53 @@ class FindFriendsRequestsPage extends StatelessWidget {
   }
 }
 
-class _RequestsView extends ConsumerWidget {
+enum _PendingAction { accept, decline }
+
+class _RequestsView extends ConsumerStatefulWidget {
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_RequestsView> createState() => _RequestsViewState();
+}
+
+class _RequestsViewState extends ConsumerState<_RequestsView> {
+  // Regression: accept/decline previously sent the friend-request's own id
+  // instead of the sender's user id (the backend's `:userId` route param),
+  // so every tap 404'd — and the failure was swallowed with no busy state
+  // or feedback, so the button just looked dead. Mirrors the fix in
+  // PendingRequestCard.
+  final Map<String, _PendingAction> _pending = {};
+
+  Future<void> _respond(
+    String requestId,
+    String userId,
+    _PendingAction action,
+  ) async {
+    if (_pending.containsKey(requestId)) return;
+    setState(() => _pending[requestId] = action);
+    try {
+      final actions = ref.read(friendActionsProvider);
+      if (action == _PendingAction.accept) {
+        await actions.acceptRequest(userId);
+      } else {
+        await actions.declineRequest(userId);
+      }
+    } catch (_) {
+      if (mounted) {
+        final t = AppLocalizations.of(context);
+        showToast(
+          context,
+          action == _PendingAction.accept
+              ? t.findFriendsFailedToAcceptRequest
+              : t.findFriendsFailedToDeclineRequest,
+          type: ToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pending.remove(requestId));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final requestsAsync = ref.watch(friendRequestsProvider);
@@ -44,6 +89,8 @@ class _RequestsView extends ConsumerWidget {
           itemCount: requests.length,
           itemBuilder: (_, i) {
             final req = requests[i];
+            final busy = _pending.containsKey(req.id);
+            final action = _pending[req.id];
             return Card(
               margin: const EdgeInsets.only(bottom: 8),
               child: ListTile(
@@ -58,16 +105,42 @@ class _RequestsView extends ConsumerWidget {
                   children: [
                     if (req.isIncoming)
                       IconButton(
-                        icon: Icon(Icons.check_circle, color: colors.success),
-                        onPressed: () => ref
-                            .read(friendActionsProvider)
-                            .acceptRequest(req.id),
+                        icon: action == _PendingAction.accept
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colors.success,
+                                ),
+                              )
+                            : Icon(Icons.check_circle, color: colors.success),
+                        onPressed: busy
+                            ? null
+                            : () => _respond(
+                                  req.id,
+                                  req.fromUserId,
+                                  _PendingAction.accept,
+                                ),
                       ),
                     IconButton(
-                      icon: Icon(Icons.cancel, color: colors.danger),
-                      onPressed: () => ref
-                          .read(friendActionsProvider)
-                          .declineRequest(req.id),
+                      icon: action == _PendingAction.decline
+                          ? SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: colors.danger,
+                              ),
+                            )
+                          : Icon(Icons.cancel, color: colors.danger),
+                      onPressed: busy
+                          ? null
+                          : () => _respond(
+                                req.id,
+                                req.fromUserId,
+                                _PendingAction.decline,
+                              ),
                     ),
                   ],
                 ),

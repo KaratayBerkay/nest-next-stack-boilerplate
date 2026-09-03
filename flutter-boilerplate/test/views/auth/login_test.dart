@@ -218,16 +218,17 @@ void main() {
 
     testWidgets('MFA flow renders challenge, validates code, verifies',
         (tester) async {
+      // BE-033: the challenge response carries no user — the form must not
+      // need one to render the code step. The user only arrives with the
+      // real session from verifyLoginMfa below.
       const testUser = AuthenticatedUser(
         id: '1',
         email: 'test@example.com',
         name: 'Test',
         tier: 'free',
       );
-
       when(() => mockActions.login(any())).thenAnswer(
-        (_) async =>
-            LoginMfaRequired(mfaToken: 'mfa-token-123', user: testUser),
+        (_) async => LoginMfaRequired(mfaToken: 'mfa-token-123'),
       );
 
       await tester.pumpWidget(

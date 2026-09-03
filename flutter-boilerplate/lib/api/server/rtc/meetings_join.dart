@@ -18,7 +18,7 @@ class JoinMeetingServer {
       '/graphql',
       data: {
         'query':
-            'mutation JoinMeeting(\$slug: String!) { joinMeeting(slug: \$slug) { token roomName role meeting { $meetingFields } } }',
+            'mutation JoinMeeting(\$slug: String!) { joinMeeting(slug: \$slug) { token roomName livekitUrl role meeting { $meetingFields } } }',
         'variables': {'slug': slug},
       },
     );
@@ -32,15 +32,19 @@ class JoinMeetingServer {
       // extensions.statusCode so the view can tell "meeting not found"
       // (404) from "meeting already ended" — same distinction the web view
       // reads off its BFF error shape.
-      final statusCode = ((first?['extensions']
-              as Map<String, dynamic>?)?['statusCode'] as num?)
-          ?.toInt();
+      final extensions = first?['extensions'] as Map<String, dynamic>?;
+      final statusCode = (extensions?['statusCode'] as num?)?.toInt();
+      // The backend's exception code rides along as the response body so
+      // the view can tell a final 403 ("the host removed you") from a
+      // retryable one ("meeting is full") — same `exc` the web view reads.
+      final exc = extensions?['exc'] as String?;
       throw DioException(
         requestOptions: response.requestOptions,
         response: statusCode != null
             ? Response(
                 requestOptions: response.requestOptions,
                 statusCode: statusCode,
+                data: exc != null ? {'exc': exc} : null,
               )
             : null,
         message: message ?? 'Failed to join meeting',

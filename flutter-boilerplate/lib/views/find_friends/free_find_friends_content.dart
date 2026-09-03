@@ -8,7 +8,8 @@ import '../../api/server/users/search.dart';
 import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../l10n/app_localizations.dart';
-import '../../types/messages/friend_request_types.dart';
+import '../../types/messages/friend_request_types.dart'
+    show FriendRequest, outgoingPendingIds;
 import 'pending_request_card.dart';
 import 'use_friend_search.dart';
 import 'user_search_card.dart';
@@ -48,7 +49,7 @@ class FreeFindFriendsContent extends ConsumerWidget {
         ),
         Expanded(
           child: searchState.query.isNotEmpty
-              ? _buildSearchResults(context, ref, resultsAsync)
+              ? _buildSearchResults(context, ref, resultsAsync, requestsAsync)
               : _buildRequests(context, ref, requestsAsync),
         ),
       ],
@@ -59,8 +60,10 @@ class FreeFindFriendsContent extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     AsyncValue<List<UserSearchResult>> resultsAsync,
+    AsyncValue<List<FriendRequest>> requestsAsync,
   ) {
     final t = AppLocalizations.of(context);
+    final pendingIds = outgoingPendingIds(requestsAsync.asData?.value ?? []);
     return resultsAsync.when(
       loading: () => const Spinner(),
       error: (err, _) => EmptyWidget(
@@ -83,6 +86,7 @@ class FreeFindFriendsContent extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: UserSearchCard(
               user: users[i],
+              isPending: pendingIds.contains(users[i].id),
               onAdd: () =>
                   ref.read(friendActionsProvider).sendRequest(users[i].id),
             ),
@@ -122,11 +126,13 @@ class FreeFindFriendsContent extends ConsumerWidget {
               child: PendingRequestCard(
                 request: req,
                 onAccept: req.isIncoming
-                    ? () =>
-                        ref.read(friendActionsProvider).acceptRequest(req.id)
+                    ? () => ref
+                        .read(friendActionsProvider)
+                        .acceptRequest(req.fromUserId)
                     : null,
-                onDecline: () =>
-                    ref.read(friendActionsProvider).declineRequest(req.id),
+                onDecline: () => ref
+                    .read(friendActionsProvider)
+                    .declineRequest(req.fromUserId),
               ),
             );
           },

@@ -251,6 +251,7 @@ void handleEventFrame(Ref ref, Map<String, dynamic> frame) {
               token,
               roomName,
               (frame['maxDurationMinutes'] as num?)?.toInt(),
+              livekitUrl: frame['livekitUrl'] as String?,
             );
       }
     case 'rtc:rejected':

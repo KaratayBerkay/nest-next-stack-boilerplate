@@ -270,6 +270,8 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
     String token,
     String roomName,
     int? maxDurationMinutes, {
+    // Server-stamped client URL for this call (rtc:accepted `livekitUrl`).
+    String? livekitUrl,
     RtcCallPeer? peer,
     // Snapshot recovery only — the live rtc:accepted push's client already
     // knows the call type from rtc:invite/startCall. Without this, a
@@ -293,6 +295,7 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
       livekit: RtcLiveKitInfo(
         token: token,
         roomName: roomName,
+        livekitUrl: livekitUrl,
         maxDurationMinutes: maxDurationMinutes,
       ),
       connectedAt: acceptedAt ?? DateTime.now(),
@@ -382,6 +385,7 @@ class RtcCallNotifier extends StateNotifier<RtcCallState> {
         snapshot.token!,
         snapshot.roomName!,
         snapshot.maxDurationMinutes,
+        livekitUrl: snapshot.livekitUrl,
         peer: snapshot.peerId != null
             ? RtcCallPeer(
                 id: snapshot.peerId!,

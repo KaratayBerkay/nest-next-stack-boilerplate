@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/rtc/livekit_url.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
@@ -9,7 +10,6 @@ import 'package:livekit_client/livekit_client.dart' as lk;
 import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/query.dart';
-import '../../app_config.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../../types/rtc/active_call_snapshot.dart';
@@ -245,7 +245,7 @@ class _RtcCallOverlayState extends ConsumerState<RtcCallOverlay> {
       });
 
     try {
-      await room.connect(AppConfig.livekitUrl, livekit.token);
+      await room.connect(resolveLivekitUrl(livekit.livekitUrl), livekit.token);
       if (!mounted || _room != room) {
         await room.disconnect();
         return;

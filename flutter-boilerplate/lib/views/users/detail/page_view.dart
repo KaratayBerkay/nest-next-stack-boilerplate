@@ -7,6 +7,7 @@ import '../../../api/server/users/search.dart';
 import '../../../components/ui/avatar/avatar.dart';
 import '../../../components/ui/button/button.dart';
 import '../../../components/ui/empty/empty.dart';
+import '../../../components/ui/toast/toast.dart';
 import '../../../constants/theme.dart';
 import '../../../l10n/app_localizations.dart';
 
@@ -17,7 +18,7 @@ import '../../../l10n/app_localizations.dart';
 /// row), passed through as the route's `extra`. A user reaching this route
 /// with no `extra` (e.g. a bare deep link) sees an empty state rather than
 /// the previous bug of silently showing the caller's own profile.
-class UserDetailPageContent extends ConsumerWidget {
+class UserDetailPageContent extends ConsumerStatefulWidget {
   final String lang;
   final String userId;
   final Object? extra;
@@ -30,7 +31,38 @@ class UserDetailPageContent extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<UserDetailPageContent> createState() =>
+      _UserDetailPageContentState();
+}
+
+class _UserDetailPageContentState extends ConsumerState<UserDetailPageContent> {
+  // Same regression class as UserSearchCard/SuggestedFriendsPanel: unawaited
+  // send with no loading/failure feedback and no "already sent" state.
+  bool _sending = false;
+  bool _sent = false;
+
+  Future<void> _handleAdd() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    try {
+      await ref.read(friendActionsProvider).sendRequest(widget.userId);
+      if (mounted) setState(() => _sent = true);
+    } catch (_) {
+      if (mounted) {
+        final t = AppLocalizations.of(context);
+        showToast(
+          context,
+          t.findFriendsFailedToSendRequest,
+          type: ToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
 
@@ -38,7 +70,7 @@ class UserDetailPageContent extends ConsumerWidget {
     final String? email;
     final String? avatarUrl;
     final bool? isOnline;
-    final data = extra;
+    final data = widget.extra;
     if (data is Friend) {
       name = data.name;
       email = data.email;
@@ -95,11 +127,17 @@ class UserDetailPageContent extends ConsumerWidget {
                 ),
               ],
               const SizedBox(height: 24),
-              Button(
-                child: Text(t.usersAddFriend),
-                onPressed: () =>
-                    ref.read(friendActionsProvider).sendRequest(userId),
-              ),
+              if (_sent)
+                Text(
+                  t.findFriendsPending,
+                  style: TextStyle(color: colors.fgMuted),
+                )
+              else
+                Button(
+                  loading: _sending,
+                  onPressed: _sending ? null : _handleAdd,
+                  child: Text(t.usersAddFriend),
+                ),
             ],
           ),
         ),

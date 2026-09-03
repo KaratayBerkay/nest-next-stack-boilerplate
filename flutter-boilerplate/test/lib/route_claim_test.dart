@@ -72,22 +72,28 @@ void main() {
       expect(result.params, {'room': 'general'});
     });
 
-    test('chat-room route with conversation param', () {
+    test('chat-room route with the web-shared room param (CROSS-026)', () {
       final result = routeToPageClaim(
-        Uri.parse('/v1/en/chat-room?conversation=tech'),
+        Uri.parse('/v1/en/chat-room?room=tech'),
       );
       expect(result.page, 'chat-room');
       expect(result.params, {'room': 'tech'});
     });
 
-    test('legacy chat route maps to chat-room page', () {
+    test('the retired ?conversation= spelling no longer selects a room', () {
+      final result = routeToPageClaim(
+        Uri.parse('/v1/en/chat-room?conversation=tech'),
+      );
+      expect(result.params, {'room': 'general'});
+    });
+
+    test(
+        'the removed legacy /chat/:id route is no longer a chat-room claim (MOB-016)',
+        () {
       final result = routeToPageClaim(
         Uri.parse('/v1/en/chat/019f709d-1aaa-76b8-9f1c-4ea0b69c0529'),
       );
-      expect(result.page, 'chat-room');
-      expect(result.params, {
-        'room': '019f709d-1aaa-76b8-9f1c-4ea0b69c0529',
-      });
+      expect(result.page, isNull);
     });
 
     test('unknown route returns null page and params', () {

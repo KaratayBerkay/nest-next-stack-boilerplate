@@ -537,7 +537,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'v1ChatRoom',
             builder: (_, state) => ChatRoomPageContent(
               lang: state.pathParameters['lang'] ?? 'en',
-              initialRoom: state.uri.queryParameters['conversation'],
+              // `room`, same as web's /chat-room?room= (CROSS-026).
+              initialRoom: state.uri.queryParameters['room'],
             ),
           ),
           // Admin

@@ -54,6 +54,12 @@ dependencies:
   fl_chart: ^1.2.0
   livekit_client: ^2.7.0
   wakelock_plus: ^1.7.0
+  # Runs the Android foreground service MediaProjection (screen share)
+  # requires since Android 10, enforced with a SecurityException since
+  # Android 14 — without it, starting "share one app" gets this app killed
+  # the instant the shared app takes the foreground (MOB-038). Same package
+  # LiveKit's own example app uses for exactly this.
+  flutter_background: ^1.3.0
 
 dev_dependencies:
   flutter_test:

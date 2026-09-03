@@ -1081,6 +1081,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get findFriendsAddFriend => 'Arkadaş Ekle';
 
   @override
+  String get findFriendsFailedToSendRequest =>
+      'Arkadaşlık isteği gönderilemedi';
+
+  @override
+  String get findFriendsFailedToAcceptRequest =>
+      'Arkadaşlık isteği kabul edilemedi';
+
+  @override
+  String get findFriendsFailedToDeclineRequest =>
+      'Arkadaşlık isteği reddedilemedi';
+
+  @override
   String get findFriendsPrev => 'Önceki';
 
   @override
@@ -5020,6 +5032,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get homeViewPricing => 'Fiyatları Gör';
 
   @override
+  String get homeViewAbout => 'Hakkında';
+
+  @override
   String get formsAdvancedPageTitle => 'Gelişmiş Desenler';
 
   @override
@@ -6035,6 +6050,13 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get rtcScreenShareOff => 'Paylaşımı durdur';
+
+  @override
+  String get rtcScreenShareNotificationTitle => 'Ekran paylaşımı';
+
+  @override
+  String get rtcScreenShareNotificationText =>
+      'Ekranınız toplantıda paylaşılıyor.';
 
   @override
   String rtcCallLimitWarning(Object seconds) {

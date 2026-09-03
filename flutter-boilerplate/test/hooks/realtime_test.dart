@@ -46,7 +46,7 @@ void main() {
       );
 
       client.handleMessage('{"type":"error","msg":"auth failed"}');
-      await client.handleOpen();
+      await client.tokensForConnect();
 
       expect(bustTokenCacheCalled, isTrue);
     });
@@ -65,7 +65,7 @@ void main() {
       );
 
       client.handleMessage('{"type":"error","msg":"something else"}');
-      await client.handleOpen();
+      await client.tokensForConnect();
 
       expect(bustTokenCacheCalled, isFalse);
     });
@@ -88,7 +88,7 @@ void main() {
 
       // After authenticated frame, pending flag is cleared — reconnect
       // should use getTokens() directly, not refresh path
-      await client.handleOpen();
+      await client.tokensForConnect();
       expect(bustTokenCacheCalled, isFalse);
     });
 
@@ -107,7 +107,7 @@ void main() {
 
       client.disconnect();
       client.handleMessage('{"type":"error","msg":"auth failed"}');
-      await client.handleOpen();
+      await client.tokensForConnect();
 
       expect(bustTokenCacheCalled, isFalse);
     });
@@ -126,7 +126,7 @@ void main() {
       client.handleMessage('');
     });
 
-    test('onBustTokenCache error propagates from handleOpen', () async {
+    test('onBustTokenCache error propagates from tokensForConnect', () async {
       final client = RealtimeClient(
         url: 'ws://localhost:3000/ws',
         getTokens: () async => null,
@@ -140,9 +140,50 @@ void main() {
       client.handleMessage('{"type":"error","msg":"auth failed"}');
 
       await expectLater(
-        client.handleOpen(),
+        client.tokensForConnect(),
         throwsA(isA<Exception>()),
       );
+    });
+  });
+
+  group('RealtimeClient.handleOpen', () {
+    test(
+        'sends no credential frame after the socket opens — never even reads '
+        'the tokens; the upgrade cookies already authenticated the socket and '
+        'the gateway has no handler for a post-open auth frame (MOB-043)',
+        () async {
+      var tokenReads = 0;
+      final statuses = <RealtimeStatus>[];
+      final client = RealtimeClient(
+        url: 'ws://localhost:3000/ws',
+        getTokens: () async {
+          tokenReads++;
+          return {'accessToken': 'test'};
+        },
+        onStatusChange: statuses.add,
+        onFrame: (_) {},
+      );
+
+      await client.handleOpen();
+
+      expect(tokenReads, 0);
+      expect(statuses, [RealtimeStatus.authenticating]);
+    });
+
+    test('is a no-op once disconnected', () async {
+      final statuses = <RealtimeStatus>[];
+      final client = RealtimeClient(
+        url: 'ws://localhost:3000/ws',
+        getTokens: () async => {'accessToken': 'test'},
+        onStatusChange: statuses.add,
+        onFrame: (_) {},
+      );
+
+      client.disconnect();
+      statuses.clear();
+      await client.handleOpen();
+
+      expect(statuses, isEmpty);
     });
   });
 }

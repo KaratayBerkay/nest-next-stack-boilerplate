@@ -91,11 +91,16 @@ class LiveStream {
 class LiveStreamJoinResult {
   final String token;
   final String roomName;
+
+  /// Client-facing LiveKit URL from the server; null when it has none
+  /// configured (then `AppConfig.livekitUrl` is used — see resolveLivekitUrl).
+  final String? livekitUrl;
   final LiveStream stream;
 
   LiveStreamJoinResult({
     required this.token,
     required this.roomName,
+    this.livekitUrl,
     required this.stream,
   });
 
@@ -103,6 +108,7 @@ class LiveStreamJoinResult {
       LiveStreamJoinResult(
         token: json['token'] as String,
         roomName: json['roomName'] as String,
+        livekitUrl: json['livekitUrl'] as String?,
         stream: LiveStream.fromJson(json['stream'] as Map<String, dynamic>),
       );
 }

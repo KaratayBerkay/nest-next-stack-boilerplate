@@ -51,6 +51,13 @@ const testRoomMessages = [
 Widget buildTestApp({
   required Widget child,
   MockRealtimeClient? mockClient,
+  // MOB-032 regression: the real app reaches this screen through a
+  // GoRouter ShellRoute, which nests its own Navigator below MaterialApp's
+  // — a plain `home: Scaffold(...)` (the default below) has only one
+  // Navigator, so it can't reproduce the wrong-BuildContext-pop defect that
+  // hung the page-info dialog forever. See chat_room_base_view.dart's
+  // onPageInfo and confirm_dialog_test.dart's matching nested-Navigator case.
+  bool nestedNavigator = false,
 }) {
   final client = mockClient ?? MockRealtimeClient();
   when(() => client.status).thenReturn(RealtimeStatus.idle);
@@ -90,7 +97,13 @@ Widget buildTestApp({
       supportedLocales: const [Locale('en'), Locale('tr')],
       locale: const Locale('en'),
       theme: buildThemeData(AppThemeMode.light),
-      home: Scaffold(body: child),
+      home: nestedNavigator
+          ? Navigator(
+              onGenerateRoute: (settings) => MaterialPageRoute(
+                builder: (context) => Scaffold(body: child),
+              ),
+            )
+          : Scaffold(body: child),
     ),
   );
 }
@@ -155,9 +168,14 @@ void main() {
       verify(() => mockClient.send(any())).called(1);
     });
 
-    testWidgets('direct-message is sent for non-named room', (tester) async {
+    // MOB-016: this widget no longer doubles as a DM thread — an unknown
+    // room name (the old legacy /chat/:peerId shape) lands on the default
+    // room and still talks room-message, never direct-message.
+    testWidgets('an unknown initialRoom falls back to the default room',
+        (tester) async {
       final mockClient = MockRealtimeClient();
       when(() => mockClient.status).thenReturn(RealtimeStatus.idle);
+      when(() => mockClient.send(any())).thenReturn(null);
 
       await tester.pumpWidget(
         buildTestApp(
@@ -169,6 +187,44 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
 
       expect(find.text('Chat Rooms'), findsAtLeast(1));
+      // The room-counts request only ever went out for named rooms — its
+      // presence proves the view is in named-room mode for the fallback.
+      final sent = verify(() => mockClient.send(captureAny()))
+          .captured
+          .cast<Map<String, dynamic>>();
+      expect(sent.any((f) => f['type'] == 'get-room-counts'), isTrue);
+      expect(sent.any((f) => f['type'] == 'direct-message'), isFalse);
+    });
+
+    // Regression (MOB-032): tapping the page-info dialog's Close button used
+    // to hang the whole screen on a solid black barrier under the real
+    // app's nested (ShellRoute) Navigator — see buildTestApp's
+    // nestedNavigator doc comment for why this needs its own harness shape.
+    testWidgets(
+        'page-info dialog Close button dismisses under a nested Navigator',
+        (tester) async {
+      await tester.pumpWidget(
+        buildTestApp(
+          child: const ChatRoomBaseView(showPageInfo: true),
+          nestedNavigator: true,
+        ),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byIcon(Icons.info_outline));
+      await tester.pump();
+      expect(
+        find.text('Real-time chat rooms with multiple topics.'),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.text('Close'));
+      await tester.pump();
+      expect(
+        find.text('Real-time chat rooms with multiple topics.'),
+        findsNothing,
+      );
     });
   });
 }

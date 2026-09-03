@@ -21,8 +21,12 @@ class AppConfig {
     'WEB_BASE_URL',
     defaultValue: 'http://localhost:3000',
   );
+  // Fails closed: a build that forgets `--dart-define-from-file` behaves as
+  // production (no debug banner, no request/response logging) rather than
+  // as a development build. Local runs set APP_ENV=development via .env
+  // (see .env.example). MOB-041.
   static const appEnv =
-      String.fromEnvironment('APP_ENV', defaultValue: 'development');
+      String.fromEnvironment('APP_ENV', defaultValue: 'production');
   static const appName = String.fromEnvironment('APP_NAME');
   static const sentryDsn = String.fromEnvironment('SENTRY_DSN');
   static const pushEnabled =

@@ -70,12 +70,10 @@ class LoginServer {
         (body['data'] as Map<String, dynamic>)['login'] as Map<String, dynamic>;
 
     if (result['mfaRequired'] == true) {
+      // `user` is null in the challenge response — deliberately not read.
       return LoginMfaRequired(
         mfaToken: result['mfaToken'] as String,
         mfaMethod: result['mfaMethod'] as String?,
-        user: AuthenticatedUser.fromJson(
-          result['user'] as Map<String, dynamic>,
-        ),
       );
     }
 

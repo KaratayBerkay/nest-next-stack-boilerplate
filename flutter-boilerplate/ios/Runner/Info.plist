@@ -79,7 +79,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>stripe</string>
+				<string>flutterstripe</string>
 				<string>flutterboilerplate</string>
 			</array>
 		</dict>

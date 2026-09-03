@@ -16,7 +16,15 @@ final dioProvider = Provider<Dio>((ref) {
   );
 
   dio.interceptors.add(AuthInterceptor(ref));
-  if (AppConfig.isDevelopment) {
+  // Dio's LogInterceptor prints every request's headers (the Authorization
+  // bearer plus the three x-*-token headers) and, with responseBody, every
+  // response body (login/refresh payloads carry refresh tokens, message
+  // endpoints carry decrypted content). `debugPrint` is NOT stripped from
+  // release binaries, so this is gated on the compile-time kDebugMode and
+  // never on APP_ENV alone — that is just a string a build can get wrong,
+  // and the compose Dockerfile did ship release APKs built with
+  // APP_ENV=development (MOB-041).
+  if (kDebugMode && AppConfig.isDevelopment) {
     dio.interceptors.add(
       LogInterceptor(
         responseBody: true,
@@ -45,7 +53,7 @@ final authHeadersProvider = FutureProvider<Map<String, String>?>((ref) async {
 
 class AuthInterceptor extends Interceptor {
   final Ref _ref;
-  bool _isRefreshing = false;
+  Future<bool>? _refreshFuture;
 
   AuthInterceptor(this._ref);
 
@@ -107,24 +115,28 @@ class AuthInterceptor extends Interceptor {
       return;
     }
 
-    if (_isRefreshing) {
+    // Single-flight refresh: every concurrent 401 awaits the SAME
+    // in-progress refresh and retries with its result, instead of the old
+    // plain-bool guard's failure mode where only the first 401 refreshed
+    // and every other concurrent 401 gave up immediately with no retry —
+    // e.g. opening a chat fires the conversation, messages, and presence
+    // requests together, and whichever ones lost the race would 401
+    // permanently (surfacing as "Failed to load messages" even though the
+    // session was fine seconds later). The backend also rotates the
+    // refresh token on every use, so a second concurrent refresh attempt
+    // would itself just fail on an already-consumed token — one shared
+    // Future is required, not merely serializing separate attempts.
+    final refreshed = await (_refreshFuture ??= _refreshOnce());
+
+    if (!refreshed) {
       handler.next(err);
       return;
     }
 
-    _isRefreshing = true;
     try {
-      final authNotifier = _ref.read(authProvider.notifier);
-      final refreshed = await authNotifier.refreshAccessToken();
-      if (!refreshed) {
-        authNotifier.logout();
-        handler.next(err);
-        return;
-      }
-
-      final tokens = await authNotifier.getAuthTokens();
+      final tokens = await _ref.read(authProvider.notifier).getAuthTokens();
       if (tokens == null) {
-        authNotifier.logout();
+        _ref.read(authProvider.notifier).logout();
         handler.next(err);
         return;
       }
@@ -139,8 +151,24 @@ class AuthInterceptor extends Interceptor {
     } catch (_) {
       _ref.read(authProvider.notifier).logout();
       handler.next(err);
+    }
+  }
+
+  Future<bool> _refreshOnce() async {
+    final authNotifier = _ref.read(authProvider.notifier);
+    try {
+      final result = await authNotifier.refreshAccessToken();
+      // Only an explicit rejection ends the session — a network-layer
+      // failure (MOB-037) leaves the still-possibly-valid tokens in place
+      // so the next request gets a fresh chance once connectivity recovers,
+      // instead of permanently logging the user out over a transient blip.
+      // Awaited on purpose: the rejected request must not surface to its
+      // caller until the dead session is actually cleared, or a screen can
+      // react to the 401 by retrying against tokens that are mid-deletion.
+      if (result == RefreshResult.authRejected) await authNotifier.logout();
+      return result == RefreshResult.success;
     } finally {
-      _isRefreshing = false;
+      _refreshFuture = null;
     }
   }
 }

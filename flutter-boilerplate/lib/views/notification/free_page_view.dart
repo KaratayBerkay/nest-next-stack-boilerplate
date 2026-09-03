@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,18 +10,49 @@ import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/notification/notification_item.dart';
 import 'notification_item.dart';
 
-class FreeNotificationPage extends ConsumerWidget {
+class FreeNotificationPage extends ConsumerStatefulWidget {
   final String lang;
 
   const FreeNotificationPage({super.key, required this.lang});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FreeNotificationPage> createState() =>
+      _FreeNotificationPageState();
+}
+
+class _FreeNotificationPageState extends ConsumerState<FreeNotificationPage> {
+  String get lang => widget.lang;
+
+  /// Same one-shot guard as the web page's `markedRef` — opening the page
+  /// marks everything read once; a failure un-flips it so a later load gets
+  /// to retry instead of giving up for this page view.
+  bool _markedAll = false;
+
+  void _autoMarkAllRead(PaginatedListState<NotificationItem> state) {
+    if (_markedAll || state.isInitialLoading) return;
+    if (!state.items.any((n) => !n.isRead)) return;
+    _markedAll = true;
+    // Best-effort background sync, not a user action — no snackbar on
+    // failure. The actions layer invalidates the list + unread-count
+    // providers itself, which is what flips the rows and the nav badge.
+    ref.read(notificationActionsProvider).markAllRead().catchError((_) {
+      _markedAll = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final notifState = ref.watch(notificationsProvider);
+    // Web parity (CROSS-023): the web page auto-marks all notifications read
+    // the first time it has any to show; mobile used to require an explicit
+    // tap, so the unread badge outlived the visit here and not there.
+    ref.listen(notificationsProvider, (_, next) => _autoMarkAllRead(next));
+    _autoMarkAllRead(notifState);
 
     return Column(
       children: [

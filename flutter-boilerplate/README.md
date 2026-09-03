@@ -64,6 +64,18 @@ flutter build ios --dart-define-from-file=.env
 
 > **CORS:** When running Flutter web against `api.eys.gen.tr`, the backend must allow your Flutter origin in `CORS_ORIGIN`. For local dev, use `CORS_ORIGIN=*` on the backend, or proxy both through nginx on the same origin.
 
+### Release builds
+
+- Always build from a real env file (`--dart-define-from-file=.env`). `APP_ENV` defaults to
+  `production`, so a build that forgets the define behaves as production (no debug banner, no
+  request/response logging) rather than as a development build. Dio's request/response logging is
+  additionally compiled out of every release binary (`kDebugMode`), whatever `APP_ENV` says.
+- `docker compose --profile flutter build` reads `flutter-boilerplate/.env` (override with
+  `--build-arg ENV_FILE=…`) and refuses any file that does not set `APP_ENV=production`.
+- Signing: without `android/key.properties` Gradle signs the release with the **debug** keystore and
+  prints a warning. Store/CI builds should make that fatal:
+  `flutter build apk --release --dart-define-from-file=.env --android-project-arg=requireReleaseSigning=true`.
+
 ### Environment Variables
 
 Set via `--dart-define-from-file=.env` or individual `--dart-define=KEY=VALUE` flags.
@@ -73,7 +85,7 @@ Set via `--dart-define-from-file=.env` or individual `--dart-define=KEY=VALUE` f
 | `API_BASE_URL` | `http://localhost:3001` | Backend API root |
 | `STRIPE_PUBLISHABLE_KEY` | `""` | Stripe publishable key |
 | `WS_URL` | `ws://localhost:3001/ws` | WebSocket endpoint |
-| `APP_ENV` | `development` | Environment name |
+| `APP_ENV` | `production` | `development` enables the debug banner and Dio request/response logging (debug builds only); anything else is treated as production |
 | `APP_NAME` | `""` | App display name |
 | `SENTRY_DSN` | `""` | Sentry error tracking DSN |
 | `PUSH_ENABLED` | `false` | Firebase Cloud Messaging toggle |

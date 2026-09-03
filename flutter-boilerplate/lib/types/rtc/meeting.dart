@@ -81,12 +81,17 @@ class Meeting {
 class JoinMeetingResult {
   final String token;
   final String roomName;
+
+  /// Client-facing LiveKit URL from the server; null when it has none
+  /// configured (then `AppConfig.livekitUrl` is used — see resolveLivekitUrl).
+  final String? livekitUrl;
   final String role;
   final Meeting meeting;
 
   JoinMeetingResult({
     required this.token,
     required this.roomName,
+    this.livekitUrl,
     required this.role,
     required this.meeting,
   });
@@ -95,6 +100,7 @@ class JoinMeetingResult {
       JoinMeetingResult(
         token: json['token'] as String,
         roomName: json['roomName'] as String,
+        livekitUrl: json['livekitUrl'] as String?,
         role: json['role'] as String,
         meeting: Meeting.fromJson(json['meeting'] as Map<String, dynamic>),
       );

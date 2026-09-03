@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../constants/routes.dart';
 import '../../l10n/app_localizations.dart';
 
 class HomePageContent extends StatelessWidget {
@@ -30,6 +31,13 @@ class HomePageContent extends StatelessWidget {
             TextButton(
               onPressed: () => context.go('/pricing'),
               child: Text(t.homeViewPricing),
+            ),
+            // The About page had no in-app way in on either platform
+            // (CROSS-038) — this is the Flutter twin of the web marketing
+            // header's Pricing / About links.
+            TextButton(
+              onPressed: () => context.go(Routes.about),
+              child: Text(t.homeViewAbout),
             ),
           ],
         ),

@@ -53,20 +53,36 @@ class PostHeader extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Text(
-                      postData.authorName,
-                      style: TextStyle(
-                        color: colors.fg,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    // Flexible + ellipsis: the trailing group below is now
+                    // bounded to a predictable width (MOB-035) rather than
+                    // unbounded, but a sufficiently long author name could
+                    // still overflow this Row on its own — truncate instead.
+                    Flexible(
+                      child: Text(
+                        postData.authorName,
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: colors.fg,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      DateTimeHelper.relative(postData.createdAt),
-                      style: TextStyle(
-                        color: colors.fgMuted,
-                        fontSize: 10,
+                    // Also Flexible: an old post's relative timestamp
+                    // ("8 months ago") is long enough to overflow this Row
+                    // on its own once the name above has already given up
+                    // all the room it can.
+                    Flexible(
+                      child: Text(
+                        DateTimeHelper.relative(postData.createdAt),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: colors.fgMuted,
+                          fontSize: 10,
+                        ),
                       ),
                     ),
                   ],
@@ -77,12 +93,22 @@ class PostHeader extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ReactionInline(
-                postId: postData.id,
-                reactions: postData.reactions,
-                currentUserId: currentUserId,
-                onReactionChange: onRefresh,
-                onToggle: onToggleReaction,
+              // Capped, not just Flexible: giving this an even flex share
+              // against the Expanded name column starved the fixed-size
+              // view/edit/delete IconButtons beside it below their own
+              // floor and overflowed internally (tried that first). A fixed
+              // ceiling instead makes this Row's own natural width
+              // predictable — the reaction-chip ListView already scrolls
+              // horizontally on its own once content exceeds it (MOB-035).
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 60),
+                child: ReactionInline(
+                  postId: postData.id,
+                  reactions: postData.reactions,
+                  currentUserId: currentUserId,
+                  onReactionChange: onRefresh,
+                  onToggle: onToggleReaction,
+                ),
               ),
               if (onViewPost != null)
                 IconButton(

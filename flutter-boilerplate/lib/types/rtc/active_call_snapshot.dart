@@ -13,6 +13,9 @@ class ActiveCallSnapshot {
   final String? peerAvatarUrl;
   final String? token;
   final String? roomName;
+
+  /// Client-facing LiveKit URL; null when the server has none configured.
+  final String? livekitUrl;
   final int? maxDurationMinutes;
 
   /// rtc:accepted recovery only — when the call actually connected, so a
@@ -31,6 +34,7 @@ class ActiveCallSnapshot {
     this.peerAvatarUrl,
     this.token,
     this.roomName,
+    this.livekitUrl,
     this.maxDurationMinutes,
     this.acceptedAt,
   });
@@ -48,6 +52,7 @@ class ActiveCallSnapshot {
         peerAvatarUrl: json['peerAvatarUrl'] as String?,
         token: json['token'] as String?,
         roomName: json['roomName'] as String?,
+        livekitUrl: json['livekitUrl'] as String?,
         maxDurationMinutes: (json['maxDurationMinutes'] as num?)?.toInt(),
         acceptedAt: json['acceptedAt'] as String?,
       );

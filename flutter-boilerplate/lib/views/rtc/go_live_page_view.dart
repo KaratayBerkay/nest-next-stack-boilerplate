@@ -6,6 +6,7 @@ import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
     show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/livekit_url.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_boilerplate/lib/rtc/stream_signal.dart';
 import 'package:flutter_boilerplate/lib/tier.dart';
@@ -17,7 +18,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../../api/client/rtc/streams_actions.dart';
 import '../../api/client/rtc/streams_chat_live.dart';
-import '../../app_config.dart';
 import '../../components/rtc/rtc_chat_panel.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
@@ -91,7 +91,12 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
         'slug': result.stream.slug,
       });
       _sentJoinChat = true;
-      await _connectRoom(result.token, result.roomName, result.stream.slug);
+      await _connectRoom(
+        result.token,
+        result.roomName,
+        result.stream.slug,
+        result.livekitUrl,
+      );
     } catch (e, stackTrace) {
       logRtcEvent(
         event: 'stream.start_failed',
@@ -118,6 +123,7 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
     String token,
     String roomName,
     String streamId,
+    String? livekitUrl,
   ) async {
     final room = lk.Room();
     _room = room;
@@ -200,7 +206,7 @@ class _RtcGoLiveFormState extends ConsumerState<_RtcGoLiveForm> {
       });
 
     try {
-      await room.connect(AppConfig.livekitUrl, token);
+      await room.connect(resolveLivekitUrl(livekitUrl), token);
       if (!mounted || _room != room) {
         await room.disconnect();
         return;

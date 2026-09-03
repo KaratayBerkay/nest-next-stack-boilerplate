@@ -1076,6 +1076,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get findFriendsAddFriend => 'Add Friend';
 
   @override
+  String get findFriendsFailedToSendRequest => 'Failed to send friend request';
+
+  @override
+  String get findFriendsFailedToAcceptRequest =>
+      'Failed to accept friend request';
+
+  @override
+  String get findFriendsFailedToDeclineRequest =>
+      'Failed to decline friend request';
+
+  @override
   String get findFriendsPrev => 'Prev';
 
   @override
@@ -5009,6 +5020,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get homeViewPricing => 'View Pricing';
 
   @override
+  String get homeViewAbout => 'About';
+
+  @override
   String get formsAdvancedPageTitle => 'Advanced Patterns';
 
   @override
@@ -6021,6 +6035,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rtcScreenShareOff => 'Stop sharing';
+
+  @override
+  String get rtcScreenShareNotificationTitle => 'Screen sharing';
+
+  @override
+  String get rtcScreenShareNotificationText =>
+      'Your screen is being shared in the meeting.';
 
   @override
   String rtcCallLimitWarning(Object seconds) {

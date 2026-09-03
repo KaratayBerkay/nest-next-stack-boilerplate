@@ -10,7 +10,15 @@ class OAuthActions {
 
   OAuthActions(this._ref);
 
-  Future<OAuthLoginResponse> loginWithOAuth(String state) {
-    return _ref.read(oauthLoginServerProvider).call(state);
+  Future<OAuthLoginResponse> loginWithOAuth(
+    String state, {
+    required String claim,
+    String? codeVerifier,
+  }) {
+    return _ref.read(oauthLoginServerProvider).call(
+          state,
+          claim: claim,
+          codeVerifier: codeVerifier,
+        );
   }
 }

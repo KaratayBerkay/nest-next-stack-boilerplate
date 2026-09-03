@@ -317,6 +317,47 @@ void main() {
       );
     });
 
+    // MOB-034: the server's client-facing LiveKit URL rides both the live
+    // rtc:accepted frame and the recovery snapshot; the overlay connects to
+    // it instead of the compile-time AppConfig value.
+    test('recovered rtc:accepted carries the server livekitUrl into state', () {
+      final container = makeContainer();
+      container.read(rtcCallProvider.notifier).applySnapshot(
+            ActiveCallSnapshot(
+              type: 'rtc:accepted',
+              callId: 'c2',
+              token: 'tok',
+              roomName: 'room-2',
+              livekitUrl: 'wss://livekit.example.com',
+            ),
+          );
+
+      expect(
+        container.read(rtcCallProvider).livekit?.livekitUrl,
+        'wss://livekit.example.com',
+      );
+    });
+
+    test('live onAccepted carries the server livekitUrl into state', () {
+      final container = makeContainer();
+      final notifier = container.read(rtcCallProvider.notifier);
+      notifier.onIncoming('c1', _peer, false);
+      notifier.acceptCall();
+
+      notifier.onAccepted(
+        'c1',
+        'tok',
+        'room-1',
+        30,
+        livekitUrl: 'wss://livekit.example.com',
+      );
+
+      expect(
+        container.read(rtcCallProvider).livekit?.livekitUrl,
+        'wss://livekit.example.com',
+      );
+    });
+
     test('live rtc:accepted (no acceptedAt) stamps connectedAt = now', () {
       final container = makeContainer();
       final notifier = container.read(rtcCallProvider.notifier);

@@ -1,10 +1,9 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:math';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/oauth_link_handler.dart';
+import 'package:flutter_boilerplate/lib/oauth_pkce.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
@@ -93,11 +92,8 @@ String _providerSvg(String provider) {
   }
 }
 
-String _generateState() {
-  final random = Random.secure();
-  final bytes = List<int>.generate(32, (_) => random.nextInt(256));
-  return base64Url.encode(bytes);
-}
+// Same shape as the PKCE verifier: 32 CSPRNG bytes, base64url, no padding.
+String _generateState() => generateOAuthCodeVerifier();
 
 class SocialLoginButtons extends ConsumerWidget {
   const SocialLoginButtons({super.key});
@@ -160,15 +156,23 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
 
     try {
       final state = _generateState();
+      // CROSS-032: the callback returns over a custom scheme any app on the
+      // device could register, so the app proves it started this flow with
+      // a verifier that never leaves memory — only its digest goes out here,
+      // and loginWithOAuth below demands the verifier itself.
+      final codeVerifier = generateOAuthCodeVerifier();
+      final codeChallenge = await oauthCodeChallengeS256(codeVerifier);
       const callbackUri = 'flutterboilerplate://oauth/callback';
       const backendUrl = AppConfig.apiBaseUrl;
       final url = '$backendUrl/auth/oauth/${widget.provider}'
-          '?state=$state&redirect_uri=${Uri.encodeComponent(callbackUri)}';
+          '?state=$state&redirect_uri=${Uri.encodeComponent(callbackUri)}'
+          '&code_challenge=$codeChallenge';
 
-      final completer = Completer<String>();
+      final completer = Completer<OAuthCallback>();
       ref.read(pendingOAuthProvider.notifier).state = PendingOAuth(
         state: state,
         provider: widget.provider,
+        codeVerifier: codeVerifier,
         completer: completer,
       );
 
@@ -183,19 +187,23 @@ class _SocialLoginButtonState extends ConsumerState<_SocialLoginButton> {
         return;
       }
 
-      String? resultState;
+      OAuthCallback? result;
       try {
-        resultState = await completer.future.timeout(
+        result = await completer.future.timeout(
           const Duration(minutes: 5),
         );
       } on TimeoutException {
         ref.read(pendingOAuthProvider.notifier).state = null;
       }
 
-      if (resultState == null || !mounted) return;
+      if (result == null || !mounted) return;
 
       final actions = ref.read(oauthActionsProvider);
-      final authResult = await actions.loginWithOAuth(resultState);
+      final authResult = await actions.loginWithOAuth(
+        result.state,
+        claim: result.claim!,
+        codeVerifier: codeVerifier,
+      );
 
       await ref.read(authProvider.notifier).setSession(
             authResult.accessToken,

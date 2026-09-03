@@ -85,7 +85,13 @@ class PremiumFindFriendsPage extends ConsumerWidget {
     required AsyncValue<dynamic> requestsAsync,
   }) {
     if (searchState.query.isNotEmpty) {
-      return _buildSearchResults(context, colors, ref, resultsAsync);
+      return _buildSearchResults(
+        context,
+        colors,
+        ref,
+        resultsAsync,
+        requestsAsync as AsyncValue<List<FriendRequest>>,
+      );
     }
 
     return SingleChildScrollView(
@@ -117,8 +123,10 @@ class PremiumFindFriendsPage extends ConsumerWidget {
     AppColors colors,
     WidgetRef ref,
     AsyncValue<List<UserSearchResult>> resultsAsync,
+    AsyncValue<List<FriendRequest>> requestsAsync,
   ) {
     final t = AppLocalizations.of(context);
+    final pendingIds = outgoingPendingIds(requestsAsync.asData?.value ?? []);
     return resultsAsync.when(
       loading: () => const Spinner(),
       error: (err, _) => EmptyWidget(
@@ -141,6 +149,7 @@ class PremiumFindFriendsPage extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: UserSearchCard(
               user: users[i],
+              isPending: pendingIds.contains(users[i].id),
               onAdd: () =>
                   ref.read(friendActionsProvider).sendRequest(users[i].id),
             ),
@@ -174,10 +183,12 @@ class PremiumFindFriendsPage extends ConsumerWidget {
           child: PendingRequestCard(
             request: req,
             onAccept: req.isIncoming
-                ? () => ref.read(friendActionsProvider).acceptRequest(req.id)
+                ? () => ref
+                    .read(friendActionsProvider)
+                    .acceptRequest(req.fromUserId)
                 : null,
             onDecline: () =>
-                ref.read(friendActionsProvider).declineRequest(req.id),
+                ref.read(friendActionsProvider).declineRequest(req.fromUserId),
           ),
         ),
       ),

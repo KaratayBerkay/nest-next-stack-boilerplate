@@ -31,3 +31,14 @@ class FriendRequest {
     );
   }
 }
+
+// "pending" means "I already sent this person a request" — an incoming
+// request (someone else sent *me* one) previously got mixed in here too,
+// mislabeling that person as already-requested in search results. Mirrors
+// the web's getOutgoingPendingIds (search-utils.ts).
+Set<String> outgoingPendingIds(List<FriendRequest> friendRequests) {
+  return friendRequests
+      .where((r) => !r.isIncoming)
+      .map((r) => r.fromUserId)
+      .toSet();
+}

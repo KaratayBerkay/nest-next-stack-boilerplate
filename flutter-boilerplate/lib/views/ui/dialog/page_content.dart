@@ -15,19 +15,23 @@ class DialogDemoPage extends StatelessWidget {
         child: const Text('Open Dialog'),
         onPressed: () => showDialog<bool>(
           context: context,
-          builder: (_) => AlertDialog(
+          // Pop via the builder's own context, not the outer `context` —
+          // see confirm_dialog.dart's ConfirmDialogWidget.show for why this
+          // demo would otherwise teach the exact pattern that hangs a
+          // dialog forever under a nested Navigator.
+          builder: (dialogContext) => AlertDialog(
             title: const DialogTitleWidget(text: 'Dialog Title'),
             content: const DialogContent(
               child: Text('This is the dialog content.'),
             ),
             actions: [
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
                 child: const Text('Cancel'),
               ),
               Button(
                 child: const Text('Confirm'),
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: () => Navigator.of(dialogContext).pop(),
               ),
             ],
           ),

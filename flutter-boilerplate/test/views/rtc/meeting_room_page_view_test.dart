@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/l10n/app_localizations_en.dart';
 import 'package:flutter_boilerplate/views/rtc/meeting_room_page_view.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -37,6 +38,38 @@ void main() {
       expect(roomPhaseForJoinFailure(500), RoomPhase.joinFailed);
       expect(roomPhaseForJoinFailure(403), RoomPhase.joinFailed);
       expect(roomPhaseForJoinFailure(null), RoomPhase.joinFailed);
+    });
+
+    // BE-031: removal is a ban, so the removed user's rejoin 403s with
+    // EX_MEETING_REMOVED — final, not a retry prompt.
+    test('maps a 403 carrying EX_MEETING_REMOVED to the removed screen', () {
+      expect(
+        roomPhaseForJoinFailure(403, exc: kMeetingRemovedExc),
+        RoomPhase.removed,
+      );
+      // A capacity 403 stays a plain join failure.
+      expect(
+        roomPhaseForJoinFailure(403, exc: 'EX_MEETING_FULL'),
+        RoomPhase.joinFailed,
+      );
+    });
+
+    test('joinFailureExc reads the exc code off the join error body', () {
+      final options = RequestOptions(path: '/graphql');
+      final removed = DioException(
+        requestOptions: options,
+        response: Response(
+          requestOptions: options,
+          statusCode: 403,
+          data: {'exc': kMeetingRemovedExc},
+        ),
+      );
+      expect(joinFailureExc(removed), kMeetingRemovedExc);
+      expect(
+        joinFailureExc(DioException(requestOptions: options)),
+        isNull,
+      );
+      expect(joinFailureExc(StateError('x')), isNull);
     });
   });
 

@@ -94,12 +94,29 @@ class RefreshTokenServer {
     );
     final body = response.data as Map<String, dynamic>;
     if (body['errors'] != null) {
-      final msgs = (body['errors'] as List)
+      final errors = body['errors'] as List;
+      final msgs = errors
           .map((e) => (e as Map<String, dynamic>)['message'] as String?)
           .where((m) => m != null)
           .join(', ');
+      // Mirrors AuthInterceptor._graphQlErrorStatusCode: this backend always
+      // answers GraphQL errors with HTTP 200, the real status buried in
+      // extensions.statusCode — an expired/invalid refresh token throws
+      // UnauthorizedException server-side and lands here. Without surfacing
+      // that as response.statusCode, classifyRefreshFailure() (which only
+      // inspects error.response?.statusCode) can never see it, misreads a
+      // real rejection as a transient network blip, and leaves the dead
+      // refresh token in storage forever — an infinite retry loop instead of
+      // the clean logout MOB-037 intended. Reproduced live: both long-running
+      // QA sessions stuck permanently retrying an already-rejected token.
+      final statusCode = _errorStatusCode(errors);
       throw DioException(
         requestOptions: response.requestOptions,
+        response:
+            statusCode != null ? (response..statusCode = statusCode) : response,
+        type: statusCode != null
+            ? DioExceptionType.badResponse
+            : DioExceptionType.unknown,
         message: msgs.isNotEmpty ? msgs : 'Token refresh failed',
       );
     }
@@ -112,5 +129,14 @@ class RefreshTokenServer {
       deviceToken: result['deviceToken'] as String,
       userToken: result['userToken'] as String,
     );
+  }
+
+  int? _errorStatusCode(List<dynamic> errors) {
+    if (errors.isEmpty) return null;
+    final first = errors.first;
+    if (first is! Map<String, dynamic>) return null;
+    final extensions = first['extensions'];
+    if (extensions is! Map<String, dynamic>) return null;
+    return extensions['statusCode'] as int?;
   }
 }

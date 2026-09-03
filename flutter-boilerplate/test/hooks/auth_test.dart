@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_boilerplate/hooks/use_auth.dart';
 import 'package:flutter_boilerplate/types/auth/user.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -111,28 +112,17 @@ void main() {
   });
 
   group('AuthNotifier.refreshAccessToken', () {
-    test('returns false when no refresh token stored', () async {
+    test('rejects (no call attempted) when no refresh token stored', () async {
       final container = ProviderContainer();
       addTearDown(container.dispose);
 
       final notifier = container.read(authProvider.notifier);
       final result = await notifier.refreshAccessToken();
-      expect(result, isFalse);
-    });
-
-    test('returns false when refresh fails', () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
-
-      final notifier = container.read(authProvider.notifier);
-      await notifier.setRefreshToken('invalid-token');
-
-      final result = await notifier.refreshAccessToken();
-      expect(result, isFalse);
+      expect(result, RefreshResult.authRejected);
     });
 
     test(
-      'returns false without attempting a call when rbac/device/user tokens are missing',
+      'rejects (no call attempted) when rbac/device/user tokens are missing',
       () async {
         final container = ProviderContainer();
         addTearDown(container.dispose);
@@ -144,9 +134,67 @@ void main() {
         await notifier.setRefreshToken('some-refresh-token');
 
         final result = await notifier.refreshAccessToken();
-        expect(result, isFalse);
+        expect(result, RefreshResult.authRejected);
       },
     );
+  });
+
+  // Regression (MOB-037): a failed HTTP call used to be indistinguishable
+  // from an explicit token rejection inside refreshAccessToken's catch
+  // block — both returned `false`, and the caller (AuthInterceptor's
+  // _refreshOnce) logged the user out either way. This is the actual
+  // classification refreshAccessToken's catch block now delegates to.
+  group('classifyRefreshFailure', () {
+    test('a 401 response classifies as authRejected', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/graphql'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/graphql'),
+          statusCode: 401,
+        ),
+      );
+      expect(classifyRefreshFailure(error), RefreshResult.authRejected);
+    });
+
+    test('a 403 response classifies as authRejected', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/graphql'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/graphql'),
+          statusCode: 403,
+        ),
+      );
+      expect(classifyRefreshFailure(error), RefreshResult.authRejected);
+    });
+
+    test('a DioException with no response classifies as networkError', () {
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/graphql'),
+        type: DioExceptionType.connectionError,
+      );
+      expect(classifyRefreshFailure(error), RefreshResult.networkError);
+    });
+
+    test('a 500 response classifies as networkError, not authRejected', () {
+      // A server error is the server failing, not the server explicitly
+      // saying "this token is invalid" — treating it as a rejection would
+      // log the user out over the server's own problem, not theirs.
+      final error = DioException(
+        requestOptions: RequestOptions(path: '/graphql'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/graphql'),
+          statusCode: 500,
+        ),
+      );
+      expect(classifyRefreshFailure(error), RefreshResult.networkError);
+    });
+
+    test('a non-Dio error classifies as networkError', () {
+      expect(
+        classifyRefreshFailure(Exception('boom')),
+        RefreshResult.networkError,
+      );
+    });
   });
 
   group('AuthNotifier.setSession / logout / getAuthTokens', () {

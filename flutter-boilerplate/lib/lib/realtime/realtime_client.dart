@@ -96,9 +96,7 @@ class RealtimeClient {
   // socket even opens. Names must match
   // RealtimeGateway.SESSION_COOKIE_NAMES exactly.
   Future<void> _connectWithAuth(int myGeneration) async {
-    final tokens =
-        _pendingAuthFail ? await _refreshAndFetchTokens() : await getTokens();
-    _pendingAuthFail = false;
+    final tokens = await tokensForConnect();
 
     // Superseded (a newer connect() already ran) or torn down while the
     // token fetch above was in flight — don't let a stale attempt open a
@@ -134,34 +132,43 @@ class RealtimeClient {
       debugPrint('[Realtime] connect failed: $e');
       // A rejected handshake (e.g. an expired access-token cookie) surfaces
       // here as a generic connection failure, not a post-open message —
-      // retry once with freshly refreshed tokens before falling back to
-      // plain backoff.
-      if (_authFailRetries == 0) _pendingAuthFail = true;
+      // retry with freshly refreshed tokens before falling back to plain
+      // backoff. Unconditional, not just the first attempt: gating this on
+      // `_authFailRetries == 0` meant only the *second* connect() attempt
+      // ever refreshed — if that one refresh call didn't yield a working
+      // token (itself transient-network-prone, same class of failure as
+      // MOB-037), every remaining attempt in the backoff cycle (and each
+      // subsequent 60s degraded-retry cycle only grants one more) silently
+      // reused the same already-dead token and could never recover.
+      // Reproduced live: a real session stuck 401-looping on this exact
+      // path for minutes with no recovery.
+      _pendingAuthFail = true;
       _handleDisconnect(myGeneration);
     });
+  }
+
+  /// Tokens for the next upgrade attempt. After an auth rejection the cached
+  /// bundle is refreshed first (onBustTokenCache) so the retry doesn't
+  /// re-present the same dead cookies.
+  @visibleForTesting
+  Future<Map<String, String>?> tokensForConnect() async {
+    if (_pendingAuthFail) {
+      _pendingAuthFail = false;
+      return _refreshAndFetchTokens();
+    }
+    return getTokens();
   }
 
   @visibleForTesting
   Future<void> handleOpen() async {
     if (_destroyed) return;
+    // The upgrade request already carried the session cookies
+    // (_connectWithAuth); RealtimeGateway.verifyUpgrade authenticated the
+    // socket before it opened and pushes `{type: 'authenticated'}` on its
+    // own. Nothing is sent here: this used to re-ship all four session
+    // tokens in a post-open `auth` frame the gateway has no handler for —
+    // pure extra exposure of credentials on the wire (MOB-043).
     _setStatus(RealtimeStatus.authenticating);
-
-    Map<String, String>? tokens;
-    if (_pendingAuthFail) {
-      _pendingAuthFail = false;
-      tokens = await _refreshAndFetchTokens();
-    } else {
-      tokens = await getTokens();
-    }
-
-    if (tokens == null || _destroyed) {
-      debugPrint(
-        '[Realtime] no tokens available, closing (destroyed=$_destroyed)',
-      );
-      _channel?.sink.close();
-      return;
-    }
-    _send({'type': 'auth', 'tokens': tokens});
   }
 
   @visibleForTesting

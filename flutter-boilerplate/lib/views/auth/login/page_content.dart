@@ -345,6 +345,7 @@ class _LoginPageContentState extends ConsumerState<LoginPageContent> {
           required: true,
           controller: _passwordCtrl,
           obscureText: true,
+          showVisibilityToggle: true,
           errorText: _fieldErrors['password'],
           textInputAction: TextInputAction.done,
           onSubmitted: _submit,

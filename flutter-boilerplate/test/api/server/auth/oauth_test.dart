@@ -46,16 +46,28 @@ class _CapturingAdapter implements HttpClientAdapter {
 void main() {
   group('OAuthLoginServer', () {
     test(
-      'sends only state under OAuthLoginInput, never a client-supplied profile',
+      'sends state + the callback claim + the PKCE-style verifier under '
+      'OAuthLoginInput, never a client-supplied profile',
       () async {
         final adapter = _CapturingAdapter();
         final server = OAuthLoginServer(Dio()..httpClientAdapter = adapter);
 
-        final result = await server.call('state-value-123');
+        final result = await server.call(
+          'state-value-123',
+          claim: 'claim-from-callback',
+          codeVerifier: 'verifier-held-in-memory',
+        );
 
         final data = adapter.requests.single as Map<String, dynamic>;
+        // CROSS-032: state alone must never be what redeems a session —
+        // the claim proves this client received the completed callback,
+        // the verifier proves it is the client that started the flow.
         expect(data['variables'], {
-          'input': {'state': 'state-value-123'},
+          'input': {
+            'state': 'state-value-123',
+            'claim': 'claim-from-callback',
+            'codeVerifier': 'verifier-held-in-memory',
+          },
         });
         final query = data['query'] as String;
         expect(query, contains(r'$input: OAuthLoginInput!'));
@@ -80,7 +92,7 @@ void main() {
       final server = OAuthLoginServer(Dio()..httpClientAdapter = adapter);
 
       expect(
-        () => server.call('bad-state'),
+        () => server.call('bad-state', claim: 'any-claim'),
         throwsA(
           isA<DioException>().having(
             (e) => e.message,

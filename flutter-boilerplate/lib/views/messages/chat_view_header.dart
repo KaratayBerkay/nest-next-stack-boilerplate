@@ -5,6 +5,7 @@ import 'package:flutter_boilerplate/lib/rtc/rtc_call_provider.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_call_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../api/client/friends/query.dart';
 import '../../api/client/messages/query.dart';
 import '../../api/server/messages/conversation_attachments.dart';
 import '../../components/ui/attachment_preview/attachment_gallery_sheet.dart';
@@ -28,6 +29,7 @@ class ChatViewHeader extends ConsumerWidget {
     final colors = AppColors.of(context);
     final t = AppLocalizations.of(context);
     final convAsync = ref.watch(conversationsProvider);
+    final friendsAsync = ref.watch(friendsListProvider);
     final onlineUsers = ref.watch(onlineUsersProvider);
     final typingUsers = ref.watch(typingUsersProvider);
     final rtcState = ref.watch(rtcCallProvider);
@@ -37,7 +39,17 @@ class ChatViewHeader extends ConsumerWidget {
       error: (_, __) => const SizedBox.shrink(),
       data: (convs) {
         final conv = convs.where((c) => c.id == conversationId).firstOrNull;
-        final name = conv?.userName ?? 'Chat';
+        // A brand-new friend has no entry in `conversationsProvider` yet —
+        // that list is built from message history, not the friend graph, so
+        // it's empty until the first message is sent. Without this fallback
+        // the header showed a generic "Chat" title and a "C" initial for
+        // any friend you hadn't messaged before (mirrors the web version,
+        // which never has this gap because it's handed the full selected
+        // user object directly instead of re-deriving it here).
+        final friend = friendsAsync.asData?.value
+            .where((f) => f.id == conversationId)
+            .firstOrNull;
+        final name = conv?.userName ?? friend?.name ?? 'Chat';
         final avatarUrl = conv?.userAvatarUrl;
         final isOnline = onlineUsers.contains(conversationId);
         final isTyping = typingUsers.containsKey(conversationId);

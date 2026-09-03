@@ -35,18 +35,22 @@ class AlertDialogWidget extends StatelessWidget {
   }) {
     return showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
+      // Pop via the builder's own context — see confirm_dialog.dart's
+      // ConfirmDialogWidget.show for why closing over the outer `context`
+      // hangs the dialog forever under a nested (e.g. GoRouter ShellRoute)
+      // Navigator.
+      builder: (dialogContext) => AlertDialog(
         title: title != null ? Text(title) : null,
         content: content ?? (description != null ? Text(description) : null),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(dialogContext).pop(false),
             child: Text(cancelText ?? 'Cancel'),
           ),
           Button(
             variant: destructive ? ButtonVariant.danger : ButtonVariant.primary,
             child: Text(confirmText ?? 'Confirm'),
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
           ),
         ],
       ),

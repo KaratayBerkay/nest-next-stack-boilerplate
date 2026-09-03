@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_boilerplate/lib/tier_view.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../api/client/premium/query.dart';
 import '../../constants/theme.dart';
@@ -14,17 +15,19 @@ class PremiumPageContent extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return const TierGate(
-      freeWidget: _FreePremiumView(),
-      basicWidget: _BasicPremiumView(),
-      mediumWidget: _MediumPremiumView(),
-      premiumWidget: _PremiumPremiumView(),
+    return TierGate(
+      freeWidget: _FreePremiumView(lang: lang),
+      basicWidget: const _BasicPremiumView(),
+      mediumWidget: const _MediumPremiumView(),
+      premiumWidget: const _PremiumPremiumView(),
     );
   }
 }
 
 class _FreePremiumView extends StatelessWidget {
-  const _FreePremiumView();
+  final String lang;
+
+  const _FreePremiumView({required this.lang});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +53,7 @@ class _FreePremiumView extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: () => context.go('/v1/$lang/plans'),
               icon: const Icon(Icons.arrow_forward),
               label: Text(t.premiumViewPlans),
               style: ElevatedButton.styleFrom(

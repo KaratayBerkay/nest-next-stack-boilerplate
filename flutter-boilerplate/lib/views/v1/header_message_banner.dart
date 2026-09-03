@@ -81,7 +81,7 @@ class _BannerCard extends ConsumerWidget {
             ref.read(headerMessageBannerProvider.notifier).state = null;
             context.go(
               data.isRoom
-                  ? '/v1/$lang/chat-room?conversation=${data.targetId}'
+                  ? '/v1/$lang/chat-room?room=${data.targetId}'
                   : '/v1/$lang/messages?user=${data.targetId}',
             );
           },

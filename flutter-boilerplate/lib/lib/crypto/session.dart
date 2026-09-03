@@ -18,6 +18,7 @@ import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../api/server/crypto/handshake.dart';
+import 'wire_crypto_storage.dart';
 
 const _wireCryptoContext = 'session-crypto-v1';
 const _macLength = 16; // Poly1305 tag, appended to ct on the wire.
@@ -300,10 +301,8 @@ Future<void> _persistSeqNow(String deviceToken) async {
 
 // ── Storage ──────────────────────────────────────────────────────────────
 
-String _storageKey(String deviceToken) => 'wire_crypto_keys_$deviceToken';
-
 Future<_StoredKeys?> _loadKeys(String deviceToken) async {
-  final raw = await _storage.read(key: _storageKey(deviceToken));
+  final raw = await _storage.read(key: wireCryptoStorageKey(deviceToken));
   if (raw == null) return null;
   try {
     return _StoredKeys.fromJson(jsonDecode(raw) as Map<String, dynamic>);
@@ -314,14 +313,13 @@ Future<_StoredKeys?> _loadKeys(String deviceToken) async {
 
 Future<void> _storeKeys(String deviceToken, _StoredKeys keys) async {
   await _storage.write(
-    key: _storageKey(deviceToken),
+    key: wireCryptoStorageKey(deviceToken),
     value: jsonEncode(keys.toJson()),
   );
 }
 
-Future<void> _flushKeys(String deviceToken) async {
-  await _storage.delete(key: _storageKey(deviceToken));
-}
+Future<void> _flushKeys(String deviceToken) =>
+    deleteWireCryptoKeys(deviceToken);
 
 // ── Hex helpers (dart:convert has base64 but not hex) ───────────────────
 

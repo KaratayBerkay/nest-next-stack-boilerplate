@@ -44,14 +44,31 @@ class MessageActions {
     );
   }
 
-  Future<void> deleteMessageForMe(String messageId) async {
+  // conversationId is the DM peer id — conversationMessagesProvider's family
+  // key — so the caller can pass message.conversationId straight through.
+  // Without this refresh the message stayed visible on screen, unchanged,
+  // until the app was relaunched: the server-side delete succeeded but
+  // nothing ever told this screen's StateNotifier its cached list was stale.
+  Future<void> deleteMessageForMe(
+    String conversationId,
+    String messageId,
+  ) async {
     final server = _ref.read(deleteMessageServerProvider);
     await server.forMe(messageId);
+    await _ref
+        .read(conversationMessagesProvider(conversationId).notifier)
+        .refresh();
   }
 
-  Future<void> deleteMessageForEveryone(String messageId) async {
+  Future<void> deleteMessageForEveryone(
+    String conversationId,
+    String messageId,
+  ) async {
     final server = _ref.read(deleteMessageServerProvider);
     await server.forEveryone(messageId);
+    await _ref
+        .read(conversationMessagesProvider(conversationId).notifier)
+        .refresh();
   }
 
   Future<void> setFavorite(String peerId, bool favorite) async {

@@ -13,9 +13,26 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/.dart_tool ./.dart_tool
 COPY . .
-ARG APP_ENV=production
-ENV APP_ENV=$APP_ENV
-RUN flutter build apk --release --dart-define-from-file=.env.example
+# The release APK takes its config from a dart-define file (README §
+# Environment Variables). This used to build from `.env.example`, whose
+# APP_ENV=development switched on Dio's request/response logging — auth
+# headers and token-bearing bodies printed to logcat — inside a *release*
+# binary, and pointed it at localhost (MOB-041). Build from a real env file
+# and refuse anything that isn't a production config; pick another file with
+# `docker build --build-arg ENV_FILE=.env.staging`.
+ARG ENV_FILE=.env
+RUN test -f "$ENV_FILE" || { \
+      echo "ERROR: $ENV_FILE not found — copy .env.example to $ENV_FILE with production values (see README)"; \
+      exit 1; \
+    }
+RUN grep -Eq '^APP_ENV=production[[:space:]]*$' "$ENV_FILE" || { \
+      echo "ERROR: refusing to build a release APK: $ENV_FILE must set APP_ENV=production"; \
+      exit 1; \
+    }
+# No android/key.properties in the build context means this APK is signed
+# with the debug keystore — Gradle now says so loudly (MOB-047). It is fine
+# for the tester download page below, never for store distribution.
+RUN flutter build apk --release --dart-define-from-file="$ENV_FILE"
 
 FROM python:3.13-alpine AS serve
 WORKDIR /srv

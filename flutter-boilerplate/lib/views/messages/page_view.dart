@@ -45,9 +45,16 @@ class _MessagesPageContentState extends ConsumerState<MessagesPageContent> {
   void _applyInitialUser() {
     final userId = widget.initialUser;
     if (userId == null || userId.isEmpty) return;
-    // ChatView's own initState marks the conversation read once it mounts
-    // for this id — no need to duplicate that call here.
-    ref.read(selectedConversationUserIdProvider.notifier).state = userId;
+    // Riverpod forbids modifying a provider synchronously from initState /
+    // didUpdateWidget (this crashed every deep link from a message push
+    // notification with "Tried to modify a provider while the widget tree
+    // was building") — defer to after the current frame finishes building.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // ChatView's own initState marks the conversation read once it mounts
+      // for this id — no need to duplicate that call here.
+      ref.read(selectedConversationUserIdProvider.notifier).state = userId;
+    });
   }
 
   @override

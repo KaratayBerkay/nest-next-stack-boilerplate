@@ -5,11 +5,25 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <!-- MediaProjection (screen share) must run inside a foreground service
+         since Android 10, enforced with a SecurityException since Android 14
+         — without these, starting a share gets this app killed the instant
+         the shared app takes the foreground (MOB-038). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+    <!-- No usesCleartextTraffic here: release builds talk https/wss only.
+         Local http://10.0.2.2 development is covered by the debug-variant
+         manifest overlay (src/debug/AndroidManifest.xml), which merges the
+         flag into debug builds alone (MOB-042).
+         allowBackup=false: the session tokens live in flutter_secure_storage
+         (Keystore-bound, so a restored copy is unreadable anyway) and nothing
+         else on disk is worth backing up — opting out keeps the app's private
+         storage out of Auto Backup entirely (MOB-042). -->
     <application
         android:label="EYS"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:allowBackup="false">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -44,6 +58,14 @@
                 <data android:scheme="flutterboilerplate"/>
             </intent-filter>
         </activity>
+        <!-- Backs flutter_background's enable/disableBackgroundExecution()
+             (MOB-038) — the foreground-service host for screen share's
+             MediaProjection session. -->
+        <service
+            android:name="de.julianassmann.flutter_background.IsolateHolderService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

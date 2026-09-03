@@ -18,7 +18,7 @@ class JoinStreamServer {
       '/graphql',
       data: {
         'query':
-            'mutation JoinStreamAsViewer(\$slug: String!) { joinStreamAsViewer(slug: \$slug) { token roomName stream { $streamFields } } }',
+            'mutation JoinStreamAsViewer(\$slug: String!) { joinStreamAsViewer(slug: \$slug) { token roomName livekitUrl stream { $streamFields } } }',
         'variables': {'slug': slug},
       },
     );

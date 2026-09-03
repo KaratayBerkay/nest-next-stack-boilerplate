@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../api/client/friends/actions.dart';
+import '../../api/client/friends/query.dart';
 import '../../api/client/users/search.dart';
 import '../../api/server/friends/suggested.dart';
 import '../../api/server/users/search.dart';
@@ -9,6 +10,8 @@ import '../../components/ui/empty/empty.dart';
 import '../../components/ui/spinner/spinner.dart';
 import '../../constants/theme.dart';
 import '../../l10n/app_localizations.dart';
+import '../../types/messages/friend_request_types.dart'
+    show FriendRequest, outgoingPendingIds;
 import 'suggested_friends_panel.dart';
 import 'use_friend_search.dart';
 import 'user_search_card.dart';
@@ -30,6 +33,7 @@ class MediumFindFriendsContent extends ConsumerWidget {
     final searchState = ref.watch(friendSearchProvider);
     final searchActions = ref.read(friendSearchProvider.notifier);
     final resultsAsync = ref.watch(searchUsersProvider(searchState.query));
+    final requestsAsync = ref.watch(friendRequestsProvider);
 
     return Column(
       children: [
@@ -49,7 +53,13 @@ class MediumFindFriendsContent extends ConsumerWidget {
         ),
         Expanded(
           child: searchState.query.isNotEmpty
-              ? _buildSearchResults(context, colors, ref, resultsAsync)
+              ? _buildSearchResults(
+                  context,
+                  colors,
+                  ref,
+                  resultsAsync,
+                  requestsAsync,
+                )
               : SuggestedFriendsPanel(
                   suggestedAsync: AsyncData(suggestedUsers),
                   lang: lang,
@@ -64,7 +74,9 @@ class MediumFindFriendsContent extends ConsumerWidget {
     AppColors colors,
     WidgetRef ref,
     AsyncValue<List<UserSearchResult>> resultsAsync,
+    AsyncValue<List<FriendRequest>> requestsAsync,
   ) {
+    final pendingIds = outgoingPendingIds(requestsAsync.asData?.value ?? []);
     return resultsAsync.when(
       loading: () => const Spinner(),
       error: (err, _) => EmptyWidget(
@@ -87,6 +99,7 @@ class MediumFindFriendsContent extends ConsumerWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: UserSearchCard(
               user: users[i],
+              isPending: pendingIds.contains(users[i].id),
               onAdd: () =>
                   ref.read(friendActionsProvider).sendRequest(users[i].id),
             ),

@@ -50,21 +50,20 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
   List<String> get vipRooms => const [];
   bool get showSelfCrown => false;
 
-  /// `ChatRoomBaseView` is reused by the legacy `/v1/:lang/chat/:conversationId`
-  /// route for 1:1 DM threads, where `_room` is actually a peer's user id, not
-  /// a named room — `isValidRoom` on the backend (and the room-scoped realtime
-  /// verbs: room-message, get-room-counts, the chat-room page claim) only make
-  /// sense for the named-room case. Mirrors the backend's own
-  /// `isValidRoom`/`VIP_ROOM_PREFIX` check (messaging-room.service.ts).
-  bool get _isNamedRoom =>
-      ChatConstants.chatRooms.contains(_room) ||
-      vipRooms.contains(_room) ||
-      _room.startsWith('vip-');
+  /// Mirrors the backend's own `isValidRoom`/`VIP_ROOM_PREFIX` check
+  /// (messaging-room.service.ts). This widget used to double as a second,
+  /// unreachable 1:1 DM implementation for a legacy `/chat/:conversationId`
+  /// route (MOB-016) — that route is gone, and a deep link naming an unknown
+  /// room now lands on the default room instead of a nonsense DM thread.
+  bool _isNamedRoom(String room) =>
+      ChatConstants.chatRooms.contains(room) ||
+      vipRooms.contains(room) ||
+      room.startsWith('vip-');
 
   @override
   void initState() {
     super.initState();
-    _room = widget.initialRoom;
+    _room = _isNamedRoom(widget.initialRoom) ? widget.initialRoom : 'general';
     // SendButton's `disabled` is computed from messageController.text at
     // build time (mirrors the web's `disabled={!text.trim()}`, which
     // re-renders on every keystroke via controlled-input state) — without
@@ -89,7 +88,6 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
     // (RealtimeLifecycle claims 'chat-room' with this room on entering this
     // route — see convert-frontend-7-flutter.md §9.1/§10 D9). `watch()` was
     // never the right mechanism for room membership (§9.3) and is gone.
-    if (!_isNamedRoom) return;
     final client = ref.read(realtimeProvider);
     client.send({'type': 'get-room-counts'});
   }
@@ -121,21 +119,12 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
     final client = ref.read(realtimeProvider);
     final attachment = _pendingAttachment;
     final attachments = attachment == null ? null : [attachment.toJson()];
-    client.send(
-      _isNamedRoom
-          ? {
-              'type': 'room-message',
-              'room': _room,
-              'text': text,
-              if (attachments != null) 'attachments': attachments,
-            }
-          : {
-              'type': 'direct-message',
-              'recipientId': _room,
-              'text': text,
-              if (attachments != null) 'attachments': attachments,
-            },
-    );
+    client.send({
+      'type': 'room-message',
+      'room': _room,
+      'text': text,
+      if (attachments != null) 'attachments': attachments,
+    });
     _messageController.clear();
     setState(() {
       _pendingAttachment = null;
@@ -200,38 +189,30 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
       _ => 'disconnected',
     };
     final onlineUserIds = ref.watch(onlineUsersProvider);
-    final PaginatedListState<ChatMessage> messagesState;
-    final VoidCallback onLoadMore;
-    if (_isNamedRoom) {
-      final roomState = ref.watch(roomMessagesProvider(_room));
-      messagesState = PaginatedListState<ChatMessage>(
-        items: roomState.items
-            .map(
-              (m) => ChatMessage(
-                id: m.id,
-                conversationId: _room,
-                senderId: m.senderId,
-                senderName: m.senderName,
-                senderAvatarUrl: m.avatar,
-                content: m.body,
-                attachments: m.attachments,
-                createdAt: DateTime.parse(m.createdAt),
-                isRead: true,
-              ),
-            )
-            .toList(),
-        hasMore: roomState.hasMore,
-        isLoadingMore: roomState.isLoadingMore,
-        isInitialLoading: roomState.isInitialLoading,
-        error: roomState.error,
-      );
-      onLoadMore =
-          () => ref.read(roomMessagesProvider(_room).notifier).loadMore();
-    } else {
-      messagesState = ref.watch(conversationMessagesProvider(_room));
-      onLoadMore = () =>
-          ref.read(conversationMessagesProvider(_room).notifier).loadMore();
-    }
+    final roomState = ref.watch(roomMessagesProvider(_room));
+    final messagesState = PaginatedListState<ChatMessage>(
+      items: roomState.items
+          .map(
+            (m) => ChatMessage(
+              id: m.id,
+              conversationId: _room,
+              senderId: m.senderId,
+              senderName: m.senderName,
+              senderAvatarUrl: m.avatar,
+              content: m.body,
+              attachments: m.attachments,
+              createdAt: DateTime.parse(m.createdAt),
+              isRead: true,
+            ),
+          )
+          .toList(),
+      hasMore: roomState.hasMore,
+      isLoadingMore: roomState.isLoadingMore,
+      isInitialLoading: roomState.isInitialLoading,
+      error: roomState.error,
+    );
+    void onLoadMore() =>
+        ref.read(roomMessagesProvider(_room).notifier).loadMore();
     final roomCounts = ref.watch(roomCountsProvider);
     final roomMembers = ref.watch(roomMembersProvider(_room));
     final width = MediaQuery.of(context).size.width;
@@ -327,12 +308,16 @@ class ChatRoomBaseViewState extends ConsumerState<ChatRoomBaseView>
           onPageInfo: widget.showPageInfo
               ? () => showDialog<void>(
                     context: context,
-                    builder: (_) => AlertDialog(
+                    // Pop via the builder's own context — see
+                    // confirm_dialog.dart's ConfirmDialogWidget.show for why
+                    // closing over the outer `context` hangs the dialog
+                    // forever under this route's ShellRoute Navigator.
+                    builder: (dialogContext) => AlertDialog(
                       title: Text(t.chatRoomTitle),
                       content: Text(t.chatRoomPageInfoDescription),
                       actions: [
                         TextButton(
-                          onPressed: () => Navigator.of(context).pop(),
+                          onPressed: () => Navigator.of(dialogContext).pop(),
                           child: Text(t.v1ShellClose),
                         ),
                       ],

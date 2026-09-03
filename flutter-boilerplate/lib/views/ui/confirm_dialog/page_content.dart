@@ -12,12 +12,14 @@ class ConfirmDialogDemoPage extends StatelessWidget {
     return Center(
       child: Button(
         child: const Text('Show Confirm'),
-        onPressed: () => showDialog<bool>(
-          context: context,
-          builder: (_) => const ConfirmDialogWidget(
-            title: 'Delete Item',
-            message: 'Are you sure? This cannot be undone.',
-          ),
+        // ConfirmDialogWidget.build() is intentionally a no-op (SizedBox.shrink)
+        // — the real dialog content lives in its static show(), not in the
+        // widget itself. Wrapping it in a second showDialog (as this demo
+        // used to) rendered a blank dialog instead of the confirm sheet.
+        onPressed: () => ConfirmDialogWidget.show(
+          context,
+          title: 'Delete Item',
+          message: 'Are you sure? This cannot be undone.',
         ),
       ),
     );

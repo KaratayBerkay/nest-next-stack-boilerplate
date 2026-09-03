@@ -2,10 +2,12 @@ import 'dart:async';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 import 'package:flutter_boilerplate/lib/pagination_state.dart';
 import 'package:flutter_boilerplate/lib/realtime/realtime_client.dart'
     show RealtimeStatus;
 import 'package:flutter_boilerplate/lib/realtime/realtime_provider.dart';
+import 'package:flutter_boilerplate/lib/rtc/livekit_url.dart';
 import 'package:flutter_boilerplate/lib/rtc/meeting_signal.dart';
 import 'package:flutter_boilerplate/lib/rtc/rtc_telemetry.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,7 +19,6 @@ import '../../api/client/friends/query.dart';
 import '../../api/client/rtc/meetings_actions.dart';
 import '../../api/client/rtc/meetings_chat_live.dart';
 import '../../api/server/rtc/meetings_recording.dart';
-import '../../app_config.dart';
 import '../../components/rtc/rtc_chat_panel.dart';
 import '../../components/rtc/rtc_report_dialog.dart';
 import '../../components/ui/avatar/avatar.dart';
@@ -28,12 +29,28 @@ import '../../types/rtc/recording.dart';
 
 enum RoomPhase { joining, active, ended, removed, notFound, joinFailed }
 
+/// Backend exception code for "the host removed you" — removal is a ban for
+/// the rest of the meeting (BE-031), so a rejoin 403s with this code.
+const kMeetingRemovedExc = 'EX_MEETING_REMOVED';
+
 /// Pure mapper for a failed join: 404 means the meeting is gone or already
-/// over (the not-found copy covers both); any other status is a join
-/// failure — never "the meeting has ended", which used to mask real server
-/// errors as a normal end. Same split the web view makes.
-RoomPhase roomPhaseForJoinFailure(int? statusCode) =>
-    statusCode == 404 ? RoomPhase.notFound : RoomPhase.joinFailed;
+/// over (the not-found copy covers both); a 403 carrying the removed code is
+/// final and renders the same "removed" screen the live push does; any other
+/// status is a join failure — never "the meeting has ended", which used to
+/// mask real server errors as a normal end. Same split the web view makes.
+RoomPhase roomPhaseForJoinFailure(int? statusCode, {String? exc}) {
+  if (statusCode == 404) return RoomPhase.notFound;
+  if (exc == kMeetingRemovedExc) return RoomPhase.removed;
+  return RoomPhase.joinFailed;
+}
+
+/// Pulls the backend `exc` code the join server stashes on the error
+/// response body (see meetings_join.dart).
+String? joinFailureExc(Object error) {
+  if (error is! DioException) return null;
+  final data = error.response?.data;
+  return data is Map<String, dynamic> ? data['exc'] as String? : null;
+}
 
 /// Screen copy shown in place of the room for each non-active phase.
 String roomPhaseMessage(RoomPhase phase, AppLocalizations t) => switch (phase) {
@@ -177,7 +194,7 @@ class _RtcMeetingRoomPageContentState
           .send({'type': 'rtc:join-room-chat', 'slug': widget.slug});
       _sentJoinChat = true;
       if (result.role == 'HOST') unawaited(_fetchRecording());
-      await _connectRoom(result.token, result.roomName);
+      await _connectRoom(result.token, result.roomName, result.livekitUrl);
     } catch (error, stackTrace) {
       logRtcEvent(
         event: 'meeting.join_failed',
@@ -190,7 +207,12 @@ class _RtcMeetingRoomPageContentState
       );
       if (!mounted) return;
       final status = error is DioException ? error.response?.statusCode : null;
-      setState(() => _phase = roomPhaseForJoinFailure(status));
+      setState(
+        () => _phase = roomPhaseForJoinFailure(
+          status,
+          exc: joinFailureExc(error),
+        ),
+      );
       final message =
           error is DioException && (error.message?.isNotEmpty ?? false)
               ? error.message!
@@ -222,7 +244,11 @@ class _RtcMeetingRoomPageContentState
     }
   }
 
-  Future<void> _connectRoom(String token, String roomName) async {
+  Future<void> _connectRoom(
+    String token,
+    String roomName,
+    String? livekitUrl,
+  ) async {
     final room = lk.Room();
     _room = room;
     final listener = room.createListener();
@@ -302,7 +328,7 @@ class _RtcMeetingRoomPageContentState
       });
 
     try {
-      await room.connect(AppConfig.livekitUrl, token);
+      await room.connect(resolveLivekitUrl(livekitUrl), token);
       if (!mounted || _room != room) {
         await room.disconnect();
         return;
@@ -454,13 +480,30 @@ class _RtcMeetingRoomPageContentState
     );
   }
 
-  void _toggleScreenShare() {
+  Future<void> _toggleScreenShare() async {
     final room = _room;
     if (room == null) return;
     final next = !_localScreenShareEnabled;
+
+    // Android's MediaProjection capture must be running inside a foreground
+    // service *before* it starts, or the OS kills this app the instant the
+    // shared app/screen takes the foreground (MOB-038) — the whole point of
+    // "share one app" is that the shared app has to come to the front,
+    // pushing the sharer back, which is exactly what the service exists to
+    // survive. Must happen before setScreenShareEnabled(true), not after.
+    if (next && lk.lkPlatformIs(lk.PlatformType.android)) {
+      final started = await _enableAndroidScreenShareForegroundService();
+      if (!started) return;
+    }
+
     setState(() => _localScreenShareEnabled = next);
     room.localParticipant?.setScreenShareEnabled(next).then<void>(
-      (_) => _rebuildParticipants(),
+      (_) {
+        _rebuildParticipants();
+        if (!next && lk.lkPlatformIs(lk.PlatformType.android)) {
+          unawaited(_disableAndroidScreenShareForegroundService());
+        }
+      },
       onError: (Object error, StackTrace stackTrace) {
         logRtcEvent(
           event: 'meeting.media.screen_share_failed',
@@ -473,8 +516,81 @@ class _RtcMeetingRoomPageContentState
           phase: 'connected',
         );
         if (mounted) setState(() => _localScreenShareEnabled = false);
+        if (next && lk.lkPlatformIs(lk.PlatformType.android)) {
+          unawaited(_disableAndroidScreenShareForegroundService());
+        }
       },
     );
+  }
+
+  /// Returns false (and leaves screen share off) if the user declines the
+  /// capture prompt or the foreground service can't be started — proceeding
+  /// to setScreenShareEnabled anyway would either do nothing or get this
+  /// app killed a moment later.
+  Future<bool> _enableAndroidScreenShareForegroundService() async {
+    // Read localized copy before the first await — this method's caller
+    // already awaits Hardware.requestCapturePermission() (a system consent
+    // dialog) before even reaching here, so context could easily be stale
+    // by the time a lint would otherwise flag a `context` read below.
+    final t = AppLocalizations.of(context);
+    final hardware = lk.Hardware.instance;
+    // livekit_client marks this @experimental, but it is the only
+    // capture-consent entry point on Android 14+; opt in deliberately.
+    // ignore: experimental_member_use
+    final captureGranted = await hardware.requestCapturePermission();
+    if (!captureGranted || !mounted) return false;
+    try {
+      var hasPermissions = await FlutterBackground.hasPermissions;
+      if (!hasPermissions) {
+        hasPermissions = await FlutterBackground.initialize(
+          androidConfig: FlutterBackgroundAndroidConfig(
+            notificationTitle: t.rtcScreenShareNotificationTitle,
+            notificationText: t.rtcScreenShareNotificationText,
+            // By the time this runs, requestCapturePermission()'s own
+            // app-selector step has already handed foreground focus to
+            // whatever app the user picked to share — this plugin's default
+            // (true) tries to launch a battery-optimization settings screen
+            // right here, which Android silently blocks as a "background
+            // activity launch" since EYS no longer holds focus, and that
+            // failure was taking the rest of initialize() down with it
+            // (hasPermissions stayed false, so enableBackgroundExecution()
+            // below never actually ran, and the process was never really
+            // protected — confirmed live via oom_adj staying at background
+            // level through a full share). Not required for the foreground
+            // service itself to start, only for surviving longer against
+            // battery-optimization killing later — safe to skip.
+            shouldRequestBatteryOptimizationsOff: false,
+          ),
+        );
+      }
+      if (hasPermissions && !FlutterBackground.isBackgroundExecutionEnabled) {
+        await FlutterBackground.enableBackgroundExecution();
+      }
+      return hasPermissions;
+    } catch (error, stackTrace) {
+      logRtcEvent(
+        event: 'meeting.media.screen_share_failed',
+        rtcKind: 'meeting',
+        rtcId: widget.slug,
+        mediaType: 'screen',
+        exceptionType: 'CLIENT_ERROR',
+        error: error,
+        stackTrace: stackTrace,
+        phase: 'connected',
+      );
+      return false;
+    }
+  }
+
+  Future<void> _disableAndroidScreenShareForegroundService() async {
+    if (!FlutterBackground.isBackgroundExecutionEnabled) return;
+    try {
+      await FlutterBackground.disableBackgroundExecution();
+    } catch (_) {
+      // Nothing useful to do with a failed *disable* — the meeting isn't
+      // affected either way, and dispose() below is the safety net that
+      // still fires if this leaves the service running.
+    }
   }
 
   void _sendChat() {
@@ -622,6 +738,13 @@ class _RtcMeetingRoomPageContentState
   @override
   void dispose() {
     unawaited(WakelockPlus.disable());
+    // Safety net: whatever path ends the meeting while sharing (leave, end,
+    // back button, a dropped connection) must not leave the foreground
+    // service — and its persistent notification — running forever after.
+    if (lk.lkPlatformIs(lk.PlatformType.android) &&
+        FlutterBackground.isBackgroundExecutionEnabled) {
+      unawaited(FlutterBackground.disableBackgroundExecution());
+    }
     if (_sentJoinChat) {
       ref
           .read(realtimeProvider)

@@ -12,7 +12,15 @@ class OAuthLoginServer {
 
   OAuthLoginServer(this._dio);
 
-  Future<OAuthLoginResponse> call(String state) async {
+  /// Redeems a completed handshake. [claim] is the one-time secret the
+  /// backend put on the callback redirect; [codeVerifier] is the PKCE-style
+  /// verifier whose digest the app registered when starting the flow
+  /// (CROSS-032) — the backend refuses the session without both.
+  Future<OAuthLoginResponse> call(
+    String state, {
+    required String claim,
+    String? codeVerifier,
+  }) async {
     const mutation = '''
       mutation LoginWithOAuth(\$input: OAuthLoginInput!) {
         loginWithOAuth(input: \$input) {
@@ -39,7 +47,11 @@ class OAuthLoginServer {
       data: {
         'query': mutation,
         'variables': {
-          'input': {'state': state},
+          'input': {
+            'state': state,
+            'claim': claim,
+            if (codeVerifier != null) 'codeVerifier': codeVerifier,
+          },
         },
       },
     );

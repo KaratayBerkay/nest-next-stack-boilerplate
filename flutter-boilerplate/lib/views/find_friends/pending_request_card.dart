@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 
 import '../../components/ui/avatar/avatar.dart';
+import '../../components/ui/toast/toast.dart';
 import '../../constants/theme.dart';
+import '../../l10n/app_localizations.dart';
 import '../../types/messages/friend_request_types.dart';
 
-class PendingRequestCard extends StatelessWidget {
+enum _PendingAction { accept, decline }
+
+class PendingRequestCard extends StatefulWidget {
   final FriendRequest request;
-  final VoidCallback? onAccept;
-  final VoidCallback? onDecline;
+  final Future<void> Function()? onAccept;
+  final Future<void> Function()? onDecline;
 
   const PendingRequestCard({
     super.key,
@@ -17,30 +21,89 @@ class PendingRequestCard extends StatelessWidget {
   });
 
   @override
+  State<PendingRequestCard> createState() => _PendingRequestCardState();
+}
+
+class _PendingRequestCardState extends State<PendingRequestCard> {
+  // Regression: this previously discarded the accept/decline handlers'
+  // errors entirely — a 404 (e.g. the wrong id being sent) threw an
+  // unhandled exception with the row just sitting there, no explanation,
+  // and nothing stopped a rapid double-tap from firing two mutations.
+  // Mirrors the web's PendingRequestCard.
+  _PendingAction? _pendingAction;
+
+  Future<void> _respond(
+    _PendingAction action,
+    Future<void> Function()? handler,
+  ) async {
+    if (_pendingAction != null || handler == null) return;
+    setState(() => _pendingAction = action);
+    try {
+      await handler();
+    } catch (_) {
+      if (mounted) {
+        final t = AppLocalizations.of(context);
+        showToast(
+          context,
+          action == _PendingAction.accept
+              ? t.findFriendsFailedToAcceptRequest
+              : t.findFriendsFailedToDeclineRequest,
+          type: ToastType.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _pendingAction = null);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final colors = AppColors.of(context);
+    final busy = _pendingAction != null;
 
     return Card(
       child: ListTile(
         leading: Avatar(
-          name: request.fromUserName,
-          imageUrl: request.fromUserAvatar,
+          name: widget.request.fromUserName,
+          imageUrl: widget.request.fromUserAvatar,
         ),
-        title: Text(request.fromUserName),
+        title: Text(widget.request.fromUserName),
         subtitle: Text(
-          _timeAgo(request.createdAt),
+          _timeAgo(widget.request.createdAt),
           style: TextStyle(color: colors.fgMuted, fontSize: 12),
         ),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: Icon(Icons.check_circle, color: colors.success),
-              onPressed: onAccept,
+              icon: _pendingAction == _PendingAction.accept
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.success,
+                      ),
+                    )
+                  : Icon(Icons.check_circle, color: colors.success),
+              onPressed: busy || widget.onAccept == null
+                  ? null
+                  : () => _respond(_PendingAction.accept, widget.onAccept),
             ),
             IconButton(
-              icon: Icon(Icons.cancel, color: colors.danger),
-              onPressed: onDecline,
+              icon: _pendingAction == _PendingAction.decline
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: colors.danger,
+                      ),
+                    )
+                  : Icon(Icons.cancel, color: colors.danger),
+              onPressed: busy || widget.onDecline == null
+                  ? null
+                  : () => _respond(_PendingAction.decline, widget.onDecline),
             ),
           ],
         ),

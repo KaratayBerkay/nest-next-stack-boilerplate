@@ -29,12 +29,14 @@ final suggestedFriendsServerProvider = Provider(
   (ref) => SuggestedFriendsServer(ref.read(dioProvider)),
 );
 
+// Deliberately no `email` in the selection: suggested candidates are
+// strangers, and the backend blanks the field (PII) — mirrors the web
+// api/server/friends/suggested.ts query.
 const _query = '''
   query SuggestedFriends {
     suggestedFriends {
       id
       name
-      email
       avatarUrl
       mutualFriends
     }

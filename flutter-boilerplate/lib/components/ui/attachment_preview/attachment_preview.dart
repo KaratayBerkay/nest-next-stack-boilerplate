@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_boilerplate/lib/api_client.dart';
+import 'package:flutter_boilerplate/lib/share_temp_file.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -50,16 +49,17 @@ class AttachmentPreview extends ConsumerWidget {
         _serveUrl(url),
         options: Options(responseType: ResponseType.bytes),
       );
-      final dir = await getTemporaryDirectory();
-      // The display name comes from the sender's upload metadata — strip any
-      // path separators so a crafted name can't escape the temp directory.
-      final rawName = (name?.isNotEmpty ?? false) ? name! : 'attachment';
-      final fileName = rawName.split(RegExp(r'[/\\]')).last;
-      final file = File(
-        '${dir.path}/${fileName.isNotEmpty ? fileName : 'attachment'}',
+      // The decrypted bytes only ever touch disk inside a throwaway file that
+      // is removed again once the share sheet returns (MOB-044). The display
+      // name comes from the sender's upload metadata — reduced to a single
+      // safe path segment so a crafted name can't escape the directory.
+      await shareBytesViaTempFile(
+        baseDir: await getTemporaryDirectory(),
+        fileName: safeShareFileName(name),
+        bytes: response.data!,
+        share: (path) =>
+            SharePlus.instance.share(ShareParams(files: [XFile(path)])),
       );
-      await file.writeAsBytes(response.data!);
-      await SharePlus.instance.share(ShareParams(files: [XFile(file.path)]));
     } catch (_) {
       if (context.mounted) {
         final t = AppLocalizations.of(context);

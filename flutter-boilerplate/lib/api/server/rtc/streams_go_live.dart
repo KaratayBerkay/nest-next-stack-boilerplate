@@ -18,7 +18,7 @@ class GoLiveServer {
       '/graphql',
       data: {
         'query':
-            'mutation GoLive(\$title: String!) { goLive(title: \$title) { token roomName stream { $streamFields } } }',
+            'mutation GoLive(\$title: String!) { goLive(title: \$title) { token roomName livekitUrl stream { $streamFields } } }',
         'variables': {'title': title},
       },
     );

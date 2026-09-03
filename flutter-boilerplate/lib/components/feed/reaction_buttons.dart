@@ -64,6 +64,13 @@ class _ReactionInlineState extends State<ReactionInline> {
     final total = widget.reactions.length;
     final userReacted = widget.currentUserId != null &&
         widget.reactions.any((r) => r.userId == widget.currentUserId);
+    // Only the types someone actually picked — this used to always render
+    // all 4 chips the instant any reaction existed, which was both wrong
+    // (showing reaction types nobody used) and, combined with a long author
+    // name, what overflowed the card (MOB-035).
+    final activeTypes = _reactionTypes
+        .where((type) => widget.reactions.any((r) => r.type == type))
+        .toList();
 
     return Tooltip(
       message: AppLocalizations.of(context).feedReact,
@@ -107,41 +114,46 @@ class _ReactionInlineState extends State<ReactionInline> {
               ),
             ),
             const SizedBox(width: 2),
-            if (total > 0)
-              SizedBox(
-                height: 24,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  shrinkWrap: true,
-                  itemCount: _reactionTypes.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 2),
-                  itemBuilder: (context, index) {
-                    final type = _reactionTypes[index];
-                    final count =
-                        widget.reactions.where((r) => r.type == type).length;
-                    final active = widget.reactions.any(
-                      (r) => r.type == type && r.userId == widget.currentUserId,
-                    );
+            if (activeTypes.isNotEmpty)
+              // Flexible so this list is what gives way if ReactionInline's
+              // own allotted width (see post_header.dart's trailing Row)
+              // isn't enough — it already scrolls horizontally in isolation,
+              // it just needs permission to be narrower than its content.
+              Flexible(
+                child: SizedBox(
+                  height: 24,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    shrinkWrap: true,
+                    itemCount: activeTypes.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 2),
+                    itemBuilder: (context, index) {
+                      final type = activeTypes[index];
+                      final count =
+                          widget.reactions.where((r) => r.type == type).length;
+                      final active = widget.reactions.any(
+                        (r) =>
+                            r.type == type && r.userId == widget.currentUserId,
+                      );
 
-                    return InkWell(
-                      onTap: _submitting ? null : () => _handleReaction(type),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(4),
-                          color: active
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.transparent,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _emojis[type] ?? '',
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                            if (count > 0)
+                      return InkWell(
+                        onTap: _submitting ? null : () => _handleReaction(type),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(4),
+                            color: active
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.transparent,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _emojis[type] ?? '',
+                                style: const TextStyle(fontSize: 12),
+                              ),
                               Padding(
                                 padding: const EdgeInsets.only(left: 1),
                                 child: Text(
@@ -153,11 +165,12 @@ class _ReactionInlineState extends State<ReactionInline> {
                                   ),
                                 ),
                               ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
           ],

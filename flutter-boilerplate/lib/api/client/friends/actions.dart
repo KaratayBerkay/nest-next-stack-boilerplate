@@ -18,15 +18,18 @@ class FriendActions {
     _invalidate();
   }
 
-  Future<void> acceptRequest(String requestId) async {
+  // Both take the *other user's* id (the backend route is
+  // `friends/accept|decline/:userId`), not the FriendRequest row's own id —
+  // a prior bug here sent the request id and 404'd on every tap.
+  Future<void> acceptRequest(String userId) async {
     final server = _ref.read(acceptFriendRequestServerProvider);
-    await server.call(requestId);
+    await server.call(userId);
     _invalidate();
   }
 
-  Future<void> declineRequest(String requestId) async {
+  Future<void> declineRequest(String userId) async {
     final server = _ref.read(declineFriendRequestServerProvider);
-    await server.call(requestId);
+    await server.call(userId);
     _invalidate();
   }
 
