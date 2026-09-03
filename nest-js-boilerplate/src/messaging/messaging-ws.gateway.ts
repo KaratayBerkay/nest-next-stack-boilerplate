@@ -420,6 +420,7 @@ export class MessagingWsGateway implements OnModuleInit {
       plaintext.text ?? '',
       attachments,
       storageEnvelope,
+      typeof data.replyToId === 'string' ? data.replyToId : undefined,
     );
 
     // Broadcast per-connection encrypted to all room members.
@@ -435,6 +436,8 @@ export class MessagingWsGateway implements OnModuleInit {
         avatar: initials(senderName),
         body: plaintext.text ?? null,
         attachments: saved.attachments ?? [],
+        replyTo: saved.replyTo ?? null,
+        deletedAt: null,
         createdAt: saved.createdAt.toISOString(),
       },
       ...(data.tempId ? { tempId: data.tempId } : {}),

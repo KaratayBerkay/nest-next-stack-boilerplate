@@ -7,11 +7,14 @@ import { countLetters } from '../common/utils/letter-count';
 import { UsageService } from '../usage/usage.service';
 import { tierRank, MIN_TIER_FOR_VIP } from '../authorization/tier-rank';
 import {
+  DELETE_FOR_EVERYONE_WINDOW_MS,
   type RoomMember,
   type MessageAttachment,
   initials,
 } from './messaging.types';
 import { resolveAttachmentEnvelopes } from './attachment-envelopes.util';
+import { buildReplyPreview } from './message-body.util';
+import { RealtimeGateway } from '../realtime/realtime.gateway';
 
 const ROOM_MEMBERS_PREFIX = 'room:';
 
@@ -87,6 +90,7 @@ export class MessagingRoomService {
     private readonly redis: Redis | null,
     private readonly storageCrypto: StorageCryptoService,
     private readonly usage: UsageService,
+    private readonly realtime: RealtimeGateway,
   ) {
     // This app has no process-level unhandledRejection/uncaughtException
     // handler, so an unguarded rejection here (very plausible right after a
@@ -331,11 +335,28 @@ export class MessagingRoomService {
     body = '',
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
+    replyToId?: string,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
     if (!hasRoomTierAccess(roomId, tier))
       throw new ForbiddenException('VIP rooms require MEDIUM tier or above');
+    // Same rule as DMs (CROSS-024): a replyToId must point at a message in
+    // THIS room, or a crafted id could quote a decrypted preview out of a
+    // VIP room into a public one.
+    let validReplyToId: string | undefined;
+    if (replyToId) {
+      const target = await this.prisma.roomMessage.findUnique({
+        where: { id: replyToId },
+        select: { id: true, roomId: true },
+      });
+      if (!target || target.roomId !== roomId) {
+        throw new ForbiddenException(
+          'Cannot reply to a message outside this room',
+        );
+      }
+      validReplyToId = replyToId;
+    }
     await this.usage.assertCanSendMessage(senderId, countLetters(body));
     // Room messages are ALWAYS stored encrypted: a caller-supplied envelope
     // is flattened into the v/ct/nonce columns as-is, otherwise the server
@@ -379,6 +400,7 @@ export class MessagingRoomService {
           ct,
           nonce,
           letterCount: countLetters(body),
+          replyToId: validReplyToId ?? null,
           attachments:
             storedAttachments.length > 0
               ? {
@@ -395,6 +417,12 @@ export class MessagingRoomService {
         include: {
           sender: { select: { name: true, email: true } },
           attachments: true,
+          replyTo: {
+            include: {
+              attachments: true,
+              sender: { select: { name: true, email: true } },
+            },
+          },
         },
       });
       // Link each attachment back to the room message it shipped in so the
@@ -415,6 +443,48 @@ export class MessagingRoomService {
       attachments: row.attachments.map((a) =>
         this.storageCrypto.toWireAttachment(a),
       ),
+      // Ready-to-send quote preview (decrypted with the room key) so the WS
+      // broadcast can carry it without the gateway needing StorageCrypto.
+      replyTo: this.toReplyPreview(row.replyTo, senderId),
+    };
+  }
+
+  /**
+   * Wire-format a one-level `replyTo` relation into the same ReplyPreview
+   * shape DMs use: tombstoned quotes lose their attachments, and the body is
+   * decrypted (room key first) by buildReplyPreview.
+   */
+  private toReplyPreview(
+    replyTo:
+      | (Record<string, unknown> & {
+          deletedAt: Date | null;
+          attachments: Parameters<StorageCryptoService['toWireAttachment']>[0][];
+          sender?: { name: string | null; email: string | null } | null;
+        })
+      | null
+      | undefined,
+    viewerId: string,
+  ) {
+    if (!replyTo) return null;
+    const { sender, ...row } = replyTo;
+    const preview = buildReplyPreview(
+      {
+        ...row,
+        attachments: replyTo.deletedAt
+          ? []
+          : replyTo.attachments.map((a) =>
+              this.storageCrypto.toWireAttachment(a),
+            ),
+      },
+      viewerId,
+      this.storageCrypto,
+    );
+    if (!preview) return null;
+    // Rooms have many senders, so (unlike a 2-party DM) the quote needs the
+    // quoted author's display name on the wire.
+    return {
+      ...preview,
+      senderName: sender?.name || sender?.email || 'Unknown',
     };
   }
 
@@ -423,6 +493,7 @@ export class MessagingRoomService {
     tier: string | undefined,
     before?: string,
     take = 30,
+    viewerId?: string,
   ) {
     if (!isValidRoom(roomId))
       throw new NotFoundException(`Unknown room: ${roomId}`);
@@ -430,6 +501,8 @@ export class MessagingRoomService {
       throw new ForbiddenException('VIP rooms require MEDIUM tier or above');
     const where: Prisma.RoomMessageWhereInput = { roomId };
     if (before) where.createdAt = { lt: new Date(before) };
+    // "Delete for me" rows hide the message from this viewer's history only.
+    if (viewerId) where.deletions = { none: { userId: viewerId } };
     const messages = await this.prisma.roomMessage.findMany({
       where,
       orderBy: { createdAt: 'desc' },
@@ -437,6 +510,12 @@ export class MessagingRoomService {
       include: {
         sender: { select: { name: true, email: true } },
         attachments: true,
+        replyTo: {
+          include: {
+            attachments: true,
+            sender: { select: { name: true, email: true } },
+          },
+        },
       },
     });
     return {
@@ -445,16 +524,99 @@ export class MessagingRoomService {
         senderId: m.senderId,
         senderName: m.sender.name || m.sender.email || 'Unknown',
         avatar: initials(m.sender.name || m.sender.email || 'Unknown'),
-        v: m.v,
-        ct: m.ct,
-        nonce: m.nonce,
-        attachments: m.attachments.map((a) =>
-          this.storageCrypto.toWireAttachment(a),
-        ),
+        // Tombstoned rows ship no ciphertext/attachments — same contract as
+        // DM getMessages; the client renders "This message was deleted".
+        ...(m.deletedAt
+          ? { body: null }
+          : { v: m.v, ct: m.ct, nonce: m.nonce }),
+        attachments: m.deletedAt
+          ? []
+          : m.attachments.map((a) => this.storageCrypto.toWireAttachment(a)),
+        deletedAt: m.deletedAt ? m.deletedAt.toISOString() : null,
+        replyTo: this.toReplyPreview(m.replyTo, viewerId ?? m.senderId),
         createdAt: m.createdAt.toISOString(),
       })),
       hasMore: messages.length === take,
     };
+  }
+
+  /**
+   * "Delete for me" for a room message — server-persisted per viewer (see
+   * RoomMessageDeletion), so it survives reloads and the viewer's other
+   * devices. Nobody else in the room is affected. Mirrors
+   * MessagingDmService.deleteMessageForMe.
+   */
+  async deleteRoomMessageForMe(
+    userId: string,
+    roomId: string,
+    messageId: string,
+  ): Promise<{ id: string }> {
+    if (!isValidRoom(roomId))
+      throw new NotFoundException(`Unknown room: ${roomId}`);
+    const message = await this.prisma.roomMessage.findFirst({
+      where: { id: messageId, roomId },
+      select: { id: true },
+    });
+    if (!message) throw new NotFoundException('Message not found');
+    await this.prisma.roomMessageDeletion.upsert({
+      where: { roomMessageId_userId: { roomMessageId: messageId, userId } },
+      create: { roomMessageId: messageId, userId },
+      update: {},
+    });
+    // Multi-device/multi-tab sync for the ACTOR only.
+    await this.realtime.emitToUserEncrypted(userId, {
+      type: 'room-message-deleted',
+      scope: 'me',
+      room: roomId,
+      messageId,
+    });
+    return { id: messageId };
+  }
+
+  /**
+   * "Delete for everyone" — sender-only, within DELETE_FOR_EVERYONE_WINDOW_MS
+   * of sending, soft-hide only (ciphertext + attachment rows stay at rest),
+   * idempotent. Every room member gets one `room-message-deleted` frame.
+   */
+  async deleteRoomMessageForEveryone(
+    userId: string,
+    roomId: string,
+    messageId: string,
+  ): Promise<{ id: string; deletedAt: string }> {
+    if (!isValidRoom(roomId))
+      throw new NotFoundException(`Unknown room: ${roomId}`);
+    const message = await this.prisma.roomMessage.findFirst({
+      where: { id: messageId, roomId },
+      select: { id: true, senderId: true, createdAt: true, deletedAt: true },
+    });
+    if (!message) throw new NotFoundException('Message not found');
+    if (message.senderId !== userId) {
+      throw new ForbiddenException(
+        'Only the sender can delete this message for everyone',
+      );
+    }
+    if (
+      !message.deletedAt &&
+      Date.now() - message.createdAt.getTime() > DELETE_FOR_EVERYONE_WINDOW_MS
+    ) {
+      throw new ForbiddenException('Delete window has expired');
+    }
+    const deletedAt = message.deletedAt ?? new Date();
+    if (!message.deletedAt) {
+      await this.prisma.roomMessage.update({
+        where: { id: messageId },
+        data: { deletedAt },
+      });
+    }
+    await this.realtime.emitToRoomEncrypted(roomId, {
+      type: 'room-message-deleted',
+      scope: 'everyone',
+      room: roomId,
+      messageId,
+      senderId: message.senderId,
+      deletedAt: deletedAt.toISOString(),
+    });
+    return { id: messageId, deletedAt: deletedAt.toISOString() };
   }
 
   /**

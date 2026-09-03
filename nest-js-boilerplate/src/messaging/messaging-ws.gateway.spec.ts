@@ -376,6 +376,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'hello',
         [],
         undefined,
+        undefined, // replyToId (CROSS-024)
       );
     });
 
@@ -397,6 +398,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         '',
         attachments,
         undefined,
+        undefined, // replyToId (CROSS-024)
       );
     });
 
@@ -415,6 +417,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         '',
         [],
         envelope,
+        undefined, // replyToId (CROSS-024)
       );
     });
 
@@ -443,6 +446,7 @@ describe('MessagingWsGateway — VIP room tier gate', () => {
         'hello',
         [],
         undefined,
+        undefined, // replyToId (CROSS-024)
       );
     });
 

@@ -48,6 +48,12 @@ export class StripeService {
         items: [{ price: priceId }],
         default_payment_method: paymentMethodId,
         off_session: true,
+        // BE-019: a first invoice that needs SCA must not fail the create —
+        // Stripe leaves the subscription `incomplete` with a confirmable
+        // PaymentIntent (see StripePaymentProvider.resolveIncomplete). The
+        // expanded confirmation_secret is that PaymentIntent's client secret.
+        payment_behavior: 'allow_incomplete',
+        expand: ['latest_invoice.confirmation_secret'],
         // Selects which of the Price's currency_options to bill in. Only
         // meaningful at subscription-creation time — once a subscription
         // exists its currency is fixed, so tier changes on the same
@@ -136,6 +142,34 @@ export class StripeService {
       scheduleId: updated.id,
       effectiveAt: new Date(periodEnd * 1000),
       currency: subscription.currency.toUpperCase(),
+    };
+  }
+
+  /** BE-019: same expansion as createSubscription, for the finalize path. */
+  async retrieveSubscriptionForFinalize(
+    stripeSubscriptionId: string,
+  ): Promise<Stripe.Subscription> {
+    return this.stripe.subscriptions.retrieve(stripeSubscriptionId, {
+      expand: ['latest_invoice.confirmation_secret'],
+    });
+  }
+
+  /**
+   * BE-019: state of the PaymentIntent behind an invoice confirmation secret
+   * (`pi_..._secret_...`) — tells "needs 3DS" apart from "card declined"
+   * for an `incomplete` subscription.
+   */
+  async getPaymentIntentState(
+    clientSecret: string,
+  ): Promise<{ status: string; declineCode: string | null }> {
+    const paymentIntentId = clientSecret.split('_secret_')[0];
+    const pi = await this.stripe.paymentIntents.retrieve(paymentIntentId);
+    return {
+      status: pi.status,
+      declineCode:
+        pi.last_payment_error?.decline_code ??
+        pi.last_payment_error?.code ??
+        null,
     };
   }
 

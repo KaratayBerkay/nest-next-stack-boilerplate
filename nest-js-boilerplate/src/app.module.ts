@@ -16,14 +16,13 @@ import { RedisThrottlerStorage } from './throttle/redis-throttler-storage';
 import { REDIS_CLIENT } from './redis/redis.tokens';
 import { AlsModule } from './als/als.module';
 import { AuthModule } from './auth/auth.module';
-import { VaultModule } from './vault/vault.module';
 import { AuthorizationModule } from './authorization/authorization.module';
 import { BillingModule } from './billing/billing.module';
 import { StripeModule } from './billing/stripe/stripe.module';
 import { ComplexityModule } from './complexity/complexity.module';
 import { ComplexityPlugin } from './complexity/complexity.plugin';
 import { CompressionModule } from './compression/compression.module';
-import { CookiesModule } from './cookies/cookies.module';
+import { DemoCookiesModule } from './demo-cookies/cookies.module';
 import { CookiesSsrModule } from './cookies-ssr/cookies-ssr.module';
 import { CorsModule } from './cors/cors.module';
 import { CryptoModule } from './common/crypto/crypto.module';
@@ -75,13 +74,13 @@ import { SessionsModule } from './sessions/sessions.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { SseModule } from './sse/sse.module';
 import { SubscriptionsModule } from './subscriptions/subscriptions.module';
-import { TasksModule } from './tasks/tasks.module';
+import { DemoTasksModule } from './demo-tasks/tasks.module';
 import { TeamMembersModule } from './team-members/team-members.module';
 import { UnionsEnumsModule } from './unions-enums/unions-enums.module';
 import { ThrottleModule } from './throttle/throttle.module';
 import { HttpThrottlerGuard } from './throttle/http-throttler.guard';
 import { UploadModule } from './upload/upload.module';
-import { UsersModule } from './users/users.module';
+import { DemoUsersModule } from './demo-users/users.module';
 import { WsModule } from './ws/ws.module';
 import { validationSchema, validationOptions } from './config/env.validation';
 
@@ -173,7 +172,6 @@ const CORE_MODULES = [
   ApiKeysModule,
   WireCryptoModule,
   UploadModule,
-  VaultModule,
   HealthModule,
   RedisModule,
   CsrfModule,
@@ -185,7 +183,7 @@ const CORE_MODULES = [
 // These are standalone demos (gRPC, SSE, CORS, CQRS, etc.) that should not be
 // part of a production build. Set LOAD_DEMO_MODULES=true to include them.
 const DEMO_MODULES = [
-  UsersModule, // demo CRUD module — leaks passwordHash; must not run in production
+  DemoUsersModule, // demo CRUD module — leaks passwordHash; must not run in production (dir renamed from users/ — BE-002)
   // ProjectTasksModule/TeamMembersModule: their own resolver doc comments
   // describe them as exercising GraphQL through multi-level FK depth
   // (Task -> Project -> Organization -> User) and Prisma-schema-derived
@@ -202,7 +200,7 @@ const DEMO_MODULES = [
   GrpcModule,
   CqrsExampleModule,
   RouterDemoModule,
-  TasksModule,
+  DemoTasksModule,
   ComplexityModule,
   DirectivesModule,
   ExtensionsModule,
@@ -216,7 +214,7 @@ const DEMO_MODULES = [
   SubscriptionsModule,
   UnionsEnumsModule,
   WsModule,
-  CookiesModule,
+  DemoCookiesModule,
   CookiesSsrModule,
   CompressionModule,
   CorsModule,

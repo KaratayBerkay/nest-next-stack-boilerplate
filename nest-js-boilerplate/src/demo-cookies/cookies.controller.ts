@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 // cookie-parser is applied app-wide in main.ts (`app.use(cookieParser(COOKIE_SECRET))`), so
 // req.cookies / req.signedCookies are populated here. The e2e mirrors that middleware.
 @Controller('cookies')
-export class CookiesController {
+export class DemoCookiesController {
   // Sets a plain cookie and a signed one. `passthrough: true` lets Nest still send the body.
   @Post('set')
   set(@Res({ passthrough: true }) res: Response): { ok: true } {

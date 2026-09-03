@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { PushSubscription } from '../@generated/push-subscription/push-subscription.model';
 import type { JwtUser } from '../auth/auth.types';
 import { CurrentUser } from '../auth/current-user.decorator';
@@ -10,11 +10,6 @@ import { PushSubscriptionService } from './push-subscription.service';
 @Resolver(() => PushSubscription)
 export class PushSubscriptionResolver {
   constructor(private readonly pushSubscriptions: PushSubscriptionService) {}
-
-  @Query(() => [PushSubscription])
-  myPushSubscriptions(@CurrentUser() user: JwtUser) {
-    return this.pushSubscriptions.findByUser(user.userId);
-  }
 
   @Mutation(() => PushSubscription)
   subscribePush(

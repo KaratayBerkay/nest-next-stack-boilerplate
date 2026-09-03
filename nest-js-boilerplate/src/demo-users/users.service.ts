@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { UserCreateInput } from '../@generated/user/user-create.input';
 
 @Injectable()
-export class UsersService {
+export class DemoUsersService {
   constructor(private readonly prisma: PrismaService) {}
 
   findAll() {

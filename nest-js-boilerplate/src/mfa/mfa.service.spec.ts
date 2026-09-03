@@ -63,6 +63,7 @@ describe('MfaService', () => {
     sha256: jest.Mock;
   };
   let mockOutbox: { emit: jest.Mock };
+  let mockNotifications: { create: jest.Mock };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -73,11 +74,13 @@ describe('MfaService', () => {
       sha256: jest.fn((value: string) => `sha256(${value})`),
     };
     mockOutbox = { emit: jest.fn().mockResolvedValue(undefined) };
+    mockNotifications = { create: jest.fn().mockResolvedValue(undefined) };
 
     service = new MfaService(
       prisma as never,
       mockCrypto as never,
       mockOutbox as never,
+      mockNotifications as never,
     );
   });
 
@@ -260,6 +263,14 @@ describe('MfaService', () => {
 
       expect(result.enabled).toBe(true);
       expect(result.backupCodes).toHaveLength(10);
+      // BE-014: MFA state changes produce an in-app SECURITY notification.
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          type: 'SECURITY',
+          payload: { kind: 'security-mfa-enabled' },
+        }),
+      );
       // Backup codes returned to the caller must be the raw (unhashed) values.
       result.backupCodes.forEach((code) => {
         expect(code).not.toMatch(/^sha256\(/);
@@ -333,6 +344,7 @@ describe('MfaService', () => {
       await expect(service.verify('u1', '000000')).rejects.toMatchObject({
         response: { exc: 'EX_VALIDATION_FORM' },
       });
+      expect(mockNotifications.create).not.toHaveBeenCalled();
 
       expect(prisma.$transaction).not.toHaveBeenCalled();
       expect(prisma.user.update).not.toHaveBeenCalled();
@@ -364,6 +376,13 @@ describe('MfaService', () => {
       const result = await service.disable('u1', '123456');
 
       expect(result).toBe(true);
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          type: 'SECURITY',
+          payload: { kind: 'security-mfa-disabled' },
+        }),
+      );
       expect(prisma.mfaFactor.deleteMany).toHaveBeenCalledWith({
         where: { userId: 'u1' },
       });

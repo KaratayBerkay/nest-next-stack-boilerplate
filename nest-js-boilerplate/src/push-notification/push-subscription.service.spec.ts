@@ -106,31 +106,6 @@ describe('PushSubscriptionService', () => {
     });
   });
 
-  describe('findByUser', () => {
-    it("returns all of the user's subscriptions", async () => {
-      const subs = [
-        { id: 's1', userId: 'u1', endpoint: 'https://a' },
-        { id: 's2', userId: 'u1', endpoint: 'https://b' },
-      ];
-      prisma.pushSubscription.findMany.mockResolvedValue(subs);
-
-      const result = await service.findByUser('u1');
-
-      expect(result).toEqual(subs);
-      expect(prisma.pushSubscription.findMany).toHaveBeenCalledWith({
-        where: { userId: 'u1' },
-      });
-    });
-
-    it('returns an empty array when the user has no subscriptions', async () => {
-      prisma.pushSubscription.findMany.mockResolvedValue([]);
-
-      const result = await service.findByUser('u1');
-
-      expect(result).toEqual([]);
-    });
-  });
-
   describe('subscribe endpoint validation (stored-SSRF guard)', () => {
     // The endpoint is a URL this server later POSTs to blindly during push
     // delivery; without shape validation any authenticated user can plant an

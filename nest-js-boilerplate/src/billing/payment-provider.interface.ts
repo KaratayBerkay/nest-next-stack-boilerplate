@@ -22,6 +22,10 @@ export interface CreateSubscriptionResult {
   /** The currency actually charged, per Stripe's response — always present
    * on success. */
   currency?: string;
+  /** BE-019: set together with reason 'authentication_required' — the first
+   * invoice's PaymentIntent client secret the customer must confirm
+   * on-session (3DS/SCA) before `finalizeSubscription` can provision. */
+  clientSecret?: string;
 }
 
 export interface ScheduleTierChangeInput {
@@ -45,6 +49,16 @@ export const PAYMENT_PROVIDER = 'PAYMENT_PROVIDER';
 export interface PaymentProvider {
   createSubscription(
     input: CreateSubscriptionInput,
+  ): Promise<CreateSubscriptionResult>;
+  /**
+   * BE-019: re-read a subscription whose first invoice needed customer
+   * authentication. Resolves to the same success payload as
+   * createSubscription once the customer completed 3DS, or to
+   * `authentication_required` again (with a fresh clientSecret) while it is
+   * still pending, or to a decline reason if the confirmation failed.
+   */
+  finalizeSubscription(
+    stripeSubscriptionId: string,
   ): Promise<CreateSubscriptionResult>;
   /** Returns the subscription's currency so the caller's ledger write can
    * record it accurately instead of assuming USD. */

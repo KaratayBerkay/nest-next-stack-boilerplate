@@ -9,8 +9,8 @@ import { Interval, SchedulerRegistry, Timeout } from '@nestjs/schedule';
 // when the system clock jumps (e.g. DST, NTP sync), producing a `TimeoutNegativeWarning` and
 // causing immediate re-fires. @Interval uses a fixed ms value — no date math, no negative delay.
 @Injectable()
-export class TasksService {
-  private readonly logger = new Logger(TasksService.name);
+export class DemoTasksService {
+  private readonly logger = new Logger(DemoTasksService.name);
   private intervalTicks = 0;
   private timedOut = false;
 

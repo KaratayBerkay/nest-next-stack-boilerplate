@@ -1,13 +1,18 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { SubscriptionTier } from '../@generated/prisma/subscription-tier.enum';
 import { TIER_RANK } from '../authorization/tier-rank';
+import { tierFeatures, type TierFeature } from './tier-features';
+import Redis from 'ioredis';
 import { PrismaService } from '../prisma/prisma.service';
+import { REDIS_CLIENT } from '../redis/redis.tokens';
 import { TokenStoreService } from '../auth/token-store.service';
 import { NotificationService } from '../notification/notification.service';
 import { RealtimeGateway } from '../realtime/realtime.gateway';
@@ -18,7 +23,6 @@ import {
   PAYMENT_PROVIDER,
   type PaymentProvider,
 } from './payment-provider.interface';
-import { Inject } from '@nestjs/common';
 
 // Kept in sync with next-js-boilerplate's CURRENCIES constant
 // (src/constants/currency.ts) and flutter-boilerplate's USD-only display —
@@ -61,6 +65,23 @@ interface SubscribeOutcome {
   periodEnd?: Date;
   pendingTier?: SubscriptionTier | null;
   pendingTierEffectiveAt?: Date | null;
+  /** BE-019: with reason 'authentication_required' — confirm client-side, then finalizeSubscription. */
+  clientSecret?: string;
+  stripeSubscriptionId?: string;
+}
+
+/** BE-019: how long a first subscription may sit awaiting 3DS before the
+ * finalize context is forgotten (Stripe expires the incomplete subscription
+ * itself after 23h). */
+const SCA_PENDING_TTL_SECONDS = 24 * 60 * 60;
+const scaPendingKey = (stripeSubscriptionId: string) =>
+  `billing:sca:${stripeSubscriptionId}`;
+
+interface ScaPendingContext {
+  userId: string;
+  targetTier: SubscriptionTier;
+  retryKey: string;
+  currency: string;
 }
 
 @Injectable()
@@ -76,6 +97,7 @@ export class BillingService {
     private readonly wallet: WalletService,
     private readonly outbox: OutboxService,
     @Inject(PAYMENT_PROVIDER) private readonly provider: PaymentProvider,
+    @Inject(REDIS_CLIENT) private readonly redis: Redis,
   ) {}
 
   async subscribeToPlan(
@@ -204,6 +226,34 @@ export class BillingService {
         });
 
         if (!chargeResult.success) {
+          if (
+            chargeResult.reason === 'authentication_required' &&
+            chargeResult.stripeSubscriptionId &&
+            chargeResult.clientSecret
+          ) {
+            // BE-019: the card needs 3DS. Nothing is provisioned yet — park
+            // what finalizeSubscription needs (bound to this user) and hand
+            // the client secret to the client.
+            const pending: ScaPendingContext = {
+              userId,
+              targetTier,
+              retryKey,
+              currency,
+            };
+            await this.redis.set(
+              scaPendingKey(chargeResult.stripeSubscriptionId),
+              JSON.stringify(pending),
+              'EX',
+              SCA_PENDING_TTL_SECONDS,
+            );
+            result = {
+              success: false,
+              reason: 'authentication_required',
+              clientSecret: chargeResult.clientSecret,
+              stripeSubscriptionId: chargeResult.stripeSubscriptionId,
+            };
+            return;
+          }
           result = { success: false, reason: chargeResult.reason };
           return;
         }
@@ -264,6 +314,99 @@ export class BillingService {
       await this.notifyUpgrade(userId, targetTier);
     }
 
+    return result ?? { success: false, reason: 'subscription_failed' };
+  }
+
+  /**
+   * BE-019: second half of a first subscription whose invoice needed 3DS.
+   * The client confirmed the PaymentIntent on-session; re-read the
+   * subscription from Stripe and, if it is now active, provision exactly as
+   * handleFirstSubscribe would have. Bound to the user who started the flow.
+   */
+  async finalizeSubscription(
+    userId: string,
+    stripeSubscriptionId: string,
+  ): Promise<SubscribeOutcome> {
+    const raw = await this.redis.get(scaPendingKey(stripeSubscriptionId));
+    const pending = raw ? (JSON.parse(raw) as ScaPendingContext) : null;
+    if (!pending || pending.userId !== userId) {
+      throw new NotFoundException({
+        exc: 'EX_BILLING_NO_PENDING_SUBSCRIPTION',
+        msg: 'No subscription is awaiting confirmation',
+        key: 'billing.errors.noPendingSubscription',
+      });
+    }
+    const { targetTier, retryKey } = pending;
+    let provisioned = false;
+    let result: SubscribeOutcome | null = null;
+
+    await this.prisma.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+        const lockedUser = await tx.user.findUniqueOrThrow({
+          where: { id: userId },
+          select: SUBSCRIBER_SELECT,
+        });
+        if (TIER_RANK[lockedUser.subscriptionTier] >= TIER_RANK[targetTier]) {
+          result = {
+            success: true,
+            periodEnd: lockedUser.subscriptionPeriodEnd ?? undefined,
+          };
+          return;
+        }
+
+        const fin =
+          await this.provider.finalizeSubscription(stripeSubscriptionId);
+        if (!fin.success) {
+          result = {
+            success: false,
+            reason: fin.reason,
+            clientSecret: fin.clientSecret,
+            stripeSubscriptionId,
+          };
+          return;
+        }
+
+        const rowKey = fin.latestInvoiceId
+          ? `stripe_invoice:${fin.latestInvoiceId}`
+          : retryKey;
+        try {
+          const wallet = await this.wallet.ensureWallet(userId, tx);
+          provisioned = await this.persistUpgrade(
+            tx,
+            userId,
+            targetTier,
+            fin,
+            rowKey,
+            retryKey,
+            wallet.id,
+          );
+        } catch (err) {
+          this.logger.error({
+            category: 'billing',
+            event: 'billing.charged_but_not_persisted',
+            userId,
+            targetTier,
+            stripeSubscriptionId,
+            latestInvoiceId: fin.latestInvoiceId,
+            retryKey,
+            error: (err as Error).message,
+          });
+          throw err;
+        }
+        result = { success: true, periodEnd: fin.periodEnd };
+      },
+      { maxWait: 15_000, timeout: 120_000 },
+    );
+
+    if (provisioned) {
+      await this.redis.del(scaPendingKey(stripeSubscriptionId));
+      await this.tokenStore.rewriteFieldsForUser(userId, {
+        tier: targetTier,
+      });
+      this.realtime.updateUserTier(userId, targetTier);
+      await this.notifyUpgrade(userId, targetTier);
+    }
     return result ?? { success: false, reason: 'subscription_failed' };
   }
 
@@ -920,10 +1063,13 @@ export class BillingService {
    * as getSubscription, not the old static TIER_PRICES_CENTS table the web
    * app formats client-side.
    */
-  async getPlanPrices(
-    currency?: string,
-  ): Promise<
-    Array<{ tier: SubscriptionTier; priceCents: number; currency: string }>
+  async getPlanPrices(currency?: string): Promise<
+    Array<{
+      tier: SubscriptionTier;
+      priceCents: number;
+      currency: string;
+      features: TierFeature[];
+    }>
   > {
     const normalized = normalizeCurrency(currency);
     const tiers = [
@@ -938,7 +1084,12 @@ export class BillingService {
           tier,
           normalized,
         );
-        return { tier, priceCents: info.cents, currency: info.currency };
+        return {
+          tier,
+          priceCents: info.cents,
+          currency: info.currency,
+          features: tierFeatures(tier),
+        };
       }),
     );
   }

@@ -8,6 +8,7 @@ import { hash, verify } from '@node-rs/argon2';
 import { Prisma, User } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { NotificationService } from '../notification/notification.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { MailService } from '../mail/mail.service';
 import {
@@ -36,6 +37,7 @@ export class AuthRegistrationService {
     private readonly usernames: UsernameService,
     private readonly devices: DeviceService,
     private readonly emailOtp: EmailOtpService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async register(
@@ -413,6 +415,24 @@ export class AuthRegistrationService {
         tx,
       );
     });
+
+    // In-app SECURITY notification (BE-014): the undo email below is the
+    // recovery path, this is the visible "was that you?" signal on every
+    // signed-in device. Never fatal — the password is already changed.
+    await this.notifications
+      .create({
+        userId,
+        actorId: userId,
+        type: 'SECURITY',
+        title: 'Your password was changed',
+        body: "If this wasn't you, use the undo link in the email we just sent and review your sessions.",
+        payload: { kind: 'security-password-changed' },
+      })
+      .catch((err: Error) =>
+        this.logger.warn(
+          `SECURITY notification failed for ${userId}: ${err.message}`,
+        ),
+      );
 
     const undoUrl = `${this.config.get('FRONTEND_URL', 'http://localhost:3000')}/auth/undo-password-change?token=${rawToken}`;
     await this.mail.enqueue({

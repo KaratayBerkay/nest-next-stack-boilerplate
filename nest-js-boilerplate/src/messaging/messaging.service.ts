@@ -35,7 +35,13 @@ export class MessagingService {
     usage: UsageService,
   ) {
     this.realtime = realtime;
-    this.rooms = new MessagingRoomService(prisma, redis, storageCrypto, usage);
+    this.rooms = new MessagingRoomService(
+      prisma,
+      redis,
+      storageCrypto,
+      usage,
+      realtime,
+    );
     this.dm = new MessagingDmService(
       prisma,
       cache,
@@ -276,6 +282,7 @@ export class MessagingService {
     body: string,
     attachments?: MessageAttachment[],
     envelope?: Record<string, unknown>,
+    replyToId?: string,
   ) {
     return this.rooms.saveRoomMessage(
       roomId,
@@ -284,6 +291,7 @@ export class MessagingService {
       body,
       attachments,
       envelope,
+      replyToId,
     );
   }
 
@@ -292,8 +300,21 @@ export class MessagingService {
     tier: string | undefined,
     before?: string,
     take?: number,
+    viewerId?: string,
   ) {
-    return this.rooms.getRoomMessages(roomId, tier, before, take);
+    return this.rooms.getRoomMessages(roomId, tier, before, take, viewerId);
+  }
+
+  deleteRoomMessageForMe(userId: string, roomId: string, messageId: string) {
+    return this.rooms.deleteRoomMessageForMe(userId, roomId, messageId);
+  }
+
+  deleteRoomMessageForEveryone(
+    userId: string,
+    roomId: string,
+    messageId: string,
+  ) {
+    return this.rooms.deleteRoomMessageForEveryone(userId, roomId, messageId);
   }
 
   getRoomAttachments(

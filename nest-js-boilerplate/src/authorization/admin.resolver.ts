@@ -48,7 +48,8 @@ function isTargetRoleGteActor(targetRole: string, actorRole: string): boolean {
  * `setUserTier` lets admins change a user's subscription tier and propagate it to live Redis
  * sessions immediately.
  *
- * `premiumStats` demonstrates the `@MinTier()` gate with `SessionAuthGuard`.
+ * `premiumStats`/`growthStats` demonstrate the `@MinTier()` gate on top of the
+ * admin role check (both `@Roles()` and `@MinTier()` must pass).
  */
 @ObjectType()
 export class PremiumStatsPayload {
@@ -211,7 +212,13 @@ export class AdminResolver {
     return true;
   }
 
-  /** Demo gated resolver: proves tier-based access end-to-end. */
+  /**
+   * Demo gated resolver: proves tier-based access end-to-end. Also
+   * role-gated (CROSS-035): these are platform-wide aggregates, so the
+   * tier gate alone let any paying subscriber read them. The class-level
+   * RolesGuard enforces `@Roles()` before TierGuard runs.
+   */
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseGuards(SessionAuthGuard, TierGuard)
   @MinTier(SubscriptionTier.BASIC)
   @Query(() => PremiumStatsPayload, { name: 'premiumStats' })
@@ -223,6 +230,7 @@ export class AdminResolver {
     return { totalUsers, activeUsers, revenue: totalUsers * 9.99 };
   }
 
+  @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @UseGuards(SessionAuthGuard, TierGuard)
   @MinTier(SubscriptionTier.MEDIUM)
   @Query(() => GrowthStatsPayload, { name: 'growthStats' })

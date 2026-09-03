@@ -77,8 +77,4 @@ export class PushSubscriptionService {
       where: { userId, endpoint },
     });
   }
-
-  async findByUser(userId: string) {
-    return this.prisma.pushSubscription.findMany({ where: { userId } });
-  }
 }

@@ -368,6 +368,7 @@ export class MessagingController {
       user.tier,
       before,
       parseTake(take),
+      user.userId,
     );
     return {
       ...result,
@@ -375,6 +376,38 @@ export class MessagingController {
         decryptMessageBody(m, user.userId, this.storageCrypto),
       ),
     };
+  }
+
+  @Post('rooms/:roomSlug/messages/:messageId/delete-for-me')
+  @ApiOperation({
+    summary: 'Hide a room message for the current user only',
+    description:
+      'Server-persisted (RoomMessageDeletion) — stays hidden across reloads and this user’s other devices. Nobody else in the room is affected.',
+  })
+  async deleteRoomMessageForMe(
+    @CurrentUser() user: JwtUser,
+    @Param('roomSlug') roomId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.ms.deleteRoomMessageForMe(user.userId, roomId, messageId);
+  }
+
+  @Post('rooms/:roomSlug/messages/:messageId/delete-for-everyone')
+  @ApiOperation({
+    summary: 'Tombstone a room message for every member',
+    description:
+      'Sender-only, within the delete-for-everyone window. Soft-hide: ciphertext and attachments stay at rest, the row is served as a tombstone and a room-message-deleted frame is broadcast.',
+  })
+  async deleteRoomMessageForEveryone(
+    @CurrentUser() user: JwtUser,
+    @Param('roomSlug') roomId: string,
+    @Param('messageId') messageId: string,
+  ) {
+    return this.ms.deleteRoomMessageForEveryone(
+      user.userId,
+      roomId,
+      messageId,
+    );
   }
 
   @Get('rooms/:roomSlug/attachments')

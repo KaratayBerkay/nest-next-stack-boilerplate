@@ -1,12 +1,8 @@
 import { randomBytes } from 'node:crypto';
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { generateSecret, generateURI, verify as verifyTotp } from 'otplib';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { NotificationService } from '../notification/notification.service';
 import { OutboxService } from '../outbox/outbox.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { MfaEnrollPayload, MfaVerifyPayload } from './mfa.types';
@@ -16,11 +12,40 @@ const BACKUP_CODE_COUNT = 10;
 
 @Injectable()
 export class MfaService {
+  private readonly logger = new Logger(MfaService.name);
   constructor(
     private readonly prisma: PrismaService,
     private readonly crypto: CryptoService,
     private readonly outbox: OutboxService,
+    private readonly notifications: NotificationService,
   ) {}
+
+  /**
+   * In-app SECURITY notification for MFA state changes (BE-014). Best-effort:
+   * the factor change is already committed, a notification failure must not
+   * surface as an MFA error.
+   */
+  private async notifySecurity(
+    userId: string,
+    title: string,
+    body: string,
+    kind: string,
+  ): Promise<void> {
+    await this.notifications
+      .create({
+        userId,
+        actorId: userId,
+        type: 'SECURITY',
+        title,
+        body,
+        payload: { kind },
+      })
+      .catch((err: Error) =>
+        this.logger.warn(
+          `SECURITY notification failed for ${userId}: ${err.message}`,
+        ),
+      );
+  }
 
   /**
    * Begin TOTP enrollment: create a pending (unverified) factor with an
@@ -120,6 +145,13 @@ export class MfaService {
       );
     });
 
+    await this.notifySecurity(
+      userId,
+      'Two-factor authentication enabled',
+      "Sign-ins now require your authenticator app. If you didn't do this, change your password immediately.",
+      'security-mfa-enabled',
+    );
+
     return { enabled: true, backupCodes: codes };
   }
 
@@ -158,6 +190,13 @@ export class MfaService {
         tx,
       );
     });
+
+    await this.notifySecurity(
+      userId,
+      'Two-factor authentication disabled',
+      "Your account no longer asks for a second factor at sign-in. If you didn't do this, re-enable it and change your password.",
+      'security-mfa-disabled',
+    );
 
     return true;
   }

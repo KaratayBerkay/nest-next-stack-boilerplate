@@ -22,6 +22,7 @@ type MockPrisma = {
 
 interface MockPaymentProvider {
   createSubscription: jest.Mock;
+  finalizeSubscription: jest.Mock;
   cancelSubscription: jest.Mock;
   cancelSubscriptionNow: jest.Mock;
   scheduleTierChange: jest.Mock;
@@ -65,6 +66,7 @@ describe('BillingService', () => {
   let mockStripe: MockStripeService;
   let mockWallet: MockWallet;
   let mockOutbox: { emit: jest.Mock };
+  let mockRedis: { get: jest.Mock; set: jest.Mock; del: jest.Mock };
 
   beforeEach(() => {
     const createSubscription = jest.fn();
@@ -74,6 +76,7 @@ describe('BillingService', () => {
     const releaseSubscriptionSchedule = jest.fn().mockResolvedValue(undefined);
     mockProvider = {
       createSubscription,
+      finalizeSubscription: jest.fn(),
       cancelSubscription,
       cancelSubscriptionNow,
       scheduleTierChange,
@@ -141,6 +144,11 @@ describe('BillingService', () => {
     };
 
     mockOutbox = { emit: jest.fn().mockResolvedValue(undefined) };
+    mockRedis = {
+      get: jest.fn().mockResolvedValue(null),
+      set: jest.fn().mockResolvedValue('OK'),
+      del: jest.fn().mockResolvedValue(1),
+    };
 
     service = new BillingService(
       mockPrisma as never,
@@ -151,6 +159,7 @@ describe('BillingService', () => {
       mockWallet as never,
       mockOutbox as never,
       mockProvider,
+      mockRedis as never,
     );
   });
 
@@ -420,7 +429,8 @@ describe('BillingService', () => {
 
       expect(mockPrisma.$executeRaw).toHaveBeenCalledTimes(1);
       const firstCall = mockPrisma.$executeRaw.mock.calls[0] as
-        readonly string[] | undefined;
+        | readonly string[]
+        | undefined;
       expect(String(firstCall?.[0] ?? '')).toContain('pg_advisory_xact_lock');
       expect(result.success).toBe(true);
       expect(result.periodEnd).toEqual(new Date('2026-03-01'));
@@ -535,6 +545,129 @@ describe('BillingService', () => {
     });
   });
 
+  // BE-019: a first subscription whose invoice needs 3DS is parked, not
+  // provisioned; finalizeSubscription completes it after the client confirms.
+  describe('subscribeToPlan — authentication_required (BE-019)', () => {
+    it('returns the client secret, parks the finalize context, and provisions nothing', async () => {
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.createSubscription.mockResolvedValue({
+        success: false,
+        reason: 'authentication_required',
+        clientSecret: 'pi_1_secret_x',
+        stripeSubscriptionId: 'sub_sca',
+      });
+
+      const result = await service.subscribeToPlan(
+        'u1',
+        SubscriptionTier.PREMIUM,
+        'pm_card123',
+        'retry-1',
+      );
+
+      expect(result).toEqual({
+        success: false,
+        reason: 'authentication_required',
+        clientSecret: 'pi_1_secret_x',
+        stripeSubscriptionId: 'sub_sca',
+      });
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        'billing:sca:sub_sca',
+        expect.stringContaining('"userId":"u1"'),
+        'EX',
+        expect.any(Number),
+      );
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockTokenStore.rewriteFieldsForUser).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('finalizeSubscription (BE-019)', () => {
+    const pending = JSON.stringify({
+      userId: 'u1',
+      targetTier: SubscriptionTier.PREMIUM,
+      retryKey: 'retry-1',
+      currency: 'USD',
+    });
+
+    it('provisions the tier once Stripe reports the subscription active', async () => {
+      mockRedis.get.mockResolvedValue(pending);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockPrisma.user.findUnique.mockResolvedValue({
+        stripeSubscriptionId: null,
+      });
+      mockProvider.finalizeSubscription.mockResolvedValue({
+        ...SUB_RESULT,
+        stripeSubscriptionId: 'sub_sca',
+        currency: 'USD',
+      });
+
+      const result = await service.finalizeSubscription('u1', 'sub_sca');
+
+      expect(result.success).toBe(true);
+      expect(mockProvider.finalizeSubscription).toHaveBeenCalledWith('sub_sca');
+      expect(mockPrisma.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            subscriptionTier: SubscriptionTier.PREMIUM,
+            stripeSubscriptionId: 'sub_sca',
+          }),
+        }),
+      );
+      expect(mockTokenStore.rewriteFieldsForUser).toHaveBeenCalledWith('u1', {
+        tier: SubscriptionTier.PREMIUM,
+      });
+      expect(mockRealtime.updateUserTier).toHaveBeenCalledWith(
+        'u1',
+        SubscriptionTier.PREMIUM,
+      );
+      expect(mockRedis.del).toHaveBeenCalledWith('billing:sca:sub_sca');
+    });
+
+    it('passes a still-pending authentication back to the client without provisioning', async () => {
+      mockRedis.get.mockResolvedValue(pending);
+      mockPrisma.user.findUniqueOrThrow.mockResolvedValue(SUB_USER);
+      mockProvider.finalizeSubscription.mockResolvedValue({
+        success: false,
+        reason: 'authentication_required',
+        clientSecret: 'pi_1_secret_x',
+        stripeSubscriptionId: 'sub_sca',
+      });
+
+      const result = await service.finalizeSubscription('u1', 'sub_sca');
+
+      expect(result).toMatchObject({
+        success: false,
+        reason: 'authentication_required',
+        clientSecret: 'pi_1_secret_x',
+      });
+      expect(mockPrisma.user.update).not.toHaveBeenCalled();
+      expect(mockRedis.del).not.toHaveBeenCalled();
+    });
+
+    it('refuses to finalize a subscription another user started (or an unknown one)', async () => {
+      mockRedis.get.mockResolvedValue(
+        JSON.stringify({
+          userId: 'u2',
+          targetTier: 'PREMIUM',
+          retryKey: 'r',
+          currency: 'USD',
+        }),
+      );
+      await expect(
+        service.finalizeSubscription('u1', 'sub_sca'),
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_BILLING_NO_PENDING_SUBSCRIPTION' },
+      });
+      mockRedis.get.mockResolvedValue(null);
+      await expect(
+        service.finalizeSubscription('u1', 'sub_missing'),
+      ).rejects.toMatchObject({
+        response: { exc: 'EX_BILLING_NO_PENDING_SUBSCRIPTION' },
+      });
+      expect(mockProvider.finalizeSubscription).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getSubscription', () => {
     it('reads the real charged amount/currency off the live Stripe subscription when one exists', async () => {
       mockPrisma.user.findUnique.mockResolvedValue({
@@ -580,6 +713,31 @@ describe('BillingService', () => {
   });
 
   describe('getPlanPrices', () => {
+    // CROSS-031: the feature list ships with the prices so no client keeps
+    // its own copy of "what's included".
+    it('attaches the canonical feature list per tier, with limits from the enforcing constants', async () => {
+      const prices = await service.getPlanPrices('USD');
+      const byTier = Object.fromEntries(prices.map((p) => [p.tier, p]));
+      expect(byTier.FREE.features).toEqual(
+        expect.arrayContaining([
+          { key: 'basicAccess' },
+          { key: 'callMinutes', value: '10' },
+        ]),
+      );
+      expect(byTier.BASIC.features).toEqual(
+        expect.arrayContaining([{ key: 'everythingIn', value: 'FREE' }]),
+      );
+      expect(byTier.PREMIUM.features).toEqual(
+        expect.arrayContaining([
+          { key: 'everythingIn', value: 'MEDIUM' },
+          { key: 'callMinutes', value: '120' },
+          { key: 'storageMultiplier', value: '8' },
+        ]),
+      );
+      // Every tier lists at least the perks the gates actually enforce.
+      for (const p of prices) expect(p.features.length).toBeGreaterThan(0);
+    });
+
     it('returns all 4 tiers priced in the requested currency, not the static USD table', async () => {
       mockStripe.getPriceInfoForTier.mockImplementation(
         (tier: SubscriptionTier) =>
@@ -599,7 +757,7 @@ describe('BillingService', () => {
         SubscriptionTier.BASIC,
         'TRY',
       );
-      expect(result).toEqual([
+      expect(result).toMatchObject([
         { tier: SubscriptionTier.FREE, priceCents: 0, currency: 'TRY' },
         { tier: SubscriptionTier.BASIC, priceCents: 34999, currency: 'TRY' },
         { tier: SubscriptionTier.MEDIUM, priceCents: 69999, currency: 'TRY' },

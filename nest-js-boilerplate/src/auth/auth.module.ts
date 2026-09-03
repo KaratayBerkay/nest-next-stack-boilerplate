@@ -2,6 +2,7 @@ import { forwardRef, Module } from '@nestjs/common';
 import { DevicesModule } from '../devices/devices.module';
 import { FriendsModule } from '../friends/friends.module';
 import { MailModule } from '../mail/mail.module';
+import { NotificationModule } from '../notification/notification.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { WireCryptoModule } from '../wire-crypto/wire-crypto.module';
 import { AuthContractsModule } from './auth-contracts.module';
@@ -25,6 +26,9 @@ import { UsernameService } from './username.service';
     // RealtimeGateway notifies existing devices of new device logins;
     // forwardRef breaks the cycle: RealtimeModule → AuthModule → RealtimeModule.
     forwardRef(() => RealtimeModule),
+    // SECURITY notifications (password changed). forwardRef: NotificationModule
+    // -> RealtimeModule -> AuthModule.
+    forwardRef(() => NotificationModule),
   ],
   controllers: [OAuthController],
   providers: [

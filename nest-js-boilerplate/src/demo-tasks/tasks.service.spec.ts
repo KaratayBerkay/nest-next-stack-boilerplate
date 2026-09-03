@@ -1,26 +1,26 @@
 import { INestApplication } from '@nestjs/common';
 import { ScheduleModule, SchedulerRegistry } from '@nestjs/schedule';
 import { Test } from '@nestjs/testing';
-import { TasksModule } from './tasks.module';
-import { TasksService } from './tasks.service';
+import { DemoTasksModule } from './tasks.module';
+import { DemoTasksService } from './tasks.service';
 
 const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 // Proves @nestjs/schedule actually fires jobs (compiling the decorators isn't enough) and
 // that the dynamic SchedulerRegistry API works.
-describe('TasksService (scheduling)', () => {
+describe('DemoTasksService (scheduling)', () => {
   let app: INestApplication;
-  let service: TasksService;
+  let service: DemoTasksService;
   let registry: SchedulerRegistry;
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [ScheduleModule.forRoot(), TasksModule],
+      imports: [ScheduleModule.forRoot(), DemoTasksModule],
     }).compile();
     app = moduleRef.createNestApplication();
     await app.init();
-    service = app.get(TasksService);
+    service = app.get(DemoTasksService);
     registry = app.get(SchedulerRegistry);
   });
 

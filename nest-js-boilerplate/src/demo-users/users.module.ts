@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AuthContractsModule } from '../auth/auth-contracts.module';
-import { UsersResolver } from './users.resolver';
-import { UsersService } from './users.service';
+import { DemoUsersResolver } from './users.resolver';
+import { DemoUsersService } from './users.service';
 
 // AuthContractsModule supplies SessionAuthGuard's own dependencies
 // (TokenStoreService, SessionValidatorService). Without the import, Nest
@@ -12,6 +12,6 @@ import { UsersService } from './users.service';
 // module never loads.
 @Module({
   imports: [AuthContractsModule],
-  providers: [UsersResolver, UsersService],
+  providers: [DemoUsersResolver, DemoUsersService],
 })
-export class UsersModule {}
+export class DemoUsersModule {}

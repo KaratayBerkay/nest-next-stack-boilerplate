@@ -8,12 +8,12 @@ import { SessionAuthGuard } from '../auth/session-auth.guard';
 import { RolesGuard } from '../authorization/roles.guard';
 import { Roles } from '../authorization/roles.decorator';
 import { UserRole } from '../@generated/prisma/user-role.enum';
-import { UsersService } from './users.service';
+import { DemoUsersService } from './users.service';
 
 @UseGuards(SessionAuthGuard, RolesGuard)
 @Resolver(() => User)
-export class UsersResolver {
-  constructor(private readonly usersService: UsersService) {}
+export class DemoUsersResolver {
+  constructor(private readonly usersService: DemoUsersService) {}
 
   @Roles(UserRole.ADMIN, UserRole.SUPERADMIN)
   @Query(() => [User], { name: 'users' })

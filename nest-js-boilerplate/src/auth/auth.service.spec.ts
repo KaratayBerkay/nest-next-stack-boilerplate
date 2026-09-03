@@ -20,6 +20,7 @@ import { RealtimeGateway } from '../realtime/realtime.gateway';
 import { EmailOtpService } from './email-otp.service';
 import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import { OAuthService } from './oauth/oauth.service';
+import { NotificationService } from '../notification/notification.service';
 
 jest.mock('otplib', () => ({
   verify: jest.fn(),
@@ -74,6 +75,8 @@ const mockConfig = {
   get: jest.fn((key: string, def?: unknown) => def),
 };
 
+const mockNotifications = { create: jest.fn().mockResolvedValue(undefined) };
+
 const mockOAuthService = {
   retrieveProfile: jest.fn(),
 };
@@ -108,6 +111,7 @@ describe('AuthService', () => {
         { provide: CryptoService, useValue: mockCrypto },
         { provide: OutboxService, useValue: mockOutbox },
         { provide: MailService, useValue: { enqueue: jest.fn() } },
+        { provide: NotificationService, useValue: mockNotifications },
         { provide: DeviceService, useValue: { resolveForLogin: jest.fn() } },
         { provide: TokenStoreService, useValue: mockTokenStore },
         { provide: SessionHydrationService, useValue: { hydrate: jest.fn() } },
@@ -155,6 +159,48 @@ describe('AuthService', () => {
     mockPrisma.$transaction.mockImplementation(
       (cb: (tx: typeof mockPrisma) => unknown) => cb(mockPrisma),
     );
+  });
+
+  describe('changePassword', () => {
+    it('emits an in-app SECURITY notification once the password is changed (BE-014)', async () => {
+      const passwordHash = await hash('OldPassword!123');
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.c',
+        passwordHash,
+      });
+      mockPrisma.$transaction.mockImplementation(
+        (cb: (tx: typeof mockPrisma) => unknown) => cb(mockPrisma),
+      );
+
+      await service.changePassword(
+        'u1',
+        undefined,
+        'OldPassword!123',
+        'BrandNewPassw0rd!xyz',
+      );
+
+      expect(mockNotifications.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'u1',
+          actorId: 'u1',
+          type: 'SECURITY',
+          payload: { kind: 'security-password-changed' },
+        }),
+      );
+    });
+
+    it('does not notify when the current password is wrong', async () => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        id: 'u1',
+        email: 'a@b.c',
+        passwordHash: await hash('OldPassword!123'),
+      });
+      await expect(
+        service.changePassword('u1', undefined, 'nope', 'BrandNewPassw0rd!xyz'),
+      ).rejects.toBeInstanceOf(UnauthorizedException);
+      expect(mockNotifications.create).not.toHaveBeenCalled();
+    });
   });
 
   describe('resetPassword', () => {

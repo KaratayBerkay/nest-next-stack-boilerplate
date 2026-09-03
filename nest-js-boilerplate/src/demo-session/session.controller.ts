@@ -12,7 +12,7 @@ declare module 'express-session' {
 }
 
 @Controller('session')
-export class SessionController {
+export class DemoSessionController {
   // Docs example: read/write via @Req() req.session.
   @Get('visits-req')
   visitsViaReq(@Req() request: Request): { visits: number } {

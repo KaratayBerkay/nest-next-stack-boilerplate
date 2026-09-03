@@ -19,6 +19,7 @@ import { WireCryptoService } from '../wire-crypto/wire-crypto.service';
 import { AuthTokenService, type IssueTokensFn } from './auth-token.service';
 import { AuthLoginService } from './auth-login.service';
 import { AuthRegistrationService } from './auth-registration.service';
+import { NotificationService } from '../notification/notification.service';
 import { EmailOtpService } from './email-otp.service';
 import { AuthSessionService } from './auth-session.service';
 import { OAuthService } from './oauth/oauth.service';
@@ -63,6 +64,8 @@ export class AuthService {
     private readonly emailOtp: EmailOtpService,
     private readonly wireCrypto: WireCryptoService,
     private readonly oauthService: OAuthService,
+    @Inject(forwardRef(() => NotificationService))
+    notifications: NotificationService,
   ) {
     this.authTokens = new AuthTokenService(
       jwt,
@@ -93,6 +96,7 @@ export class AuthService {
       usernames,
       devices,
       emailOtp,
+      notifications,
     );
     this.authSession = new AuthSessionService(
       prisma,

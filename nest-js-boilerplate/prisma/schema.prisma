@@ -190,13 +190,10 @@ enum RoomMemberRole {
 }
 
 enum NotificationType {
-  MENTION
   COMMENT
   REACTION
-  FOLLOW
   FRIEND_REQUEST
   POST
-  SYSTEM
   BILLING
   SECURITY
   MISSED_CALL
@@ -326,7 +323,7 @@ model User {
   /// @HideField()
   stripeSubscriptionScheduleId String?
 
-  avatarUrl       String?
+  avatarUrl  String?
   /// When true, avatarUrl is withheld from every query surface that shows
   /// this user to someone else (friends list, DM conversations,
   /// notification actors) — the owner's own `me` query is unaffected.
@@ -334,27 +331,15 @@ model User {
   /// for the owner-facing field) — every other-user-facing resolver reads
   /// this only to decide whether to null out avatarUrl, never to return it.
   /// @HideField()
-  hideAvatar      Boolean   @default(false)
-  bio             String?   @db.Text
+  hideAvatar Boolean @default(false)
+  bio        String? @db.Text
   // Personal data below is deliberately absent from the GraphQL User type —
   // that type is returned to OTHER users (friend search, meeting host,
   // stream broadcaster), where none of this is anyone's business. The
   // owner-facing read surfaces are SessionUserPayload (`me`) and the REST
   // profile endpoints, which select what they need straight from Prisma.
-  /// @HideField()
-  birthDate       DateTime? @db.Date
-  /// @HideField()
-  quietHoursStart DateTime? @db.Time(6)
-
-  locale   String @default("en")
-  timezone String @default("UTC")
-
-  /// @Validator.IsOptional()
-  /// @Validator.IsPhoneNumber()
-  /// @HideField()
-  phoneNumber   String? @unique
-  /// @HideField()
-  phoneVerified Boolean @default(false)
+  locale     String  @default("en")
+  timezone   String  @default("UTC")
 
   /// @HideField()
   mfaEnabled Boolean @default(false)
@@ -367,21 +352,6 @@ model User {
   failedLoginCount Int       @default(0)
   /// @HideField()
   lockedUntil      DateTime? @db.Timestamptz(6)
-
-  /// @HideField()
-  reputation  BigInt   @default(0)
-  /// @HideField()
-  interests   String[] @default([])
-  /// @HideField()
-  metadata    Json?    @db.JsonB
-  /// @HideField()
-  preferences Json?    @db.JsonB
-
-  // self-relation: referral graph
-  /// @HideField()
-  referredById String? @db.Uuid
-  referredBy   User?   @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
-  referrals    User[]  @relation("UserReferrals")
 
   // auth
   accounts    Account[]
@@ -408,21 +378,20 @@ model User {
   reactions Reaction[]
 
   // social graph (multiple FKs back to User)
-  following          Follow[]               @relation("Follower")
-  followers          Follow[]               @relation("Following")
-  sentFriendReqs     Friendship[]           @relation("FriendshipRequester")
-  recvFriendReqs     Friendship[]           @relation("FriendshipAddressee")
-  sentMessages       Message[]              @relation("MessageSender")
-  recvMessages       Message[]              @relation("MessageRecipient")
-  messageDeletions   MessageDeletion[]
-  favoritesGiven     FavoriteConversation[] @relation("FavoriteConversationOwner")
-  favoritedBy        FavoriteConversation[] @relation("FavoriteConversationPeer")
-  roomMessages       RoomMessage[]          @relation("RoomMessageSender")
-  roomParticipations RoomParticipant[]
-  notifications      Notification[]         @relation("NotificationRecipient")
-  triggered          Notification[]         @relation("NotificationActor")
-  pushSubscriptions  PushSubscription[]
-  fcmTokens          FcmToken[]
+  sentFriendReqs       Friendship[]           @relation("FriendshipRequester")
+  recvFriendReqs       Friendship[]           @relation("FriendshipAddressee")
+  sentMessages         Message[]              @relation("MessageSender")
+  recvMessages         Message[]              @relation("MessageRecipient")
+  messageDeletions     MessageDeletion[]
+  roomMessageDeletions RoomMessageDeletion[]
+  favoritesGiven       FavoriteConversation[] @relation("FavoriteConversationOwner")
+  favoritedBy          FavoriteConversation[] @relation("FavoriteConversationPeer")
+  roomMessages         RoomMessage[]          @relation("RoomMessageSender")
+  roomParticipations   RoomParticipant[]
+  notifications        Notification[]         @relation("NotificationRecipient")
+  triggered            Notification[]         @relation("NotificationActor")
+  pushSubscriptions    PushSubscription[]
+  fcmTokens            FcmToken[]
 
   // rtc (calls, meetings, streams)
   rtcRoomsCreated        RtcRoom[]        @relation("RtcRoomCreator")
@@ -455,7 +424,6 @@ model User {
   @@index([status])
   @@index([role])
   @@index([subscriptionTier])
-  @@index([referredById])
   @@index([createdAt])
 }
 
@@ -526,19 +494,15 @@ model FcmToken {
 }
 
 model MfaFactor {
-  id           String    @id @default(uuid(7)) @db.Uuid
-  userId       String    @db.Uuid
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  method       MfaMethod
-  label        String?
-  secret       Bytes? // encrypted TOTP secret
-  credentialId Bytes? // WebAuthn credential id
-  publicKey    Bytes? // WebAuthn public key
-  counter      BigInt? // WebAuthn signature counter
-  transports   String[]  @default([])
-  verifiedAt   DateTime? @db.Timestamptz(6)
-  lastUsedAt   DateTime? @db.Timestamptz(6)
-  createdAt    DateTime  @default(now()) @db.Timestamptz(6)
+  id         String    @id @default(uuid(7)) @db.Uuid
+  userId     String    @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  method     MfaMethod
+  label      String?
+  secret     Bytes? // encrypted TOTP secret
+  verifiedAt DateTime? @db.Timestamptz(6)
+  lastUsedAt DateTime? @db.Timestamptz(6)
+  createdAt  DateTime  @default(now()) @db.Timestamptz(6)
 
   @@unique([userId, method, label])
   @@index([userId])
@@ -766,33 +730,12 @@ model Task {
 }
 
 // ---------------------------------------------------------------------------
-// Content  (implicit m2m Post<->Tag; self-ref Category & Comment; aggregates)
+// Content  (self-ref Comment; aggregates)
 // ---------------------------------------------------------------------------
-model Category {
-  id        String     @id @default(uuid(7)) @db.Uuid
-  name      String
-  slug      String     @unique
-  parentId  String?    @db.Uuid
-  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children  Category[] @relation("CategoryTree")
-  posts     Post[]
-  createdAt DateTime   @default(now()) @db.Timestamptz(6)
-
-  @@index([parentId])
-}
-
-model Tag {
-  id    String @id @default(uuid(7)) @db.Uuid
-  name  String @unique
-  posts Post[]
-}
-
 model Post {
-  id         String    @id @default(uuid(7)) @db.Uuid
-  authorId   String    @db.Uuid
-  author     User      @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  categoryId String?   @db.Uuid
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  id       String @id @default(uuid(7)) @db.Uuid
+  authorId String @db.Uuid
+  author   User   @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
 
   /// @Validator.MinLength(3)
   /// @Validator.MaxLength(200)
@@ -806,7 +749,6 @@ model Post {
   viewCount   Int        @default(0)
   score       Float      @default(0)
   metadata    Json?      @db.JsonB
-  tags        Tag[]
   comments    Comment[]
   reactions   Reaction[]
   publishedAt DateTime?  @db.Timestamptz(6)
@@ -816,7 +758,6 @@ model Post {
 
   @@index([authorId])
   @@index([status, publishedAt])
-  @@index([categoryId])
 }
 
 model Comment {
@@ -862,19 +803,6 @@ model Reaction {
 // ---------------------------------------------------------------------------
 // Social graph  (every model here holds 2 FKs to User)
 // ---------------------------------------------------------------------------
-model Follow {
-  id          String   @id @default(uuid(7)) @db.Uuid
-  followerId  String   @db.Uuid
-  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followingId String   @db.Uuid
-  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-
-  @@unique([followerId, followingId])
-  @@index([followingId])
-  @@index([followerId, createdAt])
-}
-
 model Friendship {
   id          String           @id @default(uuid(7)) @db.Uuid
   requesterId String           @db.Uuid
@@ -1014,9 +942,37 @@ model RoomMessage {
   nonce       String
   letterCount Int                     @default(0)
   attachments RoomMessageAttachment[]
+  // "Delete for everyone" tombstone — same contract as Message.deletedAt:
+  // ciphertext/attachments stay at rest, the row is served as a tombstone.
+  deletedAt   DateTime?               @db.Timestamptz(6)
+  // Per-viewer "delete for me" rows — see RoomMessageDeletion below.
+  deletions   RoomMessageDeletion[]
   createdAt   DateTime                @default(now()) @db.Timestamptz(6)
 
+  // Quoted-reply pointer, mirroring Message.replyTo (SetNull, @HideField'd —
+  // clients only see the hand-written ReplyPreview shape).
+  /// @HideField()
+  replyToId String?       @db.Uuid
+  /// @HideField()
+  replyTo   RoomMessage?  @relation("RoomMessageReplyTo", fields: [replyToId], references: [id], onDelete: SetNull)
+  /// @HideField()
+  replies   RoomMessage[] @relation("RoomMessageReplyTo")
+
   @@index([roomId, createdAt])
+}
+
+// One row per (room message, viewer) who "deleted for me" — hides the
+// message from that viewer's room history only; everyone else still sees it.
+model RoomMessageDeletion {
+  id            String      @id @default(uuid(7)) @db.Uuid
+  roomMessageId String      @db.Uuid
+  roomMessage   RoomMessage @relation(fields: [roomMessageId], references: [id], onDelete: Cascade)
+  userId        String      @db.Uuid
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@unique([roomMessageId, userId])
+  @@index([userId])
 }
 
 model RoomMessageAttachment {

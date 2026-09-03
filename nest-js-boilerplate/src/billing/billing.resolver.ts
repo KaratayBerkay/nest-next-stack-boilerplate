@@ -31,6 +31,17 @@ export class SubscribeResult {
 
   @Field(() => Date, { nullable: true })
   pendingTierEffectiveAt?: Date | null;
+
+  /**
+   * BE-019: present with reason 'authentication_required' — the card needs
+   * 3DS. Confirm this PaymentIntent client secret with Stripe.js /
+   * flutter_stripe, then call finalizeSubscription(stripeSubscriptionId).
+   */
+  @Field(() => String, { nullable: true })
+  clientSecret?: string;
+
+  @Field(() => String, { nullable: true })
+  stripeSubscriptionId?: string;
 }
 
 @ObjectType()
@@ -90,6 +101,16 @@ export class SubscriptionInfo {
   pendingTierEffectiveAt?: Date;
 }
 
+/** CROSS-031: one entry of a tier's feature list — see tier-features.ts. */
+@ObjectType()
+export class TierFeatureInfo {
+  @Field()
+  key!: string;
+
+  @Field(() => String, { nullable: true })
+  value?: string;
+}
+
 @ObjectType()
 export class PlanPriceInfo {
   @Field(() => SubscriptionTier)
@@ -100,6 +121,10 @@ export class PlanPriceInfo {
 
   @Field()
   currency!: string;
+
+  /** CROSS-031: the canonical "what's included" list for this tier. */
+  @Field(() => [TierFeatureInfo])
+  features!: TierFeatureInfo[];
 }
 
 @ObjectType()
@@ -206,6 +231,8 @@ export class BillingResolver {
       periodEnd: result.periodEnd,
       pendingTier: result.pendingTier,
       pendingTierEffectiveAt: result.pendingTierEffectiveAt,
+      clientSecret: result.clientSecret,
+      stripeSubscriptionId: result.stripeSubscriptionId,
     };
   }
 
@@ -248,6 +275,15 @@ export class BillingResolver {
     @Args('currency', { nullable: true }) currency?: string,
   ): Promise<PlanPriceInfo[]> {
     return this.billing.getPlanPrices(currency);
+  }
+
+  /** BE-019: complete a first subscription after the customer passed 3DS. */
+  @Mutation(() => SubscribeResult)
+  async finalizeSubscription(
+    @CurrentUser() user: JwtUser,
+    @Args('stripeSubscriptionId') stripeSubscriptionId: string,
+  ): Promise<SubscribeResult> {
+    return this.billing.finalizeSubscription(user.userId, stripeSubscriptionId);
   }
 
   @Mutation(() => SetupIntentResult)

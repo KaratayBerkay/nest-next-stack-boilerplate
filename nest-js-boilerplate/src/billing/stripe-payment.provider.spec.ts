@@ -7,6 +7,8 @@ type MockStripeService = {
   cancelSubscriptionNow: jest.Mock;
   scheduleSubscriptionChange: jest.Mock;
   releaseSubscriptionSchedule: jest.Mock;
+  retrieveSubscriptionForFinalize: jest.Mock;
+  getPaymentIntentState: jest.Mock;
 };
 
 describe('StripePaymentProvider', () => {
@@ -21,6 +23,8 @@ describe('StripePaymentProvider', () => {
       cancelSubscriptionNow: jest.fn().mockResolvedValue({}),
       scheduleSubscriptionChange: jest.fn(),
       releaseSubscriptionSchedule: jest.fn().mockResolvedValue({}),
+      retrieveSubscriptionForFinalize: jest.fn(),
+      getPaymentIntentState: jest.fn(),
     };
     provider = new StripePaymentProvider(stripeService as never);
   });
@@ -235,6 +239,143 @@ describe('StripePaymentProvider', () => {
         success: false,
         reason: 'subscription_schedule_failed',
       });
+    });
+  });
+
+  // BE-019: payment_behavior=allow_incomplete — SCA and hard declines come
+  // back as an `incomplete` subscription instead of a thrown error.
+  describe('createSubscription — incomplete first invoice (BE-019)', () => {
+    const incomplete = (secret: string | null) => ({
+      id: 'sub_inc',
+      status: 'incomplete',
+      items: { data: [{ current_period_start: 1, current_period_end: 2 }] },
+      latest_invoice: {
+        id: 'inv_inc',
+        confirmation_secret: secret
+          ? { client_secret: secret, type: 'payment_intent' }
+          : null,
+      },
+      currency: 'usd',
+    });
+    const input = {
+      userId: 'u1',
+      tier: 'BASIC' as never,
+      paymentMethodId: 'pm_1',
+      stripeCustomerId: 'cus_1',
+    };
+
+    it('returns authentication_required with the client secret when the PaymentIntent needs action', async () => {
+      stripeService.createSubscription.mockResolvedValue(
+        incomplete('pi_1_secret_x'),
+      );
+      stripeService.getPaymentIntentState.mockResolvedValue({
+        status: 'requires_action',
+        declineCode: null,
+      });
+
+      const result = await provider.createSubscription(input);
+
+      expect(result).toEqual({
+        success: false,
+        reason: 'authentication_required',
+        clientSecret: 'pi_1_secret_x',
+        stripeSubscriptionId: 'sub_inc',
+      });
+      expect(stripeService.getPaymentIntentState).toHaveBeenCalledWith(
+        'pi_1_secret_x',
+      );
+      expect(stripeService.cancelSubscriptionNow).not.toHaveBeenCalled();
+    });
+
+    it('maps a hard decline to the old reasons and cancels the dead subscription', async () => {
+      stripeService.createSubscription.mockResolvedValue(
+        incomplete('pi_2_secret_y'),
+      );
+      stripeService.getPaymentIntentState.mockResolvedValue({
+        status: 'requires_payment_method',
+        declineCode: 'insufficient_funds',
+      });
+
+      const result = await provider.createSubscription(input);
+
+      expect(result).toEqual({ success: false, reason: 'insufficient_funds' });
+      expect(stripeService.cancelSubscriptionNow).toHaveBeenCalledWith(
+        'sub_inc',
+      );
+    });
+
+    it('treats an incomplete subscription without a confirmation secret as declined', async () => {
+      stripeService.createSubscription.mockResolvedValue(incomplete(null));
+      const result = await provider.createSubscription(input);
+      expect(result).toEqual({ success: false, reason: 'declined' });
+      expect(stripeService.getPaymentIntentState).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('finalizeSubscription (BE-019)', () => {
+    it('returns the success payload once the subscription is active', async () => {
+      stripeService.retrieveSubscriptionForFinalize.mockResolvedValue({
+        id: 'sub_inc',
+        status: 'active',
+        items: {
+          data: [
+            {
+              current_period_start: 1769817600,
+              current_period_end: 1772496000,
+            },
+          ],
+        },
+        latest_invoice: { id: 'inv_inc' },
+        currency: 'eur',
+      });
+
+      const result = await provider.finalizeSubscription('sub_inc');
+
+      expect(result).toEqual({
+        success: true,
+        stripeSubscriptionId: 'sub_inc',
+        periodStart: new Date(1769817600 * 1000),
+        periodEnd: new Date(1772496000 * 1000),
+        latestInvoiceId: 'inv_inc',
+        currency: 'EUR',
+      });
+    });
+
+    it('reports authentication_required again while the PaymentIntent is still pending, without cancelling', async () => {
+      stripeService.retrieveSubscriptionForFinalize.mockResolvedValue({
+        id: 'sub_inc',
+        status: 'incomplete',
+        items: { data: [{ current_period_start: 1, current_period_end: 2 }] },
+        latest_invoice: {
+          id: 'inv_inc',
+          confirmation_secret: {
+            client_secret: 'pi_1_secret_x',
+            type: 'payment_intent',
+          },
+        },
+        currency: 'usd',
+      });
+      stripeService.getPaymentIntentState.mockResolvedValue({
+        status: 'requires_action',
+        declineCode: null,
+      });
+
+      const result = await provider.finalizeSubscription('sub_inc');
+
+      expect(result.reason).toBe('authentication_required');
+      expect(stripeService.cancelSubscriptionNow).not.toHaveBeenCalled();
+    });
+
+    it('reports subscription_failed for an expired/cancelled subscription', async () => {
+      stripeService.retrieveSubscriptionForFinalize.mockResolvedValue({
+        id: 'sub_inc',
+        status: 'incomplete_expired',
+        items: { data: [] },
+        latest_invoice: null,
+        currency: 'usd',
+      });
+      const result = await provider.finalizeSubscription('sub_inc');
+      expect(result).toEqual({ success: false, reason: 'subscription_failed' });
     });
   });
 });

@@ -1,6 +1,6 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import session from 'express-session';
-import { SessionController } from './session.controller';
+import { DemoSessionController } from './session.controller';
 
 /**
  * Techniques › Session (#39). `express-session`. The docs apply the middleware
@@ -15,8 +15,8 @@ import { SessionController } from './session.controller';
  * Uses the default in-memory store: fine for a demo/test, but it leaks memory
  * and won't scale past one process — swap in a real store (Redis) for prod.
  */
-@Module({ controllers: [SessionController] })
-export class SessionModule implements NestModule {
+@Module({ controllers: [DemoSessionController] })
+export class DemoSessionModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer
       .apply(
@@ -26,6 +26,6 @@ export class SessionModule implements NestModule {
           saveUninitialized: false,
         }),
       )
-      .forRoutes(SessionController);
+      .forRoutes(DemoSessionController);
   }
 }
