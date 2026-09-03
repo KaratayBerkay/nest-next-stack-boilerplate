@@ -22,11 +22,22 @@ export function useBillingActions() {
     );
   };
 
+  const finalizeSubscription = async (stripeSubscriptionId: string) => {
+    const { finalizeSubscriptionServer } =
+      await import("@/api/server/billing/stripe");
+    return finalizeSubscriptionServer(stripeSubscriptionId);
+  };
+
   const cancelSubscription = async () => {
     const { cancelSubscriptionServer } =
       await import("@/api/server/billing/cancel");
     await cancelSubscriptionServer();
   };
 
-  return { createSetupIntent, subscribe, cancelSubscription };
+  return {
+    createSetupIntent,
+    subscribe,
+    finalizeSubscription,
+    cancelSubscription,
+  };
 }

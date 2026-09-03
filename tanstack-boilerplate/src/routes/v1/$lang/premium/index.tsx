@@ -9,6 +9,8 @@ import { BasicPageView } from "@/views/premium/BasicPageView";
 import { MediumPageView } from "@/views/premium/MediumPageView";
 import { PremiumPageView } from "@/views/premium/PremiumPageView";
 import { PremiumLoadingFallback } from "@/fallbacks";
+import { isAdminRole } from "@/lib/auth/admin-role";
+import { AccessDeniedPage } from "@/features/statics";
 
 export const metadata: Metadata = {
   title: "Premium",
@@ -33,6 +35,12 @@ export const Route = createFileRoute("/v1/$lang/premium/")({
 function PremiumPage() {
   const { user, messages } = v1Route.useLoaderData();
   const t = messages.premium;
+
+  // CROSS-035: tier-gate demo backed by admin-only aggregates — deny
+  // non-admins instead of serving a page of failing queries.
+  if (!isAdminRole(user.role)) {
+    return <AccessDeniedPage message={messages.admin.accessDenied} />;
+  }
 
   return (
     <div className="flex flex-col gap-6">

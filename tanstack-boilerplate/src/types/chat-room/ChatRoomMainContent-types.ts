@@ -1,5 +1,5 @@
 import type { Dispatch, RefObject, SetStateAction } from "react";
-import type { ChatRoomMessage } from "./ChatRoomMessage-types";
+import type { ChatRoomMessage, RoomReplyTarget } from "./ChatRoomMessage-types";
 import type { UploadItem } from "@/types/messages/AttachmentModal-types";
 
 export interface ChatRoomMainContentProps {
@@ -31,4 +31,9 @@ export interface ChatRoomMainContentProps {
   onRemoveUploadItem: (id: string) => void;
   onCancelUploads: () => void;
   onSendAttachments: () => void;
+  /** CROSS-024: message the composer is replying to, if any. */
+  replyTarget?: RoomReplyTarget | null;
+  onCancelReply?: () => void;
+  onReply?: (msg: ChatRoomMessage) => void;
+  onDeleteMessage?: (messageId: string, scope: "me" | "everyone") => void;
 }

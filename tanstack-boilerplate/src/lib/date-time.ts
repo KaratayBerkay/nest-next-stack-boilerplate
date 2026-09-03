@@ -1,5 +1,6 @@
 import { LANGS, DEFAULT_LANG } from "@/constants/i18n";
 import { readLangCookie } from "@/lib/read-lang-cookie";
+import { readTimezoneCookie } from "@/lib/timezone-cookie";
 
 export type DateInput = string | number | Date;
 
@@ -15,8 +16,32 @@ export function getCurrentLocale(): string {
   return seg ?? readLangCookie();
 }
 
+// CROSS-019: the profile timezone (Settings → General) used to be stored and
+// read back only to pre-fill that dropdown — every date still rendered in
+// the browser's zone. Every wall-clock formatter below now passes the
+// preferred zone to Intl. Client-side it comes from the `timezone` cookie
+// (kept in sync with the profile by the auth provider and the settings
+// save); on the server it is unset, so SSR output stays in UTC and the
+// client corrects after hydration, exactly like the date_display preference.
+export function getPreferredTimeZone(): string | undefined {
+  return readTimezoneCookie() ?? undefined;
+}
+
+function tzOptions<T extends Intl.DateTimeFormatOptions>(
+  options?: T,
+): T | Intl.DateTimeFormatOptions | undefined {
+  const timeZone = getPreferredTimeZone();
+  if (!timeZone) return options;
+  return { ...(options ?? {}), timeZone };
+}
+
 export type TodayFormat =
-  "ISO" | "only_date" | "year" | "month" | "day" | "weekday";
+  | "ISO"
+  | "only_date"
+  | "year"
+  | "month"
+  | "day"
+  | "weekday";
 
 export type DateField<T> = (item: T) => DateInput;
 
@@ -79,35 +104,34 @@ export function formatDate(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleDateString(locale);
+  return toDate(input).toLocaleDateString(locale, tzOptions());
 }
 
 export function formatDateTime(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleString(locale);
+  return toDate(input).toLocaleString(locale, tzOptions());
 }
 
 export function formatDateLong(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
+  return toDate(input).toLocaleDateString(
+    locale,
+    tzOptions({ year: "numeric", month: "long", day: "numeric" }),
+  );
 }
 
 export function formatMonthYear(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleDateString(locale, {
-    year: "numeric",
-    month: "short",
-  });
+  return toDate(input).toLocaleDateString(
+    locale,
+    tzOptions({ year: "numeric", month: "short" }),
+  );
 }
 
 export type DateDisplayPreference = "long" | "iso" | "short";
@@ -116,17 +140,20 @@ export function formatDateShort(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleDateString(locale, { dateStyle: "short" });
+  return toDate(input).toLocaleDateString(
+    locale,
+    tzOptions({ dateStyle: "short" }),
+  );
 }
 
 export function formatDateTimeShort(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleString(locale, {
-    dateStyle: "short",
-    timeStyle: "short",
-  });
+  return toDate(input).toLocaleString(
+    locale,
+    tzOptions({ dateStyle: "short", timeStyle: "short" }),
+  );
 }
 
 /** Time-of-day only ("14:02" / "2:02 PM" per locale) — for detail rows
@@ -135,7 +162,10 @@ export function formatTimeShort(
   input: DateInput,
   locale: string = getCurrentLocale(),
 ): string {
-  return toDate(input).toLocaleTimeString(locale, { timeStyle: "short" });
+  return toDate(input).toLocaleTimeString(
+    locale,
+    tzOptions({ timeStyle: "short" }),
+  );
 }
 
 export function formatDateByPreference(
@@ -220,8 +250,11 @@ export function getDateParts(input: DateInput) {
   };
 }
 
+/** The zone dates are rendered in: the profile preference when set, else the browser's. */
 export function getTimezone(): string {
-  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+  return (
+    getPreferredTimeZone() ?? Intl.DateTimeFormat().resolvedOptions().timeZone
+  );
 }
 
 export function getTime(timezone?: string): string {

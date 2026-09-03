@@ -15,6 +15,7 @@ import { ScrollToBottomButton } from "@/components/ui/ScrollToBottomButton";
 import { ConnectionUnstable } from "@/components/ConnectionUnstable";
 import { AttachmentModal } from "@/components/attachment-modal/AttachmentModal";
 import { insertEmojiAtCursor } from "@/lib/insert-emoji-at-cursor";
+import { ReplyBanner } from "@/views/messages/ReplyBanner";
 import type { ChatRoomMainContentProps } from "@/types/chat-room/ChatRoomMainContent-types";
 
 export function ChatRoomMainContent({
@@ -45,6 +46,10 @@ export function ChatRoomMainContent({
   onRemoveUploadItem,
   onCancelUploads,
   onSendAttachments,
+  replyTarget,
+  onCancelReply,
+  onReply,
+  onDeleteMessage,
 }: ChatRoomMainContentProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const chatWindowRef = useRef<HTMLDivElement>(null);
@@ -107,6 +112,8 @@ export function ChatRoomMainContent({
         onFetchNextPage={onFetchNextPage}
         bottomRef={bottomRef}
         t={t}
+        onReply={onReply}
+        onDelete={onDeleteMessage}
       />
 
       {!isAtBottom && messages.length > 0 && (
@@ -122,6 +129,15 @@ export function ChatRoomMainContent({
           {messageError}
         </p>
       )}
+
+      {replyTarget && onCancelReply ? (
+        <ReplyBanner
+          replyTarget={replyTarget}
+          isReplyToMe={replyTarget.senderId === userId}
+          peerName={replyTarget.senderName}
+          onCancel={onCancelReply}
+        />
+      ) : null}
 
       <div className="flex gap-2 border-t p-2">
         <AttachButton

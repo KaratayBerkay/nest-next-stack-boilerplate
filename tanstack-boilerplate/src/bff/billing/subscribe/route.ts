@@ -32,9 +32,21 @@ const SUBSCRIBE_MUTATION = `
       periodEnd
       pendingTier
       pendingTierEffectiveAt
+      clientSecret
+      stripeSubscriptionId
     }
   }
 `;
+
+// BE-019: the backend's decline reasons, mapped to i18n keys the checkout
+// page can render (the raw reason used to be shown verbatim).
+export const DECLINE_REASON_KEYS: Record<string, string> = {
+  insufficient_funds: "billing.errors.insufficientFunds",
+  declined: "billing.errors.declined",
+  authentication_required: "billing.errors.authenticationRequired",
+  configuration_error: "billing.errors.configuration",
+  subscription_failed: "billing.errors.subscriptionFailed",
+};
 
 // fallow-ignore-next-line complexity
 export async function POST(request: NextRequest) {
@@ -116,6 +128,8 @@ export async function POST(request: NextRequest) {
       periodEnd?: string;
       pendingTier?: string;
       pendingTierEffectiveAt?: string;
+      clientSecret?: string | null;
+      stripeSubscriptionId?: string | null;
     };
   }>(
     SUBSCRIBE_MUTATION,
@@ -135,13 +149,31 @@ export async function POST(request: NextRequest) {
   }
 
   const result = data?.subscribeToPlan;
+  // BE-019: the card needs 3DS. Not a failure yet — hand the PaymentIntent
+  // client secret to the page, which confirms it with Stripe.js and then
+  // calls /api/billing/subscribe/finalize.
+  if (
+    !result?.success &&
+    result?.reason === "authentication_required" &&
+    result.clientSecret &&
+    result.stripeSubscriptionId
+  ) {
+    return NextResponse.json({
+      ok: false,
+      requiresAction: true,
+      clientSecret: result.clientSecret,
+      stripeSubscriptionId: result.stripeSubscriptionId,
+    });
+  }
   if (!result?.success) {
+    const reason = result?.reason ?? "declined";
     return NextResponse.json(
       {
         statusCode: 402,
         exc: "EX_BILLING_DECLINED",
-        msg: result?.reason ?? "Payment declined",
-        key: "billing.errors.declined",
+        msg: "Payment declined",
+        key: DECLINE_REASON_KEYS[reason] ?? "billing.errors.declined",
+        reason,
       },
       { status: 402 },
     );

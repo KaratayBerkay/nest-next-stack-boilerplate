@@ -16,6 +16,7 @@ import { subscriptionQueryOptions } from "@/api/client/billing/query";
 import PlanInfoCard from "@/views/settings/PlanInfoCard";
 import PlanAdvantages from "@/views/settings/PlanAdvantages";
 import UpgradeActions from "@/views/settings/UpgradeActions";
+import { useTierFeatures } from "@/lib/checkout/tier-features";
 
 function useSubscription(userId: string | undefined) {
   return useSuspenseQuery(subscriptionQueryOptions(userId));
@@ -28,7 +29,6 @@ export default function PageContent({
   const { lang } = use(params);
   const { user } = useAuth();
   const t = useMessages("settings");
-  const p = useMessages("pricing");
   const currency = useCurrencyCookie();
   const dateDisplay = useDateDisplayCookie();
   const { data: subscription } = useSubscription(user?.id);
@@ -37,12 +37,8 @@ export default function PageContent({
   const periodEnd = (subscription as { periodEnd?: string } | null)?.periodEnd;
   const cancelAtPeriodEnd = subscription?.cancelAtPeriodEnd ?? false;
 
-  const FEATURES: Record<Tier, string[]> = {
-    FREE: p.featuresFree,
-    BASIC: p.featuresBasic,
-    MEDIUM: p.featuresMedium,
-    PREMIUM: p.featuresPremium,
-  };
+  // CROSS-031: same backend-driven list every other tier surface renders.
+  const FEATURES = useTierFeatures();
 
   return (
     <div className={cn("flex h-full w-full flex-col gap-6", className)}>

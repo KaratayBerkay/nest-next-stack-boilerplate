@@ -1,10 +1,18 @@
 import { apiFetchJson } from "@/lib/api-client";
 import { BILLING_PLAN_PRICES_URL } from "@/constants/api/urls";
 
+/** CROSS-031: one entry of the backend's canonical per-tier feature list. */
+export interface TierFeatureDescriptor {
+  key: string;
+  value?: string | null;
+}
+
 export interface PlanPrice {
   tier: string;
   priceCents: number;
   currency: string;
+  /** CROSS-031: what the tier includes — translated client-side by key. */
+  features?: TierFeatureDescriptor[];
 }
 
 interface PlanPricesResponse {

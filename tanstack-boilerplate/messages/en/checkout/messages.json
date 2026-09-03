@@ -40,5 +40,9 @@
   "noPaymentMethodReturned": "No payment method returned",
   "subscriptionFailed": "Subscription failed",
   "upgradeToTier": "Upgrade to {tier}",
-  "changeToTier": "Change plan to {tier}"
+  "changeToTier": "Change plan to {tier}",
+  "declinedInsufficientFunds": "Your card has insufficient funds. Try another card.",
+  "declinedCard": "Your card was declined. Try another card or contact your bank.",
+  "authenticationRequired": "Your bank requires additional verification for this card.",
+  "authenticationFailed": "Card verification was not completed. Try again or use another card."
 }

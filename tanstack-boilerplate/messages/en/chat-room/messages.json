@@ -38,5 +38,15 @@
   "allUploadsNoResults": "No uploads match your filters",
   "allUploadsClearFilters": "Clear filters",
   "loadMore": "Load more",
-  "attachmentLimitReached": "Only {count} attachments can be sent at once"
+  "attachmentLimitReached": "Only {count} attachments can be sent at once",
+  "deletedMessage": "This message was deleted",
+  "deleteForMe": "Delete for me",
+  "deleteForEveryone": "Delete for everyone",
+  "deleteForEveryoneConfirmTitle": "Delete for everyone?",
+  "deleteForEveryoneConfirmDescription": "This message will be removed for everyone in this room. This cannot be undone.",
+  "deleteMessageFailed": "Failed to delete message. Try again.",
+  "reply": "Reply",
+  "you": "You",
+  "messageActions": "Message actions",
+  "attachmentPreview": "Attachment"
 }

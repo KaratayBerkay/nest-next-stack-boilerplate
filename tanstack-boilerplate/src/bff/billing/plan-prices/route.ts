@@ -9,6 +9,10 @@ const PLAN_PRICES_QUERY = `
       tier
       priceCents
       currency
+      features {
+        key
+        value
+      }
     }
   }
 `;
@@ -24,7 +28,12 @@ export async function GET(request: NextRequest) {
   const currency = request.nextUrl.searchParams.get("currency") ?? undefined;
 
   const { data, errors } = await graphqlFetch<{
-    planPrices: { tier: string; priceCents: number; currency: string }[];
+    planPrices: {
+      tier: string;
+      priceCents: number;
+      currency: string;
+      features: { key: string; value?: string | null }[];
+    }[];
   }>(PLAN_PRICES_QUERY, { currency }, accessToken);
 
   if (errors) {

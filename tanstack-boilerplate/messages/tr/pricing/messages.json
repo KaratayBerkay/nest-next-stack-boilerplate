@@ -28,5 +28,21 @@
   "pricePremium": "$49.99/ay",
   "changePending": "Değişiklik bekliyor",
   "planChangeScheduled": "Planınız {date} tarihinde {tier} olarak değişecek.",
-  "downgrade": "Düşür"
+  "downgrade": "Düşür",
+  "featureLabels": {
+    "basicAccess": "Temel erişim",
+    "communitySupport": "Topluluk desteği",
+    "everythingIn": "{tier} planındaki her şey",
+    "prioritySupport": "Öncelikli destek",
+    "basicAnalytics": "Temel analitik",
+    "postStats": "Gönderi istatistikleri ve tepki dağılımı",
+    "vipRooms": "VIP oda erişimi",
+    "suggestedFriends": "Önerilen arkadaşlar",
+    "whoReacted": "Tepki verenler listesi",
+    "exportData": "Veri dışa aktarma",
+    "crownBadge": "Taç rozeti",
+    "dedicatedSupport": "Özel destek",
+    "callMinutes": "{value} dakikaya kadar arama",
+    "storageMultiplier": "{value}× depolama hakkı"
+  }
 }

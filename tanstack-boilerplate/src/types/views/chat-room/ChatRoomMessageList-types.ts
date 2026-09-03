@@ -10,4 +10,8 @@ export interface ChatRoomMessageListProps {
   onFetchNextPage: () => void;
   bottomRef: React.RefObject<HTMLDivElement | null>;
   t: Record<string, string>;
+  /** Quote a message in the composer (CROSS-024). Omit to hide the actions menu. */
+  onReply?: (msg: ChatRoomMessage) => void;
+  /** Delete for me / for everyone (CROSS-024). */
+  onDelete?: (messageId: string, scope: "me" | "everyone") => void;
 }

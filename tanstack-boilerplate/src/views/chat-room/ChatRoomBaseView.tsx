@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { ChatRoomFallback } from "@/fallbacks";
 import {
   chatRoomHandleSend,
+  chatRoomDeleteMessage,
   selectChatRoom,
 } from "@/views/chat-room/ChatRoomHandlers";
 import { useChatRoomRealtime } from "@/views/chat-room/useChatRoomRealtime";
@@ -28,6 +29,10 @@ import { useToast } from "@/components/ui/Toast";
 import { ChatRoomHeader } from "@/views/chat-room/ChatRoomHeader";
 import { ChatRoomSidebar } from "@/views/chat-room/ChatRoomSidebar";
 import { ChatRoomMainContent } from "@/views/chat-room/ChatRoomMainContent";
+import type {
+  ChatRoomMessage,
+  RoomReplyTarget,
+} from "@/types/chat-room/ChatRoomMessage-types";
 import { RoomAttachmentGallerySheet } from "@/views/chat-room/RoomAttachmentGallerySheet";
 import type { ChatRoomBaseViewProps } from "@/types/chat-room/ChatRoomBaseView-types";
 
@@ -49,6 +54,8 @@ function ChatRoomContent({
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messageError, setMessageError] = useState<string | null>(null);
+  // CROSS-024: quoted-reply target held by the composer.
+  const [replyTarget, setReplyTarget] = useState<RoomReplyTarget | null>(null);
   const [roomCounts, setRoomCounts] = useState<Record<string, number>>({});
   const [roomMembers, setRoomMembers] = useState<
     {
@@ -95,6 +102,7 @@ function ChatRoomContent({
     setDraftRoom(room);
     setInput("");
     setMessageError(null);
+    setReplyTarget(null);
     cancelUploads();
   }
 
@@ -112,7 +120,10 @@ function ChatRoomContent({
       scrollToBottom,
       setMessageError,
       t.messageTooLong,
+      undefined,
+      replyTarget,
     );
+    setReplyTarget(null);
   }, [
     input,
     realtime,
@@ -123,6 +134,7 @@ function ChatRoomContent({
     anyUploading,
     uploadItems.length,
     t.messageTooLong,
+    replyTarget,
   ]);
 
   const handleSendAttachments = useCallback(() => {
@@ -137,7 +149,9 @@ function ChatRoomContent({
       setMessageError,
       t.messageTooLong,
       doneAttachments(),
+      replyTarget,
     );
+    setReplyTarget(null);
     clearUploads();
   }, [
     input,
@@ -148,8 +162,31 @@ function ChatRoomContent({
     scrollToBottom,
     doneAttachments,
     clearUploads,
+    replyTarget,
     t.messageTooLong,
   ]);
+
+  const handleReply = useCallback((msg: ChatRoomMessage) => {
+    setReplyTarget({
+      id: msg.id,
+      senderId: msg.senderId,
+      senderName: msg.senderName,
+      body: msg.body,
+      deletedAt: msg.deletedAt ?? null,
+      hasAttachments: !!msg.attachments?.length,
+    });
+  }, []);
+
+  const handleDeleteMessage = useCallback(
+    async (messageId: string, scope: "me" | "everyone") => {
+      try {
+        await chatRoomDeleteMessage(queryClient, room, messageId, scope);
+      } catch {
+        setMessageError(t.deleteMessageFailed);
+      }
+    },
+    [queryClient, room, t.deleteMessageFailed],
+  );
 
   const handleAttachFiles = useCallback(
     (files: File[]) => {
@@ -264,6 +301,10 @@ function ChatRoomContent({
           onRemoveUploadItem={removeUploadItem}
           onCancelUploads={cancelUploads}
           onSendAttachments={handleSendAttachments}
+          replyTarget={replyTarget}
+          onCancelReply={() => setReplyTarget(null)}
+          onReply={handleReply}
+          onDeleteMessage={(id, scope) => void handleDeleteMessage(id, scope)}
         />
       </div>
 

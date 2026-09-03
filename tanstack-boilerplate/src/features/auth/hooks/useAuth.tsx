@@ -24,6 +24,7 @@ import { setOwnUserId } from "@/api/client/messages/query";
 // Login/register return a subset from AuthPayload; the snapshot is the
 // identity source after the first `me` call.
 import type { User } from "@/types/auth/User";
+import { setTimezoneCookie } from "@/lib/timezone-cookie";
 
 export type { User } from "@/types/auth/User";
 
@@ -56,9 +57,7 @@ function redirectToLoginIfNeeded(): void {
 // Internal channel for the SSR session bridge. Raw inline <script> tags in
 // the body (the old window.__INITIAL_USER__ approach) break React 19
 // hydration, so the session streams in as RSC props via SessionHydrator.
-const AuthHydrateContext = createContext<((user: User) => void) | null>(
-  null,
-);
+const AuthHydrateContext = createContext<((user: User) => void) | null>(null);
 
 export function SessionHydrator({ user }: { user: User }) {
   const hydrate = useContext(AuthHydrateContext);
@@ -71,6 +70,13 @@ export function SessionHydrator({ user }: { user: User }) {
 export function AuthProvider({ children, initialUser }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(initialUser ?? null);
   const [loading, setLoading] = useState(!initialUser);
+
+  // CROSS-019: mirror the profile's timezone into the cookie the date
+  // formatters read, so a fresh browser renders dates in the saved zone
+  // from the first signed-in paint, not only after visiting Settings.
+  useEffect(() => {
+    if (user?.timezone) setTimezoneCookie(user.timezone);
+  }, [user?.timezone]);
   const logoutEventRef = useRef(false);
   const ssrHydratedRef = useRef(false);
 

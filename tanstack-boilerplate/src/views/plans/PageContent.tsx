@@ -28,6 +28,7 @@ import {
 } from "@/api/client/billing/query";
 import { useTierFeatures } from "@/lib/checkout/tier-features";
 import { TierCard } from "./TierCard";
+import type { I18nMessages } from "@/generated/i18n-messages";
 
 function buildTierCards(
   user: { tier?: string } | null,
@@ -35,7 +36,7 @@ function buildTierCards(
   priceCents: Record<Tier, number>,
   lang: string,
   FEATURES: Record<Tier, string[]>,
-  t: Record<string, string | string[]>,
+  t: I18nMessages["pricing"],
   pendingTier?: string,
   pendingTierEffectiveAt?: string,
 ) {
